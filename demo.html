@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kouverte Vox - Video Demo Interattivo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+    background: #0a1f3d;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+/* Background */
+body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0, 217, 255, 0.15), transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(0, 128, 255, 0.1), transparent 50%),
+        linear-gradient(135deg, #0a1f3d 0%, #001a4d 50%, #0a3d5c 100%);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Title Card */
+.title-card {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    gap: 24px;
+}
+.title-icon {
+    font-size: 100px;
+    animation: bounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 40px rgba(0, 217, 255, 0.6));
+}
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+.title-text {
+    font-size: clamp(48px, 10vw, 80px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -2px;
+    line-height: 1;
+}
+.title-tagline {
+    font-size: clamp(18px, 4vw, 28px);
+    color: #00d9ff;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+.title-sub {
+    color: rgba(255,255,255,0.6);
+    font-size: 16px;
+    max-width: 600px;
+    line-height: 1.6;
+    margin-top: 12px;
+}
+.scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: translateY(0); }
+    50% { opacity: 1; transform: translateY(8px); }
+}
+
+/* Sections */
+.section {
+    min-height: 100vh;
+    padding: 80px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.section-num {
+    font-size: 16px;
+    color: #00d9ff;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease;
+}
+
+.section-title {
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.1;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease 0.1s;
+}
+
+.section-desc {
+    font-size: 18px;
+    color: rgba(255,255,255,0.7);
+    text-align: center;
+    max-width: 600px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.8s ease 0.2s;
+}
+
+.section.visible .section-num,
+.section.visible .section-title,
+.section.visible .section-desc {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Demo Phone Frame */
+.phone-frame {
+    width: 320px;
+    height: 640px;
+    border-radius: 40px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 8px solid rgba(0, 217, 255, 0.2);
+    padding: 20px 16px;
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+        0 0 80px rgba(0, 217, 255, 0.3),
+        0 40px 80px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.8s ease 0.3s;
+}
+
+.section.visible .phone-frame {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.phone-notch {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 24px;
+    background: #000;
+    border-radius: 0 0 16px 16px;
+    z-index: 100;
+}
+
+.phone-screen {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #0a1f3d 0%, #001a4d 100%);
+    border-radius: 24px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.phone-top {
+    padding: 32px 16px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 217, 255, 0.2);
+}
+
+.phone-logo {
+    font-size: 14px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.phone-credits {
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.3);
+    border-radius: 100px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.phone-content {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+/* Login Demo */
+.demo-login {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 0;
+}
+.demo-input {
+    background: rgba(0, 217, 255, 0.05);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    animation: typeIn 1s ease forwards;
+    opacity: 0;
+}
+
+@keyframes typeIn {
+    to { opacity: 1; }
+}
+
+.demo-input.t1 {
+    animation-delay: 0.5s;
+}
+.demo-input.t2 {
+    animation-delay: 1.5s;
+}
+.demo-input.filled {
+    color: #fff;
+    border-color: #00d9ff;
+}
+
+.demo-btn {
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    color: #000;
+    padding: 12px;
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 8px;
+    cursor: pointer;
+    animation: pulse 2s ease-in-out infinite;
+    animation-delay: 2.5s;
+    opacity: 0;
+    animation-fill-mode: forwards;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.9; transform: scale(1.02); }
+}
+
+/* Recording Demo */
+.demo-orb-wrap {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 0;
+}
+.demo-orb-title {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+.demo-orb-sub {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 32px;
+    text-align: center;
+}
+.demo-orb {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    box-shadow:
+        0 0 60px rgba(0, 217, 255, 0.4),
+        0 0 120px rgba(0, 128, 255, 0.3);
+    position: relative;
+    animation: orbPulse 1.5s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+}
+
+@keyframes orbPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(0, 217, 255, 0.4); }
+    50% { transform: scale(1.08); box-shadow: 0 0 120px rgba(0, 217, 255, 0.7); }
+}
+
+.demo-ring {
+    position: absolute;
+    border: 2px solid rgba(0, 217, 255, 0.4);
+    border-radius: 50%;
+    animation: ringExpand 1.5s ease-out infinite;
+}
+.demo-ring.r1 { width: 160px; height: 160px; }
+.demo-ring.r2 { width: 200px; height: 200px; animation-delay: 0.3s; }
+.demo-ring.r3 { width: 240px; height: 240px; animation-delay: 0.6s; }
+
+@keyframes ringExpand {
+    0% { opacity: 1; transform: scale(0.6); }
+    100% { opacity: 0; transform: scale(1.2); }
+}
+
+.demo-orb-timer {
+    margin-top: 24px;
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 900;
+    color: #00d9ff;
+}
+
+.demo-mood {
+    display: flex;
+    gap: 6px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.demo-mood-pill {
+    padding: 5px 10px;
+    border-radius: 16px;
+    font-size: 10px;
+    background: rgba(0, 217, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    color: rgba(255,255,255,0.6);
+}
+.demo-mood-pill.active {
+    background: rgba(0, 217, 255, 0.2);
+    color: #00d9ff;
+    border-color: #00d9ff;
+}
+
+/* Feed Demo */
+.demo-story {
+    background: rgba(0, 217, 255, 0.06);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    animation: slideUp 0.6s ease forwards;
+    opacity: 0;
+}
+
+.demo-story.s1 { animation-delay: 0.5s; }
+.demo-story.s2 { animation-delay: 0.7s; }
+.demo-story.s3 { animation-delay: 0.9s; }
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.demo-story-mood {
+    font-size: 9px;
+    color: #00d9ff;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.demo-story-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.demo-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 14px;
+    color: #000;
+}
+.demo-story-info { flex: 1; }
+.demo-story-name { font-size: 12px; font-weight: 700; }
+.demo-story-meta { font-size: 10px; color: rgba(255,255,255,0.5); }
+
+.demo-player {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.demo-play {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-size: 10px;
+    cursor: pointer;
+}
+.demo-wave {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    height: 16px;
+}
+.demo-bar {
+    flex: 1;
+    background: #00d9ff;
+    border-radius: 1px;
+    opacity: 0.5;
+    animation: waveAnim 1.5s ease-in-out infinite;
+}
+
+@keyframes waveAnim {
+    0%, 100% { transform: scaleY(0.3); opacity: 0.4; }
+    50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Match Card Demo */
+.demo-card {
+    width: 90%;
+    aspect-ratio: 0.75;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    border-radius: 20px;
+    padding: 16px;
+    margin: 20px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    box-shadow: 0 16px 40px rgba(0, 217, 255, 0.3);
+    animation: cardSwing 4s ease-in-out infinite;
+}
+
+@keyframes cardSwing {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: translateX(-30px) rotate(-8deg); }
+    50% { transform: rotate(0deg); }
+    75% { transform: translateX(30px) rotate(8deg); }
+}
+
+.demo-card-avatar {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.demo-card-name {
+    color: #000;
+    font-size: 20px;
+    font-weight: 900;
+}
+.demo-card-bio {
+    color: rgba(0,0,0,0.7);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.demo-swipe-actions {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 16px;
+}
+.demo-swipe-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.demo-swipe-btn.no { background: rgba(255, 94, 122, 0.2); }
+.demo-swipe-btn.super {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    width: 50px;
+    height: 50px;
+    font-size: 22px;
+}
+.demo-swipe-btn.yes { background: rgba(0, 217, 255, 0.3); }
+
+/* Profile Demo */
+.demo-profile-hero {
+    text-align: center;
+    padding: 16px 0;
+}
+.demo-profile-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 900;
+    color: #000;
+    margin: 0 auto 12px;
+    box-shadow: 0 0 40px rgba(0, 217, 255, 0.4);
+}
+
+.demo-profile-name {
+    font-size: 18px;
+    font-weight: 900;
+}
+.demo-profile-handle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 2px;
+}
+
+.demo-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 16px 0;
+}
+.demo-stat {
+    background: rgba(0, 217, 255, 0.06);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+}
+.demo-stat-num {
+    font-size: 16px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.demo-stat-label {
+    font-size: 8px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+.demo-clip {
+    background: rgba(0, 217, 255, 0.04);
+    border-radius: 10px;
+    padding: 8px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.demo-clip-play {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    font-size: 9px;
+}
+.demo-clip-info { flex: 1; }
+.demo-clip-name { font-size: 10px; font-weight: 600; }
+.demo-clip-meta { font-size: 8px; color: rgba(255,255,255,0.5); }
+
+/* Bottom nav demo */
+.demo-nav {
+    border-top: 1px solid rgba(0, 217, 255, 0.2);
+    padding: 8px 0;
+    display: flex;
+    justify-content: space-around;
+}
+.demo-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: rgba(255,255,255,0.4);
+    font-size: 8px;
+}
+.demo-nav-btn.active {
+    color: #00d9ff;
+}
+
+/* Stats card */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 800px;
+    width: 100%;
+    margin-top: 32px;
+}
+
+.stats-card {
+    background: rgba(0, 217, 255, 0.06);
+    border: 1px solid rgba(0, 217, 255, 0.2);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.section.visible .stats-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.section.visible .stats-card:nth-child(1) { transition-delay: 0.4s; }
+.section.visible .stats-card:nth-child(2) { transition-delay: 0.5s; }
+.section.visible .stats-card:nth-child(3) { transition-delay: 0.6s; }
+.section.visible .stats-card:nth-child(4) { transition-delay: 0.7s; }
+
+.stats-card:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: #00d9ff;
+    transform: translateY(-4px);
+}
+
+.stats-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+}
+
+.stats-value {
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stats-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* CTA Section */
+.cta-section {
+    padding: 80px 20px;
+    text-align: center;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 32px;
+}
+
+.cta-btn {
+    padding: 16px 32px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.cta-btn.primary {
+    background: linear-gradient(135deg, #00d9ff, #0080ff);
+    color: #000;
+    box-shadow: 0 12px 32px rgba(0, 217, 255, 0.4);
+}
+
+.cta-btn.primary:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 217, 255, 0.6);
+}
+
+.cta-btn.ghost {
+    background: transparent;
+    border: 2px solid rgba(0, 217, 255, 0.5);
+    color: #00d9ff;
+}
+
+.cta-btn.ghost:hover {
+    background: rgba(0, 217, 255, 0.1);
+    border-color: #00d9ff;
+}
+
+/* Progress Bar */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #00d9ff, #0080ff);
+    z-index: 1000;
+    width: 0%;
+    transition: width 0.1s linear;
+}
+
+/* Floating Side Nav */
+.side-nav {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 100;
+}
+
+.side-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(0, 217, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.side-dot:hover {
+    background: rgba(0, 217, 255, 0.6);
+    transform: scale(1.3);
+}
+
+.side-dot.active {
+    background: #00d9ff;
+    box-shadow: 0 0 16px rgba(0, 217, 255, 0.7);
+    transform: scale(1.3);
+}
+
+/* Audio waves animation */
+.demo-bar:nth-child(1) { animation-delay: 0s; height: 60%; }
+.demo-bar:nth-child(2) { animation-delay: 0.1s; height: 80%; }
+.demo-bar:nth-child(3) { animation-delay: 0.2s; height: 100%; }
+.demo-bar:nth-child(4) { animation-delay: 0.3s; height: 70%; }
+.demo-bar:nth-child(5) { animation-delay: 0.4s; height: 90%; }
+.demo-bar:nth-child(6) { animation-delay: 0.5s; height: 50%; }
+.demo-bar:nth-child(7) { animation-delay: 0.6s; height: 80%; }
+.demo-bar:nth-child(8) { animation-delay: 0.7s; height: 100%; }
+.demo-bar:nth-child(9) { animation-delay: 0.8s; height: 60%; }
+.demo-bar:nth-child(10) { animation-delay: 0.9s; height: 70%; }
+
+@media (max-width: 768px) {
+    .side-nav { right: 12px; }
+    .phone-frame { width: 280px; height: 560px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<div class="side-nav">
+    <button class="side-dot active" onclick="scrollToSection(0)" title="Intro"></button>
+    <button class="side-dot" onclick="scrollToSection(1)" title="Auth"></button>
+    <button class="side-dot" onclick="scrollToSection(2)" title="Record"></button>
+    <button class="side-dot" onclick="scrollToSection(3)" title="Feed"></button>
+    <button class="side-dot" onclick="scrollToSection(4)" title="Match"></button>
+    <button class="side-dot" onclick="scrollToSection(5)" title="Profile"></button>
+    <button class="side-dot" onclick="scrollToSection(6)" title="Stats"></button>
+    <button class="side-dot" onclick="scrollToSection(7)" title="Start"></button>
+</div>
+
+<!-- Title Card -->
+<div class="title-card">
+    <div class="title-icon">🎙️</div>
+    <div>
+        <div class="title-text">Kouverte Vox</div>
+        <div class="title-tagline">La voce non mente</div>
+    </div>
+    <div class="title-sub">
+        Solo voci. Niente foto. Pura autenticità.<br>
+        Scopri come funziona →
+    </div>
+    <div class="scroll-hint">Scroll ↓</div>
+</div>
+
+<!-- Section 1: AUTH -->
+<div class="section">
+    <div class="section-num">01 · Accesso</div>
+    <div class="section-title">Login Sicuro</div>
+    <div class="section-desc">
+        Email + Password con JWT tokens e bcrypt hashing.<br>
+        I tuoi dati sono protetti come una banca.
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            <div class="phone-top">
+                <div class="phone-logo">◆ Kouverte Vox</div>
+                <div class="phone-credits">💎 0</div>
+            </div>
+            <div class="phone-content">
+                <div style="font-size: 18px; font-weight: 900; margin-bottom: 4px; background: linear-gradient(135deg, #00d9ff, #0080ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Accedi</div>
+                <div style="font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 16px;">Inserisci le tue credenziali</div>
+                <div class="demo-login">
+                    <div class="demo-input t1 filled">alice@kouverte.local</div>
+                    <div class="demo-input t2 filled">••••••••••</div>
+                    <div class="demo-btn">Accedi →</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: RECORD -->
+<div class="section">
+    <div class="section-num">02 · Registra</div>
+    <div class="section-title">La Tua Voce è Tutto</div>
+    <div class="section-desc">
+        Tieni premuto l'ORB per registrare. Scegli mood, rilascia per pubblicare.<br>
+        Le tue storie scadono in 24 ore. Solo voci pure.
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            <div class="phone-top">
+                <div class="phone-logo">◆ Kouverte Vox</div>
+                <div class="phone-credits">💎 100</div>
+            </div>
+            <div class="phone-content">
+                <div class="demo-orb-wrap">
+                    <div class="demo-orb-title">Press &amp; Hold</div>
+                    <div class="demo-orb-sub">la tua voce<br>è tutto</div>
+                    <div style="position: relative; width: 240px; height: 240px; display: flex; align-items: center; justify-content: center;">
+                        <div class="demo-ring r1"></div>
+                        <div class="demo-ring r2"></div>
+                        <div class="demo-ring r3"></div>
+                        <div class="demo-orb">🎙️</div>
+                    </div>
+                    <div class="demo-orb-timer">00:07</div>
+                    <div class="demo-mood">
+                        <div class="demo-mood-pill active">✨ vibe</div>
+                        <div class="demo-mood-pill">🔥 hot</div>
+                        <div class="demo-mood-pill">🌊 deep</div>
+                        <div class="demo-mood-pill">😜 fun</div>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-nav">
+                <div class="demo-nav-btn active">⏺<br>TALK</div>
+                <div class="demo-nav-btn">📡<br>FEED</div>
+                <div class="demo-nav-btn">💕<br>MATCH</div>
+                <div class="demo-nav-btn">👤<br>TU</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: FEED -->
+<div class="section">
+    <div class="section-num">03 · Feed</div>
+    <div class="section-title">Scopri Voci</div>
+    <div class="section-desc">
+        Storie vocali da altri utenti, ogni giorno fresche.<br>
+        Reagisci, chatta, connettiti.
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            <div class="phone-top">
+                <div class="phone-logo">◆ Kouverte Vox</div>
+                <div class="phone-credits">💎 100</div>
+            </div>
+            <div class="phone-content">
+                <div class="demo-story s1">
+                    <div class="demo-story-mood">✨ vibe</div>
+                    <div class="demo-story-header">
+                        <div class="demo-avatar">A</div>
+                        <div class="demo-story-info">
+                            <div class="demo-story-name">alice</div>
+                            <div class="demo-story-meta">2m • 7s</div>
+                        </div>
+                    </div>
+                    <div class="demo-player">
+                        <div class="demo-play">▶</div>
+                        <div class="demo-wave">
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-story s2">
+                    <div class="demo-story-mood">🔥 hot</div>
+                    <div class="demo-story-header">
+                        <div class="demo-avatar">B</div>
+                        <div class="demo-story-info">
+                            <div class="demo-story-name">bob</div>
+                            <div class="demo-story-meta">15m • 12s</div>
+                        </div>
+                    </div>
+                    <div class="demo-player">
+                        <div class="demo-play">▶</div>
+                        <div class="demo-wave">
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-story s3">
+                    <div class="demo-story-mood">🌊 deep</div>
+                    <div class="demo-story-header">
+                        <div class="demo-avatar">C</div>
+                        <div class="demo-story-info">
+                            <div class="demo-story-name">claire</div>
+                            <div class="demo-story-meta">1h • 5s</div>
+                        </div>
+                    </div>
+                    <div class="demo-player">
+                        <div class="demo-play">▶</div>
+                        <div class="demo-wave">
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div><div class="demo-bar"></div><div class="demo-bar"></div>
+                            <div class="demo-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-nav">
+                <div class="demo-nav-btn">⏺<br>TALK</div>
+                <div class="demo-nav-btn active">📡<br>FEED</div>
+                <div class="demo-nav-btn">💕<br>MATCH</div>
+                <div class="demo-nav-btn">👤<br>TU</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 4: MATCH -->
+<div class="section">
+    <div class="section-num">04 · Match</div>
+    <div class="section-title">Swipe & Match</div>
+    <div class="section-desc">
+        Ascolta voci, swipe per trovare il match perfetto.<br>
+        Niente apparenze. Solo voci che colpiscono.
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            <div class="phone-top">
+                <div class="phone-logo">◆ Kouverte Vox</div>
+                <div class="phone-credits">💎 100</div>
+            </div>
+            <div class="phone-content" style="display: flex; flex-direction: column; align-items: center; padding: 16px 8px;">
+                <div class="demo-card">
+                    <div class="demo-card-avatar">A</div>
+                    <div style="position: absolute; top: 16px; left: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">▶</div>
+                    <div class="demo-card-name">alice</div>
+                    <div class="demo-card-bio">Tap per ascoltare la sua voce</div>
+                </div>
+                <div class="demo-swipe-actions" style="width: 90%;">
+                    <div class="demo-swipe-btn no">✕</div>
+                    <div class="demo-swipe-btn super">⭐</div>
+                    <div class="demo-swipe-btn yes">♥</div>
+                </div>
+            </div>
+            <div class="demo-nav">
+                <div class="demo-nav-btn">⏺<br>TALK</div>
+                <div class="demo-nav-btn">📡<br>FEED</div>
+                <div class="demo-nav-btn active">💕<br>MATCH</div>
+                <div class="demo-nav-btn">👤<br>TU</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 5: PROFILE -->
+<div class="section">
+    <div class="section-num">05 · Profilo</div>
+    <div class="section-title">3 Voci Per Te</div>
+    <div class="section-desc">
+        Ogni utente ha 3 clip vocali: "Chi sono", "Mi piace", "Cerco".<br>
+        Stats real-time: storie, match, like ricevuti.
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+            <div class="phone-top">
+                <div class="phone-logo">◆ Kouverte Vox</div>
+                <div class="phone-credits">💎 100</div>
+            </div>
+            <div class="phone-content">
+                <div class="demo-profile-hero">
+                    <div class="demo-profile-avatar">A</div>
+                    <div class="demo-profile-name">alice</div>
+                    <div class="demo-profile-handle">@alice</div>
+                </div>
+                <div class="demo-stats">
+                    <div class="demo-stat">
+                        <div class="demo-stat-num">12</div>
+                        <div class="demo-stat-label">Stories</div>
+                    </div>
+                    <div class="demo-stat">
+                        <div class="demo-stat-num">8</div>
+                        <div class="demo-stat-label">Match</div>
+                    </div>
+                    <div class="demo-stat">
+                        <div class="demo-stat-num">42</div>
+                        <div class="demo-stat-label">Likes</div>
+                    </div>
+                </div>
+                <div style="font-size: 9px; color: #00d9ff; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;">🎙️ Le tue 3 voci</div>
+                <div class="demo-clip">
+                    <div class="demo-clip-play">▶</div>
+                    <div class="demo-clip-info">
+                        <div class="demo-clip-name">Chi sono</div>
+                        <div class="demo-clip-meta">8s · vibe ✨</div>
+                    </div>
+                </div>
+                <div class="demo-clip">
+                    <div class="demo-clip-play">▶</div>
+                    <div class="demo-clip-info">
+                        <div class="demo-clip-name">Mi piace</div>
+                        <div class="demo-clip-meta">12s · hot 🔥</div>
+                    </div>
+                </div>
+                <div class="demo-clip">
+                    <div class="demo-clip-play" style="background: rgba(0,217,255,0.1); color: rgba(255,255,255,0.5);">+</div>
+                    <div class="demo-clip-info">
+                        <div class="demo-clip-name">Cerco</div>
+                        <div class="demo-clip-meta">Da registrare</div>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-nav">
+                <div class="demo-nav-btn">⏺<br>TALK</div>
+                <div class="demo-nav-btn">📡<br>FEED</div>
+                <div class="demo-nav-btn">💕<br>MATCH</div>
+                <div class="demo-nav-btn active">👤<br>TU</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 6: STATS -->
+<div class="section">
+    <div class="section-num">06 · Performance</div>
+    <div class="section-title">Numeri Reali</div>
+    <div class="section-desc">
+        Risultati dei test stress su Kouverte Vox:<br>
+        Sicurezza, velocità, scalabilità.
+    </div>
+
+    <div class="stats-grid">
+        <div class="stats-card">
+            <div class="stats-icon">⚡</div>
+            <div class="stats-value">&lt; 2ms</div>
+            <div class="stats-label">Response Time</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🚀</div>
+            <div class="stats-value">100</div>
+            <div class="stats-label">Concurrent Users</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🔒</div>
+            <div class="stats-value">JWT</div>
+            <div class="stats-label">+ Bcrypt Auth</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">💾</div>
+            <div class="stats-value">100%</div>
+            <div class="stats-label">DB Persistence</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">📡</div>
+            <div class="stats-value">Real-time</div>
+            <div class="stats-label">Socket.io Chat</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🎯</div>
+            <div class="stats-value">5/5</div>
+            <div class="stats-label">Test Passati</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🎨</div>
+            <div class="stats-value">Top</div>
+            <div class="stats-label">Design Mobile-First</div>
+        </div>
+        <div class="stats-card">
+            <div class="stats-icon">🌐</div>
+            <div class="stats-value">PWA</div>
+            <div class="stats-label">Multi-Device</div>
+        </div>
+    </div>
+</div>
+
+<!-- Final CTA -->
+<div class="section cta-section">
+    <div class="section-num">07 · Pronto?</div>
+    <div class="section-title">Lancia Ora 🚀</div>
+    <div class="section-desc">
+        Kouverte Vox è ready to launch.<br>
+        L'app spacca, i numeri parlano. Provala adesso.
+    </div>
+    <div class="cta-buttons">
+        <a href="splash.html" class="cta-btn primary">Apri Splash Screen</a>
+        <a href="app.html" class="cta-btn ghost">Avvia App</a>
+    </div>
+    <div style="margin-top: 60px; color: rgba(255,255,255,0.4); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;">
+        Made by Kouverte © 2026
+    </div>
+</div>
+
+<script>
+// Scroll progress
+window.addEventListener('scroll', () => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = (window.scrollY / max) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+});
+
+// Intersection Observer for sections
+const sections = document.querySelectorAll('.section');
+const dots = document.querySelectorAll('.side-dot');
+
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            // Update active dot
+            const idx = Array.from(sections).indexOf(entry.target);
+            dots.forEach((d, i) => d.classList.toggle('active', i === idx + 1));
+        }
+    });
+}, { threshold: 0.3 });
+
+sections.forEach(s => observer.observe(s));
+
+// Side nav scroll
+function scrollToSection(idx) {
+    if (idx === 0) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        sections[idx - 1].scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Auto-scroll demo (optional - press SPACE)
+document.addEventListener('keypress', e => {
+    if (e.code === 'Space') {
+        e.preventDefault();
+        window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+    }
+});
+</script>
+
+</body>
+</html>

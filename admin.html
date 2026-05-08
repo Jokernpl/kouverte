@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOX · Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+.sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 240px;
+    background: #111;
+    border-right: 1px solid #222;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 100;
+}
+.logo-admin {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, #ff4444, #ff89a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 40px;
+}
+.nav-admin { display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #888;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    text-align: left;
+    width: 100%;
+}
+.nav-item:hover { background: #1a1a1a; color: #e0e0e0; }
+.nav-item.active { background: linear-gradient(135deg, rgba(255,68,68,0.2), rgba(255,137,168,0.2)); color: #ff89a8; }
+.main {
+    margin-left: 240px;
+    padding: 40px;
+    max-width: 1200px;
+}
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.page-subtitle {
+    color: #666;
+    margin-bottom: 32px;
+    font-size: 14px;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+}
+.stat-card {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    padding: 20px;
+}
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ff4444, #ff89a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.stat-label {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.table-container {
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 12px;
+    overflow: hidden;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    background: #1a1a1a;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    border-bottom: 1px solid #222;
+}
+td {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid #1a1a1a;
+}
+tr:hover { background: #1a1a1a; }
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-active { background: rgba(126,203,161,0.2); color: #7ecba1; }
+.badge-expired { background: rgba(255,68,68,0.2); color: #ff4444; }
+.btn-action {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    background: transparent;
+    color: #e0e0e0;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-action:hover { background: #222; }
+.btn-delete { border-color: rgba(255,68,68,0.3); color: #ff4444; }
+.btn-delete:hover { background: rgba(255,68,68,0.1); }
+.search-bar {
+    width: 100%;
+    max-width: 400px;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: #e0e0e0;
+    font-size: 14px;
+    margin-bottom: 20px;
+    font-family: inherit;
+}
+.search-bar:focus { outline: none; border-color: #ff4444; }
+.tab-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #111;
+    border: 1px solid #222;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.tab.active { background: #1a1a1a; color: #e0e0e0; border-color: #ff4444; }
+.section { display: none; }
+.section.active { display: block; }
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #444;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="logo-admin">VOX</div>
+    <nav class="nav-admin">
+        <button class="nav-item active" onclick="showSection('dashboard')">📊 Dashboard</button>
+        <button class="nav-item" onclick="showSection('users')">👥 Utenti</button>
+        <button class="nav-item" onclick="showSection('stories')">🎙 Stories</button>
+        <button class="nav-item" onclick="showSection('duels')">⚔️ Duelli</button>
+        <button class="nav-item" onclick="showSection('shop')">🛍️ Shop</button>
+        <button class="nav-item" onclick="showSection('settings')">⚙️ Impostazioni</button>
+    </nav>
+</div>
+
+<div class="main">
+    <!-- Dashboard -->
+    <div class="section active" id="sec-dashboard">
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Panoramica piattaforma VOX</div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Tipo</th><th>Dettagli</th><th>Quando</th></tr></thead>
+                <tbody id="recent-activity"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Users -->
+    <div class="section" id="sec-users">
+        <div class="page-title">Gestione Utenti</div>
+        <div class="page-subtitle">Utenti registrati: <span id="user-count">0</span></div>
+        <input type="text" class="search-bar" placeholder="Cerca utente..." onkeyup="filterUsers(this.value)">
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Username</th><th>ID</th><th>Storie</th><th>Registrato</th><th>Azioni</th></tr></thead>
+                <tbody id="users-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stories -->
+    <div class="section" id="sec-stories">
+        <div class="page-title">Gestione Stories</div>
+        <div class="page-subtitle">Storie attive e scadute</div>
+        <div class="tab-bar">
+            <div class="tab active" onclick="filterStories('all', this)">Tutte</div>
+            <div class="tab" onclick="filterStories('active', this)">Attive</div>
+            <div class="tab" onclick="filterStories('expired', this)">Scadute</div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Utente</th><th>Mood</th><th>Reazioni</th><th>Stato</th><th>Creata</th><th>Azioni</th></tr></thead>
+                <tbody id="stories-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Duels -->
+    <div class="section" id="sec-duels">
+        <div class="page-title">Gestione Duelli</div>
+        <div class="page-subtitle">Battaglie vocali</div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Tema</th><th>Utente 1</th><th>Utente 2</th><th>Voti</th><th>Stato</th><th>Azioni</th></tr></thead>
+                <tbody id="duels-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Shop -->
+    <div class="section" id="sec-shop">
+        <div class="page-title">Gestione Shop</div>
+        <div class="page-subtitle">Prodotti e vendite</div>
+        <div class="stats-grid" id="shop-stats"></div>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Prodotto</th><th>Vendite</th><th>Ricavo</th><th>Stato</th></tr></thead>
+                <tbody id="shop-table"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="section" id="sec-settings">
+        <div class="page-title">Impostazioni</div>
+        <div class="page-subtitle">Configurazione sistema</div>
+        <div style="background:#111; border:1px solid #222; border-radius:12px; padding:24px; max-width:600px;">
+            <h3 style="margin-bottom:16px; font-size:16px;">Manutenzione</h3>
+            <button class="btn-action" onclick="cleanup()" style="margin-right:8px;">Pulisci storie scadute</button>
+            <button class="btn-action btn-delete" onclick="cleanupDuels()">Pulisci duelli espirati</button>
+            <div style="margin-top:24px; padding-top:24px; border-top:1px solid #222;">
+                <h3 style="margin-bottom:12px; font-size:16px; color:#ff4444;">Zona Pericolosa</h3>
+                <button class="btn-action btn-delete" onclick="resetDB()">RESET COMPLETO DATABASE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let allUsers = [];
+let allStories = [];
+
+function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('sec-' + name).classList.add('active');
+    event.target.classList.add('active');
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'users') loadUsers();
+    if (name === 'stories') loadStories();
+    if (name === 'duels') loadDuels();
+    if (name === 'shop') loadShop();
+}
+
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        document.getElementById('stats-grid').innerHTML = `
+            <div class="stat-card"><div class="stat-value">${data.totalUsers || 0}</div><div class="stat-label">Utenti Totali</div></div>
+            <div class="stat-card"><div class="stat-value">${data.activeStories || 0}</div><div class="stat-label">Storie Attive</div></div>
+            <div class="stat-card"><div class="stat-value">${data.totalReactions || 0}</div><div class="stat-label">Reazioni</div></div>
+            <div class="stat-card"><div class="stat-value">${data.activeDuels || 0}</div><div class="stat-label">Duelli Attivi</div></div>
+            <div class="stat-card"><div class="stat-value">€${(data.totalRevenue || 0).toFixed(2)}</div><div class="stat-label">Ricavo Totale</div></div>
+        `;
+    } catch (e) { console.error(e); }
+}
+
+async function loadUsers() {
+    try {
+        const res = await fetch('/api/admin/users');
+        const data = await res.json();
+        allUsers = data.users || [];
+        document.getElementById('user-count').textContent = allUsers.length;
+        renderUsers(allUsers);
+    } catch (e) { console.error(e); }
+}
+
+function renderUsers(users) {
+    document.getElementById('users-table').innerHTML = users.map(u => `
+        <tr>
+            <td>@${u.username}</td>
+            <td style="font-size:11px;color:#666;">${u.id.slice(0,12)}...</td>
+            <td>${u.story_count || 0}</td>
+            <td>${new Date(u.created_at).toLocaleDateString('it-IT')}</td>
+            <td><button class="btn-action btn-delete" onclick="deleteUser('${u.id}')">Elimina</button></td>
+        </tr>
+    `).join('');
+}
+
+function filterUsers(query) {
+    const filtered = allUsers.filter(u => u.username.toLowerCase().includes(query.toLowerCase()));
+    renderUsers(filtered);
+}
+
+async function loadStories() {
+    try {
+        const res = await fetch('/api/admin/stories');
+        const data = await res.json();
+        allStories = data.stories || [];
+        renderStories(allStories);
+    } catch (e) { console.error(e); }
+}
+
+function renderStories(stories) {
+    document.getElementById('stories-table').innerHTML = stories.map(s => {
+        const expired = s.expires_at < Date.now();
+        return `
+        <tr>
+            <td>@${s.username}</td>
+            <td>${getMoodEmoji(s.mood)}</td>
+            <td>${s.reactions_count || 0}</td>
+            <td><span class="badge ${expired ? 'badge-expired' : 'badge-active'}">${expired ? 'Scaduta' : 'Attiva'}</span></td>
+            <td>${new Date(s.created_at).toLocaleString('it-IT')}</td>
+            <td><button class="btn-action btn-delete" onclick="deleteStory('${s.id}')">Elimina</button></td>
+        </tr>
+    `; }).join('') || '<tr><td colspan="6" class="empty-state">Nessuna storia</td></tr>';
+}
+
+function getMoodEmoji(mood) {
+    const m = { neutral: '😐', happy: '😊', sad: '😢', angry: '😠', love: '❤️' };
+    return m[mood] || '😐';
+}
+
+function filterStories(type, btn) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    if (type === 'all') renderStories(allStories);
+    else if (type === 'active') renderStories(allStories.filter(s => s.expires_at > Date.now()));
+    else if (type === 'expired') renderStories(allStories.filter(s => s.expires_at <= Date.now()));
+}
+
+async function loadDuels() {
+    try {
+        const res = await fetch('/api/admin/duels');
+        const data = await res.json();
+        document.getElementById('duels-table').innerHTML = (data.duels || []).map(d => `
+            <tr>
+                <td>${d.theme}</td>
+                <td>@${d.user1_name || '...'}</td>
+                <td>@${d.user2_name || 'In attesa...'}</td>
+                <td>${d.total_votes || 0}</td>
+                <td><span class="badge ${d.expires_at > Date.now() ? 'badge-active' : 'badge-expired'}">${d.expires_at > Date.now() ? 'Attivo' : 'Espirato'}</span></td>
+                <td><button class="btn-action btn-delete" onclick="deleteDuel('${d.id}')">Elimina</button></td>
+            </tr>
+        `).join('') || '<tr><td colspan="6" class="empty-state">Nessun duello</td></tr>';
+    } catch (e) { console.error(e); }
+}
+
+async function loadShop() {
+    try {
+        const res = await fetch('/api/admin/shop/stats');
+        const data = await res.json();
+        document.getElementById('shop-stats').innerHTML = `
+            <div class="stat-card"><div class="stat-value">€${(data.totalRevenue || 0).toFixed(2)}</div><div class="stat-label">Ricavo Totale</div></div>
+            <div class="stat-card"><div class="stat-value">${data.totalTransactions || 0}</div><div class="stat-label">Transazioni</div></div>
+        `;
+        document.getElementById('shop-table').innerHTML = (data.topProducts || []).map(p => `
+            <tr>
+                <td>${p.name}</td>
+                <td>${p.sold}</td>
+                <td>€${((p.revenue || 0) / 100).toFixed(2)}</td>
+                <td><span class="badge badge-active">Attivo</span></td>
+            </tr>
+        `).join('') || '<tr><td colspan="4" class="empty-state">Nessuna vendita</td></tr>';
+    } catch (e) { console.error(e); }
+}
+
+async function deleteUser(id) {
+    if (!confirm('Eliminare utente e tutte le sue storie?')) return;
+    await fetch('/api/admin/users/' + id, { method: 'DELETE' });
+    loadUsers();
+}
+
+async function deleteStory(id) {
+    if (!confirm('Eliminare questa storia?')) return;
+    await fetch('/api/admin/stories/' + id, { method: 'DELETE' });
+    loadStories();
+}
+
+async function deleteDuel(id) {
+    if (!confirm('Eliminare questo duello?')) return;
+    await fetch('/api/admin/duels/' + id, { method: 'DELETE' });
+    loadDuels();
+}
+
+async function cleanup() {
+    if (!confirm('Pulire tutte le storie scadute?')) return;
+    await fetch('/api/cleanup', { method: 'POST' });
+    alert('Pulizia completata');
+    loadDashboard();
+}
+
+async function cleanupDuels() {
+    await fetch('/api/admin/duels/cleanup', { method: 'POST' });
+    alert('Pulizia duelli completata');
+    loadDuels();
+}
+
+async function resetDB() {
+    if (!confirm('ATTENZIONE: Resettare COMPLETAMENTE il database?')) return;
+    if (!confirm('SEI SICURO? Questa azione è IRREVERSIBILE!')) return;
+    await fetch('/api/admin/reset', { method: 'POST' });
+    alert('Database resettato');
+    location.reload();
+}
+
+// Init
+loadDashboard();
+</script>
+</body>
+</html>

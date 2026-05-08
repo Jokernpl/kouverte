@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOUVERTE · Shop — Abbellisci il tuo profilo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: #060206;
+    color: #f0e5d2;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+.header {
+    background: linear-gradient(180deg, rgba(6,2,6,0.95) 0%, rgba(6,2,6,0.8) 100%);
+    padding: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(201,169,110,0.2);
+}
+.header-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 24px;
+    background: linear-gradient(135deg, #c9a96e, #ff89a8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.credits-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(201,169,110,0.15);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(201,169,110,0.3);
+    font-weight: 600;
+    font-size: 14px;
+}
+.container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px 100px;
+}
+.section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 28px;
+    margin: 32px 0 16px;
+    background: linear-gradient(135deg, #f0e5d2, #c9a96e);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.section-title:first-child { margin-top: 16px; }
+.category-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(201,169,110,0.6);
+    margin: 24px 0 12px;
+}
+.product-grid {
+    display: grid;
+    gap: 12px;
+}
+.product-card {
+    background: linear-gradient(135deg, rgba(255,137,168,0.08), rgba(168,117,201,0.08));
+    border: 1px solid rgba(201,169,110,0.2);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+.product-card:hover {
+    border-color: rgba(201,169,110,0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(255,137,168,0.15);
+}
+.product-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff89a8, #a875c9);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.product-card:hover::before { opacity: 1; }
+.product-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.product-icon {
+    font-size: 32px;
+    line-height: 1;
+}
+.product-info { flex: 1; }
+.product-name {
+    font-weight: 600;
+    font-size: 16px;
+    margin-bottom: 4px;
+}
+.product-desc {
+    font-size: 13px;
+    color: rgba(240,229,210,0.6);
+    line-height: 1.4;
+}
+.product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+.product-price {
+    font-weight: 600;
+    font-size: 18px;
+    color: #c9a96e;
+}
+.btn-buy {
+    background: linear-gradient(135deg, #ff89a8, #a875c9);
+    border: none;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.btn-buy:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(255,137,168,0.4);
+}
+.btn-buy:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.vip-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #c9a96e, #ff89a8);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.inventory-section { margin-top: 40px; }
+.inventory-item {
+    background: rgba(126,203,161,0.1);
+    border: 1px solid rgba(126,203,161,0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.inventory-item .product-icon { font-size: 24px; }
+.inventory-info { flex: 1; }
+.inventory-name { font-weight: 600; font-size: 14px; }
+.inventory-status { font-size: 12px; color: rgba(240,229,210,0.5); }
+.btn-activate {
+    background: rgba(126,203,161,0.2);
+    border: 1px solid rgba(126,203,161,0.4);
+    color: #7ecba1;
+    padding: 6px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(6,2,6,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(201,169,110,0.2);
+    display: flex;
+    justify-content: space-around;
+    padding: 12px;
+    z-index: 100;
+}
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: rgba(240,229,210,0.5);
+    text-decoration: none;
+    font-size: 11px;
+    transition: color 0.3s;
+}
+.nav-item.active { color: #c9a96e; }
+.nav-icon { font-size: 20px; }
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6,2,6,0.9);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal.active { display: flex; }
+.modal-content {
+    background: #1a0a1a;
+    border: 1px solid rgba(201,169,110,0.3);
+    border-radius: 20px;
+    padding: 32px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+.modal-icon { font-size: 48px; margin-bottom: 16px; }
+.modal-title { font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+.modal-desc { color: rgba(240,229,210,0.6); font-size: 14px; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 12px; justify-content: center; }
+.btn-cancel {
+    background: transparent;
+    border: 1px solid rgba(240,229,210,0.3);
+    color: #f0e5d2;
+    padding: 10px 24px;
+    border-radius: 20px;
+    cursor: pointer;
+}
+.toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #7ecba1, #a875c9);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    z-index: 300;
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+.toast.active { display: block; }
+@keyframes slideDown {
+    from { transform: translateX(-50%) translateY(-20px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <div class="header-inner">
+        <div class="logo">Kouverte Shop</div>
+        <div class="credits-display">
+            💰 <span id="credits">...</span> crediti
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="section-title">The Voice Shop</div>
+    <p style="color: rgba(240,229,210,0.6); font-size: 14px; margin-bottom: 24px;">
+        Abbellisci il tuo profilo. Fatti notare. Sii irresistibile.
+    </p>
+
+    <div class="category-label">VIP · Abbonamenti</div>
+    <div class="product-grid" id="vip-products"></div>
+
+    <div class="category-label">Boost · Visibilità</div>
+    <div class="product-grid" id="boost-products"></div>
+
+    <div class="category-label">Cosmetici · Stile</div>
+    <div class="product-grid" id="cosmetic-products"></div>
+
+    <div class="category-label">Badge · Status</div>
+    <div class="product-grid" id="badge-products"></div>
+
+    <div class="category-label">Consumabili</div>
+    <div class="product-grid" id="consumable-products"></div>
+
+    <div class="category-label">Crediti</div>
+    <div class="product-grid" id="credits-products"></div>
+
+    <div class="inventory-section">
+        <div class="section-title">Il tuo inventario</div>
+        <div id="inventory-list">
+            <p style="color: rgba(240,229,210,0.4); font-size: 14px;">Nessun acquisto ancora. Il tuo profilo aspetta di brillare ✨</p>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <a href="/app.html" class="nav-item">
+        <span class="nav-icon">🎙</span>
+        <span>Feed</span>
+    </a>
+    <a href="/shop.html" class="nav-item active">
+        <span class="nav-icon">🛍️</span>
+        <span>Shop</span>
+    </a>
+    <a href="/app.html#matches" class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span>Chat</span>
+    </a>
+    <a href="/app.html#profile" class="nav-item">
+        <span class="nav-icon">👤</span>
+        <span>Profilo</span>
+    </a>
+</div>
+
+<div class="modal" id="purchase-modal">
+    <div class="modal-content">
+        <div class="modal-icon" id="modal-icon">🛍️</div>
+        <div class="modal-title" id="modal-title">Conferma acquisto</div>
+        <div class="modal-desc" id="modal-desc"></div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal()">Annulla</button>
+            <button class="btn-buy" id="modal-confirm" style="padding: 10px 24px;">Conferma</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser = null;
+let allProducts = [];
+
+async function init() {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId');
+    if (!userId) {
+        document.querySelector('.container').innerHTML = '<p style="text-align:center;margin-top:40px;color:rgba(240,229,210,0.6);">Devi effettuare il login prima.<br><a href="/index.html" style="color:#c9a96e;">Torna alla home</a></p>';
+        return;
+    }
+    currentUser = userId;
+    await loadCredits();
+    await loadProducts();
+    await loadInventory();
+}
+
+async function loadCredits() {
+    try {
+        const res = await fetch(`/api/shop/credits?userId=${currentUser}`);
+        const data = await res.json();
+        document.getElementById('credits').textContent = data.credits || 0;
+    } catch (e) {
+        console.error('Errore caricamento crediti:', e);
+        showToast('Errore di connessione');
+    }
+}
+
+async function loadProducts() {
+    try {
+        const res = await fetch('/api/shop/products');
+        const data = await res.json();
+        allProducts = data.products || [];
+        renderProducts();
+    } catch (e) {
+        console.error('Errore caricamento prodotti:', e);
+        showToast('Errore di connessione');
+    }
+}
+
+function renderProducts() {
+    const categories = {
+        'subscription': 'vip-products',
+        'boost': 'boost-products',
+        'cosmetic': 'cosmetic-products',
+        'badge': 'badge-products',
+        'consumable': 'consumable-products',
+        'credits': 'credits-products'
+    };
+    for (const [cat, divId] of Object.entries(categories)) {
+        const div = document.getElementById(divId);
+        const prods = allProducts.filter(p => p.category === cat);
+        div.innerHTML = prods.map(p => `
+            <div class="product-card" onclick="confirmPurchase('${p.id}')">
+                ${p.category === 'subscription' ? '<div class="vip-badge">VIP</div>' : ''}
+                <div class="product-header">
+                    <div class="product-icon">${p.icon}</div>
+                    <div class="product-info">
+                        <div class="product-name">${p.name}</div>
+                        <div class="product-desc">${p.description}</div>
+                    </div>
+                </div>
+                <div class="product-footer">
+                    <div class="product-price">${p.price_credits} crediti</div>
+                    <button class="btn-buy" onclick="event.stopPropagation(); confirmPurchase('${p.id}')">Acquista</button>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+let selectedProduct = null;
+function confirmPurchase(productId) {
+    selectedProduct = allProducts.find(p => p.id === productId);
+    if (!selectedProduct) return;
+    document.getElementById('modal-icon').textContent = selectedProduct.icon;
+    document.getElementById('modal-title').textContent = selectedProduct.name;
+    document.getElementById('modal-desc').textContent = `${selectedProduct.description}\n\nPrezzo: ${selectedProduct.price_credits} crediti`;
+    document.getElementById('modal-confirm').onclick = () => purchase(selectedProduct.id);
+    document.getElementById('purchase-modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('purchase-modal').classList.remove('active');
+}
+
+async function purchase(productId) {
+    const res = await fetch('/api/shop/buy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser, productId })
+    });
+    const data = await res.json();
+    closeModal();
+    if (data.ok) {
+        showToast(`✅ ${data.product} acquistato!`);
+        await loadCredits();
+        await loadInventory();
+    } else {
+        showToast(`❌ ${data.error}`);
+    }
+}
+
+async function loadInventory() {
+    const res = await fetch(`/api/shop/inventory?userId=${currentUser}`);
+    const data = await res.json();
+    const list = document.getElementById('inventory-list');
+    if (!data.items || data.items.length === 0) {
+        list.innerHTML = '<p style="color: rgba(240,229,210,0.4); font-size: 14px;">Nessun acquisto ancora. Il tuo profilo aspetta di brillare ✨</p>';
+        return;
+    }
+    list.innerHTML = data.items.map(item => `
+        <div class="inventory-item">
+            <div class="product-icon">${item.icon}</div>
+            <div class="inventory-info">
+                <div class="inventory-name">${item.name}</div>
+                <div class="inventory-status">${item.expires_at ? 'Scade: ' + new Date(item.expires_at).toLocaleDateString() : 'Permanente'}</div>
+            </div>
+            ${item.category === 'cosmetic' ? `<button class="btn-activate" onclick="toggleItem('${item.id}', ${item.active ? 0 : 1})">${item.active ? 'Disattiva' : 'Attiva'}</button>` : ''}
+        </div>
+    `).join('');
+}
+
+async function toggleItem(inventoryId, active) {
+    await fetch('/api/shop/inventory/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: currentUser, inventoryId, active })
+    });
+    await loadInventory();
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('active');
+    setTimeout(() => toast.classList.remove('active'), 3000);
+}
+
+init();
+</script>
+</body>
+</html>

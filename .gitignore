@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+*.err
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# Backup files
+*.bak
+*-old.*
+
+# Archive (file vecchi da non usare)
+_archive/
+
+# Build
+dist/
+build/

@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>Kouverte Vox</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+html, body { height: 100%; overflow: hidden; background: #0a1f3d; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+:root {
+    --dark-blue: #0a1f3d;
+    --cyan: #00d9ff;
+    --accent: #0080ff;
+    --white: #ffffff;
+    --gray-light: #a0aec0;
+    --glass: rgba(0, 217, 255, 0.08);
+    --glass-strong: rgba(0, 217, 255, 0.15);
+    --stroke: rgba(0, 217, 255, 0.2);
+    --grad: linear-gradient(135deg, #00d9ff, #0080ff);
+    --safe-bot: env(safe-area-inset-bottom, 0);
+    --safe-top: env(safe-area-inset-top, 0);
+}
+
+/* Background */
+.ambient {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(135deg, #0a1f3d 0%, #001a4d 50%, #0a3d5c 100%);
+}
+.ambient::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(0,217,255,0.08), transparent 30%);
+    transition: background 0.3s ease;
+}
+
+/* App */
+.app {
+    position: relative; z-index: 1;
+    height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    max-width: 480px; margin: 0 auto;
+    padding-top: var(--safe-top);
+}
+
+/* Top bar */
+.top {
+    padding: 16px 20px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10, 31, 61, 0.6); backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--stroke);
+}
+.logo {
+    font-size: 20px; font-weight: 900;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.credits {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke); border-radius: 100px;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+}
+.credits .coin {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+}
+
+/* Screens */
+.screens { flex: 1; position: relative; overflow: hidden; }
+.screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+    overflow-y: auto;
+}
+.screen.active { opacity: 1; pointer-events: all; }
+
+/* Home / Recording */
+.home {
+    align-items: center; justify-content: center;
+    padding: 0 20px;
+}
+.home-title {
+    text-align: center; margin-bottom: 8px;
+    font-size: 12px; color: var(--gray-light);
+    letter-spacing: 2px; text-transform: uppercase; font-weight: 600;
+}
+.home-sub {
+    text-align: center; margin-bottom: 40px;
+    font-size: 28px; font-weight: 800;
+    letter-spacing: -0.5px; line-height: 1.1;
+}
+
+.orb-wrap {
+    position: relative;
+    width: 280px; height: 280px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+}
+.orb {
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: var(--grad);
+    position: relative;
+    box-shadow: 0 0 80px rgba(0,217,255,0.4), 0 0 160px rgba(0,128,255,0.3), inset 0 0 60px rgba(255,255,255,0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    animation: orb-float 4s ease-in-out infinite;
+}
+.orb:active, .orb.recording {
+    transform: scale(1.1);
+    box-shadow: 0 0 120px rgba(0,217,255,0.7), 0 0 240px rgba(0,128,255,0.5), inset 0 0 80px rgba(255,255,255,0.3);
+}
+.orb.recording { animation: orb-pulse 1s ease-in-out infinite; }
+
+@keyframes orb-float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-10px) scale(1.02); }
+}
+@keyframes orb-pulse {
+    0%, 100% { transform: scale(1.1); }
+    50% { transform: scale(1.18); }
+}
+
+.orb-icon {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff; font-size: 48px;
+    pointer-events: none;
+}
+
+.ring {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(0,217,255,0.3);
+    border-radius: 50%;
+    animation: ring-expand 1.5s ease-out infinite;
+}
+.ring.r1 { width: 220px; height: 220px; animation-delay: 0s; }
+.ring.r2 { width: 260px; height: 260px; animation-delay: 0.5s; }
+.ring.r3 { width: 300px; height: 300px; animation-delay: 1s; }
+
+@keyframes ring-expand {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.2); }
+}
+
+.record-timer {
+    text-align: center; font-size: 24px; font-weight: 900;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 8px;
+}
+.record-hint {
+    text-align: center; font-size: 13px; color: var(--gray-light);
+    margin-bottom: 32px;
+}
+
+.mood-selector {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+}
+.mood-pill {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: var(--glass); border: 1px solid var(--stroke);
+    color: var(--gray-light); font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.mood-pill.active {
+    background: var(--glass-strong);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+/* Feed */
+.feed { padding: 16px 12px; overflow-y: auto; }
+.story {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+.story:hover {
+    background: var(--glass-strong);
+    border-color: var(--cyan);
+}
+
+.story-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+}
+.story-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900;
+    color: #000;
+}
+.story-info { flex: 1; }
+.story-name { font-size: 14px; font-weight: 600; }
+.story-meta { font-size: 12px; color: var(--gray-light); margin-top: 2px; }
+.story-mood { font-size: 11px; color: var(--cyan); font-weight: 700; }
+
+.story-player {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: rgba(0,217,255,0.04);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+.play-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--grad);
+    border: none;
+    color: #000;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+}
+.play-btn:hover { transform: scale(1.1); }
+.play-btn svg { width: 18px; height: 18px; }
+
+.waveform {
+    display: flex; align-items: center; gap: 2px; flex: 1;
+}
+.bar {
+    flex: 1; height: 20px; background: var(--cyan);
+    border-radius: 2px; opacity: 0.5;
+    transition: opacity 0.05s ease;
+}
+.bar.played { opacity: 1; }
+
+.story-actions {
+    display: flex; gap: 8px; justify-content: space-between;
+}
+.action {
+    flex: 1;
+    padding: 10px;
+    background: rgba(0,217,255,0.06);
+    border: 1px solid var(--stroke);
+    border-radius: 10px;
+    color: var(--gray-light);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.action:hover {
+    background: var(--glass);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+.action.liked {
+    background: rgba(0,217,255,0.15);
+    color: var(--cyan);
+}
+
+/* Match */
+.match { position: relative; }
+.match-stack {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+}
+.card {
+    position: absolute;
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 1;
+    background: var(--grad);
+    border-radius: 24px;
+    padding: 24px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 20px 60px rgba(0,217,255,0.2);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+.card.dragging { cursor: grabbing; }
+.card.swipe-left { animation: swipeLeft 0.4s ease-out forwards; }
+.card.swipe-right { animation: swipeRight 0.4s ease-out forwards; }
+
+@keyframes swipeLeft {
+    to { transform: translateX(-500px) rotate(-20deg); opacity: 0; }
+}
+@keyframes swipeRight {
+    to { transform: translateX(500px) rotate(20deg); opacity: 0; }
+}
+
+.card-name { font-size: 24px; font-weight: 900; color: #000; margin-bottom: 4px; }
+.card-bio { font-size: 13px; color: rgba(0,0,0,0.7); margin-bottom: 12px; }
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag {
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    font-size: 11px; color: #000;
+}
+.card-play {
+    position: absolute; top: 20px; right: 20px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(20px);
+    transition: all 0.2s ease;
+}
+.card-play:hover { background: rgba(255,255,255,0.3); }
+
+.swipe-actions {
+    position: absolute; bottom: 24px; left: 0; right: 0;
+    display: flex; justify-content: space-around; align-items: center;
+    padding: 0 20px;
+    z-index: 10;
+}
+.swipe-btn {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.swipe-btn.no {
+    background: rgba(255, 94, 122, 0.2);
+    color: rgba(255, 94, 122, 0.8);
+}
+.swipe-btn.no:hover {
+    background: rgba(255, 94, 122, 0.3);
+    transform: scale(1.1);
+}
+.swipe-btn.super {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #000;
+    width: 72px;
+    height: 72px;
+    box-shadow: 0 12px 32px rgba(251, 191, 36, 0.4);
+}
+.swipe-btn.super:hover { transform: scale(1.12); }
+.swipe-btn.yes {
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--cyan);
+}
+.swipe-btn.yes:hover {
+    background: rgba(0, 217, 255, 0.3);
+    transform: scale(1.1);
+}
+.swipe-btn svg { width: 28px; height: 28px; }
+
+/* Profile */
+.profile { padding: 20px; overflow-y: auto; }
+.profile-hero {
+    display: flex; flex-direction: column; align-items: center;
+    margin-bottom: 24px;
+    text-align: center;
+}
+.profile-avatar {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; font-weight: 900;
+    color: #000;
+    box-shadow: 0 0 60px rgba(0,217,255,0.3);
+    margin-bottom: 16px;
+}
+.profile-name { font-size: 24px; font-weight: 800; margin-bottom: 4px; }
+.profile-handle { font-size: 14px; color: var(--gray-light); }
+
+.profile-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 12px; margin-bottom: 24px;
+}
+.stat {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+}
+.stat-num {
+    font-size: 22px; font-weight: 800;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.stat-label {
+    font-size: 11px; color: var(--gray-light);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+.profile-section {
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 20px;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+.profile-section-title {
+    font-size: 12px; color: var(--cyan);
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 12px; font-weight: 700;
+}
+.voice-clip {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px;
+    background: rgba(0,217,255,0.04);
+    border-radius: 14px;
+    margin-bottom: 8px;
+}
+.voice-clip:last-child { margin-bottom: 0; }
+.voice-clip .play-btn { width: 40px; height: 40px; flex-shrink: 0; }
+.voice-clip-info { flex: 1; }
+.voice-clip-name { font-size: 14px; font-weight: 600; }
+.voice-clip-meta { font-size: 12px; color: var(--gray-light); margin-top: 2px; }
+
+/* Bottom Nav */
+.nav {
+    display: flex; justify-content: space-around;
+    padding: 8px 16px calc(8px + var(--safe-bot));
+    background: rgba(10, 31, 61, 0.6); backdrop-filter: blur(40px);
+    border-top: 1px solid var(--stroke);
+}
+.nav-btn {
+    flex: 1;
+    padding: 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer;
+    color: var(--gray-light);
+    transition: color 0.2s ease;
+}
+.nav-btn.active {
+    color: var(--cyan);
+}
+.nav-btn.active svg {
+    filter: drop-shadow(0 0 12px rgba(0,217,255,0.6));
+}
+.nav-btn svg { width: 26px; height: 26px; fill: currentColor; }
+.nav-btn span {
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+
+/* Modals */
+.modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(20px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 100; padding: 20px;
+}
+.modal.show {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-card {
+    background: rgba(10, 31, 61, 0.95);
+    border: 1px solid var(--stroke);
+    border-radius: 24px;
+    padding: 24px;
+    width: 100%; max-width: 400px;
+    animation: slideUp 0.4s cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+@keyframes slideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-title {
+    font-size: 22px; font-weight: 800; margin-bottom: 8px;
+    background: var(--grad);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.modal-text { color: var(--gray-light); margin-bottom: 20px; line-height: 1.5; }
+
+.auth-tabs {
+    display: flex; gap: 12px; margin-bottom: 20px;
+    border-bottom: 1px solid var(--stroke);
+}
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    color: var(--gray-light);
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+.tab-btn.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+}
+
+.input {
+    width: 100%; padding: 14px 16px;
+    background: var(--glass); border: 1px solid var(--stroke);
+    border-radius: 12px;
+    color: var(--white); font-size: 14px;
+    outline: none;
+    transition: border 0.2s ease;
+    margin-bottom: 12px;
+}
+.input::placeholder { color: var(--gray-light); }
+.input:focus {
+    border-color: var(--cyan);
+    background: var(--glass-strong);
+}
+
+.btn {
+    width: 100%; padding: 16px;
+    background: var(--grad);
+    border: none; border-radius: 12px;
+    color: #000; font-size: 16px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0,217,255,0.3);
+}
+.btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,217,255,0.4); }
+.btn:active { transform: translateY(0); }
+.btn.ghost {
+    background: transparent;
+    border: 1px solid var(--stroke);
+    box-shadow: none;
+    color: var(--cyan);
+    margin-top: 12px;
+}
+
+/* Toast */
+.toast {
+    position: fixed; bottom: calc(80px + var(--safe-bot)); left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0,217,255,0.95); color: #000;
+    padding: 12px 20px; border-radius: 100px;
+    font-size: 14px; font-weight: 600;
+    box-shadow: 0 8px 32px rgba(0,217,255,0.3);
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    z-index: 200;
+    pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* Empty state */
+.empty {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    height: 100%;
+}
+.empty-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--glass); backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin-bottom: 16px;
+}
+.empty-title {
+    font-size: 18px; font-weight: 700; margin-bottom: 6px;
+}
+.empty-text {
+    font-size: 14px; color: var(--gray-light);
+    line-height: 1.4; max-width: 280px;
+}
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<div class="app">
+    <!-- Top Bar -->
+    <div class="top">
+        <div class="logo">◆ Kouverte Vox</div>
+        <div class="credits" onclick="goShop()">
+            <div class="coin"></div>
+            <span id="creditsCount">0</span>
+        </div>
+    </div>
+
+    <!-- Screens -->
+    <div class="screens">
+
+        <!-- HOME: Recording -->
+        <div class="screen home active" id="screen-home">
+            <div class="home-title">Press &amp; Hold</div>
+            <div class="home-sub">la tua voce<br>è tutto</div>
+
+            <div class="orb-wrap">
+                <div class="ring r1"></div>
+                <div class="ring r2"></div>
+                <div class="ring r3"></div>
+                <div class="orb" id="orb">
+                    <div class="orb-icon">🎙️</div>
+                </div>
+            </div>
+
+            <div class="record-timer" id="recordTimer">00:00</div>
+            <div class="record-hint" id="recordHint">Tieni premuto per registrare</div>
+
+            <div class="mood-selector" id="moodSelector">
+                <div class="mood-pill active" data-mood="vibe">✨ vibe</div>
+                <div class="mood-pill" data-mood="hot">🔥 hot</div>
+                <div class="mood-pill" data-mood="deep">🌊 deep</div>
+                <div class="mood-pill" data-mood="fun">😜 fun</div>
+            </div>
+        </div>
+
+        <!-- FEED -->
+        <div class="screen feed" id="screen-feed">
+            <!-- Generated dynamically -->
+        </div>
+
+        <!-- MATCH -->
+        <div class="screen match" id="screen-match">
+            <div class="match-stack" id="matchStack">
+                <!-- Generated dynamically -->
+            </div>
+            <div class="swipe-actions">
+                <div class="swipe-btn no" onclick="swipeCard('left')">
+                    <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </div>
+                <div class="swipe-btn super" onclick="superLike()">
+                    <svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6L12 2z" fill="currentColor"/></svg>
+                </div>
+                <div class="swipe-btn yes" onclick="swipeCard('right')">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="currentColor"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- PROFILE -->
+        <div class="screen profile" id="screen-profile">
+            <div class="profile-hero">
+                <div class="profile-avatar" id="profileAv">?</div>
+                <div class="profile-name" id="profileName">-</div>
+                <div class="profile-handle" id="profileHandle">@-</div>
+            </div>
+
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-num" id="statStories">0</div>
+                    <div class="stat-label">Stories</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" id="statMatches">0</div>
+                    <div class="stat-label">Match</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-num" id="statLikes">0</div>
+                    <div class="stat-label">Likes</div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-title">🎙️ Le tue 3 voci</div>
+                <div id="myClips">
+                    <div class="voice-clip empty" data-slot="0">
+                        <div class="play-btn" style="background: var(--glass); cursor: pointer;">➕</div>
+                        <div class="voice-clip-info">
+                            <div class="voice-clip-name">Chi sono</div>
+                            <div class="voice-clip-meta">Raccontati brevemente</div>
+                        </div>
+                    </div>
+                    <div class="voice-clip empty" data-slot="1">
+                        <div class="play-btn" style="background: var(--glass); cursor: pointer;">➕</div>
+                        <div class="voice-clip-info">
+                            <div class="voice-clip-name">Mi piace</div>
+                            <div class="voice-clip-meta">Cosa ti attrae</div>
+                        </div>
+                    </div>
+                    <div class="voice-clip empty" data-slot="2">
+                        <div class="play-btn" style="background: var(--glass); cursor: pointer;">➕</div>
+                        <div class="voice-clip-info">
+                            <div class="voice-clip-name">Cerco</div>
+                            <div class="voice-clip-meta">Il tuo ideal type</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-section">
+                <div class="profile-section-title">⚙️ Impostazioni</div>
+                <button class="btn ghost" onclick="logout()" style="width: 100%; text-align: left;">Disconnetti</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="nav">
+        <div class="nav-btn active" data-screen="home" onclick="switchScreen('home')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></svg>
+            <span>Talk</span>
+        </div>
+        <div class="nav-btn" data-screen="feed" onclick="switchScreen('feed')">
+            <svg viewBox="0 0 24 24"><path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"/></svg>
+            <span>Feed</span>
+        </div>
+        <div class="nav-btn" data-screen="match" onclick="switchScreen('match')">
+            <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span>Match</span>
+        </div>
+        <div class="nav-btn" data-screen="profile" onclick="switchScreen('profile')">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 14c-4.42 0-8 1.79-8 4v2h16v-2c0-2.21-3.58-4-8-4z"/></svg>
+            <span>Tu</span>
+        </div>
+    </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal" id="authModal">
+    <div class="modal-card">
+        <div style="display: flex; gap: 12px; margin-bottom: 20px;" id="authTabs">
+            <button class="tab-btn active" onclick="switchAuthTab('login')">Accedi</button>
+            <button class="tab-btn" onclick="switchAuthTab('register')">Registrati</button>
+        </div>
+
+        <div id="loginTab">
+            <div class="modal-title">Accedi a Kouverte Vox</div>
+            <div class="modal-text">Inserisci le tue credenziali</div>
+            <input class="input" id="loginEmail" type="email" placeholder="Email">
+            <input class="input" id="loginPassword" type="password" placeholder="Password">
+            <button class="btn" onclick="doLogin()">Accedi</button>
+        </div>
+
+        <div id="registerTab" style="display: none;">
+            <div class="modal-title">Crea il tuo account</div>
+            <div class="modal-text">Raggiungi le voci autentiche</div>
+            <input class="input" id="registerEmail" type="email" placeholder="Email">
+            <input class="input" id="registerUsername" type="text" placeholder="Username (3+ caratteri)">
+            <input class="input" id="registerPassword" type="password" placeholder="Password (6+ caratteri)">
+            <input class="input" id="registerPasswordConfirm" type="password" placeholder="Conferma password">
+            <button class="btn" onclick="doRegister()">Registrati</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============= SETUP =============
+const tg = window.Telegram?.WebApp;
+if (tg) {
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#0a1f3d');
+    tg.setBackgroundColor('#0a1f3d');
+    if (tg.HapticFeedback) {
+        window.haptic = (type='light') => {
+            try { tg.HapticFeedback.impactOccurred(type); } catch(e){}
+        };
+    }
+}
+window.haptic = window.haptic || (() => {});
+
+// ============= STATE =============
+const state = {
+    user: null,
+    token: null,
+    mood: 'vibe',
+    stories: [],
+    cards: [],
+    cardIndex: 0,
+    chatWith: null
+};
+
+// ============= API =============
+const API = '';
+async function api(path, opts={}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (state.token) headers.Authorization = `Bearer ${state.token}`;
+
+    const r = await fetch(API + '/api' + path, {
+        headers,
+        ...opts
+    });
+    if (r.status === 401) {
+        logout();
+        return null;
+    }
+    return r.json();
+}
+
+// ============= AUTH =============
+function showAuth() { document.getElementById('authModal').classList.add('show'); }
+function hideAuth() { document.getElementById('authModal').classList.remove('show'); }
+
+function switchAuthTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('[id$="Tab"]').forEach(t => t.style.display = 'none');
+
+    if (tab === 'login') {
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+        document.getElementById('loginTab').style.display = 'block';
+    } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+        document.getElementById('registerTab').style.display = 'block';
+    }
+}
+
+async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    if (!email || !password) { toast('Email e password richieste'); return; }
+
+    try {
+        const r = await api('/auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+        if (r?.ok) {
+            state.user = r.user;
+            state.token = r.token;
+            localStorage.setItem('kouverte_token', r.token);
+            localStorage.setItem('kouverte_user', JSON.stringify(r.user));
+            hideAuth();
+            initSocket();
+            updateProfile();
+            loadFeed();
+            haptic('medium');
+            toast('✨ Benvenuto!');
+        } else {
+            toast(r?.error || 'Errore login');
+        }
+    } catch(e) { toast('Errore connessione'); }
+}
+
+async function doRegister() {
+    const email = document.getElementById('registerEmail').value.trim();
+    const username = document.getElementById('registerUsername').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const confirm = document.getElementById('registerPasswordConfirm').value;
+
+    if (!email || !username || !password || !confirm) { toast('Tutti i campi richiesti'); return; }
+    if (password !== confirm) { toast('Le password non coincidono'); return; }
+
+    try {
+        const r = await api('/auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ email, username, password })
+        });
+        if (r?.ok) {
+            state.user = r.user;
+            state.token = r.token;
+            localStorage.setItem('kouverte_token', r.token);
+            localStorage.setItem('kouverte_user', JSON.stringify(r.user));
+            hideAuth();
+            initSocket();
+            updateProfile();
+            loadFeed();
+            haptic('medium');
+            toast('🎉 Account creato!');
+        } else {
+            toast(r?.error || 'Errore registrazione');
+        }
+    } catch(e) { toast('Errore connessione'); }
+}
+
+function logout() {
+    state.user = null;
+    state.token = null;
+    localStorage.removeItem('kouverte_token');
+    localStorage.removeItem('kouverte_user');
+    showAuth();
+    haptic('medium');
+}
+
+function autoLogin() {
+    const token = localStorage.getItem('kouverte_token');
+    const user = localStorage.getItem('kouverte_user');
+
+    if (token && user) {
+        state.token = token;
+        state.user = JSON.parse(user);
+        initSocket();
+        updateProfile();
+        loadFeed();
+        return;
+    }
+
+    showAuth();
+}
+
+// ============= SOCKET.IO =============
+let socket = null;
+function initSocket() {
+    if (socket) return;
+    socket = io();
+    socket.on('connect', () => {
+        if (state.user) socket.emit('join', { username: state.user.username });
+    });
+    socket.on('message', (data) => {
+        if (state.chatWith === data.from) {
+            addChatMessage(data.from, data.text, false);
+        }
+    });
+}
+
+// ============= NAVIGATION =============
+function switchScreen(name) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + name).classList.add('active');
+    document.querySelector(`.nav-btn[data-screen="${name}"]`).classList.add('active');
+    haptic('light');
+
+    if (name === 'feed') loadFeed();
+    if (name === 'match') loadMatchCards();
+    if (name === 'profile') updateProfile();
+}
+
+// ============= TOAST =============
+let toastTimer;
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============= MOOD =============
+document.querySelectorAll('.mood-pill').forEach(pill => {
+    pill.onclick = () => {
+        document.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        state.mood = pill.dataset.mood;
+        haptic('light');
+    };
+});
+
+// ============= RECORDING =============
+const orb = document.getElementById('orb');
+let mediaRec = null;
+let audioChunks = [];
+let recStartTime = 0;
+let recTimerInt = null;
+let isRecording = false;
+
+async function startRecording() {
+    if (isRecording || !state.user) return;
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRec = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRec.ondataavailable = e => audioChunks.push(e.data);
+        mediaRec.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const dur = Date.now() - recStartTime;
+            if (dur < 1000) { toast('Troppo corto'); return; }
+            await uploadStory(blob, dur);
+        };
+
+        mediaRec.start();
+        recStartTime = Date.now();
+        isRecording = true;
+        orb.classList.add('recording');
+        document.querySelector('.home').classList.add('is-recording');
+        document.getElementById('recordHint').textContent = 'Rilascia per pubblicare';
+
+        recTimerInt = setInterval(() => {
+            const s = Math.floor((Date.now() - recStartTime) / 1000);
+            const m = String(Math.floor(s / 60)).padStart(2, '0');
+            const sec = String(s % 60).padStart(2, '0');
+            document.getElementById('recordTimer').textContent = `${m}:${sec}`;
+            if (s >= 60) stopRecording();
+        }, 100);
+
+        haptic('heavy');
+    } catch(e) {
+        toast('Microfono non accessibile');
+    }
+}
+
+function stopRecording() {
+    if (!isRecording) return;
+    isRecording = false;
+    if (mediaRec && mediaRec.state !== 'inactive') mediaRec.stop();
+    clearInterval(recTimerInt);
+    orb.classList.remove('recording');
+    document.querySelector('.home').classList.remove('is-recording');
+    document.getElementById('recordHint').textContent = 'Tieni premuto per registrare';
+    document.getElementById('recordTimer').textContent = '00:00';
+}
+
+['mousedown','touchstart'].forEach(evt => {
+    orb.addEventListener(evt, e => { e.preventDefault(); startRecording(); }, { passive: false });
+});
+['mouseup','mouseleave','touchend','touchcancel'].forEach(evt => {
+    orb.addEventListener(evt, stopRecording);
+});
+
+async function uploadStory(blob, duration) {
+    toast('Pubblicando...');
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+        try {
+            const r = await api('/stories', {
+                method: 'POST',
+                body: JSON.stringify({
+                    audioData: reader.result,
+                    durationMs: duration,
+                    mood: state.mood,
+                    slot: 0
+                })
+            });
+            if (r?.ok) {
+                haptic('medium');
+                toast('✨ Pubblicato!');
+                setTimeout(() => switchScreen('feed'), 600);
+            } else {
+                toast(r?.error || 'Errore');
+            }
+        } catch(e) { toast('Errore'); }
+    };
+    reader.readAsDataURL(blob);
+}
+
+// ============= FEED =============
+async function loadFeed() {
+    const feedEl = document.getElementById('screen-feed');
+    feedEl.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div></div>';
+
+    try {
+        const r = await api('/stories');
+        const stories = r?.stories || [];
+        state.stories = stories;
+
+        if (stories.length === 0) {
+            feedEl.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">🎙</div>
+                    <div class="empty-title">Nessuna voce ancora</div>
+                    <div class="empty-text">Sii il primo a parlare</div>
+                </div>`;
+            return;
+        }
+
+        const moodEmoji = { vibe: '✨', hot: '🔥', deep: '🌊', fun: '😜' };
+
+        feedEl.innerHTML = stories.map(s => {
+            const initial = (s.username || '?').charAt(0).toUpperCase();
+            const ago = timeAgo(s.createdAt);
+            const dur = Math.round((s.durationMs || 0) / 1000);
+            const bars = Array(40).fill(0).map(() => `<div class="bar" style="height:${Math.random()*70+30}%"></div>`).join('');
+            return `
+            <div class="story">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <div class="story-mood">${moodEmoji[s.mood]||'✨'} ${s.mood||'vibe'}</div>
+                </div>
+                <div class="story-header">
+                    <div class="story-avatar">${initial}</div>
+                    <div class="story-info">
+                        <div class="story-name">${s.username || 'anonimo'}</div>
+                        <div class="story-meta">${ago} • ${dur}s</div>
+                    </div>
+                </div>
+                <div class="story-player">
+                    <button class="play-btn" onclick="playStory('${s.id}', this)">
+                        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+                    </button>
+                    <div class="waveform">${bars}</div>
+                </div>
+                <div class="story-actions">
+                    <div class="action" onclick="reactStory('${s.id}', '❤️', this)">❤️ <span>0</span></div>
+                    <div class="action" onclick="reactStory('${s.id}', '🔥', this)">🔥 <span>0</span></div>
+                    <div class="action" onclick="openChat('${s.username}')">💬 Chat</div>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch(e) {
+        feedEl.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div></div>';
+    }
+}
+
+function timeAgo(ts) {
+    const s = (Date.now() - ts) / 1000;
+    if (s < 60) return 'ora';
+    if (s < 3600) return Math.floor(s/60) + 'm';
+    if (s < 86400) return Math.floor(s/3600) + 'h';
+    return Math.floor(s/86400) + 'g';
+}
+
+let currentAudio = null;
+async function playStory(id, btn) {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    haptic('light');
+    try {
+        const r = await api(`/stories/${id}/audio`);
+        if (r?.audioData) {
+            currentAudio = new Audio(r.audioData);
+            currentAudio.play();
+            const bars = btn.parentElement.querySelectorAll('.bar');
+            currentAudio.ontimeupdate = () => {
+                const pct = currentAudio.currentTime / currentAudio.duration;
+                bars.forEach((b, i) => b.classList.toggle('played', i/bars.length < pct));
+            };
+            currentAudio.onended = () => bars.forEach(b => b.classList.remove('played'));
+        } else {
+            toast('Audio non disponibile');
+        }
+    } catch(e) { toast('Errore'); }
+}
+
+async function reactStory(id, emoji, el) {
+    if (!state.user) return;
+    haptic('medium');
+    el.classList.toggle('liked');
+    const span = el.querySelector('span');
+    if (span) span.textContent = parseInt(span.textContent || 0) + 1;
+    try {
+        await api(`/stories/${id}/react`, {
+            method: 'POST',
+            body: JSON.stringify({ emoji })
+        });
+    } catch(e){}
+}
+
+function openChat(username) {
+    if (!state.user) return;
+    state.chatWith = username;
+    toast(`💬 Chat con ${username}`);
+    haptic('medium');
+}
+
+// ============= MATCH =============
+async function loadMatchCards() {
+    const stack = document.getElementById('matchStack');
+    stack.innerHTML = '<div class="empty"><div class="empty-icon">⏳</div></div>';
+
+    try {
+        const r = await api('/users/list');
+        const users = (r?.users || []).filter(u => u.id !== state.user?.id);
+
+        if (users.length === 0) {
+            stack.innerHTML = `
+                <div class="empty">
+                    <div class="empty-icon">💫</div>
+                    <div class="empty-title">Nessuno qui</div>
+                </div>`;
+            return;
+        }
+
+        state.cards = users;
+        state.cardIndex = 0;
+        renderCards();
+    } catch(e) {
+        stack.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div></div>';
+    }
+}
+
+function renderCards() {
+    const stack = document.getElementById('matchStack');
+    if (state.cardIndex >= state.cards.length) {
+        stack.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">🎉</div>
+                <div class="empty-title">Fine!</div>
+            </div>`;
+        return;
+    }
+
+    const colors = [
+        'linear-gradient(135deg, #00d9ff, #0080ff)',
+        'linear-gradient(135deg, #00d9ff, #0080ff)',
+        'linear-gradient(135deg, #00d9ff, #0080ff)',
+        'linear-gradient(135deg, #00d9ff, #0080ff)'
+    ];
+
+    const cards = state.cards.slice(state.cardIndex, state.cardIndex + 2);
+    stack.innerHTML = cards.map((u, idx) => {
+        const initial = (u.username || '?').charAt(0).toUpperCase();
+        const color = colors[(state.cardIndex + idx) % colors.length];
+        return `
+        <div class="card" style="--card-bg:${color}; z-index:${10-idx}; transform:scale(${1-idx*0.04}) translateY(${idx*8}px)" data-id="${u.id}">
+            <div style="position:absolute; top:24px; right:24px; width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:24px; font-weight:900; backdrop-filter:blur(20px);">${initial}</div>
+            <button class="card-play" onclick="event.stopPropagation(); playUserVoice('${u.id}')">
+                <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            </button>
+            <div>
+                <div class="card-name">${u.username}</div>
+                <div class="card-bio">Tap per ascoltare</div>
+            </div>
+        </div>`;
+    }).join('');
+
+    const topCard = stack.querySelector('.card');
+    if (topCard) setupSwipe(topCard);
+}
+
+function setupSwipe(card) {
+    let startX = 0, startY = 0, currentX = 0;
+    let dragging = false;
+
+    const onStart = e => {
+        const t = e.touches ? e.touches[0] : e;
+        startX = t.clientX;
+        dragging = true;
+        card.classList.add('dragging');
+    };
+    const onMove = e => {
+        if (!dragging) return;
+        const t = e.touches ? e.touches[0] : e;
+        currentX = t.clientX - startX;
+        const rot = currentX / 20;
+        card.style.transform = `translate(${currentX}px) rotate(${rot}deg)`;
+        const opacity = Math.min(Math.abs(currentX) / 100, 0.7);
+        if (currentX > 0) {
+            card.style.boxShadow = `0 20px 60px rgba(0,217,255,${opacity})`;
+        } else {
+            card.style.boxShadow = `0 20px 60px rgba(255,94,122,${opacity})`;
+        }
+    };
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        card.classList.remove('dragging');
+        if (Math.abs(currentX) > 100) {
+            swipeCard(currentX > 0 ? 'right' : 'left');
+        } else {
+            card.style.transform = '';
+            card.style.boxShadow = '';
+        }
+        currentX = 0;
+    };
+
+    card.addEventListener('touchstart', onStart, { passive: true });
+    card.addEventListener('touchmove', onMove, { passive: true });
+    card.addEventListener('touchend', onEnd);
+    card.addEventListener('mousedown', onStart);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+}
+
+function swipeCard(dir) {
+    const stack = document.getElementById('matchStack');
+    const card = stack.querySelector('.card');
+    if (!card) return;
+
+    haptic('medium');
+    if (dir === 'right') {
+        card.classList.add('swipe-right');
+        toast('💫 Like!');
+    } else {
+        card.classList.add('swipe-left');
+    }
+
+    setTimeout(() => {
+        state.cardIndex++;
+        renderCards();
+    }, 300);
+}
+
+function superLike() {
+    if (!state.cards.length || state.cardIndex >= state.cards.length) return;
+    haptic('medium');
+    toast('⭐ Super Like!');
+    swipeCard('right');
+}
+
+async function playUserVoice(userId) {
+    haptic('light');
+    toast('🎙️...');
+    try {
+        const r = await api('/stories');
+        const userStory = (r?.stories || [])[0];
+        if (userStory) {
+            playStory(userStory.id, document.querySelector('.card-play'));
+        }
+    } catch(e) {}
+}
+
+// ============= PROFILE =============
+function updateProfile() {
+    if (!state.user) return;
+    const u = state.user.username || state.user.email;
+    document.getElementById('profileAv').textContent = u.charAt(0).toUpperCase();
+    document.getElementById('profileName').textContent = u;
+    document.getElementById('profileHandle').textContent = '@' + u;
+    document.getElementById('statStories').textContent = state.user.stats?.stories_count || 0;
+    document.getElementById('statMatches').textContent = state.user.stats?.matches_count || 0;
+    document.getElementById('statLikes').textContent = state.user.stats?.likes_received || 0;
+}
+
+function goShop() {
+    toast('🛍 Shop presto');
+    haptic('light');
+}
+
+// ============= INIT =============
+window.addEventListener('mousemove', e => {
+    document.querySelector('.ambient').style.setProperty('--mx', e.clientX + 'px');
+    document.querySelector('.ambient').style.setProperty('--my', e.clientY + 'px');
+});
+
+document.body.addEventListener('touchmove', e => {
+    if (!e.target.closest('.feed') && !e.target.closest('.profile') && !e.target.closest('.match-stack')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+autoLogin();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>VOX · Vanishing Voice</title>
+<meta name="description" content="VOX. Voci che spariscono in 24 ore. Mood, stanze, anonimato. La voce non mente.">
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { overflow-x: hidden; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    background: #000;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.4;
+}
+:root {
+    --grad: linear-gradient(135deg, #ff3b6e, #c63cff);
+    --glass: rgba(255,255,255,0.06);
+    --stroke: rgba(255,255,255,0.12);
+    --dim: rgba(255,255,255,0.55);
+}
+
+/* ============ NAV ============ */
+nav {
+    position: fixed;
+    top: 16px; left: 50%; transform: translateX(-50%);
+    z-index: 100;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 8px 8px 22px;
+    background: rgba(20,20,20,0.7);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--stroke);
+    border-radius: 50px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+}
+nav .brand {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-right: 16px;
+}
+nav .nav-link {
+    color: var(--dim);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 50px;
+    transition: color 0.2s;
+}
+nav .nav-link:hover { color: #fff; }
+nav .nav-cta {
+    background: var(--grad);
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(255,59,110,0.4);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+nav .nav-cta:active { transform: scale(0.95); }
+@media (max-width: 640px) { nav .nav-link { display: none; } nav { padding: 6px 6px 6px 18px; } }
+
+/* ============ HERO ============ */
+.hero {
+    min-height: 100vh; min-height: 100dvh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 100px 20px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(255,59,110,0.18), transparent 60%),
+        radial-gradient(ellipse at 70% 80%, rgba(198,60,255,0.18), transparent 60%),
+        #000;
+}
+.hero::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: var(--grad);
+    filter: blur(120px);
+    opacity: 0.3;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: heroFloat 8s ease-in-out infinite;
+}
+@keyframes heroFloat {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+}
+
+.hero-tag {
+    position: relative;
+    z-index: 2;
+    padding: 6px 16px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 32px;
+}
+.hero h1 {
+    position: relative;
+    z-index: 2;
+    font-size: clamp(48px, 11vw, 110px);
+    font-weight: 900;
+    letter-spacing: -3px;
+    line-height: 0.95;
+    margin-bottom: 24px;
+}
+.hero h1 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero p {
+    position: relative;
+    z-index: 2;
+    font-size: clamp(16px, 2.5vw, 19px);
+    color: var(--dim);
+    max-width: 480px;
+    margin-bottom: 40px;
+    line-height: 1.5;
+}
+.hero-cta {
+    position: relative;
+    z-index: 2;
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+}
+.btn-pri {
+    background: var(--grad);
+    color: #fff;
+    text-decoration: none;
+    padding: 18px 36px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 16px 40px rgba(255,59,110,0.4);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-flex; align-items: center; gap: 8px;
+}
+.btn-pri:active { transform: scale(0.96); }
+.btn-pri svg { width: 18px; height: 18px; stroke: #fff; stroke-width: 2.5; fill: none; }
+.btn-sec {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    color: #fff;
+    text-decoration: none;
+    padding: 18px 32px;
+    border-radius: 50px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: background 0.2s;
+}
+.btn-sec:hover { background: rgba(255,255,255,0.1); }
+
+/* Visualizzatore voce animato sopra l'hero */
+.voice-orb {
+    position: relative;
+    z-index: 2;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: var(--grad);
+    margin: 0 auto 32px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 60px rgba(255,59,110,0.5);
+    animation: orb 3s ease-in-out infinite;
+}
+@keyframes orb {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 60px rgba(255,59,110,0.5); }
+    50% { transform: scale(1.06); box-shadow: 0 0 100px rgba(255,59,110,0.7); }
+}
+.voice-orb svg { width: 50px; height: 50px; fill: #fff; }
+
+/* ============ FEATURES ============ */
+.section {
+    padding: 80px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+.section-tag {
+    display: inline-block;
+    padding: 5px 14px;
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    border-radius: 50px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: var(--dim);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+}
+.section-title {
+    font-size: clamp(36px, 6vw, 60px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 16px;
+}
+.section-title em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.section-lead {
+    font-size: 17px;
+    color: var(--dim);
+    max-width: 560px;
+    line-height: 1.5;
+    margin-bottom: 50px;
+}
+
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+.card {
+    padding: 28px 24px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--stroke);
+    border-radius: 24px;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,59,110,0.4);
+    background: rgba(255,255,255,0.08);
+}
+.card-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+}
+.card-icon svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2; fill: none; }
+.card h3 {
+    font-size: 19px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: -0.3px;
+}
+.card p {
+    font-size: 14px;
+    color: var(--dim);
+    line-height: 1.5;
+}
+
+/* ============ STATS ============ */
+.stats {
+    padding: 60px 20px;
+    background: linear-gradient(180deg, transparent, rgba(255,59,110,0.05), transparent);
+    text-align: center;
+}
+.stats-row {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 24px;
+}
+.stat-num {
+    font-size: clamp(40px, 6vw, 56px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.stat-lbl {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* ============ STEPS ============ */
+.steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+.step {
+    padding: 24px 20px;
+    background: var(--glass);
+    border: 1px solid var(--stroke);
+    border-radius: 22px;
+    position: relative;
+}
+.step-n {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--grad);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px;
+}
+.step h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.step p {
+    font-size: 13px;
+    color: var(--dim);
+    line-height: 1.5;
+}
+
+/* ============ FOOTER CTA ============ */
+.cta-section {
+    padding: 100px 20px;
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(255,59,110,0.1), transparent 70%);
+}
+.cta-section h2 {
+    font-size: clamp(38px, 7vw, 64px);
+    font-weight: 900;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 14px;
+}
+.cta-section h2 em {
+    font-style: normal;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.cta-section p {
+    font-size: 16px;
+    color: var(--dim);
+    margin-bottom: 32px;
+}
+
+/* ============ FOOTER ============ */
+footer {
+    padding: 36px 20px;
+    border-top: 1px solid var(--stroke);
+    text-align: center;
+}
+footer p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav>
+    <div class="brand">VOX</div>
+    <a href="#features" class="nav-link">Cos'è</a>
+    <a href="#how" class="nav-link">Come funziona</a>
+    <a href="vox.html" class="nav-cta">Apri →</a>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+    <div class="hero-tag">🎙 Vanishing Voice · 24h</div>
+
+    <div class="voice-orb">
+        <svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v4" stroke="#fff" stroke-width="2" fill="none"/></svg>
+    </div>
+
+    <h1>La voce<br><em>non mente.</em></h1>
+    <p>Pubblica una voce. Sparisce in 24 ore. Niente foto, niente fake — solo te, in tempo reale.</p>
+
+    <div class="hero-cta">
+        <a href="vox.html" class="btn-pri">
+            <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="#fff"/></svg>
+            Apri VOX
+        </a>
+        <a href="#how" class="btn-sec">Come funziona</a>
+    </div>
+</header>
+
+<!-- ============ FEATURES ============ -->
+<section class="section" id="features">
+    <div class="section-tag">Che cos'è</div>
+    <h2 class="section-title">Audio <em>autentico.</em><br>Niente schermi, solo voci.</h2>
+    <p class="section-lead">VOX è il primo social dove condividi la tua voce, non la tua faccia. Ogni storia sparisce dopo 24 ore. La voce è verificabile, irrepetibile, vera.</p>
+
+    <div class="cards">
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 11a7 7 0 0014 0"/></svg></div>
+            <h3>Voci di 60 secondi</h3>
+            <p>Registri, scegli un mood, pubblichi. Sparisce in 24h. Niente filtri, niente trucchi.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/></svg></div>
+            <h3>Stanze a tema</h3>
+            <p>Cinema, insonni, cuori spezzati, viaggi. Scrivi a chi ti capisce. Anonimato opzionale.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4 2 7-6.5-4.5L5.5 20l2-7L2 9h7z"/></svg></div>
+            <h3>Badge & cornici</h3>
+            <p>Mostra chi sei: VIP, Pioniere, Gold. Cornici esclusive, sigilli rari. Personalizza tutto.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg></div>
+            <h3>Reazioni rapide</h3>
+            <p>Cuore, swipe, condivisione. Esprimi tutto in un tap, senza scrivere.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="10,8 16,12 10,16" fill="currentColor" stroke="none"/></svg></div>
+            <h3>Duelli vocali</h3>
+            <p>Sfida un'altra voce su un tema. Vince chi convince. Battle in tempo reale.</p>
+        </div>
+        <div class="card">
+            <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m7.08 7.08l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m7.08-7.08l4.24-4.24"/></svg></div>
+            <h3>Sparisce in 24h</h3>
+            <p>Nulla resta per sempre. Le voci vivono un giorno e poi tornano al silenzio.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<div class="stats">
+    <div class="stats-row">
+        <div><div class="stat-num">60s</div><div class="stat-lbl">Voce massima</div></div>
+        <div><div class="stat-num">24h</div><div class="stat-lbl">Vita di una voce</div></div>
+        <div><div class="stat-num">∞</div><div class="stat-lbl">Anonimato</div></div>
+        <div><div class="stat-num">0</div><div class="stat-lbl">Foto richieste</div></div>
+    </div>
+</div>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section" id="how">
+    <div class="section-tag">Come funziona</div>
+    <h2 class="section-title">Quattro passi.<br>Una <em>voce vera.</em></h2>
+    <p class="section-lead">Senza account complessi, senza onboarding eterni. In meno di un minuto sei dentro.</p>
+
+    <div class="steps">
+        <div class="step">
+            <div class="step-n">1</div>
+            <h4>Scegli un nome</h4>
+            <p>Username. Niente email obbligatoria, niente verifiche infinite.</p>
+        </div>
+        <div class="step">
+            <div class="step-n">2</div>
+            <h4>Registra una voce</h4>
+            <p>Tocca il bottone, parla per max 60 secondi. Scegli il mood.</p>
+        </div>
+        <div class="step">
+            <div class="step-n">3</div>
+            <h4>Pubblica & ascolta</h4>
+            <p>La tua voce entra nel feed. Ascolti le altre. Reagisci.</p>
+        </div>
+        <div class="step">
+            <div class="step-n">4</div>
+            <h4>Entra nelle stanze</h4>
+            <p>Chat di gruppo a tema. Scrivi a chi sente come te.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ============ CTA FINALE ============ -->
+<section class="cta-section">
+    <h2>Sei <em>pronto</em><br>a far sentire la tua voce?</h2>
+    <p>Apri VOX, in 30 secondi sei dentro.</p>
+    <a href="vox.html" class="btn-pri">
+        <svg viewBox="0 0 24 24"><polygon points="6,4 20,12 6,20" fill="#fff"/></svg>
+        Apri VOX
+    </a>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+    <p>© 2026 VOX · Vanishing Voice · Niente foto, solo voci.</p>
+</footer>
+
+</body>
+</html>
