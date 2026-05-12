@@ -16,21 +16,55 @@ const bcrypt = require('bcrypt');
 const app = express();
 const PORT = process.env.PORT || 8082;
 const HOST = process.env.HOST || '0.0.0.0';
+const IS_PROD = process.env.NODE_ENV === 'production';
 
-// JWT Config
-const JWT_SECRET = process.env.JWT_SECRET || 'kouverte-vox-secret-key-change-in-prod';
-const JWT_EXPIRES = '30d';
+// JWT Config — fail fast in produzione se non c'è secret
+if (IS_PROD && !process.env.JWT_SECRET) {
+    console.error('❌ FATAL: JWT_SECRET environment variable is required in production!');
+    process.exit(1);
+}
+const JWT_SECRET = process.env.JWT_SECRET || 'kouverte-vox-dev-secret-' + crypto.randomBytes(16).toString('hex');
+const JWT_EXPIRES = '7d';
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(__dirname));
+
+// Trust proxy in production (per req.ip corretto dietro Render/ngrok)
+app.set('trust proxy', 1);
+
+// CORS più restrittivo in prod
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : ['*'];
+
+// Block accesso a file sensibili PRIMA di static (FIX critico: vox-data.json era esposto!)
+const BLOCKED_PATHS = [
+    '/vox-data.json', '/vox-data.bak.json', '/vox-data.json.tmp',
+    '/.env', '/package.json', '/package-lock.json',
+    '/node_modules', '/.git', '/simulation-users.js',
+    '/vox-server.js', '/tg-bot.js', '/render.yaml',
+    '/.claude', '/CONFIGURA_NGROK_E_AVVIA.ps1', '/AVVIA_LIVE_NGROK.bat',
+    '/AVVIA_KOUVERTE_VOX.bat', '/AVVIA_TUNNEL_AUTOMATICO.bat'
+];
+app.use((req, res, next) => {
+    const reqPath = req.path.toLowerCase();
+    if (BLOCKED_PATHS.some(b => reqPath === b.toLowerCase() || reqPath.startsWith(b.toLowerCase() + '/'))) {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+});
+app.use(express.static(__dirname, {
+    dotfiles: 'deny',
+    index: ['index.html']
+}));
 
 const server = http.createServer(app);
 const io = new Server(server, {
-    cors: { origin: '*', methods: ['GET', 'POST'] }
+    cors: { origin: ALLOWED_ORIGINS[0] === '*' ? '*' : ALLOWED_ORIGINS, methods: ['GET', 'POST'] }
 });
 
 // Database JSON (file invece di SQLite)
 const DB_FILE = path.join(__dirname, 'vox-data.json');
+const DB_BACKUP = path.join(__dirname, 'vox-data.bak.json');
 
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) {
@@ -54,14 +88,29 @@ function loadDB() {
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 }
 
+// Atomic write per evitare corruzione DB su kill
+let dbDirty = false;
 function saveDB(db) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+    const tmp = DB_FILE + '.tmp';
+    const data = JSON.stringify(db, null, 2);
+    fs.writeFileSync(tmp, data, 'utf8');
+    fs.renameSync(tmp, DB_FILE);
+    dbDirty = false;
 }
+function markDirty() { dbDirty = true; }
 
 let DB = loadDB();
 
-// Salva periodiacmente
-setInterval(() => saveDB(DB), 10000);
+// Salva periodicamente solo se dirty
+setInterval(() => { if (dbDirty) saveDB(DB); }, 10000);
+// Backup ogni 5 minuti
+setInterval(() => {
+    try { if (fs.existsSync(DB_FILE)) fs.copyFileSync(DB_FILE, DB_BACKUP); } catch(e) {}
+}, 5 * 60 * 1000);
+
+// Graceful shutdown: salva su Ctrl+C
+process.on('SIGINT', () => { try { saveDB(DB); } catch(e) {} process.exit(0); });
+process.on('SIGTERM', () => { try { saveDB(DB); } catch(e) {} process.exit(0); });
 
 // ============ JWT MIDDLEWARE ============
 function verifyToken(req, res, next) {
@@ -69,6 +118,21 @@ function verifyToken(req, res, next) {
     if (!token) return res.status(401).json({ error: 'Token richiesto' });
     try {
         req.user = jwt.verify(token, JWT_SECRET);
+        next();
+    } catch(e) {
+        res.status(401).json({ error: 'Token non valido' });
+    }
+}
+
+// Admin middleware
+function verifyAdmin(req, res, next) {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'Token richiesto' });
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = DB.users.find(u => u.id === decoded.userId);
+        if (!user || !user.is_admin) return res.status(403).json({ error: 'Forbidden: admin only' });
+        req.user = decoded;
         next();
     } catch(e) {
         res.status(401).json({ error: 'Token non valido' });
@@ -87,6 +151,69 @@ function now() {
     return Date.now();
 }
 
+// ============ INPUT VALIDATION ============
+const USERNAME_RE = /^[a-z0-9_]{3,20}$/i;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function sanitizeUsername(u) {
+    if (typeof u !== 'string') return null;
+    const clean = u.trim().toLowerCase();
+    return USERNAME_RE.test(clean) ? clean : null;
+}
+function sanitizeEmail(e) {
+    if (typeof e !== 'string') return null;
+    const clean = e.trim().toLowerCase();
+    return EMAIL_RE.test(clean) && clean.length <= 100 ? clean : null;
+}
+function sanitizeBio(b) {
+    if (typeof b !== 'string') return '';
+    return b.replace(/[<>]/g, '').slice(0, 500);
+}
+function publicUser(u) {
+    if (!u) return null;
+    return {
+        id: u.id, email: u.email, username: u.username,
+        profile: u.profile, stats: u.stats,
+        created_at: u.created_at
+    };
+}
+
+// ============ RATE LIMITING (in-memory) ============
+const rateLimitStore = new Map();
+function rateLimit(key, maxRequests, windowMs) {
+    return (req, res, next) => {
+        const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+        const k = key + ':' + ip;
+        const nowMs = Date.now();
+        const entry = rateLimitStore.get(k) || { count: 0, resetAt: nowMs + windowMs };
+        if (nowMs > entry.resetAt) { entry.count = 0; entry.resetAt = nowMs + windowMs; }
+        entry.count++;
+        rateLimitStore.set(k, entry);
+        if (entry.count > maxRequests) {
+            return res.status(429).json({ error: 'Troppe richieste, riprova tra qualche minuto' });
+        }
+        next();
+    };
+}
+// Cleanup map ogni 10 min
+setInterval(() => {
+    const t = Date.now();
+    for (const [k, v] of rateLimitStore.entries()) {
+        if (t > v.resetAt) rateLimitStore.delete(k);
+    }
+}, 10 * 60 * 1000);
+
+// ============ PER-USER MUTEX (per prevenire double-spend shop) ============
+const userLocks = new Map();
+async function withUserLock(userId, fn) {
+    while (userLocks.get(userId)) {
+        await new Promise(r => setTimeout(r, 5));
+    }
+    userLocks.set(userId, true);
+    try { return await fn(); }
+    finally { userLocks.delete(userId); }
+}
+
 // ============ API PUBBLICHE ============
 
 // Health
@@ -94,17 +221,21 @@ app.get('/api/health', (req, res) => {
     res.json({ ok: true, service: 'VO✕', version: '1.0' });
 });
 
-// Register
-app.post('/api/auth/register', async (req, res) => {
-    const { email, password, username } = req.body || {};
-    if (!email || !password || !username) return res.status(400).json({ error: 'Email, password, username richiesti' });
-    if (username.length < 3) return res.status(400).json({ error: 'Username min 3 caratteri' });
-    if (password.length < 6) return res.status(400).json({ error: 'Password min 6 caratteri' });
+// Register — rate limited 3/15min per IP
+app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (req, res) => {
+    const emailIn = sanitizeEmail(req.body?.email);
+    const usernameIn = sanitizeUsername(req.body?.username);
+    const password = req.body?.password;
 
-    if (DB.users.find(u => u.email === email.toLowerCase())) {
+    if (!emailIn) return res.status(400).json({ error: 'Email non valida' });
+    if (!usernameIn) return res.status(400).json({ error: 'Username non valido (3-20 caratteri, solo lettere/numeri/underscore)' });
+    if (!password || typeof password !== 'string' || password.length < 6) return res.status(400).json({ error: 'Password min 6 caratteri' });
+    if (password.length > 200) return res.status(400).json({ error: 'Password troppo lunga' });
+
+    if (DB.users.find(u => u.email === emailIn)) {
         return res.status(409).json({ error: 'Email già registrata' });
     }
-    if (DB.users.find(u => u.username === username.toLowerCase())) {
+    if (DB.users.find(u => u.username === usernameIn)) {
         return res.status(409).json({ error: 'Username già in uso' });
     }
 
@@ -112,11 +243,12 @@ app.post('/api/auth/register', async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
         const user = {
             id: genId('u'),
-            email: email.toLowerCase(),
-            username: username.toLowerCase(),
+            email: emailIn,
+            username: usernameIn,
             password_hash,
+            is_admin: false,
             profile: {
-                avatar_letter: username.charAt(0).toUpperCase(),
+                avatar_letter: usernameIn.charAt(0).toUpperCase(),
                 bio: '',
                 clips: [
                     { slot: 0, title: 'Chi sono', audio_id: null, duration: 0 },
@@ -134,32 +266,43 @@ app.post('/api/auth/register', async (req, res) => {
             updated_at: now()
         };
         DB.users.push(user);
+
+        // Give 50 initial credits
+        DB.user_credits = DB.user_credits || [];
+        DB.user_credits.push({
+            user_id: user.id,
+            credits: 50,
+            updated_at: now()
+        });
+
         saveDB(DB);
 
         const token = generateToken(user.id);
-        res.json({ ok: true, token, user: { id: user.id, email: user.email, username: user.username } });
+        res.json({ ok: true, token, user: publicUser(user) });
     } catch(e) {
         res.status(500).json({ error: 'Errore registrazione' });
     }
 });
 
-// Login
-app.post('/api/auth/login', async (req, res) => {
-    const { email, password } = req.body || {};
-    if (!email || !password) return res.status(400).json({ error: 'Email e password richieste' });
+// Login — rate limited 5/15min per IP
+app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, res) => {
+    const emailIn = sanitizeEmail(req.body?.email);
+    const password = req.body?.password;
+    if (!emailIn || !password) return res.status(400).json({ error: 'Email e password richieste' });
+    if (typeof password !== 'string' || password.length > 200) return res.status(400).json({ error: 'Password non valida' });
 
-    const user = DB.users.find(u => u.email === email.toLowerCase());
-    if (!user) return res.status(401).json({ error: 'Email o password non corretti' });
+    const user = DB.users.find(u => u.email === emailIn);
+    if (!user || !user.password_hash) return res.status(401).json({ error: 'Email o password non corretti' });
 
     try {
         const match = await bcrypt.compare(password, user.password_hash);
         if (!match) return res.status(401).json({ error: 'Email o password non corretti' });
 
         user.last_seen = now();
-        saveDB(DB);
+        markDirty();
 
         const token = generateToken(user.id);
-        res.json({ ok: true, token, user: { id: user.id, email: user.email, username: user.username, profile: user.profile, stats: user.stats } });
+        res.json({ ok: true, token, user: publicUser(user) });
     } catch(e) {
         res.status(500).json({ error: 'Errore login' });
     }
@@ -202,9 +345,9 @@ app.post('/api/profile/update', verifyToken, (req, res) => {
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
 
     const { bio } = req.body || {};
-    if (bio) user.profile.bio = bio.slice(0, 500);
+    if (bio !== undefined) user.profile.bio = sanitizeBio(bio);
     user.updated_at = now();
-    saveDB(DB);
+    markDirty();
     res.json({ ok: true, profile: user.profile });
 });
 
@@ -274,6 +417,8 @@ app.get('/api/stories', (req, res) => {
         const user = DB.users.find(u => u.id === s.user_id);
         return {
             id: s.id,
+            user_id: s.user_id,
+            userId: s.user_id,
             username: user ? user.username : 'unknown',
             durationMs: s.duration_ms,
             mood: s.mood,
@@ -318,13 +463,14 @@ app.post('/api/stories/:id/react', (req, res) => {
 
 // ============ DUELS ============
 
-app.post('/api/duels', (req, res) => {
-    const { userId, theme } = req.body || {};
-    if (!userId || !theme) return res.status(400).json({ error: 'userId e theme richiesti' });
-    
+app.post('/api/duels', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const theme = req.body?.theme;
+    if (!theme || typeof theme !== 'string') return res.status(400).json({ error: 'theme richiesto' });
+
     const duel = {
         id: genId('duel'),
-        theme: theme.slice(0, 100),
+        theme: theme.replace(/[<>]/g, '').slice(0, 100),
         user1_id: userId,
         user2_id: userId,
         clip1_id: null,
@@ -337,32 +483,30 @@ app.post('/api/duels', (req, res) => {
     res.json({ ok: true, duelId: duel.id });
 });
 
-app.post('/api/duels/:id/join', (req, res) => {
-    const { userId } = req.body || {};
-    if (!userId) return res.status(400).json({ error: 'userId richiesto' });
+app.post('/api/duels/:id/join', verifyToken, (req, res) => {
+    const userId = req.user.userId;
     const duel = DB.duels.find(d => d.id === req.params.id);
     if (!duel) return res.status(404).json({ error: 'Duello non trovato' });
     if (duel.user2_id !== duel.user1_id) return res.status(400).json({ error: 'Duello pieno' });
+    if (duel.user1_id === userId) return res.status(400).json({ error: 'Non puoi joinare il tuo duello' });
     duel.user2_id = userId;
     saveDB(DB);
     res.json({ ok: true });
 });
 
-app.post('/api/duels/:id/vote', (req, res) => {
+app.post('/api/duels/:id/vote', verifyToken, (req, res) => {
     const { clipId } = req.body || {};
     if (!clipId) return res.status(400).json({ error: 'clipId richiesto' });
-    
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
-    const ipHash = crypto.createHash('sha256').update(ip).digest('hex').slice(0, 16);
-    
-    const existing = DB.votes.find(v => v.duel_id === req.params.id && v.ip_hash === ipHash);
+
+    const userId = req.user.userId;
+    const existing = DB.votes.find(v => v.duel_id === req.params.id && v.user_id === userId);
     if (existing) return res.status(409).json({ error: 'Hai già votato' });
-    
+
     DB.votes.push({
-        id: DB.votes.length + 1,
+        id: genId('vote'),
         duel_id: req.params.id,
         clip_id: clipId,
-        ip_hash: ipHash,
+        user_id: userId,
         created_at: now()
     });
     saveDB(DB);
@@ -386,14 +530,14 @@ app.get('/api/duels', (req, res) => {
 
 // ============ SHOP API ============
 
-app.get('/api/shop/credits', (req, res) => {
-    const userId = req.query.userId;
-    if (!userId) return res.status(400).json({ error: 'userId richiesto' });
+// FIX: protetto da verifyToken — usa userId dal token, mai dal body/query
+app.get('/api/shop/credits', verifyToken, (req, res) => {
+    const userId = req.user.userId;
     let row = DB.user_credits.find(c => c.user_id === userId);
     if (!row) {
         row = { user_id: userId, credits: 0, updated_at: now() };
         DB.user_credits.push(row);
-        saveDB(DB);
+        markDirty();
     }
     res.json({ credits: row.credits });
 });
@@ -403,57 +547,67 @@ app.get('/api/shop/products', (req, res) => {
     res.json({ products });
 });
 
-app.post('/api/shop/buy', (req, res) => {
-    const { userId, productId } = req.body || {};
-    if (!userId || !productId) return res.status(400).json({ error: 'userId e productId richiesti' });
-    
-    const product = DB.shop_products.find(p => p.id === productId && p.active !== false);
-    if (!product) return res.status(404).json({ error: 'Prodotto non trovato' });
-    
-    let creditsRow = DB.user_credits.find(c => c.user_id === userId);
-    if (!creditsRow) {
-        creditsRow = { user_id: userId, credits: 0, updated_at: now() };
-        DB.user_credits.push(creditsRow);
+// FIX: protetto da verifyToken + mutex per prevenire double-spend
+app.post('/api/shop/buy', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { productId } = req.body || {};
+    if (!productId) return res.status(400).json({ error: 'productId richiesto' });
+
+    try {
+        const result = await withUserLock(userId, () => {
+            const product = DB.shop_products.find(p => p.id === productId && p.active !== false);
+            if (!product) return { status: 404, body: { error: 'Prodotto non trovato' } };
+
+            let creditsRow = DB.user_credits.find(c => c.user_id === userId);
+            if (!creditsRow) {
+                creditsRow = { user_id: userId, credits: 0, updated_at: now() };
+                DB.user_credits.push(creditsRow);
+            }
+
+            if (creditsRow.credits < product.price_credits) {
+                return { status: 402, body: { error: 'Crediti insufficienti', needed: product.price_credits, available: creditsRow.credits } };
+            }
+
+            creditsRow.credits -= product.price_credits;
+            creditsRow.updated_at = now();
+
+            let expiresAt = null;
+            if (product.item_type === 'vip_month') expiresAt = now() + 30 * 24 * 60 * 60 * 1000;
+            if (product.item_type === 'boost_2h') expiresAt = now() + 2 * 60 * 60 * 1000;
+
+            const invId = genId('inv');
+            DB.user_inventory.push({
+                id: invId,
+                user_id: userId,
+                product_id: productId,
+                purchased_at: now(),
+                expires_at: expiresAt,
+                active: 1
+            });
+
+            DB.transactions.push({
+                id: genId('txn'),
+                user_id: userId,
+                product_id: productId,
+                amount_cents: product.price_credits * 100,
+                currency: 'EUR',
+                status: 'completed',
+                created_at: now()
+            });
+
+            saveDB(DB);
+            return { status: 200, body: { ok: true, inventoryId: invId, remainingCredits: creditsRow.credits, product: product.name } };
+        });
+        return res.status(result.status).json(result.body);
+    } catch(e) {
+        return res.status(500).json({ error: 'Errore acquisto' });
     }
-    
-    if (creditsRow.credits < product.price_credits) {
-        return res.status(402).json({ error: 'Crediti insufficienti', needed: product.price_credits });
-    }
-    
-    creditsRow.credits -= product.price_credits;
-    creditsRow.updated_at = now();
-    
-    let expiresAt = null;
-    if (product.item_type === 'vip_month') expiresAt = now() + 30 * 24 * 60 * 60 * 1000;
-    if (product.item_type === 'boost_2h') expiresAt = now() + 2 * 60 * 60 * 1000;
-    
-    const invId = genId('inv');
-    DB.user_inventory.push({
-        id: invId,
-        user_id: userId,
-        product_id: productId,
-        purchased_at: now(),
-        expires_at: expiresAt,
-        active: 1
-    });
-    
-    DB.transactions.push({
-        id: genId('txn'),
-        user_id: userId,
-        product_id: productId,
-        amount_cents: product.price_credits * 100,
-        currency: 'EUR',
-        status: 'completed',
-        created_at: now()
-    });
-    
-    saveDB(DB);
-    res.json({ ok: true, inventoryId: invId, remainingCredits: creditsRow.credits, product: product.name });
 });
 
 // ============ ADMIN API ============
 
-app.get('/api/admin/stats', (req, res) => {
+// FIX: tutti gli admin endpoint richiedono verifyAdmin
+app.get('/api/admin/stats', verifyAdmin, (req, res) => {
     const totalUsers = DB.users.length;
     const activeStories = DB.stories.filter(s => s.expires_at > now()).length;
     const totalReactions = DB.reactions.length;
@@ -462,20 +616,31 @@ app.get('/api/admin/stats', (req, res) => {
     res.json({ totalUsers, activeStories, totalReactions, activeDuels, totalRevenue });
 });
 
-app.get('/api/admin/users', (req, res) => {
+app.get('/api/admin/users', verifyAdmin, (req, res) => {
+    // FIX: NON spreadiamo l'utente intero — leakerebbe password_hash. Whitelist dei campi.
     const users = DB.users.map(u => ({
-        ...u,
+        id: u.id,
+        email: u.email,
+        username: u.username,
+        is_admin: !!u.is_admin,
+        created_at: u.created_at,
+        last_seen: u.last_seen,
         story_count: DB.stories.filter(s => s.user_id === u.id).length
     })).sort((a, b) => b.created_at - a.created_at);
     res.json({ users });
 });
 
-app.get('/api/admin/stories', (req, res) => {
+app.get('/api/admin/stories', verifyAdmin, (req, res) => {
     const stories = DB.stories.map(s => {
         const user = DB.users.find(u => u.id === s.user_id);
         const reactions_count = DB.reactions.filter(r => r.story_id === s.id).length;
         return {
-            ...s,
+            id: s.id,
+            user_id: s.user_id,
+            duration_ms: s.duration_ms,
+            mood: s.mood,
+            expires_at: s.expires_at,
+            created_at: s.created_at,
             username: user ? user.username : 'unknown',
             reactions_count
         };
@@ -483,13 +648,15 @@ app.get('/api/admin/stories', (req, res) => {
     res.json({ stories });
 });
 
-app.get('/api/admin/duels', (req, res) => {
+app.get('/api/admin/duels', verifyAdmin, (req, res) => {
     const duels = DB.duels.map(d => {
         const u1 = DB.users.find(u => u.id === d.user1_id);
         const u2 = DB.users.find(u => u.id === d.user2_id);
         const total_votes = DB.votes.filter(v => v.duel_id === d.id).length;
         return {
-            ...d,
+            id: d.id, theme: d.theme,
+            user1_id: d.user1_id, user2_id: d.user2_id,
+            expires_at: d.expires_at, created_at: d.created_at,
             user1_name: u1 ? u1.username : '...',
             user2_name: u2 ? u2.username : 'In attesa...',
             total_votes
@@ -498,7 +665,7 @@ app.get('/api/admin/duels', (req, res) => {
     res.json({ duels });
 });
 
-app.delete('/api/admin/users/:id', (req, res) => {
+app.delete('/api/admin/users/:id', verifyAdmin, (req, res) => {
     const userId = req.params.id;
     DB.reactions = DB.reactions.filter(r => {
         const story = DB.stories.find(s => s.id === r.story_id);
@@ -510,19 +677,23 @@ app.delete('/api/admin/users/:id', (req, res) => {
         return duel && duel.user1_id !== userId && duel.user2_id !== userId;
     });
     DB.duels = DB.duels.filter(d => d.user1_id !== userId && d.user2_id !== userId);
+    // FIX: cleanup orfani crediti, inventario, transazioni
+    DB.user_credits = (DB.user_credits || []).filter(c => c.user_id !== userId);
+    DB.user_inventory = (DB.user_inventory || []).filter(i => i.user_id !== userId);
+    DB.transactions = (DB.transactions || []).filter(t => t.user_id !== userId);
     DB.users = DB.users.filter(u => u.id !== userId);
     saveDB(DB);
     res.json({ ok: true });
 });
 
-app.delete('/api/admin/stories/:id', (req, res) => {
+app.delete('/api/admin/stories/:id', verifyAdmin, (req, res) => {
     DB.reactions = DB.reactions.filter(r => r.story_id !== req.params.id);
     DB.stories = DB.stories.filter(s => s.id !== req.params.id);
     saveDB(DB);
     res.json({ ok: true });
 });
 
-app.delete('/api/admin/duels/:id', (req, res) => {
+app.delete('/api/admin/duels/:id', verifyAdmin, (req, res) => {
     DB.votes = DB.votes.filter(v => v.duel_id !== req.params.id);
     DB.duels = DB.duels.filter(d => d.id !== req.params.id);
     saveDB(DB);
@@ -552,20 +723,26 @@ function validateTelegramInitData(initData) {
     }
 }
 
-app.post('/api/tg/auth', (req, res) => {
-    const { initData, fallback } = req.body || {};
-    let tgUser = validateTelegramInitData(initData);
-    let validated = !!tgUser;
+app.post('/api/tg/auth', rateLimit('tg-auth', 10, 5 * 60 * 1000), (req, res) => {
+    const { initData } = req.body || {};
+    const tgUser = validateTelegramInitData(initData);
 
-    // Se la validazione fallisce (nessun token configurato o initData non valido),
-    // accetta comunque ma marca come non-validato (per dev senza bot token)
-    if (!tgUser && fallback) tgUser = fallback;
-    if (!tgUser) return res.status(400).json({ error: 'Auth Telegram fallita' });
+    // FIX: rimosso fallback insicuro. In produzione richiede HMAC valido.
+    // In dev (no BOT_TOKEN), restituisce errore esplicito.
+    if (!tgUser) {
+        if (IS_PROD || TG_BOT_TOKEN) {
+            return res.status(401).json({ error: 'Auth Telegram fallita: initData non valido' });
+        }
+        return res.status(503).json({ error: 'Telegram auth non configurato (BOT_TOKEN mancante)' });
+    }
 
     // Crea/aggiorna utente VOX collegato a Telegram
-    const userId = 'tg_' + (tgUser.id || tgUser.telegramId || crypto.randomBytes(4).toString('hex'));
-    const username = tgUser.username || ('u' + (tgUser.id || tgUser.telegramId || ''));
-    const firstName = tgUser.first_name || tgUser.firstName || 'Utente';
+    const tgIdRaw = String(tgUser.id || tgUser.telegramId || '').replace(/[^0-9]/g, '');
+    if (!tgIdRaw) return res.status(400).json({ error: 'Telegram user ID mancante' });
+    const userId = 'tg_' + tgIdRaw;
+    const usernameSrc = tgUser.username || ('u' + tgIdRaw);
+    const username = (sanitizeUsername(usernameSrc) || ('u' + tgIdRaw)).slice(0, 20);
+    const firstName = String(tgUser.first_name || tgUser.firstName || 'Utente').replace(/[<>]/g, '').slice(0, 50);
 
     let user = (DB.users || []).find(u => u.id === userId);
     if (!user) {
@@ -573,8 +750,9 @@ app.post('/api/tg/auth', (req, res) => {
             id: userId,
             username,
             firstName,
-            telegramId: tgUser.id || tgUser.telegramId,
-            verified: validated,
+            telegramId: tgIdRaw,
+            verified: true,
+            is_admin: false,
             created_at: now()
         };
         DB.users = DB.users || [];
@@ -583,11 +761,13 @@ app.post('/api/tg/auth', (req, res) => {
     } else {
         user.username = username;
         user.firstName = firstName;
-        if (validated) user.verified = true;
+        user.verified = true;
         user.last_seen = now();
-        saveDB(DB);
+        markDirty();
     }
-    res.json({ ok: true, validated, user });
+    // Emetti JWT così l'utente TG può usare endpoint protetti
+    const token = generateToken(user.id);
+    res.json({ ok: true, validated: true, token, user: { id: user.id, username: user.username, firstName: user.firstName } });
 });
 
 app.post('/api/cleanup', (req, res) => {
@@ -597,8 +777,33 @@ app.post('/api/cleanup', (req, res) => {
     res.json({ ok: true, deleted: before - DB.stories.length });
 });
 
-// Seed test data
-app.get('/api/admin/seed', async (req, res) => {
+// Fix old users without credits (give them 50 each) — admin only
+app.post('/api/admin/fix-credits', verifyAdmin, (req, res) => {
+    DB.user_credits = DB.user_credits || [];
+    let fixed = 0;
+
+    DB.users.forEach(user => {
+        const credRow = DB.user_credits.find(c => c.user_id === user.id);
+        if (!credRow) {
+            DB.user_credits.push({
+                user_id: user.id,
+                credits: 50,
+                updated_at: now()
+            });
+            fixed++;
+        } else if (credRow.credits === 0) {
+            credRow.credits = 50;
+            fixed++;
+        }
+    });
+
+    saveDB(DB);
+    res.json({ ok: true, fixed });
+});
+
+// Seed test data — disabilitato in produzione, admin-only altrimenti
+app.get('/api/admin/seed', verifyAdmin, async (req, res) => {
+    if (IS_PROD) return res.status(403).json({ error: 'Seed disabilitato in produzione' });
     const testUsers = [
         { email: 'test1@kouverte.local', username: 'TestUser1', password: 'Test123456' },
         { email: 'test2@kouverte.local', username: 'TestUser2', password: 'Test123456' },
@@ -664,6 +869,15 @@ app.get('/api/admin/seed', async (req, res) => {
             }
 
             DB.users.push(user);
+
+            // Give 50 initial credits to test user
+            DB.user_credits = DB.user_credits || [];
+            DB.user_credits.push({
+                user_id: user.id,
+                credits: 50,
+                updated_at: now()
+            });
+
             results.push({ email: testUser.email, username: testUser.username, password: testUser.password, status: 'created' });
         } catch(e) {
             results.push({ email: testUser.email, status: 'error', error: e.message });
@@ -703,14 +917,18 @@ app.get('/api/rooms/:slug/msgs', (req, res) => {
     res.json({ msgs, online: Math.max(1, online) });
 });
 
-app.post('/api/rooms/:slug/msgs', (req, res) => {
+app.post('/api/rooms/:slug/msgs', verifyToken, (req, res) => {
     const slug = req.params.slug;
-    const { userId, username, text } = req.body || {};
+    const userId = req.user.userId;
+    const { text } = req.body || {};
     if (!VALID_ROOMS.includes(slug)) return res.status(404).json({ error: 'Stanza non trovata' });
-    if (!userId || !text) return res.status(400).json({ error: 'userId e text richiesti' });
+    if (!text || typeof text !== 'string') return res.status(400).json({ error: 'text richiesto' });
     if (text.length > 280) return res.status(400).json({ error: 'Messaggio troppo lungo' });
 
-    // Anti-spam minimale: max 5 msg in 10 secondi per utente
+    const user = DB.users.find(u => u.id === userId);
+    const username = user ? user.username : 'anon';
+
+    // Anti-spam: max 5 msg in 10 secondi per utente
     const tenSecAgo = now() - 10000;
     const recentByUser = (DB.rooms[slug] || []).filter(m => m.userId === userId && m.created_at > tenSecAgo).length;
     if (recentByUser >= 5) return res.status(429).json({ error: 'Stai scrivendo troppo veloce, rallenta' });
@@ -719,13 +937,14 @@ app.post('/api/rooms/:slug/msgs', (req, res) => {
     const msg = {
         id: 'msg_' + crypto.randomBytes(6).toString('hex'),
         userId,
-        username: (username || 'anon').slice(0, 30),
-        text: text.trim().slice(0, 280),
+        username: String(username).slice(0, 30),
+        // FIX XSS: rimuovi tag HTML potenziali
+        text: text.replace(/[<>]/g, '').trim().slice(0, 280),
         created_at: now()
     };
     DB.rooms[slug].push(msg);
     if (DB.rooms[slug].length > 500) DB.rooms[slug] = DB.rooms[slug].slice(-500);
-    saveDB(DB);
+    markDirty();
     res.json({ ok: true, msg });
 });
 
@@ -739,7 +958,8 @@ app.get('/api/rooms', (req, res) => {
     res.json({ rooms: result });
 });
 
-app.post('/api/admin/reset', (req, res) => {
+app.post('/api/admin/reset', verifyAdmin, (req, res) => {
+    if (IS_PROD) return res.status(403).json({ error: 'Reset disabilitato in produzione' });
     DB = {
         users: [],
         stories: [],
@@ -759,13 +979,153 @@ app.post('/api/admin/reset', (req, res) => {
     res.json({ ok: true });
 });
 
+// ============ VOICE ROOMS · Live public/themed voice spaces ============
+// Voice rooms schema: similar to text rooms but for live voice
+const VOICE_ROOM_THEMES = [
+    { slug: 'voci-notturne', label: '🌙 Voci Notturne', desc: 'Chat vocale di notte' },
+    { slug: 'single-italiani', label: '💔 Single Italiani', desc: 'Persone sole che cercano connessione' },
+    { slug: 'deep-talks', label: '🧠 Deep Talks', desc: 'Conversazioni profonde' },
+    { slug: 'vibes-musicali', label: '🎵 Vibes Musicali', desc: 'Cantano e parlano di musica' },
+    { slug: 'travel-lovers', label: '✈️ Travel Lovers', desc: 'Gente che ama viaggiare' },
+    { slug: 'late-night', label: '🌃 Late Night', desc: 'Per gli insonnaci' }
+];
+
+DB.voice_rooms = DB.voice_rooms || {};
+VOICE_ROOM_THEMES.forEach(theme => {
+    DB.voice_rooms[theme.slug] = DB.voice_rooms[theme.slug] || {
+        slug: theme.slug,
+        label: theme.label,
+        desc: theme.desc,
+        participants: [], // [{userId, username, socketId, joinedAt}]
+        created_at: now()
+    };
+});
+
+app.get('/api/voice-rooms', (req, res) => {
+    const rooms = VOICE_ROOM_THEMES.map(theme => {
+        const room = DB.voice_rooms[theme.slug];
+        return {
+            slug: theme.slug,
+            label: theme.label,
+            desc: theme.desc,
+            participants_count: room.participants.length,
+            is_active: room.participants.length > 0
+        };
+    });
+    res.json({ rooms });
+});
+
+app.post('/api/voice-rooms/:slug/join', verifyToken, (req, res) => {
+    const slug = req.params.slug;
+    const room = DB.voice_rooms[slug];
+    if (!room) return res.status(404).json({ error: 'Voice room not found' });
+
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    // FIX: rimuovi user da TUTTE le altre stanze prima di joinare la nuova
+    VOICE_ROOM_THEMES.forEach(t => {
+        if (t.slug !== slug && DB.voice_rooms[t.slug]) {
+            const before = DB.voice_rooms[t.slug].participants.length;
+            DB.voice_rooms[t.slug].participants = DB.voice_rooms[t.slug].participants.filter(p => p.userId !== user.id);
+            if (DB.voice_rooms[t.slug].participants.length < before) {
+                io.to('voice-room-' + t.slug).emit('user-left-voice-room', { userId: user.id, username: user.username, timestamp: now() });
+            }
+        }
+    });
+
+    const existing = room.participants.find(p => p.userId === user.id);
+    if (!existing) {
+        room.participants.push({
+            userId: user.id,
+            username: user.username,
+            joinedAt: now()
+        });
+        // FIX: notifica via socket gli altri partecipanti
+        io.to('voice-room-' + slug).emit('user-joined-voice-room', { userId: user.id, username: user.username, timestamp: now() });
+    }
+
+    saveDB(DB);
+    res.json({ ok: true, room: { slug, label: room.label, participants_count: room.participants.length } });
+});
+
+app.post('/api/voice-rooms/:slug/leave', verifyToken, (req, res) => {
+    const slug = req.params.slug;
+    const room = DB.voice_rooms[slug];
+    if (!room) return res.status(404).json({ error: 'Voice room not found' });
+
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const before = room.participants.length;
+    room.participants = room.participants.filter(p => p.userId !== user.id);
+    saveDB(DB);
+    if (room.participants.length < before) {
+        // FIX: notifica via socket gli altri partecipanti
+        io.to('voice-room-' + slug).emit('user-left-voice-room', { userId: user.id, username: user.username, timestamp: now() });
+    }
+    res.json({ ok: true });
+});
+
+app.get('/api/voice-rooms/:slug/participants', (req, res) => {
+    const slug = req.params.slug;
+    const room = DB.voice_rooms[slug];
+    if (!room) return res.status(404).json({ error: 'Voice room not found' });
+
+    const participants = room.participants.map(p => ({
+        userId: p.userId,
+        username: p.username,
+        joinedAt: p.joinedAt
+    }));
+
+    res.json({ participants });
+});
+
+// ============ ONLINE NOW FEED · Who's available ============
+app.get('/api/online-now', (req, res) => {
+    const online = [];
+    const STALE_THRESHOLD = now() - 30 * 60 * 1000; // 30 min
+
+    VOICE_ROOM_THEMES.forEach(theme => {
+        const room = DB.voice_rooms[theme.slug];
+        // FIX: filtra utenti stale (>30 min in stanza senza activity)
+        const before = room.participants.length;
+        room.participants = room.participants.filter(p => p.joinedAt > STALE_THRESHOLD);
+        if (room.participants.length < before) markDirty();
+
+        room.participants.forEach(p => {
+            if (!online.find(o => o.userId === p.userId)) {
+                online.push({
+                    userId: p.userId,
+                    username: p.username,
+                    status: 'in_voice_room',
+                    room_slug: theme.slug,
+                    room_label: theme.label,
+                    joinedAt: p.joinedAt
+                });
+            }
+        });
+    });
+
+    res.json({ online: online.sort((a, b) => b.joinedAt - a.joinedAt) });
+});
+
 // ============ WEBRTC SIGNALING ============
 
 const activeCalls = new Map();
 const userSockets = new Map();
+const userVoiceRooms = new Map(); // userId -> {roomSlug, socketId}
 
 io.on('connection', (socket) => {
     console.log('[WEBRTC] Utente connesso:', socket.id);
+
+    // Register user with socket
+    socket.on('register-user', (data) => {
+        const { userId, username } = data;
+        activeCalls.set(userId, socket.id);
+        userSockets.set(username, socket.id);
+        console.log(`[SOCKET] ${username} (${userId}) registrato come ${socket.id}`);
+    });
 
     // Messaging
     socket.on('join', (data) => {
@@ -785,6 +1145,50 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Voice Room presence
+    socket.on('join-voice-room', (data) => {
+        const { roomSlug, userId, username } = data;
+        socket.join('voice-room-' + roomSlug);
+        userVoiceRooms.set(userId, { roomSlug, socketId: socket.id });
+
+        io.to('voice-room-' + roomSlug).emit('user-joined-voice-room', {
+            userId,
+            username,
+            timestamp: Date.now()
+        });
+        console.log(`[VOICE] ${username} entrato nella stanza ${roomSlug}`);
+    });
+
+    socket.on('leave-voice-room', (data) => {
+        const { roomSlug, userId, username } = data;
+        socket.leave('voice-room-' + roomSlug);
+        userVoiceRooms.delete(userId);
+
+        io.to('voice-room-' + roomSlug).emit('user-left-voice-room', {
+            userId,
+            username,
+            timestamp: Date.now()
+        });
+        console.log(`[VOICE] ${username} uscito dalla stanza ${roomSlug}`);
+    });
+
+    // WebRTC for voice rooms (multi-user)
+    socket.on('voice-offer', (data) => {
+        const { roomSlug, to, from, offer } = data;
+        socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, offer });
+    });
+
+    socket.on('voice-answer', (data) => {
+        const { roomSlug, to, from, answer } = data;
+        socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, answer });
+    });
+
+    socket.on('voice-ice', (data) => {
+        const { roomSlug, to, from, candidate } = data;
+        socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, candidate });
+    });
+
+    // Direct call (after match)
     socket.on('join-room', (roomId) => {
         socket.join(roomId);
         socket.to(roomId).emit('user-connected', socket.id);
@@ -801,10 +1205,6 @@ io.on('connection', (socket) => {
 
     socket.on('ice-candidate', (data) => {
         socket.to(data.room).emit('ice-candidate', { candidate: data.candidate, from: socket.id });
-    });
-
-    socket.on('register-user', (userId) => {
-        activeCalls.set(userId, socket.id);
     });
 
     socket.on('call-user', (data) => {
@@ -830,18 +1230,38 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        // Clean up from activeCalls + DB voice_rooms
         for (const [userId, socketId] of activeCalls.entries()) {
             if (socketId === socket.id) {
                 activeCalls.delete(userId);
+                const roomData = userVoiceRooms.get(userId);
+                if (roomData) {
+                    // FIX: rimuovi anche dal DB.voice_rooms (era solo Map in memoria)
+                    const room = DB.voice_rooms[roomData.roomSlug];
+                    if (room) {
+                        const p = room.participants.find(pp => pp.userId === userId);
+                        const username = p?.username;
+                        room.participants = room.participants.filter(pp => pp.userId !== userId);
+                        markDirty();
+                        io.to('voice-room-' + roomData.roomSlug).emit('user-left-voice-room', {
+                            userId, username,
+                            timestamp: Date.now()
+                        });
+                    }
+                    userVoiceRooms.delete(userId);
+                }
                 break;
             }
         }
+
+        // Clean up from userSockets
         for (const [username, socketId] of userSockets.entries()) {
             if (socketId === socket.id) {
                 userSockets.delete(username);
                 break;
             }
         }
+
         socket.broadcast.emit('user-disconnected', socket.id);
     });
 });

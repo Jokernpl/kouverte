@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: kouverte-vox
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node vox-server.js
+    envVars:
+      - key: PORT
+        value: 8082
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: kouverte-vox-secret-key-change-in-prod

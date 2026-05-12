@@ -1,0 +1,37 @@
+🎙️ KOUVERTE VOX - LINK PUBBLICO ATTIVO
+════════════════════════════════════════════════════════════════
+
+📱 ACCEDI QUI (da qualsiasi dispositivo):
+   https://a62a-5-90-99-6.ngrok-free.app/app.html
+
+📋 CREDENZIALI TEST:
+   Email: test1@kouverte.local
+   Password: Test123456
+
+✅ SERVER STATUS:
+   - Node.js: localhost:8082 ✓
+   - ngrok tunnel: ONLINE ✓
+   - Database: vox-data.json ✓
+
+🌐 CONDIVIDI IL LINK:
+   Puoi dare a chiunque questo URL:
+   https://a62a-5-90-99-6.ngrok-free.app/app.html
+
+   Loro potranno:
+   - Registrarsi con email+password
+   - Registrare voice clips
+   - Fare match con altri utenti
+   - Chat in tempo reale
+   - Accedere al shop
+
+⚠️ NOTE IMPORTANTI:
+   - Il link rimane attivo finché il server Node.js è acceso
+   - Se il server si spegne, il tunnel si disconnette
+   - ngrok free ha un limite di 3 sessioni/IP (ma illimitato)
+   - Per deployment permanente → Render.com o Railway.app
+
+🚀 PER DEPLOYMENT PERMANENTE:
+   Vedi il file: DEPLOY_RENDER_1CLICK.md
+
+════════════════════════════════════════════════════════════════
+Creato: 12/05/2026 10:59
