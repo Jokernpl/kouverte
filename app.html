@@ -4202,10 +4202,26 @@ function closeShop() {
 
 async function loadShop() {
     try {
-        const categoriesR = await api('/shop/categories');
-        const categories = categoriesR?.categories || [];
-        const productsR = await api('/shop/products');
-        const allProducts = productsR?.products || [];
+        // FIX: fetch direct per bypassare token stale che farebbe 401
+        const baseHeaders = { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' };
+        let categories = [], allProducts = [];
+        try {
+            const catR = await fetch(API + '/api/shop/categories', { headers: baseHeaders });
+            categories = (await catR.json())?.categories || [];
+        } catch(e) { console.warn('[shop] categories fetch failed', e); }
+        try {
+            const prodR = await fetch(API + '/api/shop/products', { headers: baseHeaders });
+            allProducts = (await prodR.json())?.products || [];
+        } catch(e) { console.warn('[shop] products fetch failed', e); }
+
+        // SAFETY: se vuoti, retry 1 volta dopo 500ms
+        if (allProducts.length === 0) {
+            await new Promise(r => setTimeout(r, 500));
+            try {
+                const r2 = await fetch(API + '/api/shop/products', { headers: baseHeaders });
+                allProducts = (await r2.json())?.products || [];
+            } catch(e) {}
+        }
 
         window.shopCategories = categories;
         window.shopAllProducts = allProducts;
@@ -4268,7 +4284,11 @@ async function loadShop() {
 function renderShopProducts(products) {
     const shopList = document.getElementById('shopList');
     if (products.length === 0) {
-        shopList.innerHTML = '<div class="empty"><div class="empty-text">Nessun prodotto disponibile</div></div>';
+        shopList.innerHTML = `<div class="empty" style="padding:30px 20px;text-align:center;">
+            <div style="font-size:40px;margin-bottom:10px;">🛍️</div>
+            <div class="empty-text" style="margin-bottom:14px;">Shop in caricamento...</div>
+            <button onclick="loadShop()" style="padding:10px 20px;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border:none;border-radius:100px;font-weight:700;cursor:pointer;">🔄 Ricarica</button>
+        </div>`;
         return;
     }
 

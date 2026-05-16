@@ -34,45 +34,6 @@
       "credits": 50,
       "password_hash": "$2b$10$VsgjrRozHoQe07PEE3S0COnt6vdr9ne.kmt0ynXWO4y50at.w5tYK",
       "last_seen": 1778930015072
-    },
-    {
-      "id": "u_068a92e63ae9",
-      "email": "bob2015.gc@gmail.com",
-      "username": "broker",
-      "password_hash": "$2b$10$vlLYysQCM6OKnT8JO2K62u5w6MGnB.tJaD4SM5aYPRwYqE8ZUhs/W",
-      "is_admin": false,
-      "profile": {
-        "avatar_letter": "B",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778930736311,
-      "updated_at": 1778930736311
     }
   ],
   "stories": [],
@@ -387,11 +348,6 @@
       "user_id": "u_test_login",
       "credits": 50,
       "updated_at": 1778929441679
-    },
-    {
-      "user_id": "u_068a92e63ae9",
-      "credits": 50,
-      "updated_at": 1778930736311
     }
   ],
   "bitcoin_payments": [
