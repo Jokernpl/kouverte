@@ -72,7 +72,8 @@ function loadDB() {
             users: [
                 { id: 'u_test1', username: 'Voci Notturne', firstName: 'Night', verified: true, created_at: 1777900000000, credits: 50 },
                 { id: 'u_test2', username: 'Single Italiani', firstName: 'Solo', verified: true, created_at: 1777900000000, credits: 50 },
-                { id: 'u_test3', username: 'Deep Talks', firstName: 'Deep', verified: true, created_at: 1777900000000, credits: 50 }
+                { id: 'u_test3', username: 'Deep Talks', firstName: 'Deep', verified: true, created_at: 1777900000000, credits: 50 },
+                { id: 'u_test_login', email: 'test1@kouverte.local', username: 'TestUser', firstName: 'Test', verified: false, created_at: 1777900000000, credits: 50 }
             ],
             stories: [],
             reactions: [],
@@ -109,6 +110,17 @@ function saveDB(db) {
 function markDirty() { dbDirty = true; }
 
 let DB = loadDB();
+
+// Initialize test user password hash on startup
+(async () => {
+    const testUser = DB.users.find(u => u.email === 'test1@kouverte.local');
+    if (testUser && !testUser.password_hash) {
+        try {
+            testUser.password_hash = await bcrypt.hash('Test123456', 10);
+            markDirty();
+        } catch(e) { console.error('Failed to hash test password:', e); }
+    }
+})();
 
 // Salva periodicamente solo se dirty
 setInterval(() => { if (dbDirty) saveDB(DB); }, 10000);
