@@ -1054,11 +1054,18 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 .room-join:active { transform: scale(0.94); }
 
 /* Shop Modal */
-.shop-modal-card {
-    max-height: 80vh;
-    overflow-y: auto;
+.modal-card.shop-modal-card {
+    max-height: 85vh;
+    overflow-y: auto !important;
+    overflow-x: hidden;
     padding: 20px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(168,85,247,0.5) transparent;
 }
+.modal-card.shop-modal-card::-webkit-scrollbar { width: 6px; }
+.modal-card.shop-modal-card::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #a855f7, #ec4899); border-radius: 100px; }
+.modal-card.shop-modal-card::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
 .shop-header {
     display: flex;
     justify-content: space-between;
