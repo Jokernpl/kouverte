@@ -69,12 +69,21 @@ const DB_BACKUP = path.join(__dirname, 'vox-data.bak.json');
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) {
         return {
-            users: [],
+            users: [
+                { id: 'u_test1', username: 'Voci Notturne', firstName: 'Night', verified: true, created_at: 1777900000000, credits: 50 },
+                { id: 'u_test2', username: 'Single Italiani', firstName: 'Solo', verified: true, created_at: 1777900000000, credits: 50 },
+                { id: 'u_test3', username: 'Deep Talks', firstName: 'Deep', verified: true, created_at: 1777900000000, credits: 50 }
+            ],
             stories: [],
             reactions: [],
             duels: [],
             votes: [],
             messages: [],
+            voice_rooms: [
+                { id: 'room_1', name: 'Voci Notturne', desc: 'Chat vocale di notte', icon: '🌙', users_count: 6, created_at: 1777900000000 },
+                { id: 'room_2', name: 'Single Italiani', desc: 'Persone sole che cercano connessione', icon: '❤️', users_count: 6, created_at: 1777900000000 },
+                { id: 'room_3', name: 'Deep Talks', desc: 'Conversazioni profonde', icon: '🧠', users_count: 4, created_at: 1777900000000 }
+            ],
             shop_products: [
                 { id: 'vox_vip', name: 'Kouverte Vox VIP · 1 mese', desc: 'Storie che durano 7 giorni, badge esclusivo', price_credits: 999, category: 'subscription', item_type: 'vip_month', icon: '👑', item_data: '{"duration_days":30}' },
                 { id: 'vox_boost', name: 'Boost · 2 ore', desc: 'La tua storia in cima al feed', price_credits: 199, category: 'boost', item_type: 'boost_2h', icon: '🚀', item_data: '{"duration_minutes":120}' },
