@@ -71,7 +71,12 @@ bot.onText(/\/help/, (msg) => {
 `*Come usare VOX:*
 
 /start — Apri l'app
+/reset — 🔄 Pulisci cache + link FRESCO
 /stanze — Lista stanze a tema
+/stats — Statistiche live
+/top — Voci trending
+/crediti — Pacchetti crediti
+/badge — Achievement
 /about — Cos'è VOX
 /help — Questo messaggio
 
@@ -260,6 +265,43 @@ Pronto a sentire voci autentiche? 🎙
     bot.sendMessage(chatId, stanza, {
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: [[{ text: '🏠 Apri Stanze', web_app: { url: WEBAPP_URL + '#rooms' } }]] }
+    });
+});
+
+// /reset (alias /release) - Pulisce cache e rimanda link app fresco
+bot.onText(/\/(reset|release|refresh|fix)/, (msg) => {
+    const chatId = msg.chat.id;
+    const v = Date.now();
+    const freshUrl = WEBAPP_URL + '?v=' + v;
+    const text =
+`🔄 *RESET APP COMPLETO*
+
+Ho generato un link FRESCO che bypassa la cache:
+
+📱 *Sul tuo dispositivo:*
+
+*1️⃣ Su Telegram Mini App:*
+   • Tocca i 3 puntini in alto a destra (•••)
+   • Seleziona "Reload" / "Ricarica"
+   • Oppure chiudi e riapri il bot
+
+*2️⃣ Su browser Chrome/Safari:*
+   • Tieni premuto il pulsante refresh
+   • Scegli "Empty cache and hard reload"
+   • Oppure CTRL+SHIFT+R (desktop)
+
+*3️⃣ Apri il link sotto* — ha versione fresca v=${v}
+
+✨ La nuova UI premium ti aspetta!`;
+    bot.sendMessage(chatId, text, {
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '🚀 Apri VOX FRESCO', web_app: { url: freshUrl } }],
+                [{ text: '🛍️ Vai a Shop', web_app: { url: freshUrl + '#shop' } }],
+                [{ text: '🏠 Vai a Rooms', web_app: { url: freshUrl + '#rooms' } }]
+            ]
+        }
     });
 });
 
