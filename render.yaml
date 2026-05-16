@@ -5,10 +5,19 @@ services:
     plan: free
     buildCommand: npm install
     startCommand: node vox-server.js
+    healthCheckPath: /
     envVars:
-      - key: PORT
-        value: 8082
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
-        value: kouverte-vox-secret-key-change-in-prod
+        generateValue: true
+      - key: WEBAPP_URL
+        value: https://www.kouverte.com/tg.html
+      - key: BITCOIN_ADDRESS
+        value: bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00
+      - key: BITCOIN_MIN_CONFIRMATIONS
+        value: "4"
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        value: Kouverte_bot

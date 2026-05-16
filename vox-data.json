@@ -1,2397 +1,48 @@
 {
   "users": [
     {
-      "id": "u_b53373726f6d",
-      "username": "sosaluigi94@gmail.co",
-      "created_at": 1777932612004
+      "id": "u_test1",
+      "username": "Voci Notturne",
+      "firstName": "Night",
+      "verified": true,
+      "created_at": 1777900000000,
+      "credits": 50
     },
     {
-      "id": "tg_tg_999",
-      "username": "testuser",
-      "firstName": "Test",
-      "telegramId": "tg_999",
-      "verified": false,
-      "created_at": 1778049688325
+      "id": "u_test2",
+      "username": "Single Italiani",
+      "firstName": "Solo",
+      "verified": true,
+      "created_at": 1777900000000,
+      "credits": 50
     },
     {
-      "id": "tg_tg_anon_a7i7nu",
-      "username": "anonimo",
-      "firstName": "Ospite",
-      "telegramId": "tg_anon_a7i7nu",
-      "verified": false,
-      "created_at": 1778049725972
+      "id": "u_test3",
+      "username": "Deep Talks",
+      "firstName": "Deep",
+      "verified": true,
+      "created_at": 1777900000000,
+      "credits": 50
     },
     {
-      "id": "u_5f55bfcd707e",
-      "username": "nirone",
-      "created_at": 1778075901481
-    },
-    {
-      "id": "tg_tg_anon_64346g",
-      "username": "anonimo",
-      "firstName": "Ospite",
-      "telegramId": "tg_anon_64346g",
-      "verified": false,
-      "created_at": 1778076564705
-    },
-    {
-      "id": "tg_tg_anon_0fbpl7",
-      "username": "anonimo",
-      "firstName": "Ospite",
-      "telegramId": "tg_anon_0fbpl7",
-      "verified": false,
-      "created_at": 1778077538436
-    },
-    {
-      "id": "tg_tg_anon_al5dd9",
-      "username": "anonimo",
-      "firstName": "Ospite",
-      "telegramId": "tg_anon_al5dd9",
-      "verified": false,
-      "created_at": 1778091949128
-    },
-    {
-      "id": "tg_tg_anon_qn1tjd",
-      "username": "anonimo",
-      "firstName": "Ospite",
-      "telegramId": "tg_anon_qn1tjd",
-      "verified": false,
-      "created_at": 1778091959078
-    },
-    {
-      "id": "u_b2286b6fa763",
+      "id": "u_test_login",
       "email": "test1@kouverte.local",
-      "username": "testuser1",
-      "password_hash": "$2b$10$S57z5.Vdd6elV7kcyLHmyOQ0iUiqbNEze86hAmOWVJsPV39GUljR6",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "Sono TestUser1. Love voice dating! 🎙️",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_933e4570694b",
-            "duration": 5371.345109470505
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 12,
-        "matches_count": 2,
-        "likes_received": 8,
-        "duels_participated": 1
-      },
-      "created_at": 1777924175768.6687,
-      "updated_at": 1778182490737,
-      "last_seen": 1778519295117
+      "username": "TestUser",
+      "firstName": "Test",
+      "verified": false,
+      "created_at": 1777900000000,
+      "credits": 50,
+      "password_hash": "$2b$10$VsgjrRozHoQe07PEE3S0COnt6vdr9ne.kmt0ynXWO4y50at.w5tYK",
+      "last_seen": 1778930015072
     },
     {
-      "id": "u_60a36fefa8ff",
-      "email": "test2@kouverte.local",
-      "username": "testuser2",
-      "password_hash": "$2b$10$xry.SIl40DBVZbFGSzsbnO8nuAoLJoWqKa6Q3VZ6Q./SE4P5uVOfC",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "Sono TestUser2. Love voice dating! 🎙️",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_918f11f6e8f8",
-            "duration": 7171.797172216924
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 3,
-        "matches_count": 0,
-        "likes_received": 18,
-        "duels_participated": 0
-      },
-      "created_at": 1777826990434.8726,
-      "updated_at": 1778112182186,
-      "last_seen": 1778112183320
-    },
-    {
-      "id": "u_b9facda47db0",
-      "email": "test3@kouverte.local",
-      "username": "testuser3",
-      "password_hash": "$2b$10$V.IPJGG1ornyL.Lz3ZjlHePp7xewgt84WVcTZBeHtUZtAuEX5W232",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "Sono TestUser3. Love voice dating! 🎙️",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_74c079234795",
-            "duration": 4492.919774553306
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 4,
-        "matches_count": 3,
-        "likes_received": 13,
-        "duels_participated": 0
-      },
-      "created_at": 1777623200905.8955,
-      "updated_at": 1778112182263,
-      "last_seen": 1778112183782
-    },
-    {
-      "id": "u_e176d8fd43a7",
-      "email": "test4@kouverte.local",
-      "username": "testuser4",
-      "password_hash": "$2b$10$khyDdwZXSGuzMzzckCYb3u8p1/aum.wGWKCUIWjUgQmX3pJajm9Ce",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "Sono TestUser4. Love voice dating! 🎙️",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_e7c157574899",
-            "duration": 8369.0656654385
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 2,
-        "matches_count": 2,
-        "likes_received": 1,
-        "duels_participated": 1
-      },
-      "created_at": 1777777226665.722,
-      "updated_at": 1778112182338,
-      "last_seen": 1778112184253
-    },
-    {
-      "id": "u_e00868e9b90c",
-      "email": "test5@kouverte.local",
-      "username": "testuser5",
-      "password_hash": "$2b$10$4fztzTTktvUYtYPbq96KvukhEbtgQmXhbKVX/7xZR87qW70Soa9q6",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "Sono TestUser5. Love voice dating! 🎙️",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_ef67486b3278",
-            "duration": 8377.410443309376
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 2,
-        "matches_count": 1,
-        "likes_received": 18,
-        "duels_participated": 0
-      },
-      "created_at": 1777809831370.557,
-      "updated_at": 1778112182409,
-      "last_seen": 1778112184695
-    },
-    {
-      "id": "u_512c74e6467d",
-      "email": "stress24@test.local",
-      "username": "stress24",
-      "password_hash": "$2b$10$H2VMga/rp.sppmhQ0z72VuNCgsNryECS.CjLn5sUjxVZe/nP0nnqu",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483277,
-      "updated_at": 1778182483277
-    },
-    {
-      "id": "u_485c760c130f",
-      "email": "stress6@test.local",
-      "username": "stress6",
-      "password_hash": "$2b$10$O6niRjh3w64RTIp/n4N1Hu6gkz6gbW96ca3n8kK.3WIrHdIuerZi6",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483280,
-      "updated_at": 1778182483280
-    },
-    {
-      "id": "u_84329d61333f",
-      "email": "stress25@test.local",
-      "username": "stress25",
-      "password_hash": "$2b$10$FfqJWSsCszxE1ly2CSlhuewWh5v6DYDX6Pztcm7ddyRHtUrU3yiHm",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483282,
-      "updated_at": 1778182483282
-    },
-    {
-      "id": "u_e134534bb59d",
-      "email": "stress11@test.local",
-      "username": "stress11",
-      "password_hash": "$2b$10$FqLkPhW/7qSQpDAARaURH.pqkE9ILJFw5.szWb2itL3oHigdwjzgC",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483283,
-      "updated_at": 1778182483283
-    },
-    {
-      "id": "u_960c65114439",
-      "email": "stress1@test.local",
-      "username": "stress1",
-      "password_hash": "$2b$10$ok5cYFiuJLWB/aKT7RSKg.yM2lyM4boMb7yS88ngT2XMJuS7hfdKe",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483350,
-      "updated_at": 1778182483350
-    },
-    {
-      "id": "u_180fd033b01e",
-      "email": "stress4@test.local",
-      "username": "stress4",
-      "password_hash": "$2b$10$zQj30ljtQLfEb9TT.9Nn0eGWzgDwHlQSLprE0CIXxSvG.IdL2Brz6",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483353,
-      "updated_at": 1778182483353
-    },
-    {
-      "id": "u_e0afa699b600",
-      "email": "stress3@test.local",
-      "username": "stress3",
-      "password_hash": "$2b$10$FuUoqvxOszs1oAoMjDJFd.iytqzK/Qug8.ZpwWgDiXRk5WdjYn.qu",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483355,
-      "updated_at": 1778182483355
-    },
-    {
-      "id": "u_264791f41538",
-      "email": "stress8@test.local",
-      "username": "stress8",
-      "password_hash": "$2b$10$9GFsurVtuWA.8pOZkH/Uhe5M8s2GHFv/ULvjWE4yOHoN/GdYY0T2m",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483356,
-      "updated_at": 1778182483356
-    },
-    {
-      "id": "u_6b357c5e2e30",
-      "email": "stress12@test.local",
-      "username": "stress12",
-      "password_hash": "$2b$10$CD77GC0lTWl4d/rLVWoQs.rfw2DcpjR0SD.wlmK.aPYqZ/g49vCjS",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483410,
-      "updated_at": 1778182483410
-    },
-    {
-      "id": "u_0e1e042ad7c0",
-      "email": "stress13@test.local",
-      "username": "stress13",
-      "password_hash": "$2b$10$4A90c416H.4D/dbsExTy9.GBE94IyNMMABIt9.QTH/ykGvBuG5zYu",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483417,
-      "updated_at": 1778182483417
-    },
-    {
-      "id": "u_e2e07c3231d5",
-      "email": "stress15@test.local",
-      "username": "stress15",
-      "password_hash": "$2b$10$8xjrAzGz0ej7wMb0UvamfuIhF7g/MSrNivLZWUWv2OsVZgUXFnA92",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483420,
-      "updated_at": 1778182483420
-    },
-    {
-      "id": "u_14cbc6c9cb84",
-      "email": "stress7@test.local",
-      "username": "stress7",
-      "password_hash": "$2b$10$AmY3wflBcpImkHX.Ybf2oeR/XPHTJEA6lNKkpy/w2Q8EbWMOOk8v2",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483425,
-      "updated_at": 1778182483425
-    },
-    {
-      "id": "u_33acfe8dacbf",
-      "email": "stress27@test.local",
-      "username": "stress27",
-      "password_hash": "$2b$10$yzaIeBk/4/M0oU1ieqodgOTIW4RfCpUXiJEw0sHqBNvpGY9pccAjK",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483477,
-      "updated_at": 1778182483477
-    },
-    {
-      "id": "u_a08f274427da",
-      "email": "stress23@test.local",
-      "username": "stress23",
-      "password_hash": "$2b$10$08m67p4grAfJHP2FLpefXuWE8z5M84.K2cN6tybCVWNNN9/dTLv0u",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483480,
-      "updated_at": 1778182483480
-    },
-    {
-      "id": "u_ca02d27b86f9",
-      "email": "stress14@test.local",
-      "username": "stress14",
-      "password_hash": "$2b$10$hXGg9ZLJYYdF2O./TgBzBOBYaNbI0ubARFIX9UpOBwenH85EgUbny",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483489,
-      "updated_at": 1778182483489
-    },
-    {
-      "id": "u_0f8221b06675",
-      "email": "stress17@test.local",
-      "username": "stress17",
-      "password_hash": "$2b$10$4b6OpLx4TFYKBvg7cQx7SuSAoIjUIKkXm4pKnFAsgECpfPp3ssNeC",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483502,
-      "updated_at": 1778182483502
-    },
-    {
-      "id": "u_1bdc92363083",
-      "email": "stress9@test.local",
-      "username": "stress9",
-      "password_hash": "$2b$10$kXlsMu/KwYF8BrP/Y6t9MeP2o0UCREdgPU9GccHoHk7xJ9aUFJp7S",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483538,
-      "updated_at": 1778182483538
-    },
-    {
-      "id": "u_507b25360e30",
-      "email": "stress10@test.local",
-      "username": "stress10",
-      "password_hash": "$2b$10$G3j0mtlsfC2E34oQQ2b6BeebGItb1NoGA98Yqw9TGfXKJ0wkKpYCy",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483540,
-      "updated_at": 1778182483540
-    },
-    {
-      "id": "u_7181e70eac6f",
-      "email": "stress28@test.local",
-      "username": "stress28",
-      "password_hash": "$2b$10$T.nfAOIL.lmdIAgFBdzMA.4dbLpk/4rtFU5WKD9qhsAcVO0fMSKBe",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483553,
-      "updated_at": 1778182483553
-    },
-    {
-      "id": "u_a923e2a4aa9b",
-      "email": "stress21@test.local",
-      "username": "stress21",
-      "password_hash": "$2b$10$S4J1/9J8er2Enei/7s8eiOc4wnjfUrXAePqPdz.yh4LsGmUDHud9a",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483566,
-      "updated_at": 1778182483566
-    },
-    {
-      "id": "u_8aeaa92fa9a9",
-      "email": "stress18@test.local",
-      "username": "stress18",
-      "password_hash": "$2b$10$n5eXAiVVY3sXQIMKtCyWt.6RHfdHbJ3Tz6SJ45aRipczdwLhKa1F2",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483605,
-      "updated_at": 1778182483605
-    },
-    {
-      "id": "u_9b5a88db42ea",
-      "email": "stress22@test.local",
-      "username": "stress22",
-      "password_hash": "$2b$10$iKJ/y6IG9enRCkdAVUKJI.dQ3iSQQq337C7mR0v9VRsEdudkNWUqW",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483607,
-      "updated_at": 1778182483607
-    },
-    {
-      "id": "u_dc12025aa9ae",
-      "email": "stress5@test.local",
-      "username": "stress5",
-      "password_hash": "$2b$10$uZ8HELLaof6AW7eBPJEgfeW5sJlp0Be8gO/ZRpfcRebGxB9VMf36G",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483620,
-      "updated_at": 1778182483620
-    },
-    {
-      "id": "u_b43fceb2c8e6",
-      "email": "stress29@test.local",
-      "username": "stress29",
-      "password_hash": "$2b$10$6SK5uxmRmFhT0w1GinSdzez8QBmRGZN/DFvZF/jiVVpyAsNchIsmC",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483628,
-      "updated_at": 1778182483628
-    },
-    {
-      "id": "u_842814c10b2a",
-      "email": "stress16@test.local",
-      "username": "stress16",
-      "password_hash": "$2b$10$PtxonUeWZ0EziotjrNFhNex4Vku3hltZhAvkfSKJcXcZc9XC/1exS",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483672,
-      "updated_at": 1778182483672
-    },
-    {
-      "id": "u_a07f6c43c471",
-      "email": "stress20@test.local",
-      "username": "stress20",
-      "password_hash": "$2b$10$j70YAdc7hxftDYEDAXIlKOfMr0D4knOO9Xg6wkYzLpBYqEAjE3A6.",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483673,
-      "updated_at": 1778182483673
-    },
-    {
-      "id": "u_8840bf7bf080",
-      "email": "stress26@test.local",
-      "username": "stress26",
-      "password_hash": "$2b$10$Xz7sDgbREM.c7xb9dEpijewWbGVZGKNZAexc/ghKI.c54n7eQcrY.",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483690,
-      "updated_at": 1778182483690
-    },
-    {
-      "id": "u_026f819b2fad",
-      "email": "stress2@test.local",
-      "username": "stress2",
-      "password_hash": "$2b$10$rNsE4jRW7bE6TQRVowPFdu8ND.fn2N9DuCZdlZ.BfkYwnxRP76SJ6",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483694,
-      "updated_at": 1778182483694
-    },
-    {
-      "id": "u_86891dbc6c8e",
-      "email": "stress19@test.local",
-      "username": "stress19",
-      "password_hash": "$2b$10$kuED7HmUCXVjsnND4dbZnu.befRgX2dbPsvXb8K8PXFFJu.mZfdjy",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483735,
-      "updated_at": 1778182483735
-    },
-    {
-      "id": "u_e72eb0a40955",
-      "email": "stress30@test.local",
-      "username": "stress30",
-      "password_hash": "$2b$10$42Jj.6DQsXUJg.BP2VzvtuOMqD2BlAGxIG0YnLOgSzZ/1o4v9iqsS",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182483741,
-      "updated_at": 1778182483741
-    },
-    {
-      "id": "u_1f4e1ce53ecc",
-      "email": "alice@kouverte.local",
-      "username": "alice",
-      "password_hash": "$2b$10$K08V6XwXZ.8s6ak7qJ8K8OSLUELhMrplpj.29/omTgN4GTeZXiS.K",
-      "profile": {
-        "avatar_letter": "A",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_254fa8e32098",
-            "duration": 5000
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": "story_b9c0e62c88da",
-            "duration": 7000
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 2,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182644305,
-      "updated_at": 1778182645689
-    },
-    {
-      "id": "u_2376240e38ef",
-      "email": "bob@kouverte.local",
-      "username": "bob",
-      "password_hash": "$2b$10$NseMxSfF7bXpe5RuNSEb4uo1K1EP6SthLqvYaD3QdfkfIe0NJXPYq",
-      "profile": {
-        "avatar_letter": "B",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 1,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182646105,
-      "updated_at": 1778182647335
-    },
-    {
-      "id": "u_2f7c9dce9d1b",
-      "email": "persist1778182838045@test.com",
-      "username": "persist1778182838045",
-      "password_hash": "$2b$10$cJyVVqinnQ/wzZWm5tKSm.RqDP9XxRHJbdLuaYzBt392oGdO4VLpm",
-      "profile": {
-        "avatar_letter": "P",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_a74e491e883b",
-            "duration": 5000
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 1,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778182838194,
-      "updated_at": 1778182838207,
-      "last_seen": 1778182838815
-    },
-    {
-      "id": "u_12dedfdd4448",
-      "email": "testuser1778222478@kouverte.local",
-      "username": "testuser1778222478",
-      "password_hash": "$2b$10$gkK07SfMc.Cbv8yAcMedrO1/j0fFoKLMUMYhcnHjJwNpZsAACD2bu",
-      "profile": {
-        "avatar_letter": "T",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_10585e26cfa3",
-            "duration": 5000
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 1,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778222478683,
-      "updated_at": 1778222511617,
-      "last_seen": 1778222479873
-    },
-    {
-      "id": "u_ceaa255f97d1",
-      "email": "amico1778224598@test.com",
-      "username": "amico1778224598",
-      "password_hash": "$2b$10$npVuv7CFzOyZK/e27y2I9ettUklG7fE7hK4ZbS9VAid8plvhUCuge",
-      "profile": {
-        "avatar_letter": "A",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778224616593,
-      "updated_at": 1778224616593
-    },
-    {
-      "id": "u_ebcaabb75caa",
-      "email": "alice1778225703@kv.com",
-      "username": "alice1778225703",
-      "password_hash": "$2b$10$ggA9woH7jYUAieKy0hBAaOx46Rx.jd/lCx1lEP3lfUkaHQTQpxJ5y",
-      "profile": {
-        "avatar_letter": "A",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_8baf5b8473a2",
-            "duration": 5000
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 1,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778225704275,
-      "updated_at": 1778225721747,
-      "last_seen": 1778225705636
-    },
-    {
-      "id": "u_0d2fd54086eb",
-      "email": "bob1778225703@kv.com",
-      "username": "bob1778225703",
-      "password_hash": "$2b$10$Xu4HMyjU.2HuREZGf0WxCu5umuhfC/m2ACIS11BhmL/CeaE/YNtoK",
-      "profile": {
-        "avatar_letter": "B",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": "story_da8c2c632895",
-            "duration": 3000
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 1,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778225728112,
-      "updated_at": 1778225729107
-    },
-    {
-      "id": "u_62d2df9c8055",
+      "id": "u_068a92e63ae9",
       "email": "bob2015.gc@gmail.com",
-      "username": "bob2015.gc@gmail.com",
-      "password_hash": "$2b$10$KYhsazbRbwDjE.d/4ZtCz.SrFwg2ZJPDgnJjLHImdybngpCD0tgMG",
-      "profile": {
-        "avatar_letter": "B",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778261246431,
-      "updated_at": 1778261246431
-    },
-    {
-      "id": "u_4069bae1e48d",
-      "email": "newtester25550@test.local",
-      "username": "newtester13071",
-      "password_hash": "$2b$10$5y4fWv/L3NhifTyml9sIEOjda4o7LlloIMwsktca5X6GKxghs0G8a",
-      "profile": {
-        "avatar_letter": "N",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778261519158,
-      "updated_at": 1778261519158
-    },
-    {
-      "id": "u_32b50643e26c",
-      "email": "user12315@vox.local",
-      "username": "user8129",
-      "password_hash": "$2b$10$sFG9JVyJvtAPvVbZptBIKeO91W.lxR7KaYyM53pFmp8MYq6LOkrpe",
-      "profile": {
-        "avatar_letter": "U",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778261559252,
-      "updated_at": 1778261559252
-    },
-    {
-      "id": "u_f5a7be434f3f",
-      "email": "marco@italia.local",
-      "username": "marco",
-      "password_hash": "$2b$10$Dyh5XOgXoNem9Tmlgk/iwOAAXvDQYwEoR1aiY9P7RkytKud9lhtgC",
-      "profile": {
-        "avatar_letter": "M",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270567980,
-      "updated_at": 1778270567980
-    },
-    {
-      "id": "u_62488c016114",
-      "email": "giulia@italia.local",
-      "username": "giulia",
-      "password_hash": "$2b$10$x6HBK3NU3YSNPefQtEpgpuO70qNrZQJP0CBM1iWIt8jOZDQ8tIK6m",
-      "profile": {
-        "avatar_letter": "G",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270568547,
-      "updated_at": 1778270568547
-    },
-    {
-      "id": "u_eb9e86d40353",
-      "email": "juan@espa�a.local",
-      "username": "juan",
-      "password_hash": "$2b$10$HIebRC1KXOSHpF5z.lPmVu6ZlN5P.r3YAnlVSn0HHEfLSiXf4fQti",
-      "profile": {
-        "avatar_letter": "J",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270569106,
-      "updated_at": 1778270569106
-    },
-    {
-      "id": "u_8e9452d76481",
-      "email": "sofia@espa�a.local",
-      "username": "sofia",
-      "password_hash": "$2b$10$0DpT1..r50PMll1EC7YZi.8.j3a8vnfcF5Nf/376OnjchYmZgEZnW",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270569648,
-      "updated_at": 1778270569648
-    },
-    {
-      "id": "u_6ddf457e0302",
-      "email": "pierre@france.local",
-      "username": "pierre",
-      "password_hash": "$2b$10$cpC.bhZIig8wM77JOUw41.l1ml3.aN6Tudeupvjn1IvrnU.OjSnAS",
-      "profile": {
-        "avatar_letter": "P",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270570207,
-      "updated_at": 1778270570207
-    },
-    {
-      "id": "u_6d7a784a290e",
-      "email": "marie@france.local",
-      "username": "marie",
-      "password_hash": "$2b$10$Y14RHU3DjF71Jtwafq0Lze5nXak7/kjGSoO9DzAqbOUqSYJxV608m",
-      "profile": {
-        "avatar_letter": "M",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270570767,
-      "updated_at": 1778270570767
-    },
-    {
-      "id": "u_3f469d62f189",
-      "email": "klaus@deutschland.local",
-      "username": "klaus",
-      "password_hash": "$2b$10$TJFe6hVGHYD5wRfMZPiw9O7IkDyeb1uy0EnoghYolzthOensniJ3.",
-      "profile": {
-        "avatar_letter": "K",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270571296,
-      "updated_at": 1778270571296
-    },
-    {
-      "id": "u_ec79e1f131e8",
-      "email": "anna@deutschland.local",
-      "username": "anna",
-      "password_hash": "$2b$10$mKpCVR6bKvSjd1iXZTMcu.DhB1stYGaEZ2BsnNrXdYfIEpZcfQ38u",
-      "profile": {
-        "avatar_letter": "A",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270571935,
-      "updated_at": 1778270571935
-    },
-    {
-      "id": "u_9939224d934e",
-      "email": "joao@brasil.local",
-      "username": "jo�o",
-      "password_hash": "$2b$10$e8QhH0h3Vy7N8ABAHu5KKONZSS1LznwWPMHzxc90Mu2zdDhalomte",
-      "profile": {
-        "avatar_letter": "J",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270572481,
-      "updated_at": 1778270572481
-    },
-    {
-      "id": "u_be1ddb6015df",
-      "email": "mariana@brasil.local",
-      "username": "mariana",
-      "password_hash": "$2b$10$P0H8Ais3F9CmDQ8z7Rhbmu7TiRxrJYf6a8qNO4Ppbirvmc6zknH/e",
-      "profile": {
-        "avatar_letter": "M",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270573054,
-      "updated_at": 1778270573054
-    },
-    {
-      "id": "u_993b957159e2",
-      "email": "diego@mexico.local",
-      "username": "diego",
-      "password_hash": "$2b$10$5xNIFPqDAPlUgo5Ow1ObGu1n6VUz3/mrLnsWuFX6EGWa6/ZlmfzZK",
-      "profile": {
-        "avatar_letter": "D",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270573581,
-      "updated_at": 1778270573581
-    },
-    {
-      "id": "u_85f6cd1fa4a7",
-      "email": "valentina@mexico.local",
-      "username": "valentina",
-      "password_hash": "$2b$10$9qdhp.slhz6SoWpRZpFZyu5zqW8UUeWTngOi/.Nni7M2asMjQLPKO",
-      "profile": {
-        "avatar_letter": "V",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270574105,
-      "updated_at": 1778270574105
-    },
-    {
-      "id": "u_56be54d04e48",
-      "email": "james@uk.local",
-      "username": "james",
-      "password_hash": "$2b$10$PiVofJz28cSLP1lvu6MXSekRTXNmbiYK1GrYC7oBVpXikWQs2Mj.6",
-      "profile": {
-        "avatar_letter": "J",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270574633,
-      "updated_at": 1778270574633
-    },
-    {
-      "id": "u_ab30cacd9807",
-      "email": "emma@uk.local",
-      "username": "emma",
-      "password_hash": "$2b$10$1UAWo3o6.JCU/7K3EzLoVOBvS00YsBrM735RquP.4lpSAdFwyrw1G",
-      "profile": {
-        "avatar_letter": "E",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270575157,
-      "updated_at": 1778270575157
-    },
-    {
-      "id": "u_0e085b6473ec",
-      "email": "yuki@japan.local",
-      "username": "yuki",
-      "password_hash": "$2b$10$7Zd2ZunDj7RuyQg5wlT2veSLsuQEktgo0aJs8UK8eNJOXemDsgyfq",
-      "profile": {
-        "avatar_letter": "Y",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270575702,
-      "updated_at": 1778270575702
-    },
-    {
-      "id": "u_0c051651d77d",
-      "email": "sakura@japan.local",
-      "username": "sakura",
-      "password_hash": "$2b$10$PcfeeGx34mQqA3qJXaH9cOMWbjqjkT1rCX3DspVjfelAvKy6xP5Jq",
-      "profile": {
-        "avatar_letter": "S",
-        "bio": "",
-        "clips": [
-          {
-            "slot": 0,
-            "title": "Chi sono",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 1,
-            "title": "Mi piace",
-            "audio_id": null,
-            "duration": 0
-          },
-          {
-            "slot": 2,
-            "title": "Cerco",
-            "audio_id": null,
-            "duration": 0
-          }
-        ]
-      },
-      "stats": {
-        "stories_count": 0,
-        "matches_count": 0,
-        "likes_received": 0,
-        "duels_participated": 0
-      },
-      "created_at": 1778270576266,
-      "updated_at": 1778270576266
-    },
-    {
-      "id": "u_9618b9301e45",
-      "email": "newuser_test@test.com",
-      "username": "newtester",
-      "password_hash": "$2b$10$iWrpKIGGW.IBV9mYkL.79u9VQc6k340sfSNDEfBrEiKaTSYyx/fN6",
+      "username": "broker",
+      "password_hash": "$2b$10$vlLYysQCM6OKnT8JO2K62u5w6MGnB.tJaD4SM5aYPRwYqE8ZUhs/W",
       "is_admin": false,
       "profile": {
-        "avatar_letter": "N",
+        "avatar_letter": "B",
         "bio": "",
         "clips": [
           {
@@ -2420,305 +71,287 @@
         "likes_received": 0,
         "duels_participated": 0
       },
-      "created_at": 1778345033480,
-      "updated_at": 1778345033480,
-      "last_seen": 1778345051074
+      "created_at": 1778930736311,
+      "updated_at": 1778930736311
     }
   ],
-  "stories": [
-    {
-      "id": "story_933e4570694b",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 5371.345109470505,
-      "mood": "fun",
-      "expires_at": 1778198582115,
-      "created_at": 1778110173562.2568
-    },
-    {
-      "id": "story_027f49b73c70",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 5175.817742063942,
-      "mood": "vibe",
-      "expires_at": 1778198582115,
-      "created_at": 1778103844881.8425
-    },
-    {
-      "id": "story_918f11f6e8f8",
-      "user_id": "u_60a36fefa8ff",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 7171.797172216924,
-      "mood": "vibe",
-      "expires_at": 1778198582186,
-      "created_at": 1778111580775.8657
-    },
-    {
-      "id": "story_0f4e1fe4b5a0",
-      "user_id": "u_60a36fefa8ff",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 5223.706377926108,
-      "mood": "fun",
-      "expires_at": 1778198582186,
-      "created_at": 1778101786140.1257
-    },
-    {
-      "id": "story_34017216dfe7",
-      "user_id": "u_60a36fefa8ff",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 5321.507814487463,
-      "mood": "hot",
-      "expires_at": 1778198582186,
-      "created_at": 1778104148339.7546
-    },
-    {
-      "id": "story_74c079234795",
-      "user_id": "u_b9facda47db0",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 4492.919774553306,
-      "mood": "fun",
-      "expires_at": 1778198582264,
-      "created_at": 1778101888836.8538
-    },
-    {
-      "id": "story_fd2a5cfd7a05",
-      "user_id": "u_b9facda47db0",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 6517.394719948763,
-      "mood": "deep",
-      "expires_at": 1778198582264,
-      "created_at": 1778097107930.2979
-    },
-    {
-      "id": "story_c87794b2430d",
-      "user_id": "u_b9facda47db0",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 8942.575871630004,
-      "mood": "deep",
-      "expires_at": 1778198582264,
-      "created_at": 1778102682266.2866
-    },
-    {
-      "id": "story_e7c157574899",
-      "user_id": "u_e176d8fd43a7",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 8369.0656654385,
-      "mood": "hot",
-      "expires_at": 1778198582338,
-      "created_at": 1778111647953.0583
-    },
-    {
-      "id": "story_f2372cfd12d5",
-      "user_id": "u_e176d8fd43a7",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 8136.948174852272,
-      "mood": "hot",
-      "expires_at": 1778198582338,
-      "created_at": 1778104201830.855
-    },
-    {
-      "id": "story_a5ce5178b68a",
-      "user_id": "u_e176d8fd43a7",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 4431.40427183616,
-      "mood": "fun",
-      "expires_at": 1778198582338,
-      "created_at": 1778095867416.6963
-    },
-    {
-      "id": "story_ef67486b3278",
-      "user_id": "u_e00868e9b90c",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 8377.410443309376,
-      "mood": "fun",
-      "expires_at": 1778198582409,
-      "created_at": 1778112074823.5762
-    },
-    {
-      "id": "story_35d5bf5b1879",
-      "user_id": "u_e00868e9b90c",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAAA=",
-      "duration_ms": 3321.3540946904795,
-      "mood": "fun",
-      "expires_at": 1778198582409,
-      "created_at": 1778095968990.6091
-    },
-    {
-      "id": "story_7a3885266aaa",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890613,
-      "created_at": 1778182490613
-    },
-    {
-      "id": "story_7aa68453c05a",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890628,
-      "created_at": 1778182490628
-    },
-    {
-      "id": "story_7668e6591c2d",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890644,
-      "created_at": 1778182490644
-    },
-    {
-      "id": "story_0af0da990584",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890659,
-      "created_at": 1778182490659
-    },
-    {
-      "id": "story_09c69c91692a",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890673,
-      "created_at": 1778182490673
-    },
-    {
-      "id": "story_11a58be96310",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890689,
-      "created_at": 1778182490689
-    },
-    {
-      "id": "story_03f5aa08787c",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890704,
-      "created_at": 1778182490704
-    },
-    {
-      "id": "story_39ab311adb1a",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890721,
-      "created_at": 1778182490721
-    },
-    {
-      "id": "story_725a95ea4cf8",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890736,
-      "created_at": 1778182490736
-    },
-    {
-      "id": "story_bee8a0c783b9",
-      "user_id": "u_b2286b6fa763",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 3000,
-      "mood": "vibe",
-      "expires_at": 1778268890737,
-      "created_at": 1778182490737
-    },
-    {
-      "id": "story_254fa8e32098",
-      "user_id": "u_1f4e1ce53ecc",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 5000,
-      "mood": "vibe",
-      "expires_at": 1778269045230,
-      "created_at": 1778182645230
-    },
-    {
-      "id": "story_b9c0e62c88da",
-      "user_id": "u_1f4e1ce53ecc",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 7000,
-      "mood": "hot",
-      "expires_at": 1778269045689,
-      "created_at": 1778182645689
-    },
-    {
-      "id": "story_9017290089fe",
-      "user_id": "u_2376240e38ef",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 4500,
-      "mood": "deep",
-      "expires_at": 1778269047335,
-      "created_at": 1778182647335
-    },
-    {
-      "id": "story_a74e491e883b",
-      "user_id": "u_2f7c9dce9d1b",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA==",
-      "duration_ms": 5000,
-      "mood": "vibe",
-      "expires_at": 1778269238207,
-      "created_at": 1778182838207
-    },
-    {
-      "id": "story_10585e26cfa3",
-      "user_id": "u_12dedfdd4448",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA",
-      "duration_ms": 5000,
-      "mood": "vibe",
-      "expires_at": 1778308911617,
-      "created_at": 1778222511617
-    },
-    {
-      "id": "story_8baf5b8473a2",
-      "user_id": "u_ebcaabb75caa",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA",
-      "duration_ms": 5000,
-      "mood": "vibe",
-      "expires_at": 1778312121746,
-      "created_at": 1778225721747
-    },
-    {
-      "id": "story_da8c2c632895",
-      "user_id": "u_0d2fd54086eb",
-      "audio_data": "data:audio/webm;base64,UklGRiYAAABXQVZFZm10IBAA",
-      "duration_ms": 3000,
-      "mood": "hot",
-      "expires_at": 1778312129107,
-      "created_at": 1778225729107
-    }
-  ],
-  "reactions": [
-    {
-      "id": 1,
-      "story_id": "story_254fa8e32098",
-      "emoji": "??",
-      "ip_hash": "12ca17b49af22894",
-      "created_at": 1778182646993
-    },
-    {
-      "id": 2,
-      "story_id": "story_8baf5b8473a2",
-      "emoji": "heart",
-      "ip_hash": "824557efd764ef2e",
-      "created_at": 1778225725229
-    }
-  ],
+  "stories": [],
+  "reactions": [],
   "duels": [],
   "votes": [],
+  "messages": [],
+  "voice_rooms": [
+    {
+      "id": "room_1",
+      "name": "Voci Notturne",
+      "desc": "Chat vocale di notte",
+      "icon": "🌙",
+      "users_count": 6,
+      "created_at": 1777900000000
+    },
+    {
+      "id": "room_2",
+      "name": "Single Italiani",
+      "desc": "Persone sole che cercano connessione",
+      "icon": "❤️",
+      "users_count": 6,
+      "created_at": 1777900000000
+    },
+    {
+      "id": "room_3",
+      "name": "Deep Talks",
+      "desc": "Conversazioni profonde",
+      "icon": "🧠",
+      "users_count": 4,
+      "created_at": 1777900000000
+    }
+  ],
   "shop_products": [
     {
+      "id": "item_frame_neon",
+      "name": "Neon Blue Frame",
+      "desc": "Avatar frame luminescente blu",
+      "price_credits": 150,
+      "category": "cosmetic",
+      "item_type": "avatar_frame",
+      "icon": "⭐",
+      "item_data": "{\"color\":\"#00ffff\",\"glow\":8}",
+      "active": true
+    },
+    {
+      "id": "item_theme_aurora",
+      "name": "Aurora Theme",
+      "desc": "Tema scuro con aurora boreale",
+      "price_credits": 199,
+      "category": "cosmetic",
+      "item_type": "theme",
+      "icon": "🌌",
+      "item_data": "{\"theme\":\"aurora\",\"animated\":true}",
+      "active": true
+    },
+    {
+      "id": "item_effect_echo",
+      "name": "Echo Reverb Effect",
+      "desc": "Effetto vocale riverbero spaziale",
+      "price_credits": 99,
+      "category": "cosmetic",
+      "item_type": "voice_effect",
+      "icon": "🎧",
+      "item_data": "{\"effect\":\"echo\",\"strength\":75}",
+      "active": true
+    },
+    {
+      "id": "item_particles_stardust",
+      "name": "Stardust Particle Trail",
+      "desc": "Particelle luminose intorno al nome",
+      "price_credits": 249,
+      "category": "cosmetic",
+      "item_type": "particles",
+      "icon": "💫",
+      "item_data": "{\"type\":\"stardust\",\"color\":\"#ffcc00\"}",
+      "active": true
+    },
+    {
+      "id": "item_effect_glitch",
+      "name": "Glitch Animation",
+      "desc": "Effetto glitch su testo profilo",
+      "price_credits": 129,
+      "category": "cosmetic",
+      "item_type": "animation",
+      "icon": "⚡",
+      "item_data": "{\"animation\":\"glitch_v1\"}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_sword",
+      "name": "⚔️ Spada Leggendaria",
+      "desc": "Arma mitica della leggenda",
+      "price_credits": 2500,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "⚔️",
+      "item_data": "{\"rarity\":\"legendary\",\"rarity_score\":9500,\"power\":95,\"unique\":true}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_medal",
+      "name": "🏆 Medaglia d'Oro",
+      "desc": "Trofeo per i grandi della voce",
+      "price_credits": 1500,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "🏆",
+      "item_data": "{\"rarity\":\"epic\",\"rarity_score\":7500,\"power\":70}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_crystal",
+      "name": "💎 Cristallo Cosmico",
+      "desc": "Cristallo puro dall'universo infinito",
+      "price_credits": 3500,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "💎",
+      "item_data": "{\"rarity\":\"legendary\",\"rarity_score\":9800,\"power\":98,\"animated\":true}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_crown",
+      "name": "👑 Corona Regale",
+      "desc": "Corona dei veri re della voce",
+      "price_credits": 2000,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "👑",
+      "item_data": "{\"rarity\":\"epic\",\"rarity_score\":7800,\"power\":75}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_scroll",
+      "name": "📜 Pergamena Antica",
+      "desc": "Testo mistico di saggezza vocale",
+      "price_credits": 1200,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "📜",
+      "item_data": "{\"rarity\":\"rare\",\"rarity_score\":5500,\"power\":55}",
+      "active": true
+    },
+    {
+      "id": "item_rarity_star",
+      "name": "🌟 Stella d'Argento",
+      "desc": "Stella brillante del firmamento",
+      "price_credits": 899,
+      "category": "rarity",
+      "item_type": "collectible",
+      "icon": "🌟",
+      "item_data": "{\"rarity\":\"rare\",\"rarity_score\":5000,\"power\":50}",
+      "active": true
+    },
+    {
+      "id": "item_season_spring",
+      "name": "🌸 Spring Flower Crown",
+      "desc": "Corona fiorita della primavera 2025",
+      "price_credits": 299,
+      "category": "seasonal",
+      "item_type": "seasonal_cosmetic",
+      "icon": "🌸",
+      "item_data": "{\"season\":\"spring_2025\",\"expires_at\":\"2025-06-21T23:59:59Z\"}",
+      "active": true
+    },
+    {
+      "id": "item_season_summer",
+      "name": "☀️ Summer Sun Badge",
+      "desc": "Badge dorato dell'estate 2025",
+      "price_credits": 199,
+      "category": "seasonal",
+      "item_type": "seasonal_cosmetic",
+      "icon": "☀️",
+      "item_data": "{\"season\":\"summer_2025\",\"expires_at\":\"2025-09-21T23:59:59Z\"}",
+      "active": true
+    },
+    {
+      "id": "item_season_autumn",
+      "name": "🍂 Autumn Leaf Aura",
+      "desc": "Aura dorata dell'autunno 2025",
+      "price_credits": 249,
+      "category": "seasonal",
+      "item_type": "seasonal_cosmetic",
+      "icon": "🍂",
+      "item_data": "{\"season\":\"autumn_2025\",\"expires_at\":\"2025-12-21T23:59:59Z\"}",
+      "active": true
+    },
+    {
+      "id": "item_season_winter",
+      "name": "❄️ Winter Snowflake Effect",
+      "desc": "Effetto fiocco di neve 2025-26",
+      "price_credits": 199,
+      "category": "seasonal",
+      "item_type": "seasonal_cosmetic",
+      "icon": "❄️",
+      "item_data": "{\"season\":\"winter_2025\",\"expires_at\":\"2026-03-21T23:59:59Z\"}",
+      "active": true
+    },
+    {
+      "id": "item_achieve_voice",
+      "name": "🎤 Voice Master Badge",
+      "desc": "Sblocca con 50 storie pubblicate",
+      "price_credits": 0,
+      "category": "achievement",
+      "item_type": "achievement_badge",
+      "icon": "🎤",
+      "item_data": "{\"unlock_condition\":\"stories>=50\"}",
+      "active": true
+    },
+    {
+      "id": "item_achieve_charmer",
+      "name": "💗 Charmer Badge",
+      "desc": "Sblocca con 1000 reazioni ricevute",
+      "price_credits": 0,
+      "category": "achievement",
+      "item_type": "achievement_badge",
+      "icon": "💗",
+      "item_data": "{\"unlock_condition\":\"reactions>=1000\"}",
+      "active": true
+    },
+    {
+      "id": "item_achieve_streak",
+      "name": "🔥 Streak Master Badge",
+      "desc": "Sblocca con 7 giorni consecutivi",
+      "price_credits": 0,
+      "category": "achievement",
+      "item_type": "achievement_badge",
+      "icon": "🔥",
+      "item_data": "{\"unlock_condition\":\"streak>=7\"}",
+      "active": true
+    },
+    {
+      "id": "item_vip_pro",
+      "name": "👑 VIP PRO · 1 mese",
+      "desc": "Storie durano 14 giorni, +20% XP gain",
+      "price_credits": 599,
+      "category": "subscription",
+      "item_type": "vip_pro",
+      "icon": "👑",
+      "item_data": "{\"duration_days\":30,\"perks\":[\"stories_14d\",\"xp_bonus_20\"]}",
+      "active": true
+    },
+    {
+      "id": "item_vip_elite",
+      "name": "💎 VIP ELITE · 1 mese",
+      "desc": "Storie 30 giorni, +50% XP, Boost illimitato",
+      "price_credits": 1299,
+      "category": "subscription",
+      "item_type": "vip_elite",
+      "icon": "💎",
+      "item_data": "{\"duration_days\":30,\"perks\":[\"stories_30d\",\"xp_bonus_50\",\"unlimited_boost\"]}",
+      "active": true
+    },
+    {
+      "id": "item_powerup_xp2x",
+      "name": "⚡ 2x XP Potion",
+      "desc": "Raddoppia XP per 24 ore",
+      "price_credits": 299,
+      "category": "powerup",
+      "item_type": "potion",
+      "icon": "⚡",
+      "item_data": "{\"effect\":\"xp_multiplier\",\"multiplier\":2,\"duration_hours\":24}",
+      "active": true
+    },
+    {
+      "id": "item_powerup_duration",
+      "name": "📈 Story Longevity Boost",
+      "desc": "Prossima storia dura 14 giorni",
+      "price_credits": 249,
+      "category": "powerup",
+      "item_type": "boost",
+      "icon": "📈",
+      "item_data": "{\"effect\":\"story_duration\",\"days\":14}",
+      "active": true
+    },
+    {
       "id": "vox_vip",
-      "name": "VO✕ VIP · 1 mese",
+      "name": "Kouverte Vox VIP · 1 mese",
       "desc": "Storie che durano 7 giorni, badge esclusivo",
       "price_credits": 999,
       "category": "subscription",
@@ -2751,200 +384,35 @@
   "transactions": [],
   "user_credits": [
     {
-      "user_id": "u_b2286b6fa763",
-      "credits": 0,
-      "updated_at": 1778261437837
-    },
-    {
-      "user_id": "u_4069bae1e48d",
-      "credits": 0,
-      "updated_at": 1778261520069
-    },
-    {
-      "user_id": "u_32b50643e26c",
-      "credits": 0,
-      "updated_at": 1778261559821
-    },
-    {
-      "user_id": "u_9618b9301e45",
+      "user_id": "u_test_login",
       "credits": 50,
-      "updated_at": 1778345033480
+      "updated_at": 1778929441679
+    },
+    {
+      "user_id": "u_068a92e63ae9",
+      "credits": 50,
+      "updated_at": 1778930736311
     }
   ],
-  "rooms": {
-    "cinema": [
-      {
-        "id": "msg_7a9323ed9e35",
-        "userId": "test_u1",
-        "username": "TestUser",
-        "text": "Ciao a tutti, ottimo cinema d autore",
-        "created_at": 1778008029830
-      }
-    ]
-  },
-  "voice_rooms": {
-    "voci-notturne": {
-      "slug": "voci-notturne",
-      "label": "🌙 Voci Notturne",
-      "desc": "Chat vocale di notte",
-      "participants": [
-        {
-          "userId": "u_b2286b6fa763",
-          "username": "testuser1",
-          "joinedAt": 1778261190904
-        },
-        {
-          "userId": "u_62d2df9c8055",
-          "username": "bob2015.gc@gmail.com",
-          "joinedAt": 1778261266069
-        },
-        {
-          "userId": "u_4069bae1e48d",
-          "username": "newtester13071",
-          "joinedAt": 1778261521654
-        },
-        {
-          "userId": "u_f5a7be434f3f",
-          "username": "marco",
-          "joinedAt": 1778270577796
-        },
-        {
-          "userId": "u_3f469d62f189",
-          "username": "klaus",
-          "joinedAt": 1778270579970
-        },
-        {
-          "userId": "u_56be54d04e48",
-          "username": "james",
-          "joinedAt": 1778270582038
-        }
-      ],
-      "created_at": 1778261090138
+  "bitcoin_payments": [
+    {
+      "id": "btc_pay_d223dd5ceaff",
+      "user_id": "u_test_login",
+      "credits_requested": 100,
+      "btc_amount": "0.00500000",
+      "status": "pending",
+      "created_at": 1778929450584,
+      "expires_at": 1778930350584
     },
-    "single-italiani": {
-      "slug": "single-italiani",
-      "label": "💔 Single Italiani",
-      "desc": "Persone sole che cercano connessione",
-      "participants": [
-        {
-          "userId": "u_62d2df9c8055",
-          "username": "bob2015.gc@gmail.com",
-          "joinedAt": 1778261263132
-        },
-        {
-          "userId": "u_b2286b6fa763",
-          "username": "testuser1",
-          "joinedAt": 1778261363122
-        },
-        {
-          "userId": "u_32b50643e26c",
-          "username": "user8129",
-          "joinedAt": 1778261561514
-        },
-        {
-          "userId": "u_62488c016114",
-          "username": "giulia",
-          "joinedAt": 1778270578139
-        },
-        {
-          "userId": "u_ec79e1f131e8",
-          "username": "anna",
-          "joinedAt": 1778270580332
-        },
-        {
-          "userId": "u_ab30cacd9807",
-          "username": "emma",
-          "joinedAt": 1778270582363
-        }
-      ],
-      "created_at": 1778261090138
-    },
-    "deep-talks": {
-      "slug": "deep-talks",
-      "label": "🧠 Deep Talks",
-      "desc": "Conversazioni profonde",
-      "participants": [
-        {
-          "userId": "u_b2286b6fa763",
-          "username": "testuser1",
-          "joinedAt": 1778261363570
-        },
-        {
-          "userId": "u_eb9e86d40353",
-          "username": "juan",
-          "joinedAt": 1778270578483
-        },
-        {
-          "userId": "u_9939224d934e",
-          "username": "jo�o",
-          "joinedAt": 1778270580672
-        },
-        {
-          "userId": "u_0e085b6473ec",
-          "username": "yuki",
-          "joinedAt": 1778270582720
-        }
-      ],
-      "created_at": 1778261090138
-    },
-    "vibes-musicali": {
-      "slug": "vibes-musicali",
-      "label": "🎵 Vibes Musicali",
-      "desc": "Cantano e parlano di musica",
-      "participants": [
-        {
-          "userId": "u_8e9452d76481",
-          "username": "sofia",
-          "joinedAt": 1778270578825
-        },
-        {
-          "userId": "u_be1ddb6015df",
-          "username": "mariana",
-          "joinedAt": 1778270581014
-        },
-        {
-          "userId": "u_0c051651d77d",
-          "username": "sakura",
-          "joinedAt": 1778270583075
-        }
-      ],
-      "created_at": 1778261090138
-    },
-    "travel-lovers": {
-      "slug": "travel-lovers",
-      "label": "✈️ Travel Lovers",
-      "desc": "Gente che ama viaggiare",
-      "participants": [
-        {
-          "userId": "u_6ddf457e0302",
-          "username": "pierre",
-          "joinedAt": 1778270579166
-        },
-        {
-          "userId": "u_993b957159e2",
-          "username": "diego",
-          "joinedAt": 1778270581356
-        }
-      ],
-      "created_at": 1778261090138
-    },
-    "late-night": {
-      "slug": "late-night",
-      "label": "🌃 Late Night",
-      "desc": "Per gli insonnaci",
-      "participants": [
-        {
-          "userId": "u_6d7a784a290e",
-          "username": "marie",
-          "joinedAt": 1778270579546
-        },
-        {
-          "userId": "u_85f6cd1fa4a7",
-          "username": "valentina",
-          "joinedAt": 1778270581710
-        }
-      ],
-      "created_at": 1778261090138
+    {
+      "id": "btc_pay_e8b83b52f465",
+      "user_id": "u_test_login",
+      "credits_requested": 50,
+      "btc_amount": "0.00250000",
+      "status": "pending",
+      "created_at": 1778930588136,
+      "expires_at": 1778931488136
     }
-  }
+  ],
+  "rooms": {}
 }

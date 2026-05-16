@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { checkBlockchainConfirmations } = require('./bitcoin-service');
 
 const app = express();
 const PORT = process.env.PORT || 8082;
@@ -25,6 +26,11 @@ if (IS_PROD && !process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'kouverte-vox-dev-secret-' + crypto.randomBytes(16).toString('hex');
 const JWT_EXPIRES = '7d';
+
+// Bitcoin Payment Config
+const BITCOIN_ADDRESS = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
+const BTC_RATE = 0.00005; // 1 credito = 0.00005 BTC (1 BTC = 20,000 crediti)
+const BITCOIN_MIN_CONFIRMATIONS = parseInt(process.env.BITCOIN_MIN_CONFIRMATIONS || '4');
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -86,13 +92,49 @@ function loadDB() {
                 { id: 'room_3', name: 'Deep Talks', desc: 'Conversazioni profonde', icon: '🧠', users_count: 4, created_at: 1777900000000 }
             ],
             shop_products: [
+                // ===== COSMETICS (5) =====
+                { id: 'item_frame_neon', name: 'Neon Blue Frame', desc: 'Avatar frame luminescente blu', price_credits: 150, category: 'cosmetic', item_type: 'avatar_frame', icon: '⭐', item_data: '{"color":"#00ffff","glow":8}', active: true },
+                { id: 'item_theme_aurora', name: 'Aurora Theme', desc: 'Tema scuro con aurora boreale', price_credits: 199, category: 'cosmetic', item_type: 'theme', icon: '🌌', item_data: '{"theme":"aurora","animated":true}', active: true },
+                { id: 'item_effect_echo', name: 'Echo Reverb Effect', desc: 'Effetto vocale riverbero spaziale', price_credits: 99, category: 'cosmetic', item_type: 'voice_effect', icon: '🎧', item_data: '{"effect":"echo","strength":75}', active: true },
+                { id: 'item_particles_stardust', name: 'Stardust Particle Trail', desc: 'Particelle luminose intorno al nome', price_credits: 249, category: 'cosmetic', item_type: 'particles', icon: '💫', item_data: '{"type":"stardust","color":"#ffcc00"}', active: true },
+                { id: 'item_effect_glitch', name: 'Glitch Animation', desc: 'Effetto glitch su testo profilo', price_credits: 129, category: 'cosmetic', item_type: 'animation', icon: '⚡', item_data: '{"animation":"glitch_v1"}', active: true },
+
+                // ===== RARITY COLLECTIBLES (6) =====
+                { id: 'item_rarity_sword', name: '⚔️ Spada Leggendaria', desc: 'Arma mitica della leggenda', price_credits: 2500, category: 'rarity', item_type: 'collectible', icon: '⚔️', item_data: '{"rarity":"legendary","rarity_score":9500,"power":95,"unique":true}', active: true },
+                { id: 'item_rarity_medal', name: '🏆 Medaglia d\'Oro', desc: 'Trofeo per i grandi della voce', price_credits: 1500, category: 'rarity', item_type: 'collectible', icon: '🏆', item_data: '{"rarity":"epic","rarity_score":7500,"power":70}', active: true },
+                { id: 'item_rarity_crystal', name: '💎 Cristallo Cosmico', desc: 'Cristallo puro dall\'universo infinito', price_credits: 3500, category: 'rarity', item_type: 'collectible', icon: '💎', item_data: '{"rarity":"legendary","rarity_score":9800,"power":98,"animated":true}', active: true },
+                { id: 'item_rarity_crown', name: '👑 Corona Regale', desc: 'Corona dei veri re della voce', price_credits: 2000, category: 'rarity', item_type: 'collectible', icon: '👑', item_data: '{"rarity":"epic","rarity_score":7800,"power":75}', active: true },
+                { id: 'item_rarity_scroll', name: '📜 Pergamena Antica', desc: 'Testo mistico di saggezza vocale', price_credits: 1200, category: 'rarity', item_type: 'collectible', icon: '📜', item_data: '{"rarity":"rare","rarity_score":5500,"power":55}', active: true },
+                { id: 'item_rarity_star', name: '🌟 Stella d\'Argento', desc: 'Stella brillante del firmamento', price_credits: 899, category: 'rarity', item_type: 'collectible', icon: '🌟', item_data: '{"rarity":"rare","rarity_score":5000,"power":50}', active: true },
+
+                // ===== SEASONAL LIMITED (4) =====
+                { id: 'item_season_spring', name: '🌸 Spring Flower Crown', desc: 'Corona fiorita della primavera 2025', price_credits: 299, category: 'seasonal', item_type: 'seasonal_cosmetic', icon: '🌸', item_data: '{"season":"spring_2025","expires_at":"2025-06-21T23:59:59Z"}', active: true },
+                { id: 'item_season_summer', name: '☀️ Summer Sun Badge', desc: 'Badge dorato dell\'estate 2025', price_credits: 199, category: 'seasonal', item_type: 'seasonal_cosmetic', icon: '☀️', item_data: '{"season":"summer_2025","expires_at":"2025-09-21T23:59:59Z"}', active: true },
+                { id: 'item_season_autumn', name: '🍂 Autumn Leaf Aura', desc: 'Aura dorata dell\'autunno 2025', price_credits: 249, category: 'seasonal', item_type: 'seasonal_cosmetic', icon: '🍂', item_data: '{"season":"autumn_2025","expires_at":"2025-12-21T23:59:59Z"}', active: true },
+                { id: 'item_season_winter', name: '❄️ Winter Snowflake Effect', desc: 'Effetto fiocco di neve 2025-26', price_credits: 199, category: 'seasonal', item_type: 'seasonal_cosmetic', icon: '❄️', item_data: '{"season":"winter_2025","expires_at":"2026-03-21T23:59:59Z"}', active: true },
+
+                // ===== ACHIEVEMENTS (3 - unlock da milestone, non comprare) =====
+                { id: 'item_achieve_voice', name: '🎤 Voice Master Badge', desc: 'Sblocca con 50 storie pubblicate', price_credits: 0, category: 'achievement', item_type: 'achievement_badge', icon: '🎤', item_data: '{"unlock_condition":"stories>=50"}', active: true },
+                { id: 'item_achieve_charmer', name: '💗 Charmer Badge', desc: 'Sblocca con 1000 reazioni ricevute', price_credits: 0, category: 'achievement', item_type: 'achievement_badge', icon: '💗', item_data: '{"unlock_condition":"reactions>=1000"}', active: true },
+                { id: 'item_achieve_streak', name: '🔥 Streak Master Badge', desc: 'Sblocca con 7 giorni consecutivi', price_credits: 0, category: 'achievement', item_type: 'achievement_badge', icon: '🔥', item_data: '{"unlock_condition":"streak>=7"}', active: true },
+
+                // ===== SUBSCRIPTIONS (2) =====
+                { id: 'item_vip_pro', name: '👑 VIP PRO · 1 mese', desc: 'Storie durano 14 giorni, +20% XP gain', price_credits: 599, category: 'subscription', item_type: 'vip_pro', icon: '👑', item_data: '{"duration_days":30,"perks":["stories_14d","xp_bonus_20"]}', active: true },
+                { id: 'item_vip_elite', name: '💎 VIP ELITE · 1 mese', desc: 'Storie 30 giorni, +50% XP, Boost illimitato', price_credits: 1299, category: 'subscription', item_type: 'vip_elite', icon: '💎', item_data: '{"duration_days":30,"perks":["stories_30d","xp_bonus_50","unlimited_boost"]}', active: true },
+
+                // ===== POWER-UPS (2 - temporary, 24h) =====
+                { id: 'item_powerup_xp2x', name: '⚡ 2x XP Potion', desc: 'Raddoppia XP per 24 ore', price_credits: 299, category: 'powerup', item_type: 'potion', icon: '⚡', item_data: '{"effect":"xp_multiplier","multiplier":2,"duration_hours":24}', active: true },
+                { id: 'item_powerup_duration', name: '📈 Story Longevity Boost', desc: 'Prossima storia dura 14 giorni', price_credits: 249, category: 'powerup', item_type: 'boost', icon: '📈', item_data: '{"effect":"story_duration","days":14}', active: true },
+
+                // Legacy items (keep for compatibility)
                 { id: 'vox_vip', name: 'Kouverte Vox VIP · 1 mese', desc: 'Storie che durano 7 giorni, badge esclusivo', price_credits: 999, category: 'subscription', item_type: 'vip_month', icon: '👑', item_data: '{"duration_days":30}' },
                 { id: 'vox_boost', name: 'Boost · 2 ore', desc: 'La tua storia in cima al feed', price_credits: 199, category: 'boost', item_type: 'boost_2h', icon: '🚀', item_data: '{"duration_minutes":120}' },
                 { id: 'vox_theme', name: 'Tema Dark Neon', desc: 'Profilo con bordi neon', price_credits: 499, category: 'cosmetic', item_type: 'theme', icon: '💜', item_data: '{"theme":"neon"}' }
             ],
             user_inventory: [],
             transactions: [],
-            user_credits: []
+            user_credits: [],
+            bitcoin_payments: []
         };
     }
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
@@ -555,17 +597,16 @@ app.get('/api/duels', (req, res) => {
 app.get('/api/shop/credits', verifyToken, (req, res) => {
     const userId = req.user.userId;
     let row = DB.user_credits.find(c => c.user_id === userId);
+
     if (!row) {
-        row = { user_id: userId, credits: 0, updated_at: now() };
+        // Sincronizza da user.credits se la tabella user_credits non esiste
+        const user = DB.users.find(u => u.id === userId);
+        const initialCredits = user?.credits || 0;
+        row = { user_id: userId, credits: initialCredits, updated_at: now() };
         DB.user_credits.push(row);
         markDirty();
     }
     res.json({ credits: row.credits });
-});
-
-app.get('/api/shop/products', (req, res) => {
-    const products = DB.shop_products.filter(p => p.active !== false).sort((a, b) => a.price_credits - b.price_credits);
-    res.json({ products });
 });
 
 // FIX: protetto da verifyToken + mutex per prevenire double-spend
@@ -623,6 +664,278 @@ app.post('/api/shop/buy', verifyToken, async (req, res) => {
     } catch(e) {
         return res.status(500).json({ error: 'Errore acquisto' });
     }
+});
+
+// ============ BITCOIN PAYMENT API ============
+
+app.post('/api/shop/bitcoin-payment', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const { credits } = req.body || {};
+
+    if (!credits || credits <= 0 || credits > 100000) {
+        return res.status(400).json({ error: 'Crediti non validi' });
+    }
+
+    const btcAmount = (credits * BTC_RATE).toFixed(8);
+    const paymentId = genId('btc_pay');
+    const expiresAt = now() + 15 * 60 * 1000; // 15 minuti
+
+    // Salva la richiesta di pagamento
+    if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+    DB.bitcoin_payments.push({
+        id: paymentId,
+        user_id: userId,
+        credits_requested: credits,
+        btc_amount: btcAmount,
+        status: 'pending',
+        created_at: now(),
+        expires_at: expiresAt
+    });
+    markDirty();
+
+    // URL per il QR code con lightning/onchain
+    const paymentUri = `bitcoin:${BITCOIN_ADDRESS}?amount=${btcAmount}&label=Kouverte%20Vox&message=Payment%20${paymentId}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentUri)}`;
+
+    res.json({
+        paymentId,
+        btcAddress: BITCOIN_ADDRESS,
+        btcAmount,
+        credits,
+        qrCodeUrl,
+        expiresAt,
+        instructions: `Invia esattamente ${btcAmount} BTC a ${BITCOIN_ADDRESS} entro 15 minuti`
+    });
+});
+
+app.get('/api/shop/bitcoin-status/:paymentId', verifyToken, (req, res) => {
+    const { paymentId } = req.params;
+    const userId = req.user.userId;
+
+    if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+    const payment = DB.bitcoin_payments.find(p => p.id === paymentId && p.user_id === userId);
+
+    if (!payment) {
+        return res.status(404).json({ error: 'Pagamento non trovato' });
+    }
+
+    res.json({
+        id: payment.id,
+        status: payment.status,
+        btcAmount: payment.btc_amount,
+        credits: payment.credits_requested,
+        expiresAt: payment.expires_at,
+        confirmedAt: payment.confirmed_at || null
+    });
+});
+
+app.post('/api/admin/bitcoin-confirm', verifyAdmin, async (req, res) => {
+    const { paymentId } = req.body || {};
+
+    if (!paymentId) return res.status(400).json({ error: 'paymentId richiesto' });
+    if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+
+    const payment = DB.bitcoin_payments.find(p => p.id === paymentId);
+    if (!payment) return res.status(404).json({ error: 'Pagamento non trovato' });
+    if (payment.status !== 'pending') return res.status(409).json({ error: 'Pagamento già confermato o scaduto' });
+
+    // ✅ VERIFICA BLOCKCHAIN: 4 CONFERME RICHIESTE
+    console.log(`🔍 Verifying Bitcoin payment ${paymentId}: ${payment.btc_amount} BTC to ${BITCOIN_ADDRESS}`);
+
+    const blockchainCheck = await checkBlockchainConfirmations(
+        payment.btc_amount,
+        BITCOIN_ADDRESS,
+        BITCOIN_MIN_CONFIRMATIONS
+    );
+
+    if (!blockchainCheck.verified) {
+        return res.status(402).json({
+            error: 'Insufficient blockchain confirmations',
+            current_confirmations: blockchainCheck.confirmations,
+            required_confirmations: BITCOIN_MIN_CONFIRMATIONS,
+            tx_hash: blockchainCheck.txHash || 'Not found',
+            blockchain_error: blockchainCheck.error || 'Unknown error'
+        });
+    }
+
+    console.log(`✅ Bitcoin verified: ${blockchainCheck.confirmations} confirmations, TxHash: ${blockchainCheck.txHash}`);
+
+    // Aggiorna crediti utente
+    let creditsRow = DB.user_credits.find(c => c.user_id === payment.user_id);
+    if (!creditsRow) {
+        creditsRow = { user_id: payment.user_id, credits: 0, updated_at: now() };
+        DB.user_credits.push(creditsRow);
+    }
+
+    creditsRow.credits += payment.credits_requested;
+    creditsRow.updated_at = now();
+
+    // Aggiorna lo stato del pagamento
+    payment.status = 'confirmed';
+    payment.confirmed_at = now();
+    payment.tx_hash = blockchainCheck.txHash;
+    payment.confirmations_verified = blockchainCheck.confirmations;
+    payment.verified_at = now();
+
+    DB.transactions.push({
+        id: genId('txn'),
+        user_id: payment.user_id,
+        type: 'bitcoin',
+        btc_amount: payment.btc_amount,
+        credits: payment.credits_requested,
+        status: 'completed',
+        created_at: now()
+    });
+
+    saveDB(DB);
+
+    res.json({ ok: true, message: `Pagamento confermato. ${payment.credits_requested} crediti aggiunti.` });
+});
+
+// ============ SHOP CATEGORIES & INVENTORY ============
+
+app.get('/api/shop/categories', (req, res) => {
+    if (!DB.shop_products) DB.shop_products = [];
+
+    const categories = {};
+    DB.shop_products.forEach(product => {
+        if (!categories[product.category]) {
+            categories[product.category] = { count: 0, icon: '🛍️' };
+        }
+        if (product.active !== false) {
+            categories[product.category].count++;
+        }
+    });
+
+    // Add emoji for each category
+    const icons = {
+        'cosmetic': '🎭',
+        'rarity': '⭐',
+        'seasonal': '📅',
+        'achievement': '🏆',
+        'subscription': '👑',
+        'powerup': '⚡',
+        'boost': '🚀'
+    };
+
+    const result = Object.entries(categories).map(([name, data]) => ({
+        name,
+        count: data.count,
+        icon: icons[name] || '🛍️'
+    }));
+
+    res.json({ categories: result });
+});
+
+app.get('/api/shop/products', (req, res) => {
+    if (!DB.shop_products) DB.shop_products = [];
+
+    const category = req.query.category;
+    let products = DB.shop_products.filter(p => p.active !== false);
+
+    if (category) {
+        products = products.filter(p => p.category === category);
+    }
+
+    res.json({ products });
+});
+
+app.get('/api/shop/inventory', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    if (!DB.user_inventory) DB.user_inventory = [];
+
+    const inventory = DB.user_inventory
+        .filter(inv => inv.user_id === userId && inv.active === 1)
+        .map(inv => {
+            const product = DB.shop_products?.find(p => p.id === inv.product_id);
+            return {
+                id: inv.id,
+                product_id: inv.product_id,
+                name: product?.name || 'Unknown',
+                category: product?.category || 'unknown',
+                icon: product?.icon || '🛍️',
+                rarity_level: inv.rarity_level || null,
+                equipped: inv.equipped || 0,
+                purchased_at: inv.purchased_at,
+                expires_at: inv.expires_at
+            };
+        });
+
+    res.json({ inventory });
+});
+
+app.post('/api/shop/inventory/equip', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { inventoryId, equipped } = req.body || {};
+
+    if (!inventoryId) return res.status(400).json({ error: 'inventoryId richiesto' });
+    if (!DB.user_inventory) DB.user_inventory = [];
+
+    const invItem = DB.user_inventory.find(i => i.id === inventoryId && i.user_id === userId);
+    if (!invItem) return res.status(404).json({ error: 'Item non trovato' });
+
+    const product = DB.shop_products.find(p => p.id === invItem.product_id);
+    if (!product || product.category !== 'cosmetic') {
+        return res.status(400).json({ error: 'Solo i cosmetics possono essere equipaggiati' });
+    }
+
+    // Se equipping, rimuovi equipped da altri cosmetics
+    if (equipped) {
+        DB.user_inventory.forEach(i => {
+            if (i.user_id === userId && i.equipped && i.id !== inventoryId) {
+                const p = DB.shop_products.find(prod => prod.id === i.product_id);
+                if (p && p.category === 'cosmetic') {
+                    i.equipped = 0;
+                }
+            }
+        });
+    }
+
+    invItem.equipped = equipped ? 1 : 0;
+    markDirty();
+
+    res.json({ ok: true, message: `Cosmetic ${equipped ? 'equipaggiato' : 'rimosso'}.` });
+});
+
+app.get('/api/shop/leaderboard/rarity', (req, res) => {
+    if (!DB.user_inventory || !DB.shop_products) {
+        return res.json({ leaderboard: [] });
+    }
+
+    // Calcola rarity score per utente
+    const userScores = {};
+    DB.user_inventory.forEach(inv => {
+        if (inv.active !== 1) return;
+        const product = DB.shop_products.find(p => p.id === inv.product_id);
+        if (!product || product.category !== 'rarity') return;
+
+        const itemData = JSON.parse(product.item_data || '{}');
+        const score = itemData.rarity_score || 0;
+
+        if (!userScores[inv.user_id]) {
+            userScores[inv.user_id] = { total_score: 0, items_count: 0 };
+        }
+        userScores[inv.user_id].total_score += score;
+        userScores[inv.user_id].items_count++;
+    });
+
+    // Top 10
+    const leaderboard = Object.entries(userScores)
+        .map(([userId, data]) => {
+            const user = DB.users.find(u => u.id === userId);
+            return {
+                rank: 0,
+                userId,
+                username: user?.username || 'Anonymous',
+                total_rarity_score: data.total_score,
+                collectibles_owned: data.items_count
+            };
+        })
+        .sort((a, b) => b.total_rarity_score - a.total_rarity_score)
+        .slice(0, 10)
+        .map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+    res.json({ leaderboard });
 });
 
 // ============ ADMIN API ============
@@ -1008,7 +1321,8 @@ const VOICE_ROOM_THEMES = [
     { slug: 'deep-talks', label: '🧠 Deep Talks', desc: 'Conversazioni profonde' },
     { slug: 'vibes-musicali', label: '🎵 Vibes Musicali', desc: 'Cantano e parlano di musica' },
     { slug: 'travel-lovers', label: '✈️ Travel Lovers', desc: 'Gente che ama viaggiare' },
-    { slug: 'late-night', label: '🌃 Late Night', desc: 'Per gli insonnaci' }
+    { slug: 'late-night', label: '🌃 Late Night', desc: 'Per gli insonnaci' },
+    { slug: 'shop-lounge', label: '🛍️ Shop Lounge', desc: 'Parla di cosmetic e rarity, scambia opinioni' }
 ];
 
 DB.voice_rooms = DB.voice_rooms || {};

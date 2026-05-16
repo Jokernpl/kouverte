@@ -40,7 +40,11 @@
       "Bash(git init *)",
       "Bash(git config *)",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(netstat -ano)",
+      "Bash(taskkill /PID 23160 /F)",
+      "Bash(kill -9 23160)"
     ]
   }
 }

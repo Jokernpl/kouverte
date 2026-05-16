@@ -297,39 +297,55 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     padding: 24px 20px;
 }
 .home-quote {
-    text-align: center; margin-bottom: 24px;
-    font-size: 11px; color: var(--gray);
-    letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+    margin: 0 auto 18px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, rgba(168,85,247,0.18), rgba(0,217,255,0.12));
+    border: 1px solid rgba(168,85,247,0.35);
+    border-radius: 100px;
+    font-size: 11px; color: #d8b4fe;
+    letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(168,85,247,0.15);
 }
 .home-title {
-    text-align: center; margin-bottom: 8px;
-    font-size: 26px; font-weight: 800;
-    letter-spacing: -0.5px; line-height: 1.1;
+    text-align: center; margin-bottom: 12px;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 42px; font-weight: 800;
+    letter-spacing: -1.2px; line-height: 1.05;
+    background: linear-gradient(135deg, #fff 0%, #d8b4fe 50%, #00d9ff 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 .home-sub {
-    text-align: center; margin-bottom: 32px;
-    font-size: 14px; color: var(--gray); line-height: 1.4;
-    max-width: 280px;
+    text-align: center; margin-bottom: 36px;
+    font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.5;
+    max-width: 300px; font-weight: 400;
 }
 
 .orb-wrap {
     position: relative;
-    width: 280px; height: 280px;
+    width: 300px; height: 300px;
     display: flex; align-items: center; justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
 }
 .orb {
-    width: 200px; height: 200px;
+    width: 220px; height: 220px;
     border-radius: 50%;
-    background: var(--grad-cyan);
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,0.55) 0%, transparent 35%),
+        radial-gradient(circle at 70% 75%, rgba(255,61,164,0.6) 0%, transparent 50%),
+        conic-gradient(from 180deg at 50% 50%, #a855f7, #00d9ff, #ff3da4, #a855f7);
     position: relative;
     box-shadow:
-        0 0 80px rgba(0,217,255,0.4),
-        0 0 160px rgba(0,128,255,0.3),
-        inset 0 0 60px rgba(255,255,255,0.2);
+        0 30px 90px rgba(168,85,247,0.55),
+        0 0 120px rgba(0,217,255,0.4),
+        0 0 200px rgba(255,61,164,0.3),
+        inset 0 -20px 40px rgba(0,0,0,0.3),
+        inset 0 20px 40px rgba(255,255,255,0.25);
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.3s ease;
-    animation: orb-float 4s ease-in-out infinite;
+    animation: orb-float 5s ease-in-out infinite, orb-rotate 18s linear infinite;
     -webkit-touch-callout: none;
 }
 .orb:active, .orb.recording {
@@ -344,7 +360,11 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
 @keyframes orb-float {
     0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-12px) scale(1.03); }
+    50% { transform: translateY(-16px) scale(1.04); }
+}
+@keyframes orb-rotate {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
 }
 @keyframes orb-pulse {
     0%, 100% { transform: scale(1.12); }
@@ -583,6 +603,281 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     border-color: rgba(249, 115, 22, 0.4);
 }
 .action span { font-size: 12px; }
+
+/* === VOICE ROOMS - PREMIUM BUBBLES === */
+.vr-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, rgba(15,23,42,0.7), rgba(30,41,59,0.5));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(168,85,247,0.18);
+    border-radius: 22px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+.vr-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 0% 50%, rgba(168,85,247,0.15), transparent 60%);
+    pointer-events: none;
+}
+.vr-card:active { transform: scale(0.98); }
+.vr-card:hover {
+    border-color: rgba(168,85,247,0.45);
+    box-shadow: 0 12px 32px rgba(168,85,247,0.2);
+}
+.vr-bubbles {
+    display: flex; position: relative; z-index: 1;
+    min-width: 60px;
+}
+.vr-bubble {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    border: 2px solid #050b1a;
+    margin-left: -12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.vr-bubble:first-child { margin-left: 0; }
+.vr-info { flex: 1; position: relative; z-index: 1; }
+.vr-title {
+    font-size: 15px; font-weight: 800; color: #fff;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 3px;
+}
+.vr-live-dot {
+    display: inline-block; width: 8px; height: 8px;
+    background: #ef4444; border-radius: 50%;
+    box-shadow: 0 0 8px #ef4444;
+    animation: pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.2); }
+}
+.vr-desc { font-size: 12px; color: rgba(255,255,255,0.55); margin-bottom: 6px; }
+.vr-meta { display: flex; align-items: center; gap: 10px; font-size: 11px; }
+.vr-count { color: rgba(255,255,255,0.7); }
+.vr-status {
+    padding: 2px 8px;
+    background: rgba(168,85,247,0.18);
+    color: #d8b4fe;
+    border-radius: 100px;
+    font-weight: 800; letter-spacing: 0.5px;
+}
+.vr-join-btn {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #a855f7, #ec4899);
+    border: none; border-radius: 14px;
+    color: #fff; font-size: 20px; font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(168,85,247,0.4);
+    position: relative; z-index: 1;
+}
+
+/* === VOICE UNIVERSE === */
+.vu-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.vu-tab {
+    flex: 1; padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 100px;
+    color: rgba(255,255,255,0.6);
+    font-size: 12px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.vu-tab.active {
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 24px rgba(168,85,247,0.3);
+}
+.vu-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    max-height: 480px; overflow-y: auto; padding: 4px;
+}
+.vu-voice-card {
+    padding: 14px 12px;
+    background: linear-gradient(180deg, rgba(99,102,241,0.12), rgba(15,23,42,0.6));
+    border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.vu-voice-card:active { transform: scale(0.97); }
+.vu-voice-img {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.vu-voice-label { font-size: 10px; color: rgba(255,255,255,0.5); margin-bottom: 2px; }
+.vu-voice-name { font-size: 13px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.vu-voice-rating { font-size: 9px; color: #fbbf24; letter-spacing: 1px; }
+.vu-voice-ratings-text { font-size: 9px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+/* === AI STUDIO === */
+.ai-actions {
+    display: flex; gap: 10px; margin: 24px 0 16px;
+    justify-content: center; flex-wrap: wrap;
+}
+.ai-action-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 100px;
+    color: #fff; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.ai-action-pill:hover, .ai-action-pill:active {
+    background: rgba(168,85,247,0.18);
+    border-color: rgba(168,85,247,0.4);
+}
+
+.studio-card {
+    position: relative;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.08);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    overflow: hidden;
+}
+.studio-card:active { transform: scale(0.98); }
+.studio-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(168,85,247,0.18), transparent 50%);
+    pointer-events: none;
+}
+.studio-featured {
+    background: linear-gradient(135deg, #a855f7 0%, #ec4899 60%, #f97316 100%);
+    border: none;
+    margin: 0 20px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 16px 40px rgba(168,85,247,0.35);
+}
+.studio-featured::before {
+    background: radial-gradient(circle at 90% 50%, rgba(255,255,255,0.3), transparent 60%);
+}
+.studio-card-content { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
+.studio-card-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.22); border-radius: 12px; display:flex; align-items:center; justify-content:center; font-size: 22px; backdrop-filter: blur(10px); }
+.studio-card-title { font-size: 16px; font-weight: 800; color: #fff; }
+.studio-card-sub { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+.studio-card-arrow {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 18px; font-weight: 700;
+    backdrop-filter: blur(10px);
+    position: relative; z-index: 1;
+}
+.studio-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin: 0 20px 18px;
+}
+.studio-grid .studio-card { min-height: 110px; display: flex; flex-direction: column; }
+.studio-card-icon-sm {
+    width: 36px; height: 36px;
+    background: rgba(168,85,247,0.18);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 10px;
+}
+.studio-card-title-sm { font-size: 14px; font-weight: 700; color: #fff; position: relative; z-index: 1; }
+.studio-card-sub-sm { font-size: 10px; color: rgba(255,255,255,0.55); margin-top: 2px; position: relative; z-index: 1; }
+.studio-card-arrow-sm {
+    position: absolute; top: 14px; right: 14px;
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 14px;
+}
+
+/* === PREMIUM CTA & PLANS === */
+.premium-cta {
+    display: flex; align-items: center; gap: 14px;
+    margin: 16px 0;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #fb923c 50%, #f97316 100%);
+    border-radius: 18px;
+    cursor: pointer;
+    box-shadow: 0 12px 32px rgba(249,115,22,0.35), inset 0 1px 0 rgba(255,255,255,0.3);
+    transition: transform 0.2s ease;
+}
+.premium-cta:active { transform: scale(0.98); }
+.premium-cta-icon {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    backdrop-filter: blur(10px);
+}
+.premium-cta-text { flex: 1; color: #fff; }
+.premium-cta-title { font-size: 15px; font-weight: 800; }
+.premium-cta-sub { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.premium-cta-arrow { color: #fff; font-size: 20px; font-weight: 700; }
+
+.plans-grid { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+.plan-card {
+    position: relative;
+    padding: 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(249,115,22,0.08));
+    border: 1.5px solid rgba(251,191,36,0.3);
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+.plan-card.featured {
+    background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+    border-color: transparent;
+    box-shadow: 0 16px 40px rgba(249,115,22,0.4);
+}
+.plan-card.featured .plan-name,
+.plan-card.featured .plan-feature,
+.plan-card.featured .plan-price { color: #fff; }
+.plan-badge {
+    position: absolute; top: 14px; right: 14px;
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 100px;
+    font-size: 9px; font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #fff;
+}
+.plan-card:not(.featured) .plan-badge { background: rgba(251,191,36,0.25); color: #fbbf24; }
+.plan-name { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
+.plan-features { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.plan-feature { font-size: 12px; opacity: 0.9; display: flex; align-items: center; gap: 6px; }
+.plan-price-row { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
+.plan-price { font-size: 28px; font-weight: 900; }
+.plan-price-old { font-size: 13px; text-decoration: line-through; opacity: 0.6; }
+
+.plan-purchase-btn {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #f59e0b, #f97316);
+    border: none; border-radius: 100px;
+    color: #fff; font-size: 15px; font-weight: 800;
+    cursor: pointer;
+    margin-top: 8px;
+    box-shadow: 0 10px 30px rgba(249,115,22,0.4);
+}
 
 /* Voice Rooms — Premium redesign */
 .voice-rooms-list { display: flex; flex-direction: column; gap: 12px; }
@@ -1875,9 +2170,9 @@ input, textarea { user-select: text; -webkit-user-select: text; }
 
         <!-- HOME: Recording -->
         <div class="screen home active" id="screen-home">
-            <div class="home-quote">PRESS &amp; HOLD</div>
-            <div class="home-title">La tua voce</div>
-            <div class="home-sub">Registra una clip vocale.<br>Le voci autentiche connettono.</div>
+            <div class="home-quote">✨ Your Voice · Your Power</div>
+            <div class="home-title">Start Your Smart<br>Voice Journey</div>
+            <div class="home-sub">Vivi la magia della voce autentica.<br>Connetti, condividi, lascia il segno.</div>
 
             <div class="orb-wrap">
                 <div class="ring r1"></div>
@@ -1896,6 +2191,47 @@ input, textarea { user-select: text; -webkit-user-select: text; }
                 <div class="mood-pill" data-mood="hot">🔥 hot</div>
                 <div class="mood-pill" data-mood="deep">🌊 deep</div>
                 <div class="mood-pill" data-mood="fun">😜 fun</div>
+            </div>
+
+            <!-- AI Studio Action Pills -->
+            <div class="ai-actions">
+                <button class="ai-action-pill" onclick="openVoiceUniverse()">
+                    <span>🎭</span> Voice Universe
+                </button>
+                <button class="ai-action-pill" onclick="haptic('light'); toast('🎙️ Voice Studio in arrivo')">
+                    <span>🎙️</span> Generate Voice
+                </button>
+                <button class="ai-action-pill" onclick="haptic('light'); toast('🖼️ Image Studio')">
+                    <span>🖼️</span> Generate Image
+                </button>
+            </div>
+
+            <!-- Voice Studio Featured Card -->
+            <div class="studio-card studio-featured" onclick="haptic('light'); toast('🎨 Voice Studio')">
+                <div class="studio-card-content">
+                    <div class="studio-card-icon">🎙️</div>
+                    <div>
+                        <div class="studio-card-title">Voice Studio</div>
+                        <div class="studio-card-sub">Create Stunning Voice</div>
+                    </div>
+                </div>
+                <div class="studio-card-arrow">↗</div>
+            </div>
+
+            <!-- Studio Grid -->
+            <div class="studio-grid">
+                <div class="studio-card" onclick="haptic('light'); toast('🖼️ Image Studio')">
+                    <div class="studio-card-icon-sm">🖼️</div>
+                    <div class="studio-card-title-sm">Image Studio</div>
+                    <div class="studio-card-sub-sm">Create Stunning Visuals</div>
+                    <div class="studio-card-arrow-sm">↗</div>
+                </div>
+                <div class="studio-card" onclick="haptic('light'); toast('🎬 Video Studio')">
+                    <div class="studio-card-icon-sm">🎬</div>
+                    <div class="studio-card-title-sm">Video Studio</div>
+                    <div class="studio-card-sub-sm">Create Stunning Videos</div>
+                    <div class="studio-card-arrow-sm">↗</div>
+                </div>
             </div>
 
             <div class="quick-stats">
@@ -1985,6 +2321,16 @@ input, textarea { user-select: text; -webkit-user-select: text; }
                     <div class="stat-num" id="statStreak">0</div>
                     <div class="stat-label">Streak</div>
                 </div>
+            </div>
+
+            <!-- PREMIUM CTA BANNER -->
+            <div class="premium-cta" onclick="showPremiumPlans()">
+                <div class="premium-cta-icon">👑</div>
+                <div class="premium-cta-text">
+                    <div class="premium-cta-title">Go to Premium</div>
+                    <div class="premium-cta-sub">Unlock better experience with Premium</div>
+                </div>
+                <div class="premium-cta-arrow">→</div>
             </div>
 
             <div class="profile-section">
@@ -2097,6 +2443,123 @@ input, textarea { user-select: text; -webkit-user-select: text; }
     </div>
 </div>
 
+<!-- Voice Universe Modal -->
+<div class="modal" id="voiceUniverseModal">
+    <div class="modal-card" style="max-width: 460px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 16px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:22px;">🎭</span>
+                <h2 style="font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:800;">Voice Universe</h2>
+            </div>
+            <button onclick="document.getElementById('voiceUniverseModal').classList.remove('show')" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">×</button>
+        </div>
+
+        <div class="vu-tabs">
+            <button class="vu-tab active" data-tab="voices" onclick="switchVuTab('voices')">Voices</button>
+            <button class="vu-tab" data-tab="favorites" onclick="switchVuTab('favorites')">Favorites</button>
+            <button class="vu-tab" data-tab="upload" onclick="switchVuTab('upload')">Upload Voice</button>
+        </div>
+
+        <div class="vu-content" id="vuContent">
+            <div class="vu-grid">
+                <div class="vu-voice-card" onclick="playVoicePreview('FoxKing')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#f97316,#ef4444);">🦊</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">FoxKing</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+                <div class="vu-voice-card" onclick="playVoicePreview('MiauLee')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#a855f7,#ec4899);">🐱</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">MiauLee</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+                <div class="vu-voice-card" onclick="playVoicePreview('xiuder')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#1e293b,#475569);">👤</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">xiuder</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+                <div class="vu-voice-card" onclick="playVoicePreview('Taya')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#7c2d12,#dc2626);">👸</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">Taya</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+                <div class="vu-voice-card" onclick="playVoicePreview('Phantom')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#0c4a6e,#1e40af);">👻</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">Phantom</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+                <div class="vu-voice-card" onclick="playVoicePreview('Devilcat')">
+                    <div class="vu-voice-img" style="background:linear-gradient(135deg,#7c2d12,#000);">😈</div>
+                    <div class="vu-voice-label">Impression of</div>
+                    <div class="vu-voice-name">Devilcat</div>
+                    <div class="vu-voice-rating">★ ★ ★ ★ ★</div>
+                    <div class="vu-voice-ratings-text">Not enough ratings</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Premium Plans Modal -->
+<div class="modal" id="plansModal">
+    <div class="modal-card" style="max-width: 440px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 18px;">
+            <h2 style="font-family:'Space Grotesk',sans-serif; font-size:24px; font-weight:800;">Choose Your Plan</h2>
+            <button onclick="closePremiumPlans()" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;">×</button>
+        </div>
+        <div class="plans-grid">
+            <div class="plan-card" onclick="selectPlan('yearly')">
+                <div class="plan-badge">BEST VALUE</div>
+                <div class="plan-name">Yearly</div>
+                <div class="plan-features">
+                    <div class="plan-feature">✓ Save 50%</div>
+                    <div class="plan-feature">✓ Unlimited usage</div>
+                    <div class="plan-feature">✓ Get 7 Days Free</div>
+                </div>
+                <div class="plan-price-row">
+                    <span class="plan-price">$60</span>
+                    <span class="plan-price-old">$120</span>
+                </div>
+            </div>
+            <div class="plan-card featured" onclick="selectPlan('monthly')">
+                <div class="plan-badge">MOST POPULAR</div>
+                <div class="plan-name">Monthly</div>
+                <div class="plan-features">
+                    <div class="plan-feature">✓ Save 30%</div>
+                    <div class="plan-feature">✓ Unlimited usage</div>
+                    <div class="plan-feature">✓ Get 3 Days Free</div>
+                </div>
+                <div class="plan-price-row">
+                    <span class="plan-price">$24</span>
+                    <span class="plan-price-old">$30</span>
+                </div>
+            </div>
+            <div class="plan-card" onclick="selectPlan('weekly')">
+                <div class="plan-name">Weekly</div>
+                <div class="plan-features">
+                    <div class="plan-feature">✓ Save 16%</div>
+                    <div class="plan-feature">✓ Limited for day</div>
+                    <div class="plan-feature">✓ Get 3 Days Free</div>
+                </div>
+                <div class="plan-price-row">
+                    <span class="plan-price">$8.4</span>
+                    <span class="plan-price-old">$10</span>
+                </div>
+            </div>
+        </div>
+        <button class="plan-purchase-btn" onclick="purchasePlan()">Continue to Purchase</button>
+    </div>
+</div>
+
 <!-- Shop Modal -->
 <div class="modal" id="shopModal">
     <div class="modal-card shop-modal-card">
@@ -2107,7 +2570,64 @@ input, textarea { user-select: text; -webkit-user-select: text; }
         <div class="shop-credits">
             <div class="credits-display">💰 <span id="shopCredits">50</span> crediti</div>
         </div>
+
+        <!-- Shop Tabs -->
+        <div class="shop-tabs" id="shopTabs" style="display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid #00ffff33; overflow-x: auto; background: rgba(0,50,100,0.2);">
+            <button class="shop-tab active" data-category="all" onclick="filterShopByCategory('all')" style="padding: 6px 12px; background: #00ffff; color: #001; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                🛍️ Tutto
+            </button>
+            <!-- Other tabs will be generated dynamically -->
+        </div>
+
+        <!-- Inventory Tab Button -->
+        <div style="padding: 8px 12px; border-bottom: 1px solid #00ffff33;">
+            <button onclick="toggleShopInventoryTab()" style="width: 100%; padding: 8px; background: linear-gradient(135deg, #9900ff, #ff00ff); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                📦 Mio Inventario
+            </button>
+        </div>
+
         <div class="shop-list" id="shopList"></div>
+        <div class="shop-inventory" id="shopInventory" style="display: none; max-height: 300px; overflow-y: auto;"></div>
+
+        <!-- Bitcoin Payment Section -->
+        <div class="shop-bitcoin-section" id="shopBitcoinSection" style="display:none; margin-top: 20px; padding: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h3 style="color: #00ffff; margin-bottom: 10px;">₿ Paga con Bitcoin</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <input type="number" id="btcCreditsInput" placeholder="Crediti" min="10" max="100000" value="100"
+                           style="flex: 1; padding: 8px; background: #1a1a2e; border: 1px solid #00ffff; color: #00ffff; border-radius: 5px;">
+                    <button onclick="requestBitcoinPayment()" style="padding: 8px 15px; background: linear-gradient(135deg, #ff6b35, #f7931a); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                        Genera QR
+                    </button>
+                    <button onclick="closeBitcoinSection()" style="padding: 8px 15px; background: #333; color: #999; border: 1px solid #555; border-radius: 5px; cursor: pointer;">
+                        Annulla
+                    </button>
+                </div>
+            </div>
+
+            <div id="btcPaymentDisplay" style="display: none; text-align: center; background: rgba(0,255,255,0.05); padding: 15px; border-radius: 10px; border: 1px solid #00ffff33;">
+                <img id="btcQrCode" src="" style="width: 200px; height: 200px; margin: 10px auto; display: block; border-radius: 5px;">
+
+                <div style="margin: 15px 0; font-size: 14px;">
+                    <div style="color: #888; margin-bottom: 5px;">Indirizzo:</div>
+                    <div id="btcAddress" style="color: #00ffff; font-family: monospace; word-break: break-all; font-size: 12px; margin-bottom: 10px;"></div>
+
+                    <div style="color: #888; margin-bottom: 5px;">Importo:</div>
+                    <div id="btcAmount" style="color: #f7931a; font-size: 16px; font-weight: bold;"></div>
+
+                    <div style="color: #888; margin-top: 10px; margin-bottom: 5px;">Crediti:</div>
+                    <div id="btcCreditsAmount" style="color: #00ffff; font-size: 14px;"></div>
+                </div>
+
+                <div style="margin-top: 15px; font-size: 12px; color: #999;">
+                    ⏱️ Scade tra 15 minuti
+                </div>
+
+                <button onclick="closeBitcoinPaymentDisplay()" style="margin-top: 10px; padding: 8px 15px; background: #333; color: #999; border: 1px solid #555; border-radius: 5px; cursor: pointer; width: 100%;">
+                    Chiudi
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -2557,6 +3077,13 @@ function completeChallenge() {
 
 function acceptChallenge() {
     haptic('light');
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem('kv_challenge_' + today, '1');
+    if (state.user) {
+        state.user.xp = (state.user.xp || 0) + 20;
+    }
+    document.getElementById('challengeBanner').style.display = 'none';
+    toast('✅ Sfida completata! +20 XP');
     switchScreen('home');
 }
 
@@ -3027,24 +3554,28 @@ async function loadVoiceRooms() {
             return;
         }
 
-        // FIX XSS: escape di tutti i campi user-controlled
-        feedEl.innerHTML = rooms.map(room => {
+        const emojiColors = ['#a855f7','#ec4899','#f97316','#06b6d4','#10b981','#fbbf24','#ef4444'];
+        feedEl.innerHTML = rooms.map((room, idx) => {
             const slug = escapeHtml(room.slug);
             const label = escapeHtml(room.label);
             const desc = escapeHtml(room.desc);
             const count = Number(room.participants_count) || 0;
-            const badge = room.is_active ? `<span class="room-active">● ${count}</span>` : '<span class="room-inactive">● Offline</span>';
+            const bubbles = Array.from({length: Math.min(3, count || 3)}, (_,i) =>
+                `<div class="vr-bubble" style="background:linear-gradient(135deg,${emojiColors[(idx+i)%emojiColors.length]},${emojiColors[(idx+i+2)%emojiColors.length]});">${['👤','🎙️','🎵'][i]}</div>`
+            ).join('');
+            const liveDot = room.is_active ? `<span class="vr-live-dot"></span>` : '';
             return `
-            <div class="voice-room-card" onclick="joinVoiceRoom('${slug}')">
-                <div class="room-header">
-                    <div class="room-title">${label}</div>
-                    ${badge}
+            <div class="vr-card" onclick="joinVoiceRoom('${slug}')">
+                <div class="vr-bubbles">${bubbles}</div>
+                <div class="vr-info">
+                    <div class="vr-title">${liveDot}${label}</div>
+                    <div class="vr-desc">${desc}</div>
+                    <div class="vr-meta">
+                        <span class="vr-count">👥 ${count} online</span>
+                        <span class="vr-status">${room.is_active ? 'LIVE' : 'OFFLINE'}</span>
+                    </div>
                 </div>
-                <div class="room-desc">${desc}</div>
-                <div class="room-footer">
-                    <span class="room-count">👥 ${count} online</span>
-                    <button class="room-join">Entra →</button>
-                </div>
+                <button class="vr-join-btn">→</button>
             </div>`;
         }).join('');
 
@@ -3566,52 +4097,167 @@ function goShop() {
     loadShop();
 }
 
+function openVoiceUniverse() {
+    haptic('light');
+    document.getElementById('voiceUniverseModal').classList.add('show');
+}
+function switchVuTab(tab) {
+    haptic('light');
+    document.querySelectorAll('.vu-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    toast(`🎭 ${tab}`);
+}
+function playVoicePreview(name) {
+    haptic('medium');
+    toast(`🎙️ Preview voce di ${name}`);
+}
+
+let selectedPlan = 'monthly';
+function showPremiumPlans() {
+    haptic('light');
+    document.getElementById('plansModal').classList.add('show');
+}
+function closePremiumPlans() {
+    document.getElementById('plansModal').classList.remove('show');
+}
+function selectPlan(plan) {
+    selectedPlan = plan;
+    document.querySelectorAll('#plansModal .plan-card').forEach(c => c.classList.remove('featured'));
+    event.currentTarget.classList.add('featured');
+    haptic('light');
+}
+function purchasePlan() {
+    haptic('medium');
+    toast(`💳 Piano ${selectedPlan} selezionato — apri shop per pagare`);
+    closePremiumPlans();
+    setTimeout(() => goShop(), 400);
+}
+
 function closeShop() {
     document.getElementById('shopModal').classList.remove('show');
 }
 
 async function loadShop() {
     try {
-        const r = await api('/shop/products');
-        const products = r?.products || [];
+        const categoriesR = await api('/shop/categories');
+        const categories = categoriesR?.categories || [];
+        const productsR = await api('/shop/products');
+        const allProducts = productsR?.products || [];
 
+        window.shopCategories = categories;
+        window.shopAllProducts = allProducts;
+        window.shopCurrentCategory = 'all';
+
+        // Assicurati che la lista di prodotti sia visibile e l'inventario nascosto
         const shopList = document.getElementById('shopList');
-        if (products.length === 0) {
-            shopList.innerHTML = '<div class="empty"><div class="empty-text">Nessun prodotto disponibile</div></div>';
-            return;
+        const shopInv = document.getElementById('shopInventory');
+        if (shopList && shopInv) {
+            shopList.style.display = 'block';
+            shopInv.style.display = 'none';
         }
 
-        // FIX XSS: escape di tutti i campi
-        shopList.innerHTML = products.map(p => {
-            const id = encodeURIComponent(p.id);
-            const name = escapeHtml(p.name);
-            const desc = escapeHtml(p.desc);
-            const icon = escapeHtml(p.icon || '🛍️');
-            const price = Number(p.price_credits) || 0;
-            return `
-            <div class="shop-item">
+        // Genera tab senza onclick inline
+        const shopTabs = document.getElementById('shopTabs');
+        if (shopTabs) {
+            shopTabs.innerHTML = `
+                <button class="shop-tab active" data-category="all" style="padding: 6px 12px; background: #00ffff; color: #001; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                    🛍️ Tutto
+                </button>
+                ${categories.map(cat => `
+                    <button class="shop-tab" data-category="${escapeHtml(cat.name)}" style="padding: 6px 12px; background: rgba(0,217,255,0.1); color: #00ffff; border: 1px solid #00ffff33; border-radius: 5px; cursor: pointer; font-weight: bold; white-space: nowrap;">
+                        ${escapeHtml(cat.icon)} ${escapeHtml(cat.name)} (${cat.count})
+                    </button>
+                `).join('')}
+            `;
+
+            // Aggiungi event listeners
+            shopTabs.querySelectorAll('.shop-tab').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const category = this.getAttribute('data-category');
+                    filterShopByCategory(category);
+                });
+            });
+        }
+
+        // Aggiungi listener al bottone inventory
+        const invBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent?.includes('Inventario'));
+        if (invBtn) {
+            invBtn.addEventListener('click', toggleShopInventoryTab);
+        }
+
+        // Renderizza i prodotti
+        if (shopList) {
+            renderShopProducts(allProducts);
+        }
+
+        if (state.user?.id) {
+            const creditsR = await api(`/shop/credits`);
+            const c = Number(creditsR?.credits) || 0;
+            document.getElementById('shopCredits').textContent = c;
+            state.credits = c;
+        }
+    } catch(e) {
+        console.error('Shop error:', e);
+    }
+}
+
+function renderShopProducts(products) {
+    const shopList = document.getElementById('shopList');
+    if (products.length === 0) {
+        shopList.innerHTML = '<div class="empty"><div class="empty-text">Nessun prodotto disponibile</div></div>';
+        return;
+    }
+
+    shopList.innerHTML = products.map(p => {
+        const id = encodeURIComponent(p.id);
+        const name = escapeHtml(p.name);
+        const desc = escapeHtml(p.desc);
+        const icon = escapeHtml(p.icon || '🛍️');
+        const price = Number(p.price_credits) || 0;
+        const itemData = p.item_data ? JSON.parse(p.item_data) : {};
+
+        // Renderizza rarity badge per collectibili
+        let rarityBadge = '';
+        if ((p.category === 'rarity' || p.category === 'achievement') && itemData.rarity) {
+            const rarityMap = {
+                common: { label: 'Comune', color: '#94a3b8' },
+                rare: { label: 'Raro', color: '#00ccff' },
+                epic: { label: 'Epico', color: '#9900ff' },
+                legendary: { label: 'Leggendario', color: '#ffcc00' }
+            };
+            const rarity = rarityMap[itemData.rarity] || {};
+            rarityBadge = `<div class="rarity-badge" style="background: ${rarity.color}20; color: ${rarity.color}; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-top: 4px; border: 1px solid ${rarity.color}33; display: inline-block;">${rarity.label}</div>`;
+        }
+
+        return `
+            <div class="shop-item" style="position: relative;">
                 <div style="display: flex; align-items: center; flex: 1;">
                     <div class="shop-item-icon">${icon}</div>
                     <div class="shop-item-info">
                         <div class="shop-item-name">${name}</div>
                         <div class="shop-item-desc">${desc}</div>
+                        ${rarityBadge}
                     </div>
                 </div>
                 <div class="shop-item-price">${price} 💰</div>
                 <button class="shop-item-buy" data-pid="${id}" data-price="${price}" data-name="${name}" onclick="buyItem(this)">Compra</button>
             </div>`;
-        }).join('');
+    }).join('');
 
-        // FIX: usa endpoint protetto (token-based, no userId in query)
-        if (state.user?.id) {
-            const creditsR = await api(`/shop/credits`);
-            const c = Number(creditsR?.credits) || 0;
-            document.getElementById('shopCredits').textContent = c;
-            state.credits = c; // sync col backend
-        }
-    } catch(e) {
-        console.error('Shop error:', e);
-    }
+    // Aggiungi pulsante Bitcoin
+    const bitcoinBtn = document.createElement('div');
+    bitcoinBtn.innerHTML = `
+        <div class="shop-item" style="background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(247,147,26,0.15)); border: 1px solid #f7931a66;">
+            <div style="display: flex; align-items: center; flex: 1;">
+                <div class="shop-item-icon" style="font-size: 28px;">₿</div>
+                <div>
+                    <div style="font-weight: bold; color: #f7931a;">Acquista Crediti</div>
+                    <div style="font-size: 12px; color: #999;">Paga con Bitcoin</div>
+                </div>
+            </div>
+            <button class="shop-item-buy" style="background: linear-gradient(135deg, #ff6b35, #f7931a);" onclick="toggleBitcoinSection()">Bitcoin</button>
+        </div>`;
+    shopList.appendChild(bitcoinBtn);
 }
 
 async function buyItem(btnOrId, priceArg, nameArg) {
@@ -3665,6 +4311,189 @@ async function buyItem(btnOrId, priceArg, nameArg) {
             btn.disabled = false;
             btn.textContent = 'Compra';
         }
+    }
+}
+
+// ============= BITCOIN PAYMENT =============
+
+function toggleBitcoinSection() {
+    const section = document.getElementById('shopBitcoinSection');
+    if (section.style.display === 'none') {
+        section.style.display = 'block';
+        document.getElementById('btcPaymentDisplay').style.display = 'none';
+        document.getElementById('btcCreditsInput').value = '100';
+    } else {
+        section.style.display = 'none';
+    }
+}
+
+function closeBitcoinSection() {
+    document.getElementById('shopBitcoinSection').style.display = 'none';
+    document.getElementById('btcPaymentDisplay').style.display = 'none';
+}
+
+function closeBitcoinPaymentDisplay() {
+    document.getElementById('btcPaymentDisplay').style.display = 'none';
+}
+
+async function requestBitcoinPayment() {
+    if (!state.user?.id) {
+        toastError('Devi accedere prima');
+        return;
+    }
+
+    const credits = Number(document.getElementById('btcCreditsInput').value);
+    if (!credits || credits < 10) {
+        toastError('Minimo 10 crediti');
+        return;
+    }
+
+    try {
+        const r = await api('/shop/bitcoin-payment', {
+            method: 'POST',
+            body: JSON.stringify({ credits })
+        });
+
+        if (r?.paymentId) {
+            const displayEl = document.getElementById('btcPaymentDisplay');
+            document.getElementById('btcQrCode').src = r.qrCodeUrl;
+            document.getElementById('btcAddress').textContent = r.btcAddress;
+            document.getElementById('btcAmount').textContent = r.btcAmount + ' BTC';
+            document.getElementById('btcCreditsAmount').textContent = r.credits + ' crediti';
+
+            displayEl.style.display = 'block';
+            toastSuccess('QR Code generato - Scade tra 15 minuti');
+
+            // Salva il paymentId per possibili verifiche future
+            state.lastBtcPaymentId = r.paymentId;
+        } else {
+            toastError(r?.error || 'Errore nella richiesta');
+        }
+    } catch(e) {
+        console.error('Bitcoin payment error:', e);
+        toastError('Errore nel generare il pagamento');
+    }
+}
+
+// ============= SHOP CATEGORY FILTERING =============
+
+function filterShopByCategory(category) {
+    window.shopCurrentCategory = category;
+
+    // Aggiorna UI tabs
+    document.querySelectorAll('.shop-tab').forEach(tab => {
+        tab.style.background = tab.dataset.category === category ? '#00ffff' : 'rgba(0,217,255,0.1)';
+        tab.style.color = tab.dataset.category === category ? '#001' : '#00ffff';
+    });
+
+    // Filtra prodotti
+    const products = category === 'all'
+        ? window.shopAllProducts
+        : window.shopAllProducts.filter(p => p.category === category);
+
+    renderShopProducts(products);
+}
+
+// ============= SHOP INVENTORY =============
+
+function toggleShopInventoryTab() {
+    const inventoryDiv = document.getElementById('shopInventory');
+    const shopList = document.getElementById('shopList');
+
+    if (inventoryDiv.style.display === 'none') {
+        shopList.style.display = 'none';
+        inventoryDiv.style.display = 'block';
+        loadInventory();
+    } else {
+        inventoryDiv.style.display = 'none';
+        shopList.style.display = 'block';
+    }
+}
+
+async function loadInventory() {
+    try {
+        if (!state.user?.id) {
+            document.getElementById('shopInventory').innerHTML = '<div class="empty"><div class="empty-text">Devi accedere prima</div></div>';
+            return;
+        }
+
+        const r = await api('/shop/inventory');
+        const items = r?.inventory || [];
+
+        if (items.length === 0) {
+            document.getElementById('shopInventory').innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">Nessun oggetto posseduto</div>';
+            return;
+        }
+
+        // Raggruppa per categoria
+        const byCategory = {};
+        items.forEach(item => {
+            if (!byCategory[item.category]) byCategory[item.category] = [];
+            byCategory[item.category].push(item);
+        });
+
+        let html = '';
+        for (const [category, categoryItems] of Object.entries(byCategory)) {
+            const categoryLabel = {
+                cosmetic: '🎭 Cosmetici',
+                rarity: '⭐ Collezionabili',
+                seasonal: '📅 Stagionali',
+                achievement: '🏆 Traguardi',
+                subscription: '👑 Abbonamenti',
+                powerup: '⚡ Potenziamenti'
+            }[category] || category;
+
+            html += `<div style="margin-bottom: 15px;">
+                <div style="font-weight: bold; color: #00ffff; margin-bottom: 8px; font-size: 12px;">${categoryLabel}</div>`;
+
+            categoryItems.forEach(item => {
+                const rarityMap = {
+                    common: { color: '#94a3b8' },
+                    rare: { color: '#00ccff' },
+                    epic: { color: '#9900ff' },
+                    legendary: { color: '#ffcc00' }
+                };
+                const rarityColor = rarityMap[item.rarity_level]?.color || '#fff';
+                const equipped = item.equipped ? '✓ Equipaggiato' : '';
+
+                html += `<div style="background: rgba(0,217,255,0.1); padding: 8px 10px; border-radius: 4px; margin-bottom: 6px; border-left: 2px solid ${rarityColor};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="font-weight: 600; font-size: 13px;">${escapeHtml(item.name)}</div>
+                            <div style="font-size: 11px; color: #00ffff80;">${escapeHtml(item.category)}</div>
+                            ${equipped ? `<div style="font-size: 11px; color: #10b981;">${equipped}</div>` : ''}
+                        </div>
+                        ${category === 'cosmetic' && !item.equipped ? `<button onclick="equipCosmetic(${item.id})" style="padding: 4px 8px; background: #9900ff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">Equipaggia</button>` : ''}
+                    </div>
+                </div>`;
+            });
+
+            html += '</div>';
+        }
+
+        document.getElementById('shopInventory').innerHTML = html;
+    } catch(e) {
+        console.error('Inventory error:', e);
+        document.getElementById('shopInventory').innerHTML = '<div class="empty"><div class="empty-text">Errore nel caricamento</div></div>';
+    }
+}
+
+async function equipCosmetic(inventoryId) {
+    try {
+        const r = await api('/shop/inventory/equip', {
+            method: 'POST',
+            body: JSON.stringify({ inventoryId, equipped: true })
+        });
+
+        if (r?.ok) {
+            toastSuccess('✨ Equipaggiato!');
+            await loadInventory();
+        } else {
+            toastError(r?.message || 'Errore nell\'equipaggiamento');
+        }
+    } catch(e) {
+        console.error('Equip error:', e);
+        toastError('Errore tecnico');
     }
 }
 
