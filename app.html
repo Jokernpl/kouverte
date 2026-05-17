@@ -1669,6 +1669,76 @@ a { text-decoration: none; color: inherit; }
 /* ============= UTILITIES ============= */
 .hidden { display: none !important; }
 
+/* ============= VOICE IN ROOM ============= */
+.voice-toggle-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--gold);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.voice-toggle-btn.active {
+  background: #2ecc71;
+  border-color: #2ecc71;
+  color: #fff;
+  animation: voice-pulse 1.5s ease-in-out infinite;
+}
+@keyframes voice-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(46,204,113,0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(46,204,113,0); }
+}
+.voice-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(46,204,113,0.12), rgba(46,204,113,0.04));
+  border-bottom: 1px solid rgba(46,204,113,0.25);
+  font-size: 12px;
+  color: #2ecc71;
+}
+.voice-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2ecc71;
+  animation: voice-pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes voice-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.voice-bar span:nth-child(2) { flex: 1; }
+.voice-mute-btn, .voice-leave-btn {
+  background: transparent;
+  border: 1px solid rgba(46,204,113,0.4);
+  color: #2ecc71;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+.voice-mute-btn.muted {
+  background: #e63946;
+  border-color: #e63946;
+  color: #fff;
+}
+.voice-leave-btn {
+  border-color: rgba(230,57,70,0.4);
+  color: #e63946;
+}
+
 /* ============= PROFILE EDIT ============= */
 .profile-edit { display: flex; flex-direction: column; gap: 6px; }
 .pe-label {
@@ -2411,7 +2481,14 @@ a { text-decoration: none; color: inherit; }
       <div class="room-panel-title" id="roomPanelTitle">Stanza</div>
       <div class="room-panel-online" id="roomPanelOnline">caricamento...</div>
     </div>
+    <button class="voice-toggle-btn" id="voiceToggleBtn" onclick="toggleVoiceInRoom()" title="Parla in voce">🎤</button>
   </header>
+  <div class="voice-bar hidden" id="voiceBar">
+    <span class="voice-dot"></span>
+    <span id="voiceBarText">In voce — 1 partecipante</span>
+    <button class="voice-mute-btn" id="voiceMuteBtn" onclick="toggleVoiceMute()" title="Mute">🎙️</button>
+    <button class="voice-leave-btn" onclick="leaveVoice()" title="Esci dalla voce">✕</button>
+  </div>
 
   <div class="room-msgs" id="roomMsgs">
     <div class="room-empty">
@@ -2874,6 +2951,7 @@ async function openRoomPanel(slug, label) {
 
 function leaveRoomPanel() {
   if (_roomPollInterval) { clearInterval(_roomPollInterval); _roomPollInterval = null; }
+  if (typeof leaveVoice === 'function' && _voiceRoomSlug) leaveVoice();
   _currentRoomSlug = null;
   document.getElementById('roomPanel').classList.remove('open');
 }
@@ -4008,7 +4086,163 @@ function getSocket() {
     if (!_peerConn || !data.candidate) return;
     try { await _peerConn.addIceCandidate(data.candidate); } catch(e) {}
   });
+
+  // ===== GROUP VOICE in ROOMS (mesh) =====
+  _socket.on('user-joined-voice-room', async (data) => {
+    if (!_voiceRoomSlug || !_voiceLocalStream) return;
+    if (data.userId === state.user?.id) return;
+    await sendVoiceOfferTo(data.userId);
+    updateVoiceBar();
+  });
+  _socket.on('user-left-voice-room', (data) => {
+    if (data.userId === state.user?.id) return;
+    closeVoicePeer(data.userId);
+    updateVoiceBar();
+  });
+  _socket.on('voice-offer', async (data) => {
+    if (data.to !== state.user?.id) return;
+    if (!_voiceLocalStream) return;
+    let pc = _voicePeers.get(data.from);
+    if (!pc) pc = createVoicePeer(data.from);
+    try {
+      await pc.setRemoteDescription(data.offer);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      _socket.emit('voice-answer', { roomSlug: _voiceRoomSlug, to: data.from, from: state.user.id, answer });
+    } catch(e) {}
+  });
+  _socket.on('voice-answer', async (data) => {
+    if (data.to !== state.user?.id) return;
+    const pc = _voicePeers.get(data.from);
+    if (!pc) return;
+    try { await pc.setRemoteDescription(data.answer); } catch(e) {}
+  });
+  _socket.on('voice-ice', async (data) => {
+    if (data.to !== state.user?.id) return;
+    const pc = _voicePeers.get(data.from);
+    if (!pc || !data.candidate) return;
+    try { await pc.addIceCandidate(data.candidate); } catch(e) {}
+  });
+
   return _socket;
+}
+
+// ============= GROUP VOICE in ROOMS =============
+const _voicePeers = new Map(); // otherId -> RTCPeerConnection
+let _voiceLocalStream = null;
+let _voiceRoomSlug = null;
+
+function createVoicePeer(otherId) {
+  const pc = new RTCPeerConnection(STUN);
+  _voicePeers.set(otherId, pc);
+  _voiceLocalStream.getTracks().forEach(t => pc.addTrack(t, _voiceLocalStream));
+  pc.ontrack = (e) => attachRemoteVoiceAudio(otherId, e.streams[0]);
+  pc.onicecandidate = (e) => {
+    if (e.candidate && _voiceRoomSlug) {
+      _socket.emit('voice-ice', {
+        roomSlug: _voiceRoomSlug, to: otherId, from: state.user.id, candidate: e.candidate
+      });
+    }
+  };
+  return pc;
+}
+
+async function sendVoiceOfferTo(otherId) {
+  if (_voicePeers.has(otherId)) return;
+  const pc = createVoicePeer(otherId);
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    _socket.emit('voice-offer', {
+      roomSlug: _voiceRoomSlug, to: otherId, from: state.user.id, offer
+    });
+  } catch(e) {}
+}
+
+function attachRemoteVoiceAudio(userId, stream) {
+  let audio = document.getElementById('remoteVoice_' + userId);
+  if (!audio) {
+    audio = document.createElement('audio');
+    audio.id = 'remoteVoice_' + userId;
+    audio.autoplay = true;
+    audio.playsInline = true;
+    document.body.appendChild(audio);
+  }
+  audio.srcObject = stream;
+}
+
+function closeVoicePeer(userId) {
+  const pc = _voicePeers.get(userId);
+  if (pc) { try { pc.close(); } catch(e) {} _voicePeers.delete(userId); }
+  const audio = document.getElementById('remoteVoice_' + userId);
+  if (audio) audio.remove();
+}
+
+function updateVoiceBar() {
+  const bar  = document.getElementById('voiceBar');
+  const text = document.getElementById('voiceBarText');
+  const btn  = document.getElementById('voiceToggleBtn');
+  if (!bar) return;
+  if (_voiceRoomSlug && _voiceLocalStream) {
+    bar.classList.remove('hidden');
+    if (btn) btn.classList.add('active');
+    const count = _voicePeers.size + 1;
+    if (text) text.textContent = `In voce — ${count} ${count === 1 ? 'partecipante' : 'partecipanti'}`;
+  } else {
+    bar.classList.add('hidden');
+    if (btn) btn.classList.remove('active');
+  }
+}
+
+async function toggleVoiceInRoom() {
+  if (!_currentRoomSlug) { toast('Apri prima una stanza'); return; }
+  if (!state.token) { showAuthModal(); return; }
+  if (_voiceRoomSlug === _currentRoomSlug) { leaveVoice(); return; }
+  if (_voiceRoomSlug) await leaveVoice();
+  try {
+    _voiceLocalStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch(e) {
+    toast('Microfono non accessibile');
+    return;
+  }
+  _voiceRoomSlug = _currentRoomSlug;
+  const sock = getSocket();
+  if (!sock) { toast('Connessione non disponibile'); return; }
+  sock.emit('join-voice-room', {
+    roomSlug: _voiceRoomSlug,
+    userId: state.user.id,
+    username: state.user.username
+  });
+  updateVoiceBar();
+  toast('Sei in voce nella stanza');
+}
+
+async function leaveVoice() {
+  if (!_voiceRoomSlug) return;
+  if (_socket) {
+    _socket.emit('leave-voice-room', {
+      roomSlug: _voiceRoomSlug,
+      userId: state.user.id,
+      username: state.user.username
+    });
+  }
+  const ids = Array.from(_voicePeers.keys());
+  ids.forEach(closeVoicePeer);
+  if (_voiceLocalStream) {
+    _voiceLocalStream.getTracks().forEach(t => t.stop());
+    _voiceLocalStream = null;
+  }
+  _voiceRoomSlug = null;
+  updateVoiceBar();
+}
+
+function toggleVoiceMute() {
+  if (!_voiceLocalStream) return;
+  const track = _voiceLocalStream.getAudioTracks()[0];
+  if (!track) return;
+  track.enabled = !track.enabled;
+  document.getElementById('voiceMuteBtn').classList.toggle('muted', !track.enabled);
+  document.getElementById('voiceMuteBtn').textContent = track.enabled ? '🎙️' : '🔇';
 }
 
 async function startCall(matchId, otherUserId, otherName) {

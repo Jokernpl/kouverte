@@ -1901,17 +1901,17 @@ io.on('connection', (socket) => {
     // WebRTC for voice rooms (multi-user)
     socket.on('voice-offer', (data) => {
         const { roomSlug, to, from, offer } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, offer });
+        socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, to, offer });
     });
 
     socket.on('voice-answer', (data) => {
         const { roomSlug, to, from, answer } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, answer });
+        socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, to, answer });
     });
 
     socket.on('voice-ice', (data) => {
         const { roomSlug, to, from, candidate } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, candidate });
+        socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, to, candidate });
     });
 
     // Direct call (after match)
