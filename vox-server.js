@@ -649,8 +649,21 @@ app.get('/api/users/feed', (req, res) => {
         })
         .sort((a, b) => b.likes_received - a.likes_received || b.created_at - a.created_at);
 
+    // Filter out blocked users (in both directions)
+    const token = req.headers.authorization?.split(' ')[1];
+    let myId = null;
+    if (token) {
+        try { myId = jwt.verify(token, JWT_SECRET).userId; } catch(e) {}
+    }
+    let filtered = users;
+    if (myId) {
+        DB.blocks = DB.blocks || [];
+        const blockedIds = new Set(DB.blocks.filter(b => b.from === myId).map(b => b.to));
+        const blockerIds = new Set(DB.blocks.filter(b => b.to === myId).map(b => b.from));
+        filtered = users.filter(u => !blockedIds.has(u.id) && !blockerIds.has(u.id) && u.id !== myId);
+    }
     const start = page * limit;
-    res.json({ users: users.slice(start, start + limit), total: users.length, has_more: start + limit < users.length });
+    res.json({ users: filtered.slice(start, start + limit), total: filtered.length, has_more: start + limit < filtered.length });
 });
 
 app.post('/api/users/:id/like', verifyToken, (req, res) => {
@@ -686,6 +699,76 @@ app.get('/api/users/:id/liked-by-me', verifyToken, (req, res) => {
     DB.likes = DB.likes || [];
     const liked = !!DB.likes.find(l => l.from === req.user.userId && l.to === req.params.id);
     res.json({ liked });
+});
+
+// ============ BLOCK / REPORT API ============
+
+app.post('/api/users/:id/block', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    if (fromId === toId) return res.status(400).json({ error: 'Non puoi bloccare te stesso' });
+    DB.blocks = DB.blocks || [];
+    const exists = DB.blocks.find(b => b.from === fromId && b.to === toId);
+    if (exists) {
+        DB.blocks = DB.blocks.filter(b => !(b.from === fromId && b.to === toId));
+        markDirty();
+        return res.json({ ok: true, blocked: false });
+    }
+    DB.blocks.push({ from: fromId, to: toId, created_at: Date.now() });
+    // Remove any existing like both ways and match
+    DB.likes = (DB.likes || []).filter(l => !((l.from === fromId && l.to === toId) || (l.from === toId && l.to === fromId)));
+    DB.matches = (DB.matches || []).filter(m => !((m.u1 === fromId && m.u2 === toId) || (m.u1 === toId && m.u2 === fromId)));
+    markDirty();
+    res.json({ ok: true, blocked: true });
+});
+
+app.post('/api/users/:id/report', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    const { reason } = req.body || {};
+    if (!reason || typeof reason !== 'string') return res.status(400).json({ error: 'Motivo richiesto' });
+    DB.reports = DB.reports || [];
+    DB.reports.push({
+        id: genId('rep'),
+        from: fromId, to: toId,
+        reason: String(reason).replace(/[<>]/g, '').slice(0, 500),
+        created_at: Date.now(),
+        status: 'pending'
+    });
+    markDirty();
+    res.json({ ok: true });
+});
+
+// ============ ME / ITEMS API ============
+
+app.get('/api/me/items', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const user = DB.users.find(u => u.id === userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    // Owned frames: derived from user.profile.frames (server-side ownership)
+    const ownedFrames = Array.isArray(user.profile?.frames) && user.profile.frames.length
+        ? user.profile.frames
+        : ['ivory'];
+
+    // Premium: derived from premium_expires_at
+    const premiumExp = user.premium_expires_at || 0;
+    const premium = premiumExp > Date.now() ? { plan: user.premium_plan || null, expires_at: premiumExp } : null;
+
+    // Daily likes: simple per-day counter
+    const todayKey = new Date().toISOString().slice(0, 10);
+    DB.likes = DB.likes || [];
+    const todayMs = new Date(todayKey + 'T00:00:00.000Z').getTime();
+    const likesToday = DB.likes.filter(l => l.from === userId && l.created_at >= todayMs).length;
+    const maxLikes = premium ? 100 : 20;
+    const daily_likes_left = Math.max(0, maxLikes - likesToday);
+
+    res.json({
+        frames: ownedFrames,
+        premium,
+        daily_likes_left,
+        max_likes: maxLikes
+    });
 });
 
 // ============ SHOP API ============
