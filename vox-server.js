@@ -719,8 +719,21 @@ app.get('/api/users/feed', (req, res) => {
         })
         .sort((a, b) => b.likes_received - a.likes_received || b.created_at - a.created_at);
 
+    // Filter out blocked users (in both directions)
+    const token = req.headers.authorization?.split(' ')[1];
+    let myId = null;
+    if (token) {
+        try { myId = jwt.verify(token, JWT_SECRET).userId; } catch(e) {}
+    }
+    let filtered = users;
+    if (myId) {
+        DB.blocks = DB.blocks || [];
+        const blockedIds = new Set(DB.blocks.filter(b => b.from === myId).map(b => b.to));
+        const blockerIds = new Set(DB.blocks.filter(b => b.to === myId).map(b => b.from));
+        filtered = users.filter(u => !blockedIds.has(u.id) && !blockerIds.has(u.id) && u.id !== myId);
+    }
     const start = page * limit;
-    res.json({ users: users.slice(start, start + limit), total: users.length, has_more: start + limit < users.length });
+    res.json({ users: filtered.slice(start, start + limit), total: filtered.length, has_more: start + limit < filtered.length });
 });
 
 app.post('/api/users/:id/like', verifyToken, (req, res) => {
@@ -787,6 +800,43 @@ app.get('/api/notifications/pending', (req, res) => {
     DB.pending_notifications = [];
     if (pending.length) markDirty();
     res.json({ notifications: pending });
+});
+
+// ============ BLOCK / REPORT API ============
+
+app.post('/api/users/:id/block', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    if (fromId === toId) return res.status(400).json({ error: 'Non puoi bloccare te stesso' });
+    DB.blocks = DB.blocks || [];
+    const exists = DB.blocks.find(b => b.from === fromId && b.to === toId);
+    if (exists) {
+        DB.blocks = DB.blocks.filter(b => !(b.from === fromId && b.to === toId));
+        markDirty();
+        return res.json({ ok: true, blocked: false });
+    }
+    DB.blocks.push({ from: fromId, to: toId, created_at: Date.now() });
+    DB.likes = (DB.likes || []).filter(l => !((l.from === fromId && l.to === toId) || (l.from === toId && l.to === fromId)));
+    DB.matches = (DB.matches || []).filter(m => !((m.u1 === fromId && m.u2 === toId) || (m.u1 === toId && m.u2 === fromId)));
+    markDirty();
+    res.json({ ok: true, blocked: true });
+});
+
+app.post('/api/users/:id/report', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    const { reason } = req.body || {};
+    if (!reason || typeof reason !== 'string') return res.status(400).json({ error: 'Motivo richiesto' });
+    DB.reports = DB.reports || [];
+    DB.reports.push({
+        id: genId('rep'),
+        from: fromId, to: toId,
+        reason: String(reason).replace(/[<>]/g, '').slice(0, 500),
+        created_at: Date.now(),
+        status: 'pending'
+    });
+    markDirty();
+    res.json({ ok: true });
 });
 
 // ============ MATCH INBOX & MESSAGES ============
