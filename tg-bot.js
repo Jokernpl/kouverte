@@ -29,20 +29,43 @@ console.log('    WebApp: ' + WEBAPP_URL);
 console.log('    BTC:    ' + BTC_ADDRESS);
 
 // ============================================================
-// CATALOGO CORNICI (sincronizzato con app.html)
+// CATALOGO CORNICI (sincronizzato con app.html — prezzi in EURO)
 // ============================================================
 const FRAMES = [
-  { id: 'ivory',    name: 'Avorio',    price: 0,     emoji: '🤍', tier: 1 },
-  { id: 'gold',     name: 'Oro',       price: 5000,  emoji: '🟡', tier: 2 },
-  { id: 'emerald',  name: 'Smeraldo',  price: 8000,  emoji: '💚', tier: 3 },
-  { id: 'ruby',     name: 'Rubino',    price: 8000,  emoji: '❤️',  tier: 3 },
-  { id: 'sapphire', name: 'Zaffiro',   price: 12000, emoji: '💙', tier: 4 },
-  { id: 'amethyst', name: 'Ametista',  price: 12000, emoji: '💜', tier: 4 },
-  { id: 'topaz',    name: 'Topazio',   price: 15000, emoji: '🧡', tier: 5 },
-  { id: 'onyx',     name: 'Onice',     price: 20000, emoji: '🖤', tier: 5 },
-  { id: 'platinum', name: 'Platino',   price: 25000, emoji: '⚪', tier: 6 },
-  { id: 'diamond',  name: 'Diamante',  price: 50000, emoji: '💎', tier: 7 }
+  { id: 'ivory',    name: 'Avorio',    price_eur: 0,   emoji: '🤍', tier: 1 },
+  { id: 'gold',     name: 'Oro',       price_eur: 3,   emoji: '🟡', tier: 2 },
+  { id: 'emerald',  name: 'Smeraldo',  price_eur: 5,   emoji: '💚', tier: 3 },
+  { id: 'ruby',     name: 'Rubino',    price_eur: 5,   emoji: '❤️',  tier: 3 },
+  { id: 'sapphire', name: 'Zaffiro',   price_eur: 8,   emoji: '💙', tier: 4 },
+  { id: 'amethyst', name: 'Ametista',  price_eur: 8,   emoji: '💜', tier: 4 },
+  { id: 'topaz',    name: 'Topazio',   price_eur: 12,  emoji: '🧡', tier: 5 },
+  { id: 'onyx',     name: 'Onice',     price_eur: 15,  emoji: '🖤', tier: 5 },
+  { id: 'platinum', name: 'Platino',   price_eur: 20,  emoji: '⚪', tier: 6 },
+  { id: 'diamond',  name: 'Diamante',  price_eur: 50,  emoji: '💎', tier: 7 }
 ];
+
+// Cambio EUR/BTC (refreshato ogni 10 min via CoinGecko)
+let BTC_RATE_EUR = 95000;
+function eurToBtc(eur) {
+  if (!eur) return '0';
+  const btc = eur / BTC_RATE_EUR;
+  return btc.toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
+}
+function refreshBtcRate() {
+  const https = require('https');
+  https.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', (res) => {
+    let data = '';
+    res.on('data', c => data += c);
+    res.on('end', () => {
+      try {
+        const j = JSON.parse(data);
+        if (j?.bitcoin?.eur) BTC_RATE_EUR = j.bitcoin.eur;
+      } catch (e) {}
+    });
+  }).on('error', () => {});
+}
+refreshBtcRate();
+setInterval(refreshBtcRate, 10 * 60 * 1000);
 
 // Tier di reward per inviti (cornice regalo gratis)
 const REFERRAL_REWARDS = [
@@ -85,11 +108,13 @@ function getUser(chatId) {
       id,
       joinedAt: Date.now(),
       invitedBy: null,
-      invitedUsers: [],   // chatIds of people they invited
+      invitedUsers: [],
       ownedFrames: ['ivory'],
-      earnedSats: 0
+      earnedEur: 0
     };
   }
+  // Migration: vecchi user con earnedSats
+  if (typeof DB.users[id].earnedEur === 'undefined') DB.users[id].earnedEur = 0;
   return DB.users[id];
 }
 
@@ -115,6 +140,9 @@ function frameById(id) {
 
 function formatSats(n) {
   return n.toLocaleString('it-IT');
+}
+function formatEur(n) {
+  return n.toFixed(2).replace('.', ',');
 }
 
 // Telegram profile photo (file URL) — async
@@ -249,7 +277,7 @@ async function sendProfile(chatId, fromName) {
 
 📅 Iscritto: ${new Date(user.joinedAt).toLocaleDateString('it-IT')}
 👥 Amici invitati: *${invited}*
-🪙 Sats guadagnati: *${formatSats(user.earnedSats)}*
+💰 Valore guadagnato: *${formatEur(user.earnedEur)} €* (${eurToBtc(user.earnedEur)} BTC)
 
 💎 *Cornici possedute:*
 ${ownedNames || '🤍 Avorio'}
@@ -283,7 +311,9 @@ function sendFramesList(chatId) {
 
   const lines = FRAMES.map(f => {
     const has = owned.includes(f.id);
-    const price = f.price === 0 ? 'Gratis' : `${formatSats(f.price)} sats`;
+    const price = f.price_eur === 0
+      ? 'Gratis'
+      : `${f.price_eur} € · ${eurToBtc(f.price_eur)} BTC`;
     const status = has ? '✅ Posseduta' : `· ${price}`;
     return `${f.emoji}  *${f.name}*  — ${status}`;
   }).join('\n');
@@ -364,17 +394,17 @@ function sendEarnings(chatId) {
   const unlocked = REFERRAL_REWARDS.filter(r => count >= r.invites);
   const next = nextRewardFor(user);
 
-  const equivalentSats = unlocked.reduce((sum, r) => {
+  const equivalentEur = unlocked.reduce((sum, r) => {
     const f = frameById(r.frame);
-    return sum + (f ? f.price : 0);
+    return sum + (f ? f.price_eur : 0);
   }, 0);
 
   const text =
-`🪙 *I tuoi guadagni*
+`💰 *I tuoi guadagni*
 
 👥 Amici invitati: *${count}*
 🎁 Cornici sbloccate: *${unlocked.length}*
-💰 Valore in sats: *${formatSats(equivalentSats)}*  (~ ${(equivalentSats/100000000).toFixed(6)} BTC)
+💎 Valore totale: *${formatEur(equivalentEur)} €*  (${eurToBtc(equivalentEur)} BTC)
 
 ${unlocked.length > 0
   ? '✅ *Sbloccate:* ' + unlocked.map(r => `${frameById(r.frame)?.emoji || ''} ${r.label}`).join(' · ')
@@ -440,19 +470,19 @@ function sendPremium(chatId) {
   const text =
 `👑 *Kouverte Premium*
 
-Scegli il piano che fa per te:
+Pagamenti in *Bitcoin*. Cambio live aggiornato.
 
-*Vox Pro* · 4,99 € / mese
+*Vox Pro* · 5 € / mese · _${eurToBtc(5)} BTC_
 ◆ Storie per 14 giorni
 ◆ Profilo verificato
 ◆ Badge Premium
 
-*Vox Elite* · 9,99 € / mese  ⭐ CONSIGLIATO
+*Vox Elite* · 10 € / mese · _${eurToBtc(10)} BTC_  ⭐ CONSIGLIATO
 ◆ Storie per 30 giorni
 ◆ Visibilità prioritaria
 ◆ Badge Premium
 
-*Vox Infinity* · 19,99 € / mese
+*Vox Infinity* · 20 € / mese · _${eurToBtc(20)} BTC_
 ◆ Storie permanenti
 ◆ Tutte le funzioni Elite
 ◆ Supporto dedicato
@@ -610,9 +640,9 @@ async function notifyReferralEarned(inviterId, newUserName) {
     if (!inviter.ownedFrames.includes(justUnlocked.frame)) {
       inviter.ownedFrames.push(justUnlocked.frame);
       const f = frameById(justUnlocked.frame);
-      inviter.earnedSats += (f?.price || 0);
+      inviter.earnedEur += (f?.price_eur || 0);
       saveDB();
-      rewardMsg = `\n\n🎉 *PREMIO SBLOCCATO!*\nHai vinto la cornice ${f.emoji} *${f.name}* (valore ${formatSats(f.price)} sats).`;
+      rewardMsg = `\n\n🎉 *PREMIO SBLOCCATO!*\nHai vinto la cornice ${f.emoji} *${f.name}* (valore ${formatEur(f.price_eur)} € · ${eurToBtc(f.price_eur)} BTC).`;
     }
   } else {
     saveDB();

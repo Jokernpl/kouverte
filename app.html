@@ -1642,18 +1642,25 @@ const state = {
   btcRate: 95000             // €/BTC fallback (1 BTC ≈ 95000€)
 };
 
-// ============= FRAMES CATALOG =============
+// ============= FRAMES CATALOG (prezzi in EURO) =============
 const FRAMES = [
-  { id: 'ivory',    name: 'Avorio',    price_sats: 0,     class: 'frame-ivory' },
-  { id: 'gold',     name: 'Oro',       price_sats: 5000,  class: 'frame-gold' },
-  { id: 'emerald',  name: 'Smeraldo',  price_sats: 8000,  class: 'frame-emerald' },
-  { id: 'ruby',     name: 'Rubino',    price_sats: 8000,  class: 'frame-ruby' },
-  { id: 'sapphire', name: 'Zaffiro',   price_sats: 12000, class: 'frame-sapphire' },
-  { id: 'amethyst', name: 'Ametista',  price_sats: 12000, class: 'frame-amethyst' },
-  { id: 'topaz',    name: 'Topazio',   price_sats: 15000, class: 'frame-topaz' },
-  { id: 'onyx',     name: 'Onice',     price_sats: 20000, class: 'frame-onyx' },
-  { id: 'platinum', name: 'Platino',   price_sats: 25000, class: 'frame-platinum' },
-  { id: 'diamond',  name: 'Diamante',  price_sats: 50000, class: 'frame-diamond' }
+  { id: 'ivory',    name: 'Avorio',    price_eur: 0,   class: 'frame-ivory' },
+  { id: 'gold',     name: 'Oro',       price_eur: 3,   class: 'frame-gold' },
+  { id: 'emerald',  name: 'Smeraldo',  price_eur: 5,   class: 'frame-emerald' },
+  { id: 'ruby',     name: 'Rubino',    price_eur: 5,   class: 'frame-ruby' },
+  { id: 'sapphire', name: 'Zaffiro',   price_eur: 8,   class: 'frame-sapphire' },
+  { id: 'amethyst', name: 'Ametista',  price_eur: 8,   class: 'frame-amethyst' },
+  { id: 'topaz',    name: 'Topazio',   price_eur: 12,  class: 'frame-topaz' },
+  { id: 'onyx',     name: 'Onice',     price_eur: 15,  class: 'frame-onyx' },
+  { id: 'platinum', name: 'Platino',   price_eur: 20,  class: 'frame-platinum' },
+  { id: 'diamond',  name: 'Diamante',  price_eur: 50,  class: 'frame-diamond' }
+];
+
+// Piani Premium (anche loro in € + equivalente BTC)
+const PREMIUM_PLANS = [
+  { id: 'pro',      name: 'Vox Pro',      price_eur: 5,   features: ['Storie per 14 giorni', 'Profilo verificato', 'Badge Premium'] },
+  { id: 'elite',    name: 'Vox Elite',    price_eur: 10,  features: ['Storie per 30 giorni', 'Profilo verificato', 'Badge Premium', 'Visibilità prioritaria'], featured: true },
+  { id: 'infinity', name: 'Vox Infinity', price_eur: 20,  features: ['Storie permanenti', 'Tutte le funzioni Elite', 'Supporto dedicato', 'Eventi esclusivi'] }
 ];
 
 // Photo data (real models from randomuser.me + Unsplash for warm dark portraits)
@@ -1723,11 +1730,7 @@ const CHATS = [
   { name: 'Sofia', preview: 'Grazie del messaggio', time: 'lun', img: 'https://randomuser.me/api/portraits/women/12.jpg' }
 ];
 
-const PLANS = [
-  { name: 'Vox Pro', price: '4,99 € / mese', features: ['Storie per 14 giorni', 'Profilo verificato', 'Badge Premium'] },
-  { name: 'Vox Elite', price: '9,99 € / mese', features: ['Storie per 30 giorni', 'Profilo verificato', 'Badge Premium', 'Visibilità prioritaria'], featured: true },
-  { name: 'Vox Infinity', price: '19,99 € / mese', features: ['Storie permanenti', 'Tutte le funzioni Elite', 'Supporto dedicato', 'Eventi esclusivi'] }
-];
+// (PLANS legacy rimosso — si usa PREMIUM_PLANS in cima)
 
 // ============= RENDERING =============
 function renderStories() {
@@ -1866,9 +1869,9 @@ function renderFrames() {
     const owned = state.ownedFrames.includes(f.id);
     const active = state.activeFrame === f.id;
     const previewImg = state.myAvatar ? `style="--frame-preview-img: url('${state.myAvatar}')"` : '';
-    const priceHtml = f.price_sats === 0
+    const priceHtml = f.price_eur === 0
       ? '<div class="frame-price free">Gratis</div>'
-      : `<div class="frame-price">${formatSats(f.price_sats)} sats</div>`;
+      : `<div class="frame-price">${f.price_eur} € <span style="opacity:.65;font-weight:400">· ${eurToBtc(f.price_eur)} BTC</span></div>`;
     return `
       <div class="frame-pick ${active ? 'active' : ''} ${owned ? '' : 'locked'}" onclick="onFrameClick('${f.id}')">
         <div class="frame-preview ${f.class}" ${previewImg}>
@@ -1887,12 +1890,16 @@ function onFrameClick(id) {
   if (!f) return;
 
   if (state.ownedFrames.includes(id)) {
-    // Already owned → just apply
     applyFrame(id);
   } else {
-    // Not owned → open BTC modal
-    openBtcModal(f);
+    openBtcModal({ ...f, kind: 'frame' });
   }
+}
+
+function onPremiumClick(id) {
+  const p = PREMIUM_PLANS.find(x => x.id === id);
+  if (!p) return;
+  openBtcModal({ ...p, kind: 'premium', class: 'frame-gold' });
 }
 
 function applyFrame(id) {
@@ -1935,39 +1942,46 @@ function setupAvatarUpload() {
 }
 
 // ============= BITCOIN =============
-function formatSats(n) {
-  return n.toLocaleString('it-IT');
+function formatEur(n) {
+  return n.toFixed(2).replace('.', ',');
 }
 
-function satsToEur(sats) {
-  const btc = sats / 100000000;
-  return (btc * state.btcRate).toFixed(2);
+// EUR -> BTC stringa pulita (es. "0.00005263")
+function eurToBtc(eur) {
+  if (!eur || !state.btcRate) return '0';
+  const btc = eur / state.btcRate;
+  // 8 decimali, taglia gli zeri finali
+  return btc.toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
 }
 
-function openBtcModal(frame) {
-  state.pendingFrame = frame.id;
+function openBtcModal(item) {
+  // item = { name, price_eur, class (per cornice), kind ('frame'|'premium'), id }
+  state.pendingFrame = item.kind === 'frame' ? item.id : null;
+  state.pendingPremium = item.kind === 'premium' ? item.id : null;
 
-  document.getElementById('btcModalTitle').textContent = `Cornice ${frame.name}`;
-  document.getElementById('btcAmount').textContent = `${formatSats(frame.price_sats)} sats`;
-  document.getElementById('btcAmountSub').textContent = `≈ ${satsToEur(frame.price_sats)} €`;
+  const labelPrefix = item.kind === 'premium' ? 'Premium' : 'Cornice';
+  document.getElementById('btcModalTitle').textContent = `${labelPrefix} ${item.name}`;
+  document.getElementById('btcAmount').textContent = `${formatEur(item.price_eur)} €`;
+  document.getElementById('btcAmountSub').textContent = `≈ ${eurToBtc(item.price_eur)} BTC`;
 
-  // Apply frame preview
+  // Anteprima visiva (cornice colorata o crown per premium)
   const preview = document.getElementById('btcFramePreview');
-  preview.className = 'btc-frame-preview ' + frame.class;
+  preview.className = 'btc-frame-preview ' + (item.class || 'frame-gold');
   const inner = document.getElementById('btcFrameInner');
-  if (state.myAvatar) {
+  if (item.kind === 'frame' && state.myAvatar) {
     inner.style.backgroundImage = `url('${state.myAvatar}')`;
     inner.style.backgroundSize = 'cover';
     inner.style.backgroundPosition = 'center';
     inner.textContent = '';
   } else {
     inner.style.backgroundImage = 'none';
-    inner.textContent = 'K';
+    inner.textContent = item.kind === 'premium' ? '♛' : 'K';
   }
 
-  // QR code via free API (bitcoin URI)
-  const btc = (frame.price_sats / 100000000).toFixed(8);
-  const uri = `bitcoin:${state.btcAddress}?amount=${btc}&label=Kouverte-${encodeURIComponent(frame.name)}`;
+  // QR code (bitcoin URI con amount preciso in BTC)
+  const btc = (item.price_eur / state.btcRate).toFixed(8);
+  const label = encodeURIComponent(`Kouverte-${item.name}`);
+  const uri = `bitcoin:${state.btcAddress}?amount=${btc}&label=${label}`;
   document.getElementById('btcQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(uri)}`;
   document.getElementById('btcAddress').textContent = state.btcAddress;
 
@@ -1981,22 +1995,39 @@ function copyBtcAddress() {
 }
 
 async function confirmBtcPayment() {
-  if (!state.pendingFrame) return;
-  // Optimistic UX: unlock + apply immediately, then verify with backend in background
-  const id = state.pendingFrame;
-  state.pendingFrame = null;
-  if (!state.ownedFrames.includes(id)) state.ownedFrames.push(id);
-  applyFrame(id);
-  closeModal('btcModal');
-  toast('Verifica del pagamento in corso...');
-
-  // Hook to backend (verification with min 4 confirmations) — silently skipped if endpoint missing
-  try {
-    await api('/bitcoin/verify', {
-      method: 'POST',
-      body: JSON.stringify({ frame: id, address: state.btcAddress })
-    });
-  } catch (e) { /* keep optimistic state */ }
+  // Cornice
+  if (state.pendingFrame) {
+    const id = state.pendingFrame;
+    state.pendingFrame = null;
+    if (!state.ownedFrames.includes(id)) state.ownedFrames.push(id);
+    applyFrame(id);
+    closeModal('btcModal');
+    toast('Verifica del pagamento in corso...');
+    try {
+      await api('/bitcoin/verify', {
+        method: 'POST',
+        body: JSON.stringify({ kind: 'frame', frame: id, address: state.btcAddress })
+      });
+    } catch (e) {}
+    return;
+  }
+  // Premium
+  if (state.pendingPremium) {
+    const id = state.pendingPremium;
+    state.pendingPremium = null;
+    state.activePremium = id;
+    state.premiumExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    saveLocal();
+    closeModal('btcModal');
+    const p = PREMIUM_PLANS.find(x => x.id === id);
+    toast(`${p?.name || 'Premium'} attivato per 30 giorni`);
+    try {
+      await api('/bitcoin/verify', {
+        method: 'POST',
+        body: JSON.stringify({ kind: 'premium', plan: id, address: state.btcAddress })
+      });
+    } catch (e) {}
+  }
 }
 
 // ============= LOCAL STORAGE =============
@@ -2024,15 +2055,16 @@ function loadLocal() {
 
 function renderPlans() {
   const el = document.getElementById('planList');
-  el.innerHTML = PLANS.map(p => `
+  if (!el) return;
+  el.innerHTML = PREMIUM_PLANS.map(p => `
     <div class="plan ${p.featured ? 'featured' : ''}">
       ${p.featured ? '<div class="plan-tag">CONSIGLIATO</div>' : ''}
       <div class="plan-name">${p.name}</div>
-      <div class="plan-price">${p.price}</div>
+      <div class="plan-price">${p.price_eur} € / mese <span style="opacity:.65;font-weight:400;font-size:12px">· ${eurToBtc(p.price_eur)} BTC</span></div>
       <ul class="plan-features">
         ${p.features.map(f => `<li>${f}</li>`).join('')}
       </ul>
-      <button class="btn-primary" style="width:100%" onclick="toast('Attiva ${p.name}')">Attiva</button>
+      <button class="btn-primary" style="width:100%" onclick="onPremiumClick('${p.id}')">Paga con Bitcoin</button>
     </div>
   `).join('');
 }
@@ -2135,10 +2167,16 @@ function init() {
     }
   } catch (e) {}
 
-  // Try to refresh BTC rate (optional)
+  // Refresh BTC rate (CoinGecko), poi re-render frames & plans con valore aggiornato
   fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur')
     .then(r => r.json())
-    .then(d => { if (d?.bitcoin?.eur) state.btcRate = d.bitcoin.eur; })
+    .then(d => {
+      if (d?.bitcoin?.eur) {
+        state.btcRate = d.bitcoin.eur;
+        renderFrames();
+        renderPlans();
+      }
+    })
     .catch(() => {});
 
   // Hide splash after 2.4s
