@@ -592,35 +592,105 @@ app.get('/api/duels', (req, res) => {
 });
 
 // ============ BITCOIN VERIFY (frontend polling) ============
-// Called by app.html after user says "Ho pagato" — checks blockchain confirmations
-app.post('/api/bitcoin/verify', async (req, res) => {
-    const { kind, id, amount_btc, address } = req.body || {};
+// Server-side pricing tables — single source of truth
+const FRAME_PRICES_EUR = {
+    ivory: 0, gold: 3, emerald: 5, ruby: 5, sapphire: 8,
+    amethyst: 8, topaz: 12, onyx: 15, platinum: 20, diamond: 50
+};
+const PREMIUM_PRICES_EUR = { pro: 5, elite: 10, infinity: 20 };
+
+// Cached EUR/BTC rate (CoinGecko, refreshed every 5 min)
+let _btcRateEur = 95000;
+let _btcRateAt  = 0;
+async function getBtcRateEur() {
+    const ageMs = Date.now() - _btcRateAt;
+    if (ageMs < 5 * 60 * 1000) return _btcRateEur;
+    try {
+        const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur');
+        const d = await r.json();
+        if (d?.bitcoin?.eur) { _btcRateEur = d.bitcoin.eur; _btcRateAt = Date.now(); }
+    } catch (e) {}
+    return _btcRateEur;
+}
+
+function grantItemToUser(userId, kind, id) {
+    if (kind === 'frame') {
+        DB.user_frames = DB.user_frames || {};
+        DB.user_frames[userId] = DB.user_frames[userId] || ['ivory'];
+        if (!DB.user_frames[userId].includes(id)) DB.user_frames[userId].push(id);
+    } else if (kind === 'premium') {
+        DB.user_premium = DB.user_premium || {};
+        DB.user_premium[userId] = { plan: id, expires_at: Date.now() + 30 * 24 * 60 * 60 * 1000 };
+    }
+    markDirty();
+}
+
+// Strict verify: token required, server-side pricing, server-only btc address
+app.post('/api/bitcoin/verify', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { kind, id } = req.body || {};
     if (!kind || !id) return res.status(400).json({ confirmed: false, error: 'kind e id richiesti' });
 
-    const btcAddr = address || BITCOIN_ADDRESS;
-    const btcAmt  = parseFloat(amount_btc) || 0;
+    let priceEur = 0;
+    if (kind === 'frame') priceEur = FRAME_PRICES_EUR[id];
+    else if (kind === 'premium') priceEur = PREMIUM_PRICES_EUR[id];
+    else return res.status(400).json({ confirmed: false, error: 'kind non valido' });
+
+    if (priceEur === undefined) return res.status(400).json({ confirmed: false, error: 'id non valido' });
+    if (priceEur === 0) {
+        grantItemToUser(userId, kind, id);
+        return res.json({ confirmed: true, confirmations: 0, required: 0, free: true });
+    }
+
+    const rate = await getBtcRateEur();
+    const expectedBtc = parseFloat((priceEur / rate).toFixed(8));
 
     try {
-        const check = await checkBlockchainConfirmations(btcAmt, btcAddr, BITCOIN_MIN_CONFIRMATIONS);
+        const check = await checkBlockchainConfirmations(expectedBtc, BITCOIN_ADDRESS, BITCOIN_MIN_CONFIRMATIONS);
         if (check.verified) {
-            // Save confirmed payment record
-            if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+            DB.bitcoin_payments = DB.bitcoin_payments || [];
             DB.bitcoin_payments.push({
                 id: genId('btc'),
+                user_id: userId,
                 kind, item_id: id,
-                btc_amount: btcAmt,
-                btc_address: btcAddr,
+                price_eur: priceEur,
+                btc_amount: expectedBtc,
+                btc_address: BITCOIN_ADDRESS,
                 tx_hash: check.txHash,
                 confirmations: check.confirmations,
                 status: 'confirmed',
                 confirmed_at: now()
             });
-            markDirty();
+            grantItemToUser(userId, kind, id);
         }
-        res.json({ confirmed: check.verified, confirmations: check.confirmations || 0, required: BITCOIN_MIN_CONFIRMATIONS });
+        res.json({
+            confirmed: check.verified,
+            confirmations: check.confirmations || 0,
+            required: BITCOIN_MIN_CONFIRMATIONS,
+            expected_btc: expectedBtc
+        });
     } catch (e) {
         res.json({ confirmed: false, confirmations: 0, error: e.message });
     }
+});
+
+// Server-side ownership source of truth
+app.get('/api/me/items', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.user_frames = DB.user_frames || {};
+    DB.user_premium = DB.user_premium || {};
+    const frames = DB.user_frames[userId] || ['ivory'];
+    let premium = DB.user_premium[userId] || null;
+    if (premium && premium.expires_at < Date.now()) premium = null;
+
+    // Daily likes left (10/day for free, 100 for premium)
+    DB.daily_likes = DB.daily_likes || {};
+    const today = new Date().toISOString().slice(0, 10);
+    const used = DB.daily_likes[userId]?.[today] || 0;
+    const maxLikes = premium ? 100 : 10;
+    const daily_likes_left = Math.max(0, maxLikes - used);
+
+    res.json({ frames, premium, daily_likes_left, max_likes: maxLikes });
 });
 
 // ============ FEED & LIKE API ============
@@ -672,11 +742,19 @@ app.post('/api/users/:id/like', verifyToken, (req, res) => {
     if (!toUser.stats) toUser.stats = {};
     toUser.stats.likes_received = (toUser.stats.likes_received || 0) + 1;
 
+    const fromUser = DB.users.find(u => u.id === fromId);
+    const fromName = fromUser?.username || fromUser?.firstName || 'qualcuno';
+    const toName   = toUser.username || toUser.firstName || 'utente';
+
     const match = DB.likes.find(l => l.from === toId && l.to === fromId);
     if (match) {
         DB.matches = DB.matches || [];
         const exists = DB.matches.find(m => (m.u1===fromId&&m.u2===toId)||(m.u1===toId&&m.u2===fromId));
         if (!exists) DB.matches.push({ id: genId('match'), u1: fromId, u2: toId, created_at: Date.now() });
+        notifyTelegramUser(fromId, `🎉 Match con ${toName}! Apri Kouverte per scrivere.`);
+        notifyTelegramUser(toId,   `🎉 Match con ${fromName}! Apri Kouverte per scrivere.`);
+    } else {
+        notifyTelegramUser(toId, `❤️ ${fromName} ti ha messo like su Kouverte!`);
     }
     markDirty();
     res.json({ ok: true, liked: true, match: !!match });
@@ -686,6 +764,106 @@ app.get('/api/users/:id/liked-by-me', verifyToken, (req, res) => {
     DB.likes = DB.likes || [];
     const liked = !!DB.likes.find(l => l.from === req.user.userId && l.to === req.params.id);
     res.json({ liked });
+});
+
+// ============ TELEGRAM NOTIFICATIONS QUEUE ============
+const BOT_NOTIFY_SECRET = process.env.BOT_NOTIFY_SECRET || 'kouverte-internal';
+
+function notifyTelegramUser(userId, message) {
+    const user = DB.users?.find(u => u.id === userId);
+    if (!user) return;
+    const telegramId = user.telegramId || (typeof user.id === 'string' && user.id.startsWith('tg_') ? user.id.slice(3) : null);
+    if (!telegramId) return;
+    DB.pending_notifications = DB.pending_notifications || [];
+    DB.pending_notifications.push({ telegram_id: telegramId, message, created_at: Date.now() });
+    markDirty();
+}
+
+// Bot polls this every 30s to fetch & flush notifications
+app.get('/api/notifications/pending', (req, res) => {
+    const secret = req.headers['x-bot-secret'];
+    if (secret !== BOT_NOTIFY_SECRET) return res.status(403).json({ error: 'Forbidden' });
+    const pending = DB.pending_notifications || [];
+    DB.pending_notifications = [];
+    if (pending.length) markDirty();
+    res.json({ notifications: pending });
+});
+
+// ============ MATCH INBOX & MESSAGES ============
+
+app.get('/api/matches', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.matches = DB.matches || [];
+    DB.match_messages = DB.match_messages || {};
+    const myMatches = DB.matches
+        .filter(m => m.u1 === userId || m.u2 === userId)
+        .map(m => {
+            const otherId = m.u1 === userId ? m.u2 : m.u1;
+            const other = DB.users.find(u => u.id === otherId);
+            if (!other) return null;
+            const msgs = DB.match_messages[m.id] || [];
+            const lastMsg = msgs[msgs.length - 1];
+            return {
+                match_id: m.id,
+                user_id: otherId,
+                username: other.username || other.firstName || 'utente',
+                avatar_letter: other.profile?.avatar_letter || (other.username || 'K').charAt(0).toUpperCase(),
+                created_at: m.created_at,
+                last_message: lastMsg?.text || null,
+                last_message_at: lastMsg?.created_at || m.created_at,
+                unread: msgs.filter(x => x.from !== userId && !x.read_by?.includes(userId)).length
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.last_message_at - a.last_message_at);
+    res.json({ matches: myMatches });
+});
+
+app.get('/api/matches/:matchId/messages', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const match = (DB.matches || []).find(m => m.id === req.params.matchId);
+    if (!match || (match.u1 !== userId && match.u2 !== userId)) return res.status(404).json({ error: 'Match non trovato' });
+    DB.match_messages = DB.match_messages || {};
+    const msgs = DB.match_messages[req.params.matchId] || [];
+    let dirty = false;
+    msgs.forEach(m => {
+        if (m.from !== userId) {
+            m.read_by = m.read_by || [];
+            if (!m.read_by.includes(userId)) { m.read_by.push(userId); dirty = true; }
+        }
+    });
+    if (dirty) markDirty();
+    res.json({ messages: msgs });
+});
+
+app.post('/api/matches/:matchId/messages', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const { text } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) return res.status(400).json({ error: 'Testo richiesto' });
+    if (text.length > 1000) return res.status(400).json({ error: 'Messaggio troppo lungo' });
+
+    const match = (DB.matches || []).find(m => m.id === req.params.matchId);
+    if (!match || (match.u1 !== userId && match.u2 !== userId)) return res.status(404).json({ error: 'Match non trovato' });
+
+    DB.match_messages = DB.match_messages || {};
+    DB.match_messages[req.params.matchId] = DB.match_messages[req.params.matchId] || [];
+    const msg = {
+        id: genId('mm'),
+        match_id: req.params.matchId,
+        from: userId,
+        text: text.trim().replace(/[<>]/g, '').slice(0, 1000),
+        created_at: now(),
+        read_by: [userId]
+    };
+    DB.match_messages[req.params.matchId].push(msg);
+
+    const otherId = match.u1 === userId ? match.u2 : match.u1;
+    const fromUser = DB.users.find(u => u.id === userId);
+    const fromName = fromUser?.username || fromUser?.firstName || 'qualcuno';
+    notifyTelegramUser(otherId, `💬 ${fromName}: "${msg.text.slice(0, 80)}"`);
+
+    markDirty();
+    res.json({ ok: true, message: msg });
 });
 
 // ============ SHOP API ============

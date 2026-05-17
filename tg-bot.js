@@ -67,6 +67,46 @@ function refreshBtcRate() {
 refreshBtcRate();
 setInterval(refreshBtcRate, 10 * 60 * 1000);
 
+// ============================================================
+// NOTIFICATION POLLING — fetches like/match/message events from server
+// ============================================================
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:8082';
+const BOT_NOTIFY_SECRET = process.env.BOT_NOTIFY_SECRET || 'kouverte-internal';
+
+function pollServerNotifications() {
+  const https = require('https');
+  const http  = require('http');
+  const url = new URL(SERVER_URL + '/api/notifications/pending');
+  const lib = url.protocol === 'https:' ? https : http;
+  const req = lib.request({
+    hostname: url.hostname,
+    port:     url.port || (url.protocol === 'https:' ? 443 : 80),
+    path:     url.pathname,
+    method:   'GET',
+    headers:  { 'x-bot-secret': BOT_NOTIFY_SECRET }
+  }, (res) => {
+    let data = '';
+    res.on('data', c => data += c);
+    res.on('end', () => {
+      try {
+        const j = JSON.parse(data);
+        if (Array.isArray(j.notifications)) {
+          j.notifications.forEach(n => {
+            const tgId = parseInt(n.telegram_id);
+            if (tgId && n.message) {
+              bot.sendMessage(tgId, n.message, { parse_mode: 'HTML' }).catch(() => {});
+            }
+          });
+        }
+      } catch (e) {}
+    });
+  });
+  req.on('error', () => {});
+  req.end();
+}
+setTimeout(pollServerNotifications, 5000);
+setInterval(pollServerNotifications, 30 * 1000);
+
 // Tier di reward per inviti (cornice regalo gratis)
 const REFERRAL_REWARDS = [
   { invites: 1,  frame: 'ivory',    label: 'Avorio'   },

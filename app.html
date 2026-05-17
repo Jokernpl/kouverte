@@ -2239,6 +2239,25 @@ a { text-decoration: none; color: inherit; }
   </div>
 </div>
 
+<!-- MATCH CHAT PANEL -->
+<div class="room-panel" id="matchPanel">
+  <header class="room-panel-header">
+    <button class="room-back-btn" onclick="closeMatchChat()">←</button>
+    <div class="room-panel-info">
+      <div class="room-panel-title" id="matchPanelTitle">Chat</div>
+      <div class="room-panel-online" id="matchPanelStatus">Match</div>
+    </div>
+  </header>
+  <div class="room-msgs" id="matchMsgs"></div>
+  <div class="room-input-wrap">
+    <input class="room-text-input" id="matchMsgInput" placeholder="Scrivi un messaggio..." maxlength="1000"
+      onkeydown="if(event.key==='Enter')sendMatchMsg()">
+    <button class="room-send-btn" onclick="sendMatchMsg()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+</div>
+
 <!-- BITCOIN MODAL -->
 <div class="modal" id="btcModal">
   <div class="btc-modal-box">
@@ -2389,27 +2408,107 @@ function renderExplore() {
   loadExploreFeed(true);
 }
 
-function renderChats() {
+function formatRelativeTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'ora';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h';
+  return Math.floor(diff/86400000) + 'g';
+}
+
+async function renderChats() {
   const el = document.getElementById('chatList');
-  if (CHATS.length === 0) {
+  if (!el) return;
+  if (!state.token) {
     el.innerHTML = `
       <div class="empty-state" style="padding:64px 24px">
-        <div class="empty-state-icon">💬</div>
-        <div class="empty-state-text">Nessun messaggio</div>
-        <div class="empty-state-sub">I tuoi match appariranno qui</div>
+        <div class="empty-state-icon">🔒</div>
+        <div class="empty-state-text">Accedi per vedere i tuoi match</div>
+        <button class="form-submit" style="margin-top:16px;max-width:200px" onclick="showAuthModal()">Accedi</button>
       </div>`;
     return;
   }
-  el.innerHTML = CHATS.map(c => `
-    <div class="chat-row" onclick="toast('Chat con ${c.name}')">
-      <img class="chat-avatar" src="${c.img}" alt="${c.name}">
-      <div class="chat-meta">
-        <div class="chat-name">${c.name}</div>
-        <div class="chat-preview">${c.preview}</div>
-      </div>
-      <div class="chat-time">${c.time}</div>
-    </div>
-  `).join('');
+  el.innerHTML = `<div class="empty-state" style="padding:32px"><div class="empty-state-icon">⏳</div><div class="empty-state-text">Caricamento match...</div></div>`;
+  const r = await api('/matches');
+  if (!r?.matches || r.matches.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:64px 24px">
+        <div class="empty-state-icon">💔</div>
+        <div class="empty-state-text">Nessun match ancora</div>
+        <div class="empty-state-sub">Metti like nelle voci che ti piacciono — ricevi notifica quando arriva un match</div>
+      </div>`;
+    return;
+  }
+  el.innerHTML = r.matches.map(m => {
+    const timeStr = formatRelativeTime(m.last_message_at);
+    const preview = m.last_message || 'Nuovo match — di\' qualcosa!';
+    const unread = m.unread > 0 ? '<span style="color:var(--gold);margin-left:6px">●</span>' : '';
+    return `
+      <div class="chat-row" onclick="openMatchChat('${m.match_id}','${escHtml(m.username)}')">
+        <div class="user-card-avatar" style="width:48px;height:48px;font-size:18px">${escHtml(m.avatar_letter)}</div>
+        <div class="chat-meta">
+          <div class="chat-name">${escHtml(m.username)}${unread}</div>
+          <div class="chat-preview">${escHtml(preview)}</div>
+        </div>
+        <div class="chat-time">${timeStr}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============= MATCH CHAT PANEL =============
+let _currentMatchId = null;
+let _matchPollInterval = null;
+
+async function openMatchChat(matchId, username) {
+  if (!state.token) { showAuthModal(); return; }
+  _currentMatchId = matchId;
+  document.getElementById('matchPanelTitle').textContent = username;
+  document.getElementById('matchPanelStatus').textContent = 'Match';
+  document.getElementById('matchMsgs').innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-state-icon">⏳</div></div>`;
+  document.getElementById('matchPanel').classList.add('open');
+  await pollMatchMsgs();
+  if (_matchPollInterval) clearInterval(_matchPollInterval);
+  _matchPollInterval = setInterval(pollMatchMsgs, 4000);
+}
+
+function closeMatchChat() {
+  if (_matchPollInterval) { clearInterval(_matchPollInterval); _matchPollInterval = null; }
+  _currentMatchId = null;
+  document.getElementById('matchPanel').classList.remove('open');
+  renderChats();
+}
+
+async function pollMatchMsgs() {
+  if (!_currentMatchId) return;
+  const r = await api(`/matches/${_currentMatchId}/messages`);
+  if (!r?.messages) return;
+  const el = document.getElementById('matchMsgs');
+  const myId = state.user?.id;
+  const wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+  if (r.messages.length === 0) {
+    el.innerHTML = `<div class="empty-state" style="padding:48px 24px"><div class="empty-state-icon">💬</div><div class="empty-state-text">Inizia la conversazione</div><div class="empty-state-sub">Saluta il tuo match!</div></div>`;
+    return;
+  }
+  el.innerHTML = r.messages.map(m => {
+    const mine = m.from === myId;
+    const time = new Date(m.created_at).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' });
+    return `<div class="room-msg ${mine ? 'mine' : 'theirs'}">
+      <div class="room-msg-bubble">${escHtml(m.text)}</div>
+      <div class="room-msg-time">${time}</div>
+    </div>`;
+  }).join('');
+  if (wasAtBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function sendMatchMsg() {
+  if (!_currentMatchId) return;
+  const input = document.getElementById('matchMsgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  const r = await api(`/matches/${_currentMatchId}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+  if (r?.ok) await pollMatchMsgs();
+  else { toast(r?.error || 'Errore invio'); input.value = text; }
 }
 
 // ============= ROOMS =============
@@ -3170,6 +3269,7 @@ function openSection(name) {
 
   if (name === 'explore') loadExploreFeed(true);
   if (name === 'profile') renderProfileClips();
+  if (name === 'chat') renderChats();
 }
 
 // ============= AUTH =============
