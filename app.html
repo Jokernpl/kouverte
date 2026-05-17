@@ -1498,6 +1498,181 @@ a { text-decoration: none; color: inherit; }
   margin-bottom: 6px;
 }
 
+/* ============= ROOM PANEL ============= */
+.room-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.room-panel.open { transform: translateY(0); }
+.room-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.room-back-btn {
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+.room-panel-info { flex: 1; min-width: 0; }
+.room-panel-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.room-panel-online { font-size: 11px; color: var(--text-dim); }
+.room-msgs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.room-msgs::-webkit-scrollbar { display: none; }
+.room-msgs { scrollbar-width: none; }
+.room-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 78%;
+}
+.room-msg.mine {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+.room-msg.theirs {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+.room-msg-author {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 3px;
+  padding: 0 10px;
+}
+.room-msg-bubble {
+  padding: 9px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.mine .room-msg-bubble {
+  background: var(--gold);
+  color: #000;
+  border-bottom-right-radius: 4px;
+}
+.theirs .room-msg-bubble {
+  background: var(--surface-2);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+.room-msg-time {
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 3px;
+  padding: 0 10px;
+}
+.room-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  gap: 10px;
+  padding: 40px;
+  text-align: center;
+}
+.room-empty-icon { font-size: 36px; opacity: 0.5; }
+.room-empty-text { font-size: 13px; line-height: 1.5; }
+.room-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.room-text-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 10px 16px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--sans);
+  outline: none;
+  -webkit-appearance: none;
+}
+.room-text-input::placeholder { color: var(--text-dim); }
+.room-text-input:focus { border-color: rgba(201,169,97,0.4); }
+.room-send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: none;
+  color: #000;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.room-noauth {
+  background: rgba(201,169,97,0.08);
+  border-top: 1px solid rgba(201,169,97,0.15);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.room-noauth button {
+  background: var(--gold);
+  color: #000;
+  border: none;
+  padding: 7px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* ============= UTILITIES ============= */
+.hidden { display: none !important; }
+
+/* ============= AUTH MODAL FORMS ============= */
+.auth-mode { display: block; }
+.auth-mode.hidden { display: none !important; }
+.form-row {
+  display: flex;
+  gap: 10px;
+}
+.form-row .form-input { flex: 1; }
+
 /* ============= RESPONSIVE ============= */
 @media (max-width: 360px) {
   .splash-k { font-size: 110px; }
@@ -1711,12 +1886,63 @@ a { text-decoration: none; color: inherit; }
 <div class="modal" id="authModal">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('authModal')">×</button>
-    <div class="modal-title">Benvenuto</div>
-    <div class="modal-sub">Accedi al tuo Kouverte</div>
-    <input type="email" id="loginEmail" placeholder="Email" class="form-input">
-    <input type="password" id="loginPassword" placeholder="Password" class="form-input">
-    <button class="form-submit" onclick="doLogin()">Accedi</button>
-    <a class="form-link" onclick="toast('Registrazione presto disponibile')">Non hai un account? <span>Registrati</span></a>
+
+    <!-- LOGIN -->
+    <div class="auth-mode" id="authLogin">
+      <div class="modal-title">Bentornato</div>
+      <div class="modal-sub">Accedi al tuo Kouverte</div>
+      <input type="email" id="loginEmail" placeholder="Email" class="form-input" autocomplete="email">
+      <input type="password" id="loginPassword" placeholder="Password" class="form-input" autocomplete="current-password">
+      <button class="form-submit" id="loginBtn" onclick="doLogin()">Accedi</button>
+      <a class="form-link" onclick="showAuthMode('register')">Non hai un account? <span>Registrati</span></a>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-mode hidden" id="authRegister">
+      <div class="modal-title">Crea account</div>
+      <div class="modal-sub">Entra nella community</div>
+      <div class="form-row">
+        <input type="text" id="regUsername" placeholder="Username" class="form-input" autocomplete="username" maxlength="20">
+      </div>
+      <input type="email" id="regEmail" placeholder="Email" class="form-input" autocomplete="email">
+      <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" class="form-input" autocomplete="new-password">
+      <input type="password" id="regConfirm" placeholder="Conferma password" class="form-input" autocomplete="new-password">
+      <button class="form-submit" id="registerBtn" onclick="doRegister()">Crea account</button>
+      <a class="form-link" onclick="showAuthMode('login')">Hai già un account? <span>Accedi</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM PANEL -->
+<div class="room-panel" id="roomPanel">
+  <header class="room-panel-header">
+    <button class="room-back-btn" onclick="leaveRoomPanel()">←</button>
+    <div class="room-panel-info">
+      <div class="room-panel-title" id="roomPanelTitle">Stanza</div>
+      <div class="room-panel-online" id="roomPanelOnline">caricamento...</div>
+    </div>
+  </header>
+
+  <div class="room-msgs" id="roomMsgs">
+    <div class="room-empty">
+      <div class="room-empty-icon">💬</div>
+      <div class="room-empty-text">Sii il primo a scrivere<br>nella stanza</div>
+    </div>
+  </div>
+
+  <!-- Input (se loggato) -->
+  <div class="room-input-wrap" id="roomInputWrap">
+    <input class="room-text-input" id="roomMsgInput" placeholder="Scrivi un messaggio..." maxlength="280"
+      onkeydown="if(event.key==='Enter')sendRoomMsg()">
+    <button class="room-send-btn" onclick="sendRoomMsg()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+    </button>
+  </div>
+
+  <!-- Banner se non loggato -->
+  <div class="room-noauth hidden" id="roomNoAuth">
+    <span>Accedi per scrivere nella stanza</span>
+    <button onclick="closeModal('authModal'); showAuthModal()">Accedi / Registrati</button>
   </div>
 </div>
 
@@ -1801,14 +2027,14 @@ const PROFILE_CATEGORIES = [
   { label: 'Lifestyle',emoji: '✨',  grad: 'linear-gradient(135deg,#0f0f00,#2a2500)' }
 ];
 
+// Slugs match server /api/rooms/:slug endpoints
 const ROOMS_FALLBACK = [
-  { slug: 'lounge-velluto',    label: 'Lounge Velluto',     desc: 'Conversazioni sottili e raffinate',         emoji: '🍷', participants_count: 124, is_active: true  },
-  { slug: 'jazz-after-dark',   label: 'Jazz After Dark',    desc: 'Vinili, smoking e voci basse',              emoji: '🎷', participants_count: 87,  is_active: true  },
-  { slug: 'parigi-by-night',   label: 'Parigi by Night',    desc: 'Romance, charme, lingua francese',          emoji: '🗼', participants_count: 56,  is_active: true  },
-  { slug: 'cinema-noir',       label: 'Cinema Noir',        desc: 'Recensioni di film cult e contemporanei',   emoji: '🎬', participants_count: 34,  is_active: true  },
-  { slug: 'segreti-di-cucina', label: 'Segreti di Cucina',  desc: 'Ricette gourmet e racconti dai grandi chef',emoji: '🥂', participants_count: 41,  is_active: true  },
-  { slug: 'arte-e-poesia',     label: 'Arte e Poesia',      desc: 'Letture, mostre, ispirazioni',              emoji: '🎭', participants_count: 28,  is_active: true  },
-  { slug: 'salotto-business',  label: 'Salotto Business',   desc: 'Networking, idee, mentor',                  emoji: '💼', participants_count: 19,  is_active: false }
+  { slug: 'notte',   label: 'Voci Notturne',   desc: 'Conversazioni di mezzanotte',          emoji: '🌙', online: 0 },
+  { slug: 'cuori',   label: 'Cuori Solitari',   desc: 'Persone che cercano connessione',      emoji: '💔', online: 0 },
+  { slug: 'confess', label: 'Confessioni',       desc: 'Racconta la tua storia anonima',       emoji: '🎭', online: 0 },
+  { slug: 'cinema',  label: 'Cinema Noir',       desc: 'Film cult e contemporanei',            emoji: '🎬', online: 0 },
+  { slug: 'viaggi',  label: 'Viaggiatori',       desc: 'Esperienze, mete, avventure',          emoji: '✈️', online: 0 },
+  { slug: 'musica',  label: 'Musica & Vibes',    desc: 'Condividi ascolti e playlist',         emoji: '🎷', online: 0 },
 ];
 
 const CHATS = []; // populated from real registered users
@@ -1900,59 +2126,149 @@ function renderChats() {
 }
 
 // ============= ROOMS =============
-state.joinedRooms = [];
+let _roomPollInterval = null;
+let _currentRoomSlug = null;
+let _lastMsgTimestamp = 0;
 
 async function loadRooms() {
   const el = document.getElementById('roomsList');
   if (!el) return;
-  let rooms = ROOMS_FALLBACK;
+  let rooms = ROOMS_FALLBACK.map(r => ({ ...r }));
   try {
-    const r = await api('/voice-rooms');
-    if (r?.rooms?.length) rooms = r.rooms;
+    const r = await api('/rooms');
+    if (r?.rooms?.length) {
+      r.rooms.forEach(sr => {
+        const found = rooms.find(x => x.slug === sr.slug);
+        if (found) found.online = sr.online || 0;
+      });
+    }
   } catch (e) {}
   state.rooms = rooms;
   renderRooms();
-  const live = rooms.filter(r => r.is_active).length;
+  const total = rooms.reduce((s, r) => s + (r.online || 0), 0);
   const cnt = document.getElementById('roomsLiveCount');
-  if (cnt) cnt.textContent = `${live} live`;
+  if (cnt) cnt.textContent = total > 0 ? `${total} online` : 'aperte';
 }
 
 function renderRooms() {
   const el = document.getElementById('roomsList');
   if (!el || !state.rooms) return;
-  el.innerHTML = state.rooms.map(r => {
-    const joined = state.joinedRooms.includes(r.slug);
-    return `
-      <div class="room-card" onclick="joinRoom('${r.slug}')">
-        <div class="room-cover">${r.emoji || '🎙️'}</div>
-        <div class="room-body">
-          <div class="room-title">${r.label}</div>
-          <div class="room-desc">${r.desc || ''}</div>
-          <div class="room-meta">
-            ${r.is_active ? '<span class="live-dot">live</span>' : '<span>offline</span>'}
-            <span>· 👥 ${r.participants_count || 0}</span>
-          </div>
+  el.innerHTML = state.rooms.map(r => `
+    <div class="room-card" onclick="openRoomPanel('${r.slug}', '${r.label.replace(/'/g,"\\'")}')">
+      <div class="room-cover">${r.emoji || '🎙️'}</div>
+      <div class="room-body">
+        <div class="room-title">${r.label}</div>
+        <div class="room-desc">${r.desc || ''}</div>
+        <div class="room-meta">
+          <span class="live-dot">live</span>
+          <span>· 👥 ${r.online || 0} online</span>
         </div>
-        <button class="room-join ${joined ? 'in' : ''}" onclick="event.stopPropagation();joinRoom('${r.slug}')">${joined ? 'Esci' : 'Entra'}</button>
       </div>
-    `;
-  }).join('');
+      <button class="room-join" onclick="event.stopPropagation();openRoomPanel('${r.slug}','${r.label.replace(/'/g,"\\'")}')">Entra</button>
+    </div>
+  `).join('');
 }
 
-async function joinRoom(slug) {
-  const room = state.rooms?.find(r => r.slug === slug);
-  if (!room) return;
-  const isIn = state.joinedRooms.includes(slug);
-  if (isIn) {
-    state.joinedRooms = state.joinedRooms.filter(s => s !== slug);
-    toast(`Uscito da ${room.label}`);
-    try { await api(`/voice-rooms/${slug}/leave`, { method: 'POST', body: '{}' }); } catch (e) {}
-  } else {
-    state.joinedRooms.push(slug);
-    toast(`Entrato in ${room.label}`);
-    try { await api(`/voice-rooms/${slug}/join`, { method: 'POST', body: '{}' }); } catch (e) {}
+// ============= ROOM PANEL =============
+async function openRoomPanel(slug, label) {
+  _currentRoomSlug = slug;
+  _lastMsgTimestamp = 0;
+
+  document.getElementById('roomPanelTitle').textContent = label;
+  document.getElementById('roomPanelOnline').textContent = 'caricamento...';
+  document.getElementById('roomMsgs').innerHTML = `
+    <div class="room-empty">
+      <div class="room-empty-icon">💬</div>
+      <div class="room-empty-text">Caricamento messaggi...</div>
+    </div>`;
+
+  // Show/hide input vs auth banner
+  const hasToken = !!state.token;
+  document.getElementById('roomInputWrap').classList.toggle('hidden', !hasToken);
+  document.getElementById('roomNoAuth').classList.toggle('hidden', hasToken);
+
+  document.getElementById('roomPanel').classList.add('open');
+
+  // Load messages immediately
+  await pollRoomMsgs();
+
+  // Poll every 4s
+  if (_roomPollInterval) clearInterval(_roomPollInterval);
+  _roomPollInterval = setInterval(pollRoomMsgs, 4000);
+}
+
+function leaveRoomPanel() {
+  if (_roomPollInterval) { clearInterval(_roomPollInterval); _roomPollInterval = null; }
+  _currentRoomSlug = null;
+  document.getElementById('roomPanel').classList.remove('open');
+}
+
+async function pollRoomMsgs() {
+  const slug = _currentRoomSlug;
+  if (!slug) return;
+  try {
+    const r = await api(`/rooms/${slug}/msgs`);
+    if (!r || _currentRoomSlug !== slug) return;
+    renderRoomMsgs(r.msgs || []);
+    const onlineEl = document.getElementById('roomPanelOnline');
+    if (onlineEl) onlineEl.textContent = `${r.online || 1} online`;
+  } catch (e) {}
+}
+
+function renderRoomMsgs(msgs) {
+  const el = document.getElementById('roomMsgs');
+  if (!el) return;
+  const myId = state.user?.id || null;
+  const wasAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+
+  if (msgs.length === 0) {
+    el.innerHTML = `
+      <div class="room-empty">
+        <div class="room-empty-icon">🎙️</div>
+        <div class="room-empty-text">Nessun messaggio ancora<br>Sii il primo a scrivere!</div>
+      </div>`;
+    return;
   }
-  renderRooms();
+
+  el.innerHTML = msgs.map(m => {
+    const mine = m.userId === myId;
+    const time = new Date(m.created_at).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="room-msg ${mine ? 'mine' : 'theirs'}">
+        ${!mine ? `<div class="room-msg-author">${escHtml(m.username)}</div>` : ''}
+        <div class="room-msg-bubble">${escHtml(m.text)}</div>
+        <div class="room-msg-time">${time}</div>
+      </div>`;
+  }).join('');
+
+  // Auto-scroll if was near bottom
+  if (wasAtBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function sendRoomMsg() {
+  const slug = _currentRoomSlug;
+  if (!slug) return;
+  if (!state.token) { showAuthModal(); return; }
+
+  const input = document.getElementById('roomMsgInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const r = await api(`/rooms/${slug}/msgs`, {
+    method: 'POST',
+    body: JSON.stringify({ text })
+  });
+  if (r?.ok) {
+    await pollRoomMsgs();
+  } else if (r?.error) {
+    toast(r.error);
+    input.value = text; // restore on error
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ============= FRAMES =============
@@ -2253,12 +2569,76 @@ function openSection(name) {
   document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ============= MODALS =============
+// ============= AUTH =============
 function showAuthModal() {
+  showAuthMode('login');
   document.getElementById('authModal').classList.add('show');
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('show');
+}
+function showAuthMode(mode) {
+  document.getElementById('authLogin').classList.toggle('hidden', mode !== 'login');
+  document.getElementById('authRegister').classList.toggle('hidden', mode !== 'register');
+}
+
+async function doLogin() {
+  const btn = document.getElementById('loginBtn');
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!email || !password) return toast('Inserisci email e password');
+  btn.disabled = true; btn.textContent = 'Accesso...';
+  const r = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+  btn.disabled = false; btn.textContent = 'Accedi';
+  if (r?.token) {
+    state.token = r.token;
+    state.user = r.user;
+    localStorage.setItem('kouverte', JSON.stringify({ token: r.token, user: r.user }));
+    closeModal('authModal');
+    toast(`Bentornato, ${r.user?.username || ''}!`);
+    // If user was trying to enter a room, refresh auth banner
+    if (_currentRoomSlug) {
+      document.getElementById('roomInputWrap').classList.remove('hidden');
+      document.getElementById('roomNoAuth').classList.add('hidden');
+    }
+  } else {
+    toast(r?.error || 'Email o password non corretti');
+  }
+}
+
+async function doRegister() {
+  const btn = document.getElementById('registerBtn');
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const confirm = document.getElementById('regConfirm').value;
+
+  if (!username) return toast('Inserisci un username');
+  if (!email) return toast('Inserisci una email');
+  if (!password || password.length < 6) return toast('Password minimo 6 caratteri');
+  if (password !== confirm) return toast('Le password non coincidono');
+
+  btn.disabled = true; btn.textContent = 'Creazione...';
+  const r = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username, email, password }) });
+  btn.disabled = false; btn.textContent = 'Crea account';
+
+  if (r?.token) {
+    state.token = r.token;
+    state.user = r.user;
+    localStorage.setItem('kouverte', JSON.stringify({ token: r.token, user: r.user }));
+    closeModal('authModal');
+    toast(`Benvenuto su Kouverte, ${r.user?.username || username}!`);
+    // Update profile name
+    const nameEl = document.getElementById('profileName');
+    if (nameEl && r.user?.username) nameEl.textContent = r.user.username;
+    // Refresh room if open
+    if (_currentRoomSlug) {
+      document.getElementById('roomInputWrap').classList.remove('hidden');
+      document.getElementById('roomNoAuth').classList.add('hidden');
+    }
+  } else {
+    toast(r?.error || 'Errore durante la registrazione');
+  }
 }
 
 // ============= TOAST =============
@@ -2284,21 +2664,6 @@ async function api(path, opts = {}) {
   }
 }
 
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!email || !password) return toast('Inserisci email e password');
-  const r = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-  if (r?.token) {
-    state.token = r.token;
-    state.user = r.user;
-    localStorage.setItem('kouverte', JSON.stringify({ token: r.token, user: r.user }));
-    closeModal('authModal');
-    toast('Bentornato');
-  } else {
-    toast(r?.error || 'Errore di accesso');
-  }
-}
 
 // ============= AVATAR HELPER =============
 function setAvatarPhoto(src) {
@@ -2360,7 +2725,7 @@ function init() {
     }
   }
 
-  // Restore session
+  // Restore saved session
   try {
     const saved = localStorage.getItem('kouverte');
     if (saved) {
@@ -2369,6 +2734,20 @@ function init() {
       state.user = data.user;
     }
   } catch (e) {}
+
+  // Telegram auto-auth (if opened from Telegram Mini App)
+  const tgInitData = window.Telegram?.WebApp?.initData;
+  if (tgInitData && !state.token) {
+    api('/tg/auth', { method: 'POST', body: JSON.stringify({ initData: tgInitData }) })
+      .then(r => {
+        if (r?.token) {
+          state.token = r.token;
+          state.user = r.user;
+          localStorage.setItem('kouverte', JSON.stringify({ token: r.token, user: r.user }));
+        }
+      })
+      .catch(() => {});
+  }
 
   // Resume pending BTC payment (survives page reload)
   try {

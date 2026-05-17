@@ -591,6 +591,38 @@ app.get('/api/duels', (req, res) => {
     res.json({ duels });
 });
 
+// ============ BITCOIN VERIFY (frontend polling) ============
+// Called by app.html after user says "Ho pagato" — checks blockchain confirmations
+app.post('/api/bitcoin/verify', async (req, res) => {
+    const { kind, id, amount_btc, address } = req.body || {};
+    if (!kind || !id) return res.status(400).json({ confirmed: false, error: 'kind e id richiesti' });
+
+    const btcAddr = address || BITCOIN_ADDRESS;
+    const btcAmt  = parseFloat(amount_btc) || 0;
+
+    try {
+        const check = await checkBlockchainConfirmations(btcAmt, btcAddr, BITCOIN_MIN_CONFIRMATIONS);
+        if (check.verified) {
+            // Save confirmed payment record
+            if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+            DB.bitcoin_payments.push({
+                id: genId('btc'),
+                kind, item_id: id,
+                btc_amount: btcAmt,
+                btc_address: btcAddr,
+                tx_hash: check.txHash,
+                confirmations: check.confirmations,
+                status: 'confirmed',
+                confirmed_at: now()
+            });
+            markDirty();
+        }
+        res.json({ confirmed: check.verified, confirmations: check.confirmations || 0, required: BITCOIN_MIN_CONFIRMATIONS });
+    } catch (e) {
+        res.json({ confirmed: false, confirmations: 0, error: e.message });
+    }
+});
+
 // ============ SHOP API ============
 
 // FIX: protetto da verifyToken — usa userId dal token, mai dal body/query
