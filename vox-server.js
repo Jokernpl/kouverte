@@ -623,6 +623,71 @@ app.post('/api/bitcoin/verify', async (req, res) => {
     }
 });
 
+// ============ FEED & LIKE API ============
+
+app.get('/api/users/feed', (req, res) => {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 20;
+    const nowMs = Date.now();
+
+    const users = (DB.users || [])
+        .filter(u => u.id && u.username && !u.id.startsWith('u_test'))
+        .map(u => {
+            const clips = (u.profile?.clips || []).filter(c => c.audio_id);
+            const activeClip = clips.map(c => DB.stories?.find(s => s.id === c.audio_id && s.expires_at > nowMs)).find(Boolean);
+            return {
+                id: u.id,
+                username: u.username,
+                firstName: u.firstName || u.username,
+                avatar_letter: u.profile?.avatar_letter || (u.username || 'K').charAt(0).toUpperCase(),
+                bio: u.profile?.bio || '',
+                clip_id: activeClip?.id || null,
+                clip_duration: activeClip?.duration_ms || 0,
+                likes_received: u.stats?.likes_received || 0,
+                created_at: u.created_at || nowMs
+            };
+        })
+        .sort((a, b) => b.likes_received - a.likes_received || b.created_at - a.created_at);
+
+    const start = page * limit;
+    res.json({ users: users.slice(start, start + limit), total: users.length, has_more: start + limit < users.length });
+});
+
+app.post('/api/users/:id/like', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    if (fromId === toId) return res.status(400).json({ error: 'Non puoi mettere like a te stesso' });
+    const toUser = DB.users.find(u => u.id === toId);
+    if (!toUser) return res.status(404).json({ error: 'Utente non trovato' });
+
+    DB.likes = DB.likes || [];
+    const idx = DB.likes.findIndex(l => l.from === fromId && l.to === toId);
+    if (idx !== -1) {
+        DB.likes.splice(idx, 1);
+        if (toUser.stats) toUser.stats.likes_received = Math.max(0, (toUser.stats.likes_received || 1) - 1);
+        markDirty();
+        return res.json({ ok: true, liked: false });
+    }
+    DB.likes.push({ from: fromId, to: toId, created_at: Date.now() });
+    if (!toUser.stats) toUser.stats = {};
+    toUser.stats.likes_received = (toUser.stats.likes_received || 0) + 1;
+
+    const match = DB.likes.find(l => l.from === toId && l.to === fromId);
+    if (match) {
+        DB.matches = DB.matches || [];
+        const exists = DB.matches.find(m => (m.u1===fromId&&m.u2===toId)||(m.u1===toId&&m.u2===fromId));
+        if (!exists) DB.matches.push({ id: genId('match'), u1: fromId, u2: toId, created_at: Date.now() });
+    }
+    markDirty();
+    res.json({ ok: true, liked: true, match: !!match });
+});
+
+app.get('/api/users/:id/liked-by-me', verifyToken, (req, res) => {
+    DB.likes = DB.likes || [];
+    const liked = !!DB.likes.find(l => l.from === req.user.userId && l.to === req.params.id);
+    res.json({ liked });
+});
+
 // ============ SHOP API ============
 
 // FIX: protetto da verifyToken — usa userId dal token, mai dal body/query

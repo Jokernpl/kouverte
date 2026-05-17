@@ -1673,6 +1673,256 @@ a { text-decoration: none; color: inherit; }
 }
 .form-row .form-input { flex: 1; }
 
+/* ============= RECORDER PANEL ============= */
+.recorder-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.recorder-panel.open { transform: translateY(0); }
+.rec-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  gap: 24px;
+}
+.rec-timer {
+  font-family: var(--serif);
+  font-size: 52px;
+  font-weight: 400;
+  color: var(--gold);
+  letter-spacing: 2px;
+  min-height: 64px;
+}
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 48px;
+}
+.waveform span {
+  display: block;
+  width: 4px;
+  border-radius: 4px;
+  background: var(--gold);
+  opacity: 0.3;
+  height: 8px;
+  transition: height 0.15s;
+}
+.waveform.active span {
+  opacity: 0.8;
+  animation: wave 0.8s ease-in-out infinite alternate;
+}
+.waveform.active span:nth-child(1) { animation-delay: 0s; }
+.waveform.active span:nth-child(2) { animation-delay: 0.1s; }
+.waveform.active span:nth-child(3) { animation-delay: 0.2s; }
+.waveform.active span:nth-child(4) { animation-delay: 0.05s; }
+.waveform.active span:nth-child(5) { animation-delay: 0.15s; }
+.waveform.active span:nth-child(6) { animation-delay: 0.25s; }
+.waveform.active span:nth-child(7) { animation-delay: 0.1s; }
+.waveform.active span:nth-child(8) { animation-delay: 0.3s; }
+@keyframes wave {
+  0%  { height: 6px; }
+  100% { height: 40px; }
+}
+.rec-btn {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.rec-btn.recording {
+  background: #e63946;
+  border-color: #e63946;
+  animation: rec-pulse 1.2s ease-in-out infinite;
+}
+@keyframes rec-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.4); }
+  50% { box-shadow: 0 0 0 16px rgba(230,57,70,0); }
+}
+.rec-mic-icon { width: 32px; height: 32px; color: var(--gold); }
+.rec-btn.recording .rec-mic-icon { color: #fff; }
+.rec-hint { font-size: 13px; color: var(--text-dim); text-align: center; }
+.rec-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 280px;
+}
+.rec-save-btn {
+  background: var(--gold);
+  color: #000;
+  border: none;
+  padding: 13px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.rec-play-btn, .rec-discard-btn {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 11px;
+  border-radius: 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+/* ============= USER CARD (Esplora) ============= */
+.user-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 18px 24px;
+}
+.user-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.user-card:active { border-color: var(--gold); }
+.user-card-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold) 0%, #8a6f3a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: #000;
+  flex-shrink: 0;
+}
+.user-card-body { flex: 1; min-width: 0; }
+.user-card-name {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+.user-card-bio {
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-bottom: 8px;
+}
+.user-card-actions { display: flex; gap: 8px; align-items: center; }
+.play-clip-btn {
+  background: rgba(201,169,97,0.12);
+  border: 1px solid rgba(201,169,97,0.3);
+  color: var(--gold);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.play-clip-btn.playing {
+  background: rgba(201,169,97,0.25);
+}
+.like-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.15s;
+  line-height: 1;
+}
+.like-btn:active { transform: scale(1.4); }
+.like-btn.liked { filter: none; }
+.likes-count { font-size: 11px; color: var(--text-dim); margin-left: 2px; }
+
+/* ============= PROFILE CLIPS ============= */
+.clips-section {
+  padding: 16px 18px;
+  border-top: 1px solid var(--border);
+}
+.clips-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--text-soft);
+  margin-bottom: 14px;
+  letter-spacing: 1px;
+}
+.clip-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.clip-row:last-child { border-bottom: none; }
+.clip-slot-label {
+  font-size: 13px;
+  color: var(--text-soft);
+  width: 80px;
+  flex-shrink: 0;
+}
+.clip-play-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.clip-play-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(201,169,97,0.15);
+  border: 1px solid rgba(201,169,97,0.3);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.clip-duration { font-size: 11px; color: var(--text-dim); }
+.clip-empty { font-size: 12px; color: var(--text-dim); font-style: italic; }
+.clip-rec-btn {
+  background: transparent;
+  border: 1px solid rgba(201,169,97,0.3);
+  color: var(--gold);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 /* ============= RESPONSIVE ============= */
 @media (max-width: 360px) {
   .splash-k { font-size: 110px; }
@@ -1837,6 +2087,12 @@ a { text-decoration: none; color: inherit; }
         </div>
 
         <div class="profile-grid" id="profileGrid"></div>
+
+        <!-- Clips vocali -->
+        <div class="clips-section" id="profileClipsSection">
+          <div class="clips-title">CLIP VOCALI</div>
+          <div id="clipsListEl"></div>
+        </div>
       </div>
     </section>
 
@@ -1880,6 +2136,38 @@ a { text-decoration: none; color: inherit; }
     </a>
   </nav>
 
+</div>
+
+<!-- RECORDER PANEL -->
+<div class="recorder-panel" id="recorderPanel">
+  <header class="room-panel-header">
+    <button class="room-back-btn" onclick="closeRecorder()">←</button>
+    <div class="room-panel-info">
+      <div class="room-panel-title" id="recorderTitle">Registra clip vocale</div>
+      <div class="room-panel-online" id="recorderSlot">Chi sono</div>
+    </div>
+  </header>
+  <div class="rec-body">
+    <div class="rec-timer" id="recTimer">00:00</div>
+    <div class="waveform" id="recWaveform">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+    <button class="rec-btn" id="recBtn" onclick="toggleRecording()">
+      <svg class="rec-mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+    <div class="rec-hint" id="recHint">Tocca il microfono per iniziare · Max 60s</div>
+    <div class="rec-actions hidden" id="recActions">
+      <button class="rec-play-btn" onclick="playRecording()">▶ Ascolta</button>
+      <button class="rec-save-btn" onclick="saveRecording()">✓ Salva clip</button>
+      <button class="rec-discard-btn" onclick="discardRecording()">✗ Registra di nuovo</button>
+    </div>
+  </div>
 </div>
 
 <!-- AUTH MODAL -->
@@ -2093,13 +2381,7 @@ function renderProfileGrid() {
 }
 
 function renderExplore() {
-  const el = document.getElementById('exploreGrid');
-  el.innerHTML = `
-    <div class="empty-state" style="grid-column:1/-1;padding:64px 24px">
-      <div class="empty-state-icon">🔍</div>
-      <div class="empty-state-text">Nessun profilo da esplorare</div>
-      <div class="empty-state-sub">I profili appariranno qui dopo le prime registrazioni</div>
-    </div>`;
+  loadExploreFeed(true);
 }
 
 function renderChats() {
@@ -2269,6 +2551,319 @@ async function sendRoomMsg() {
 
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============= AUDIO PLAYER =============
+let _currentAudio = null;
+let _currentPlayBtn = null;
+
+function playAudioData(audioData, btnEl) {
+  if (_currentAudio) {
+    _currentAudio.pause();
+    _currentAudio = null;
+    if (_currentPlayBtn) {
+      _currentPlayBtn.textContent = '▶';
+      _currentPlayBtn.classList.remove('playing');
+    }
+    if (_currentPlayBtn === btnEl) { _currentPlayBtn = null; return; }
+  }
+  _currentAudio = new Audio(audioData);
+  _currentAudio.play().catch(() => toast('Impossibile riprodurre'));
+  _currentPlayBtn = btnEl;
+  if (btnEl) { btnEl.textContent = '⏹'; btnEl.classList.add('playing'); }
+  _currentAudio.onended = () => {
+    if (btnEl) { btnEl.textContent = '▶'; btnEl.classList.remove('playing'); }
+    _currentAudio = null;
+    _currentPlayBtn = null;
+  };
+}
+
+async function fetchAndPlayClip(clipId, btnEl) {
+  if (!clipId) return;
+  btnEl.textContent = '...';
+  const r = await api(`/stories/${clipId}/audio`);
+  if (r?.audioData) {
+    playAudioData(r.audioData, btnEl);
+  } else {
+    btnEl.textContent = '▶';
+    toast('Clip non disponibile');
+  }
+}
+
+// ============= VOICE RECORDER =============
+let _recSlot = 0;
+let _recSlotName = '';
+let _mediaRecorder = null;
+let _audioChunks = [];
+let _recTimerInterval = null;
+let _recSeconds = 0;
+let _recordedBlob = null;
+let _recordedDataUrl = null;
+
+const CLIP_LABELS = ['Chi sono', 'Mi piace', 'Cerco'];
+
+function openRecorder(slot) {
+  if (!state.token) { showAuthModal(); return; }
+  _recSlot = slot;
+  _recSlotName = CLIP_LABELS[slot] || 'Clip';
+  _recordedBlob = null;
+  _recordedDataUrl = null;
+  _recSeconds = 0;
+  document.getElementById('recTimer').textContent = '00:00';
+  document.getElementById('recHint').textContent = 'Tocca il microfono per iniziare · Max 60s';
+  document.getElementById('recBtn').classList.remove('recording');
+  document.getElementById('recWaveform').classList.remove('active');
+  document.getElementById('recActions').classList.add('hidden');
+  document.getElementById('recorderSlot').textContent = _recSlotName;
+  document.getElementById('recorderPanel').classList.add('open');
+}
+
+function closeRecorder() {
+  stopRecordingClean();
+  document.getElementById('recorderPanel').classList.remove('open');
+}
+
+async function toggleRecording() {
+  if (_mediaRecorder && _mediaRecorder.state === 'recording') {
+    stopRecording();
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _audioChunks = [];
+    _mediaRecorder = new MediaRecorder(stream);
+    _mediaRecorder.ondataavailable = e => { if (e.data.size > 0) _audioChunks.push(e.data); };
+    _mediaRecorder.onstop = onRecordStop;
+    _mediaRecorder.start(100);
+    _recSeconds = 0;
+    document.getElementById('recBtn').classList.add('recording');
+    document.getElementById('recWaveform').classList.add('active');
+    document.getElementById('recHint').textContent = 'Tocca per fermare';
+    document.getElementById('recActions').classList.add('hidden');
+    _recTimerInterval = setInterval(() => {
+      _recSeconds++;
+      const m = String(Math.floor(_recSeconds/60)).padStart(2,'0');
+      const s = String(_recSeconds % 60).padStart(2,'0');
+      document.getElementById('recTimer').textContent = `${m}:${s}`;
+      if (_recSeconds >= 60) stopRecording();
+    }, 1000);
+  } catch(e) {
+    toast('Microfono non accessibile. Controlla i permessi.');
+  }
+}
+
+function stopRecording() {
+  if (_recTimerInterval) { clearInterval(_recTimerInterval); _recTimerInterval = null; }
+  if (_mediaRecorder) {
+    _mediaRecorder.stop();
+    _mediaRecorder.stream.getTracks().forEach(t => t.stop());
+  }
+  document.getElementById('recBtn').classList.remove('recording');
+  document.getElementById('recWaveform').classList.remove('active');
+}
+
+function stopRecordingClean() {
+  if (_recTimerInterval) { clearInterval(_recTimerInterval); _recTimerInterval = null; }
+  if (_mediaRecorder && _mediaRecorder.state !== 'inactive') {
+    _mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    _mediaRecorder = null;
+  }
+}
+
+function onRecordStop() {
+  const mimeType = _audioChunks[0]?.type || 'audio/webm';
+  _recordedBlob = new Blob(_audioChunks, { type: mimeType });
+  const reader = new FileReader();
+  reader.onload = e => {
+    _recordedDataUrl = e.target.result;
+    document.getElementById('recHint').textContent = 'Ottimo! Ascolta o salva la clip.';
+    document.getElementById('recActions').classList.remove('hidden');
+  };
+  reader.readAsDataURL(_recordedBlob);
+}
+
+function playRecording() {
+  if (!_recordedDataUrl) return;
+  const a = new Audio(_recordedDataUrl);
+  a.play();
+}
+
+function discardRecording() {
+  _recordedBlob = null;
+  _recordedDataUrl = null;
+  _recSeconds = 0;
+  document.getElementById('recTimer').textContent = '00:00';
+  document.getElementById('recHint').textContent = 'Tocca il microfono per iniziare · Max 60s';
+  document.getElementById('recActions').classList.add('hidden');
+}
+
+async function saveRecording() {
+  if (!_recordedDataUrl) return;
+  const btn = document.getElementById('recActions').querySelector('.rec-save-btn');
+  btn.textContent = 'Salvataggio...';
+  btn.disabled = true;
+  const r = await api('/profile/clip/save', {
+    method: 'POST',
+    body: JSON.stringify({ slot: _recSlot, audioData: _recordedDataUrl, durationMs: _recSeconds * 1000 })
+  });
+  btn.textContent = '✓ Salva clip';
+  btn.disabled = false;
+  if (r?.ok) {
+    toast(`Clip "${_recSlotName}" salvata!`);
+    closeRecorder();
+    renderProfileClips();
+  } else {
+    toast(r?.error || 'Errore salvataggio');
+  }
+}
+
+// ============= PROFILE CLIPS =============
+async function renderProfileClips() {
+  const el = document.getElementById('clipsListEl');
+  if (!el) return;
+  let clips = [
+    { slot: 0, title: 'Chi sono',  audio_id: null, duration: 0 },
+    { slot: 1, title: 'Mi piace',  audio_id: null, duration: 0 },
+    { slot: 2, title: 'Cerco',     audio_id: null, duration: 0 }
+  ];
+  if (state.token && state.user) {
+    try {
+      const r = await api('/auth/me');
+      if (r?.user?.profile?.clips) clips = r.user.profile.clips;
+    } catch(e) {}
+  }
+  el.innerHTML = clips.map(c => {
+    const hasCip = !!c.audio_id;
+    const durSec = Math.round((c.duration || 0) / 1000);
+    const durStr = durSec > 0 ? `${durSec}s` : '';
+    return `
+      <div class="clip-row">
+        <div class="clip-slot-label">${c.title || CLIP_LABELS[c.slot]}</div>
+        <div class="clip-play-area">
+          ${hasCip ? `
+            <button class="clip-play-btn" id="clipBtn_${c.slot}" onclick="fetchAndPlayClip('${c.audio_id}', this)">▶</button>
+            <span class="clip-duration">${durStr}</span>
+          ` : `<span class="clip-empty">Nessuna clip</span>`}
+        </div>
+        <button class="clip-rec-btn" onclick="openRecorder(${c.slot})">
+          ${hasCip ? '🔴 Ri-registra' : '🎙 Registra'}
+        </button>
+      </div>`;
+  }).join('');
+}
+
+// ============= EXPLORE FEED (real users) =============
+let _exploreLoading = false;
+let _explorePage = 0;
+const _likedUsers = new Set();
+
+async function loadExploreFeed(reset = true) {
+  if (_exploreLoading) return;
+  _exploreLoading = true;
+  if (reset) _explorePage = 0;
+
+  const el = document.getElementById('exploreGrid');
+  if (!el) { _exploreLoading = false; return; }
+
+  if (reset) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:48px 24px">
+      <div class="empty-state-icon" style="animation:spin 1s linear infinite">⏳</div>
+      <div class="empty-state-text">Caricamento profili...</div>
+    </div>`;
+    el.style.display = 'flex';
+    el.style.flexDirection = 'column';
+    el.style.gap = '0';
+    el.style.padding = '0';
+    el.className = 'user-feed';
+    el.id = 'exploreGrid';
+  }
+
+  const r = await api(`/users/feed?page=${_explorePage}`);
+  _exploreLoading = false;
+
+  if (!r || !r.users) {
+    if (reset) el.innerHTML = renderExploreEmpty();
+    return;
+  }
+
+  if (r.users.length === 0) {
+    if (reset) el.innerHTML = renderExploreEmpty();
+    return;
+  }
+
+  const cards = r.users.map(u => renderUserCard(u)).join('');
+  if (reset) {
+    el.innerHTML = cards;
+  } else {
+    el.insertAdjacentHTML('beforeend', cards);
+  }
+
+  if (r.has_more) {
+    el.insertAdjacentHTML('beforeend', `
+      <button class="form-submit" style="margin:12px 18px;width:calc(100% - 36px)"
+        onclick="loadMoreExplore()">Carica altri profili</button>`);
+  }
+  _explorePage++;
+}
+
+function renderExploreEmpty() {
+  return `<div class="empty-state" style="grid-column:1/-1;padding:64px 24px">
+    <div class="empty-state-icon">🔍</div>
+    <div class="empty-state-text">Nessun profilo da esplorare</div>
+    <div class="empty-state-sub">Sii tra i primi a registrarti e registrare una clip vocale</div>
+  </div>`;
+}
+
+function renderUserCard(u) {
+  const liked = _likedUsers.has(u.id);
+  const hasClip = !!u.clip_id;
+  const letter = (u.avatar_letter || u.username || 'K').charAt(0).toUpperCase();
+  return `
+    <div class="user-card" id="ucard_${u.id}">
+      <div class="user-card-avatar">${letter}</div>
+      <div class="user-card-body">
+        <div class="user-card-name">${escHtml(u.username)}</div>
+        ${u.bio ? `<div class="user-card-bio">${escHtml(u.bio)}</div>` : ''}
+        <div class="user-card-actions">
+          ${hasClip ? `
+            <button class="play-clip-btn" id="playBtn_${u.id}"
+              onclick="event.stopPropagation();fetchAndPlayClip('${u.clip_id}', this)">
+              ▶ Ascolta
+            </button>` : ''}
+          <button class="like-btn ${liked ? 'liked' : ''}"
+            onclick="event.stopPropagation();toggleLike('${u.id}', this)">${liked ? '❤️' : '🤍'}</button>
+          <span class="likes-count" id="lc_${u.id}">${u.likes_received || 0}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function loadMoreExplore() {
+  const btn = document.querySelector('.user-feed button.form-submit');
+  if (btn) btn.remove();
+  await loadExploreFeed(false);
+}
+
+async function toggleLike(userId, btnEl) {
+  if (!state.token) { showAuthModal(); return; }
+  const r = await api(`/users/${userId}/like`, { method: 'POST', body: '{}' });
+  if (!r?.ok) { toast('Errore'); return; }
+
+  const lc = document.getElementById('lc_' + userId);
+  if (r.liked) {
+    _likedUsers.add(userId);
+    btnEl.textContent = '❤️';
+    btnEl.classList.add('liked');
+    if (lc) lc.textContent = parseInt(lc.textContent || '0') + 1;
+    if (r.match) {
+      setTimeout(() => toast('🎉 Match! Avete un match!'), 300);
+    }
+  } else {
+    _likedUsers.delete(userId);
+    btnEl.textContent = '🤍';
+    btnEl.classList.remove('liked');
+    if (lc) lc.textContent = Math.max(0, parseInt(lc.textContent || '1') - 1);
+  }
 }
 
 // ============= FRAMES =============
@@ -2567,6 +3162,9 @@ function openSection(name) {
   if (nav) nav.classList.add('active');
 
   document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
+
+  if (name === 'explore') loadExploreFeed(true);
+  if (name === 'profile') renderProfileClips();
 }
 
 // ============= AUTH =============
@@ -2691,6 +3289,7 @@ function init() {
   renderPlans();
   renderFrames();
   loadRooms();
+  renderProfileClips();
 
   setupAvatarUpload();
 
