@@ -12,7 +12,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: WEBAPP_URL
-        value: https://www.kouverte.com/tg.html
+        value: https://www.kouverte.com/app.html
       - key: BITCOIN_ADDRESS
         value: bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00
       - key: BITCOIN_MIN_CONFIRMATIONS

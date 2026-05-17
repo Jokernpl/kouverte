@@ -1,826 +1,656 @@
 // ============================================================
-// 🎙️ KOUVERTE VOX · MONSTER TELEGRAM BOT v2
+// KOUVERTE · TELEGRAM BOT
+// "Il velo non si rompe. Si depone."
 // ============================================================
-// Features:
-// - Welcome con poster banner
-// - Menu persistente reply keyboard
-// - Sistema referral con tracking
-// - Daily quest + reward
-// - Mini quiz game (5 livelli)
-// - Leaderboard top utenti
-// - Smart auto-replies (chat naturale)
-// - Multi-language IT/EN auto-detect
-// - Voice clips support
-// - Real-time stats dal server
-// - /reset, /tip, /surprise, /vip, /report
+// Allineato al sito KOUVERTE (app.html):
+//   - Sezioni: Home / Esplora / Chat / Premium / Profilo
+//   - Cornici premium (Avorio → Diamante) con Bitcoin
+//   - Foto profilo Telegram → avatar webapp
+//   - Sistema invita & guadagni con cornici regalo
 // ============================================================
 
 const TelegramBot = require('node-telegram-bot-api');
-const https = require('https');
+const fs = require('fs');
+const path = require('path');
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '8782933185:AAEsR_3FfeSBlox5OPZb18WA-hcPDVq5oGU';
-const WEBAPP_URL = process.env.WEBAPP_URL || 'https://www.kouverte.com/tg.html';
+const BOT_TOKEN    = process.env.BOT_TOKEN    || '8782933185:AAEsR_3FfeSBlox5OPZb18WA-hcPDVq5oGU';
+const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
-const SERVER_API = process.env.SERVER_API || 'http://localhost:8082';
-const BTC_TIP_ADDRESS = 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
+const BTC_ADDRESS  = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
 
-if (BOT_TOKEN.startsWith('INSERISCI')) {
-    console.error('\n❌ TOKEN BOT MANCANTE\n');
-    process.exit(1);
+if (!BOT_TOKEN || BOT_TOKEN.startsWith('INSERISCI')) {
+  console.error('\n❌ BOT_TOKEN mancante in .env\n');
+  process.exit(1);
 }
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+console.log('🕯️  Kouverte Bot avviato · @' + BOT_USERNAME);
+console.log('    WebApp: ' + WEBAPP_URL);
+console.log('    BTC:    ' + BTC_ADDRESS);
 
-console.log('🤖 VOX MONSTER Bot v2 avviato');
-console.log('   WebApp URL: ' + WEBAPP_URL);
-console.log('   Bot username: @' + BOT_USERNAME);
-console.log('   Server API: ' + SERVER_API);
-console.log('   Comandi attivi: 18+\n');
-
-// ============== STATE (in-memory) ==============
-const userState = {}; // { chatId: { quizStep, score, lang, lastActive, refsCount, dailyClaimed } }
-const referrals = {}; // { fromChatId: [toChatId, ...] }
-
-function getState(chatId) {
-    if (!userState[chatId]) userState[chatId] = { quizStep: 0, score: 0, lang: 'it', refsCount: 0, dailyClaimed: null };
-    return userState[chatId];
-}
-
-// ============== HELPERS ==============
-function isItalian(msg) {
-    const lang = msg.from?.language_code || 'it';
-    return lang.startsWith('it') || lang === 'it';
-}
-
-function freshUrl(extra = '') {
-    return WEBAPP_URL + '?v=' + Date.now() + extra;
-}
-
-// Banner premium per il welcome (immagine generata via servizio gratuito)
-const WELCOME_BANNER = 'https://og.tailgraph.com/og?fontFamily=Inter&title=KOUVERTE+VOX&titleTailwind=text-white+text-7xl+font-black&text=La+voce+non+mente&textTailwind=text-gray-200+text-2xl+mt-4&bgUrl=https://images.unsplash.com/photo-1518609878373-06d740f60d8b%3Fauto%3Dformat%26fit%3Dcrop%26w%3D1200%26q%3D80&bgTailwind=bg-gradient-to-br+from-violet-900+via-fuchsia-900+to-cyan-900&t=1';
-
-// ============== /start - WELCOME PREMIUM ==============
-bot.onText(/^\/start(?:\s+(.+))?$/, async (msg, match) => {
-    const chatId = msg.chat.id;
-    const firstName = msg.from.first_name || 'amico';
-    const refParam = match[1]; // /start ref_12345
-    const state = getState(chatId);
-    state.lang = isItalian(msg) ? 'it' : 'en';
-
-    // Referral tracking
-    if (refParam && refParam.startsWith('ref_')) {
-        const refId = refParam.substring(4);
-        if (refId != chatId && !referrals[refId]?.includes(chatId)) {
-            referrals[refId] = referrals[refId] || [];
-            referrals[refId].push(chatId);
-            const refState = getState(refId);
-            refState.refsCount = (refState.refsCount || 0) + 1;
-            bot.sendMessage(refId, `🎉 Nuovo invito! Hai ${refState.refsCount} amici invitati. +50 crediti per ogni referral!`).catch(()=>{});
-        }
-    }
-
-    const welcomeText =
-`🎙️ *Benvenuto su VOX, ${firstName}!*
-
-✨ *La voce non mente* — l'unica app dove condividi la tua voce, non la tua faccia.
-
-🎯 *Cosa puoi fare:*
-• 🎙️ Pubblicare voci che spariscono in 24h
-• 💬 Entrare in 7 stanze a tema
-• ❤️ Match basato sulla VOCE non foto
-• 🎭 Voice Universe (FoxKing, Phantom, Devilcat)
-• 👑 Premium Plans + Bitcoin payments
-
-🚀 *Inizia con i pulsanti qui sotto!*
-
-💡 Tip: scrivi /menu per il menu rapido in basso`;
-
-    // Send banner image first
-    try {
-        await bot.sendPhoto(chatId, WELCOME_BANNER, {
-            caption: welcomeText,
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '🚀 Apri VOX FRESCO', web_app: { url: freshUrl() } }],
-                    [
-                        { text: '🛍️ Shop', web_app: { url: freshUrl('#shop') } },
-                        { text: '🏠 Rooms', web_app: { url: freshUrl('#rooms') } }
-                    ],
-                    [
-                        { text: '🎭 Voice Universe', web_app: { url: freshUrl('#universe') } },
-                        { text: '👑 Premium', web_app: { url: freshUrl('#premium') } }
-                    ],
-                    [
-                        { text: '🎁 Daily Quest', callback_data: 'daily' },
-                        { text: '🧠 Quiz', callback_data: 'quiz_start' }
-                    ],
-                    [{ text: '🔗 Invita amici (+50 crediti)', switch_inline_query: `Senti VOX! https://t.me/${BOT_USERNAME}?start=ref_${chatId}` }]
-                ]
-            }
-        });
-    } catch(e) {
-        // Fallback se l'immagine non carica
-        bot.sendMessage(chatId, welcomeText, { parse_mode: 'Markdown' });
-    }
-
-    // Sticky menu in basso (reply keyboard)
-    setTimeout(() => showMenu(chatId), 500);
-});
-
-// ============== MENU PERSISTENTE ==============
-function showMenu(chatId) {
-    bot.sendMessage(chatId, '⚡ *Menu rapido attivo* — usa i pulsanti qui sotto!', {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            keyboard: [
-                [{ text: '🎙️ Apri App' }, { text: '🛍️ Shop' }],
-                [{ text: '🏠 Stanze' }, { text: '🎭 Voci AI' }],
-                [{ text: '🎁 Daily' }, { text: '🧠 Quiz' }],
-                [{ text: '🏆 Top 10' }, { text: '📊 Stats' }],
-                [{ text: '💰 Crediti' }, { text: '👥 Invita' }],
-                [{ text: '🔄 Reset' }, { text: '❓ Help' }]
-            ],
-            resize_keyboard: true,
-            persistent: true
-        }
-    });
-}
-
-bot.onText(/^\/menu$/, (msg) => showMenu(msg.chat.id));
-
-// ============== SMART REPLIES (testo naturale → azione) ==============
-bot.on('message', (msg) => {
-    if (!msg.text || msg.text.startsWith('/')) return;
-    const chatId = msg.chat.id;
-    const text = msg.text.toLowerCase().trim();
-
-    // Mappa pulsanti reply keyboard → azioni
-    const actions = {
-        '🎙️ apri app': () => sendAppButton(chatId, 'Apri VOX', freshUrl()),
-        '🛍️ shop': () => sendAppButton(chatId, 'Vai allo Shop', freshUrl('#shop')),
-        '🏠 stanze': () => sendAppButton(chatId, 'Apri Stanze', freshUrl('#rooms')),
-        '🎭 voci ai': () => sendAppButton(chatId, 'Voice Universe', freshUrl('#universe')),
-        '🎁 daily': () => sendDailyQuest(chatId),
-        '🧠 quiz': () => startQuiz(chatId),
-        '🏆 top 10': () => sendLeaderboard(chatId),
-        '📊 stats': () => sendStats(chatId),
-        '💰 crediti': () => sendCrediti(chatId),
-        '👥 invita': () => sendInvite(chatId),
-        '🔄 reset': () => sendReset(chatId),
-        '❓ help': () => sendHelp(chatId)
-    };
-
-    for (const k in actions) {
-        if (text === k.toLowerCase()) return actions[k]();
-    }
-
-    // Smart natural responses
-    if (/ciao|hey|salve|hola/i.test(text)) {
-        return bot.sendMessage(chatId, `👋 Ciao ${msg.from.first_name}! Premi /start o usa il menu in basso 👇`);
-    }
-    if (/grazie|thanks/i.test(text)) {
-        return bot.sendMessage(chatId, '💜 Sempre un piacere! Buona giornata su VOX 🎙️');
-    }
-    if (/come stai|how are you/i.test(text)) {
-        return bot.sendMessage(chatId, '🤖 Sto alla grande! Pronto ad aiutarti con VOX. Cosa vuoi fare?');
-    }
-    if (/aiuto|help|come funziona|how to/i.test(text)) {
-        return sendHelp(chatId);
-    }
-    if (/voce|voci|voice/i.test(text)) {
-        return sendAppButton(chatId, '🎙️ Inizia a registrare la tua voce', freshUrl());
-    }
-    if (/match|amore|relazion|love/i.test(text)) {
-        return sendAppButton(chatId, '💜 Trova il tuo Voice Match', freshUrl('#match'));
-    }
-    if (/bitcoin|btc|pagamento|payment/i.test(text)) {
-        return sendCrediti(chatId);
-    }
-    if (/prezzo|price|costo|cost/i.test(text)) {
-        return sendCrediti(chatId);
-    }
-
-    // Default - smart suggestion
-    bot.sendMessage(chatId, `🤔 Non ho capito. Prova con /help o usa il menu in basso 👇`);
-});
-
-// ============== HELPERS DI INVIO ==============
-function sendAppButton(chatId, label, url) {
-    bot.sendMessage(chatId, `🚀 *${label}*`, {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: [[{ text: '▶ Apri ora', web_app: { url } }]] }
-    });
-}
-
-// ============== /reset ==============
-function sendReset(chatId) {
-    const v = Date.now();
-    bot.sendMessage(chatId,
-`🔄 *RESET APP COMPLETO*
-
-Link FRESCO che bypassa la cache (v=${v}):
-
-📱 *Per pulire cache:*
-1️⃣ Su Telegram: 3 puntini (•••) → Reload
-2️⃣ Browser: tieni premuto refresh → "Empty cache"
-3️⃣ Apri uno dei link sotto`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '🚀 Apri VOX FRESCO', web_app: { url: freshUrl() } }],
-                    [
-                        { text: '🛍️ Shop', web_app: { url: freshUrl('#shop') } },
-                        { text: '🏠 Rooms', web_app: { url: freshUrl('#rooms') } }
-                    ]
-                ]
-            }
-        }
-    );
-}
-bot.onText(/^\/(reset|release|refresh|fix)/, (msg) => sendReset(msg.chat.id));
-
-// ============== /daily - DAILY QUEST ==============
-function sendDailyQuest(chatId) {
-    const state = getState(chatId);
-    const today = new Date().toDateString();
-    if (state.dailyClaimed === today) {
-        return bot.sendMessage(chatId, '✅ *Quest di oggi già completata!*\n\nTorna domani per altri +20 XP e +10 crediti!', { parse_mode: 'Markdown' });
-    }
-    const quests = [
-        { task: '🎙️ Pubblica una voce oggi', reward: '+20 XP +10 crediti' },
-        { task: '❤️ Reagisci a 3 voci', reward: '+15 XP +5 crediti' },
-        { task: '💬 Entra in una voice room', reward: '+25 XP +15 crediti' },
-        { task: '🎭 Esplora 3 voci AI nello Voice Universe', reward: '+30 XP +20 crediti' },
-        { task: '👥 Invita un amico (link referral)', reward: '+100 XP +50 crediti' }
-    ];
-    const q = quests[Math.floor(Math.random() * quests.length)];
-    bot.sendMessage(chatId,
-`🎁 *DAILY QUEST DI OGGI*
-
-📋 *Compito:*
-${q.task}
-
-🎁 *Premio:*
-${q.reward}
-
-⏰ Hai 24h per completarla.
-✨ Le quest si rinnovano ogni giorno!`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '✅ Ho completato!', callback_data: 'daily_claim' }],
-                    [{ text: '🚀 Vai all\'app per farla', web_app: { url: freshUrl() } }]
-                ]
-            }
-        }
-    );
-}
-bot.onText(/^\/daily/, (msg) => sendDailyQuest(msg.chat.id));
-
-// ============== /quiz - MINI GAME ==============
-const QUIZ_QUESTIONS = [
-    {
-        q: '🧠 Cosa significa "VOX"?',
-        opts: ['A) Voce in latino', 'B) Voice eXperience', 'C) Vanishing Voice', 'D) Voci OXigeno'],
-        correct: 2,
-        explain: 'VOX = Vanishing Voice. Le voci spariscono in 24h!'
-    },
-    {
-        q: '⏰ Quanto durano i messaggi nelle stanze?',
-        opts: ['A) 24 ore', 'B) 1 ora', 'C) 7 giorni', 'D) Per sempre'],
-        correct: 1,
-        explain: 'I messaggi nelle stanze spariscono in 1 ora!'
-    },
-    {
-        q: '🎭 Quale di questi è un voce nel Voice Universe?',
-        opts: ['A) DragonSlayer', 'B) FoxKing', 'C) NinjaCat', 'D) RockStar'],
-        correct: 1,
-        explain: 'FoxKing, MiauLee, Phantom, Devilcat, xiuder, Taya!'
-    },
-    {
-        q: '👑 Quanto costa il piano Yearly Premium?',
-        opts: ['A) $24', 'B) $8.4', 'C) $60 (50% sconto)', 'D) $120'],
-        correct: 2,
-        explain: 'Yearly $60 con 50% sconto + 7 giorni free trial!'
-    },
-    {
-        q: '₿ Quante conferme blockchain servono per Bitcoin?',
-        opts: ['A) 1', 'B) 2', 'C) 4 (sicurezza max)', 'D) 6'],
-        correct: 2,
-        explain: '4 conferme blockchain = ~40 min per max sicurezza!'
-    }
+// ============================================================
+// CATALOGO CORNICI (sincronizzato con app.html)
+// ============================================================
+const FRAMES = [
+  { id: 'ivory',    name: 'Avorio',    price: 0,     emoji: '🤍', tier: 1 },
+  { id: 'gold',     name: 'Oro',       price: 5000,  emoji: '🟡', tier: 2 },
+  { id: 'emerald',  name: 'Smeraldo',  price: 8000,  emoji: '💚', tier: 3 },
+  { id: 'ruby',     name: 'Rubino',    price: 8000,  emoji: '❤️',  tier: 3 },
+  { id: 'sapphire', name: 'Zaffiro',   price: 12000, emoji: '💙', tier: 4 },
+  { id: 'amethyst', name: 'Ametista',  price: 12000, emoji: '💜', tier: 4 },
+  { id: 'topaz',    name: 'Topazio',   price: 15000, emoji: '🧡', tier: 5 },
+  { id: 'onyx',     name: 'Onice',     price: 20000, emoji: '🖤', tier: 5 },
+  { id: 'platinum', name: 'Platino',   price: 25000, emoji: '⚪', tier: 6 },
+  { id: 'diamond',  name: 'Diamante',  price: 50000, emoji: '💎', tier: 7 }
 ];
 
-function startQuiz(chatId) {
-    const state = getState(chatId);
-    state.quizStep = 0;
-    state.score = 0;
-    sendQuizQuestion(chatId);
-}
+// Tier di reward per inviti (cornice regalo gratis)
+const REFERRAL_REWARDS = [
+  { invites: 1,  frame: 'ivory',    label: 'Avorio'   },
+  { invites: 3,  frame: 'emerald',  label: 'Smeraldo' },
+  { invites: 5,  frame: 'ruby',     label: 'Rubino'   },
+  { invites: 10, frame: 'sapphire', label: 'Zaffiro'  },
+  { invites: 15, frame: 'amethyst', label: 'Ametista' },
+  { invites: 25, frame: 'topaz',    label: 'Topazio'  },
+  { invites: 40, frame: 'onyx',     label: 'Onice'    },
+  { invites: 60, frame: 'platinum', label: 'Platino'  },
+  { invites: 100,frame: 'diamond',  label: 'Diamante' }
+];
 
-function sendQuizQuestion(chatId) {
-    const state = getState(chatId);
-    if (state.quizStep >= QUIZ_QUESTIONS.length) {
-        const pct = Math.round((state.score / QUIZ_QUESTIONS.length) * 100);
-        let medal = '🥉';
-        if (pct >= 80) medal = '🥇';
-        else if (pct >= 60) medal = '🥈';
-        return bot.sendMessage(chatId,
-`🎉 *QUIZ COMPLETATO!* ${medal}
+// ============================================================
+// STORAGE PERSISTENTE (file JSON)
+// ============================================================
+const DB_PATH = path.join(__dirname, 'kouverte-bot.json');
+let DB = { users: {}, referrals: {} };
 
-📊 *Punteggio:* ${state.score}/${QUIZ_QUESTIONS.length} (${pct}%)
-
-${pct >= 80 ? '🏆 *MAESTRO VOX!* Sblocchi badge esclusivo!' :
-  pct >= 60 ? '👏 *Bravo!* Conosci VOX bene!' :
-  '📚 Continua a esplorare l\'app!'}
-
-🎁 +${state.score * 5} XP guadagnati!`,
-            {
-                parse_mode: 'Markdown',
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '🔄 Rigioca', callback_data: 'quiz_start' }],
-                        [{ text: '🚀 Apri VOX', web_app: { url: freshUrl() } }]
-                    ]
-                }
-            }
-        );
+function loadDB() {
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      DB = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+      DB.users = DB.users || {};
+      DB.referrals = DB.referrals || {};
     }
-    const q = QUIZ_QUESTIONS[state.quizStep];
-    bot.sendMessage(chatId,
-`🧠 *DOMANDA ${state.quizStep + 1}/${QUIZ_QUESTIONS.length}*
-
-${q.q}
-
-${q.opts.join('\n')}`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'A', callback_data: `quiz_a_0` },
-                        { text: 'B', callback_data: `quiz_a_1` }
-                    ],
-                    [
-                        { text: 'C', callback_data: `quiz_a_2` },
-                        { text: 'D', callback_data: `quiz_a_3` }
-                    ]
-                ]
-            }
-        }
-    );
+  } catch (e) { console.error('DB load error:', e.message); }
 }
-bot.onText(/^\/quiz/, (msg) => startQuiz(msg.chat.id));
-
-// ============== /leaderboard ==============
-function sendLeaderboard(chatId) {
-    bot.sendMessage(chatId,
-`🏆 *TOP 10 UTENTI VOX*
-
-🥇 1. @NotturnaBella — 1,847 XP
-🥈 2. @VagabondoLosco — 1,623 XP
-🥉 3. @AnimaLirica — 1,541 XP
-4. @SoloDelle3 — 1,289 XP
-5. @VoceProfonda — 1,134 XP
-6. @WhisperGirl — 987 XP
-7. @MidnightVoice — 856 XP
-8. @SoulSearcher — 743 XP
-9. @VinileLover — 671 XP
-10. @ConfessoreX — 612 XP
-
-🎯 *Vuoi entrare in top 10?*
-Pubblica voci, fai quest, invita amici!`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🚀 Inizia a scalare la classifica', web_app: { url: freshUrl() } }]] }
-        }
-    );
+function saveDB() {
+  try { fs.writeFileSync(DB_PATH, JSON.stringify(DB, null, 2)); }
+  catch (e) { console.error('DB save error:', e.message); }
 }
-bot.onText(/^\/leaderboard|^\/top10/, (msg) => sendLeaderboard(msg.chat.id));
+loadDB();
 
-// ============== /invite - REFERRAL ==============
-function sendInvite(chatId) {
-    const state = getState(chatId);
-    const link = `https://t.me/${BOT_USERNAME}?start=ref_${chatId}`;
-    bot.sendMessage(chatId,
-`👥 *INVITA AMICI = GUADAGNA CREDITI!*
+function getUser(chatId) {
+  const id = String(chatId);
+  if (!DB.users[id]) {
+    DB.users[id] = {
+      id,
+      joinedAt: Date.now(),
+      invitedBy: null,
+      invitedUsers: [],   // chatIds of people they invited
+      ownedFrames: ['ivory'],
+      earnedSats: 0
+    };
+  }
+  return DB.users[id];
+}
 
-💎 *Il tuo link personale:*
+// ============================================================
+// HELPERS
+// ============================================================
+function freshUrl(hash = '') {
+  return `${WEBAPP_URL}?v=${Date.now()}${hash}`;
+}
+
+function refLink(chatId) {
+  return `https://t.me/${BOT_USERNAME}?start=ref_${chatId}`;
+}
+
+function nextRewardFor(user) {
+  const count = user.invitedUsers.length;
+  return REFERRAL_REWARDS.find(r => r.invites > count) || null;
+}
+
+function frameById(id) {
+  return FRAMES.find(f => f.id === id);
+}
+
+function formatSats(n) {
+  return n.toLocaleString('it-IT');
+}
+
+// Telegram profile photo (file URL) — async
+async function getTgPhotoUrl(chatId) {
+  try {
+    const photos = await bot.getUserProfilePhotos(chatId, { limit: 1 });
+    if (!photos?.photos?.length) return null;
+    const sizes = photos.photos[0];
+    const biggest = sizes[sizes.length - 1];
+    const file = await bot.getFile(biggest.file_id);
+    return `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
+  } catch (e) {
+    return null;
+  }
+}
+
+// ============================================================
+// /start (con referral tracking)
+// ============================================================
+bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const firstName = msg.from.first_name || 'amico';
+  const refArg = match[1];
+  const user = getUser(chatId);
+
+  // Referral tracking
+  if (refArg && refArg.startsWith('ref_')) {
+    const refFromId = refArg.substring(4);
+    if (refFromId !== String(chatId) && !user.invitedBy) {
+      const inviter = getUser(refFromId);
+      if (!inviter.invitedUsers.includes(String(chatId))) {
+        inviter.invitedUsers.push(String(chatId));
+        user.invitedBy = refFromId;
+        saveDB();
+
+        // Notifica all'inviter + reward check
+        notifyReferralEarned(refFromId, firstName);
+      }
+    }
+  }
+
+  const photoUrl = await getTgPhotoUrl(chatId);
+
+  const caption =
+`🕯️  *KOUVERTE*
+_Il velo non si rompe. Si depone._
+
+Benvenuto, *${firstName}*.
+
+Qui sotto il tuo profilo. Apri l'app per personalizzarlo:
+
+🏠 *Home* · Storie, trending, nuovi profili
+🔍 *Esplora* · Scopri profili premium
+💬 *Chat* · Conversazioni private
+👑 *Premium* · Piani Pro / Elite / Infinity
+👤 *Profilo* · Avatar, cornici, post
+
+✨ Usa /menu per i comandi rapidi.`;
+
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '🚀 Apri Kouverte', web_app: { url: freshUrl() } }],
+      [
+        { text: '👤 Profilo',  web_app: { url: freshUrl('#profile') } },
+        { text: '🎙️ Stanze',   callback_data: 'rooms_list' }
+      ],
+      [{ text: '💎 Cornici', callback_data: 'frames_list' }],
+      [
+        { text: '🔗 Invita & guadagna', callback_data: 'invite_card' },
+        { text: '👑 Premium', web_app: { url: freshUrl('#premium') } }
+      ],
+      [{ text: '₿ Pagamenti Bitcoin', callback_data: 'btc_info' }]
+    ]
+  };
+
+  try {
+    if (photoUrl) {
+      await bot.sendPhoto(chatId, photoUrl, {
+        caption,
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+    } else {
+      await bot.sendMessage(chatId, caption, {
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+      });
+    }
+  } catch (e) {
+    bot.sendMessage(chatId, caption, { parse_mode: 'Markdown', reply_markup: keyboard });
+  }
+
+  setTimeout(() => showMenu(chatId), 600);
+});
+
+// ============================================================
+// MENU PERSISTENTE
+// ============================================================
+function showMenu(chatId) {
+  bot.sendMessage(chatId, '⌨️  Menu rapido attivo. Usa i pulsanti qui sotto.', {
+    reply_markup: {
+      keyboard: [
+        [{ text: '🏠 Home' },     { text: '🔍 Esplora' }],
+        [{ text: '🎙️ Stanze' },   { text: '💬 Chat' }],
+        [{ text: '👑 Premium' },  { text: '👤 Profilo' }],
+        [{ text: '💎 Cornici' },  { text: '🔗 Invita' }],
+        [{ text: '🪙 Guadagni' }, { text: '₿ Bitcoin' }],
+        [{ text: '❓ Aiuto' }]
+      ],
+      resize_keyboard: true,
+      persistent: true
+    }
+  });
+}
+bot.onText(/^\/menu$/, (msg) => showMenu(msg.chat.id));
+
+// ============================================================
+// /profilo — mostra la foto Telegram + info
+// ============================================================
+async function sendProfile(chatId, fromName) {
+  const user = getUser(chatId);
+  const photoUrl = await getTgPhotoUrl(chatId);
+  const invited = user.invitedUsers.length;
+  const ownedNames = user.ownedFrames
+    .map(id => frameById(id))
+    .filter(Boolean)
+    .map(f => `${f.emoji} ${f.name}`)
+    .join(' · ');
+
+  const text =
+`👤 *Profilo di ${fromName}*
+
+📅 Iscritto: ${new Date(user.joinedAt).toLocaleDateString('it-IT')}
+👥 Amici invitati: *${invited}*
+🪙 Sats guadagnati: *${formatSats(user.earnedSats)}*
+
+💎 *Cornici possedute:*
+${ownedNames || '🤍 Avorio'}
+
+Tocca il bottone qui sotto per usare questa foto come avatar Kouverte.`;
+
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '🖼️ Usa questa foto come avatar', web_app: { url: freshUrl('#profile') } }],
+      [{ text: '💎 Le mie cornici', callback_data: 'my_frames' }],
+      [{ text: '🔗 Il mio link invito', callback_data: 'invite_card' }]
+    ]
+  };
+
+  if (photoUrl) {
+    bot.sendPhoto(chatId, photoUrl, { caption: text, parse_mode: 'Markdown', reply_markup: keyboard });
+  } else {
+    bot.sendMessage(chatId, text + '\n\n_Nessuna foto profilo Telegram trovata._', {
+      parse_mode: 'Markdown', reply_markup: keyboard
+    });
+  }
+}
+bot.onText(/^\/profilo$/i, (msg) => sendProfile(msg.chat.id, msg.from.first_name || 'tu'));
+
+// ============================================================
+// /cornici — catalogo completo
+// ============================================================
+function sendFramesList(chatId) {
+  const user = getUser(chatId);
+  const owned = user.ownedFrames;
+
+  const lines = FRAMES.map(f => {
+    const has = owned.includes(f.id);
+    const price = f.price === 0 ? 'Gratis' : `${formatSats(f.price)} sats`;
+    const status = has ? '✅ Posseduta' : `· ${price}`;
+    return `${f.emoji}  *${f.name}*  — ${status}`;
+  }).join('\n');
+
+  const next = nextRewardFor(user);
+  const reward = next
+    ? `\n\n🎁 *Prossima cornice regalo:* ${next.label} con *${next.invites - user.invitedUsers.length}* inviti.`
+    : '\n\n🏆 Hai sbloccato tutte le cornici regalo possibili!';
+
+  const text =
+`💎 *Catalogo Cornici Kouverte*
+
+${lines}
+${reward}
+
+_Acquista con Bitcoin dall'app o invita amici per riceverle in regalo._`;
+
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🛒 Acquista con BTC', web_app: { url: freshUrl('#profile') } }],
+        [{ text: '🔗 Invita per guadagnarle', callback_data: 'invite_card' }]
+      ]
+    }
+  });
+}
+bot.onText(/^\/cornici$/i, (msg) => sendFramesList(msg.chat.id));
+
+// ============================================================
+// /invita — link referral + reward tier
+// ============================================================
+function sendInviteCard(chatId) {
+  const user = getUser(chatId);
+  const link = refLink(chatId);
+  const count = user.invitedUsers.length;
+  const next = nextRewardFor(user);
+
+  const rewardsList = REFERRAL_REWARDS
+    .map(r => {
+      const done = count >= r.invites;
+      return `${done ? '✅' : '⬜️'} ${r.invites} inviti → cornice *${r.label}*`;
+    })
+    .join('\n');
+
+  const text =
+`🔗 *Invita & Guadagna*
+
+Condividi il tuo link personale: ogni amico che si iscrive ti regala una cornice esclusiva.
+
+🪙 *Il tuo link:*
 \`${link}\`
 
-🎁 *Per ogni amico che entra:*
-• +50 crediti per te
-• +50 crediti per lui (welcome bonus)
-• +100 XP
+👥 *Amici invitati:* ${count}
+${next ? `🎯 *Prossimo premio:* cornice *${next.label}* tra *${next.invites - count}* inviti.` : '🏆 *Hai sbloccato tutti i premi!*'}
 
-📊 *Hai invitato:* ${state.refsCount || 0} amici
-🏆 *Crediti guadagnati:* ${(state.refsCount || 0) * 50}
+🎁 *Tabella premi:*
+${rewardsList}`;
 
-🎯 *Bonus referral:*
-• 5 amici → Badge "Influencer" 🎤
-• 10 amici → Badge "Star" 🌟 + 1 mese VIP
-• 25 amici → Badge "Legend" 👑 + Lifetime VIP`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '📤 Condividi link', switch_inline_query: `Senti VOX! 🎙️ ${link}` }],
-                    [{ text: '📋 Copia link', callback_data: `copy_${chatId}` }]
-                ]
-            }
-        }
-    );
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '📤 Condividi link su Telegram', switch_inline_query: `Entra su Kouverte ✨ ${link}` }],
+        [{ text: '🪙 Vedi guadagni', callback_data: 'earnings' }]
+      ]
+    }
+  });
 }
-bot.onText(/^\/invite|^\/referral/, (msg) => sendInvite(msg.chat.id));
+bot.onText(/^\/invita$/i, (msg) => sendInviteCard(msg.chat.id));
 
-// ============== /surprise - RANDOM FEATURE ==============
-bot.onText(/^\/surprise|^\/random/, (msg) => {
-    const surprises = [
-        { text: '🎲 *MOOD CASUALE*\n\nOggi prova la stanza:\n🌙 Insonni alle 3', url: freshUrl('#rooms') },
-        { text: '🎯 *VOCE CASUALE*\n\nAscolta una voce a caso nel feed!', url: freshUrl() },
-        { text: '🎨 *AI VOICE*\n\nProva FoxKing — la voce più amata!', url: freshUrl('#universe') },
-        { text: '🛒 *OFFERTA SPECIALE*\n\nNeon Blue Frame solo 150 crediti!', url: freshUrl('#shop') },
-        { text: '🏆 *SFIDA*\n\nPubblica una voce con #mood:hot oggi!', url: freshUrl() }
-    ];
-    const s = surprises[Math.floor(Math.random() * surprises.length)];
-    bot.sendMessage(msg.chat.id, s.text, {
-        parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: [[{ text: '🚀 Vai!', web_app: { url: s.url } }]] }
-    });
-});
+// ============================================================
+// /guadagni — riepilogo + cornici sbloccate
+// ============================================================
+function sendEarnings(chatId) {
+  const user = getUser(chatId);
+  const count = user.invitedUsers.length;
+  const unlocked = REFERRAL_REWARDS.filter(r => count >= r.invites);
+  const next = nextRewardFor(user);
 
-// ============== /tip - BITCOIN TIP ==============
-bot.onText(/^\/tip|^\/dona/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`☕ *SUPPORTA VOX CON BITCOIN*
+  const equivalentSats = unlocked.reduce((sum, r) => {
+    const f = frameById(r.frame);
+    return sum + (f ? f.price : 0);
+  }, 0);
 
-VOX è gratis. Se ti piace, offri un caffè!
+  const text =
+`🪙 *I tuoi guadagni*
 
-₿ *Indirizzo Bitcoin:*
-\`${BTC_TIP_ADDRESS}\`
+👥 Amici invitati: *${count}*
+🎁 Cornici sbloccate: *${unlocked.length}*
+💰 Valore in sats: *${formatSats(equivalentSats)}*  (~ ${(equivalentSats/100000000).toFixed(6)} BTC)
 
-💜 *Ogni donazione:*
-• 0.0001 BTC → Badge "Supporter" ☕
-• 0.001 BTC → Badge "Friend" 💜 + 500 crediti
-• 0.01 BTC → Badge "Patron" 👑 + Lifetime VIP
+${unlocked.length > 0
+  ? '✅ *Sbloccate:* ' + unlocked.map(r => `${frameById(r.frame)?.emoji || ''} ${r.label}`).join(' · ')
+  : '_Inizia a invitare per sbloccare la prima cornice._'}
 
-Grazie di cuore! 🙏`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [[{
-                    text: '💰 Apri Shop per pagare',
-                    web_app: { url: freshUrl('#shop') }
-                }]]
-            }
-        }
-    );
-});
+${next ? `🎯 *Prossima:* cornice *${next.label}* tra *${next.invites - count}* inviti.` : '🏆 *Tutte le cornici premio sono tue!*'}`;
 
-// ============== /vip ==============
-bot.onText(/^\/vip|^\/premium/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`👑 *KOUVERTE VOX PREMIUM*
-
-🏆 *Yearly* — $60 (50% OFF da $120)
-   ✓ Tutto illimitato
-   ✓ 7 giorni gratis
-   ✓ Badge "VIP Yearly" 👑
-
-💎 *Monthly* — $24 (20% OFF da $30) — più popolare!
-   ✓ Tutto illimitato
-   ✓ 3 giorni gratis
-   ✓ Badge "VIP Monthly" 💎
-
-⚡ *Weekly* — $8.4 (16% OFF da $10)
-   ✓ Limited per day
-   ✓ 3 giorni gratis
-
-🎁 *Cosa sblocchi:*
-• 🎙️ Storie 30 giorni invece di 24h
-• 🚀 Boost illimitato in cima al feed
-• 👑 Badge esclusivo VIP
-• 🎨 Tutti i cosmetics
-• 🤖 +50% XP gain
-• ❌ Niente pubblicità (mai)`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '👑 Scegli il piano', web_app: { url: freshUrl('#premium') } }]] }
-        }
-    );
-});
-
-// ============== /stats real-time ==============
-function sendStats(chatId) {
-    const opts = { hostname: 'localhost', port: 8082, path: '/api/voice-rooms', method: 'GET' };
-    let data = '';
-    const req = require('http').request(opts, res => {
-        res.on('data', d => data += d);
-        res.on('end', () => {
-            let rooms = 0, online = 0;
-            try {
-                const j = JSON.parse(data);
-                rooms = j.rooms?.length || 0;
-                online = j.rooms?.reduce((s, r) => s + (r.participants_count || 0), 0) || 0;
-            } catch(e) {}
-            bot.sendMessage(chatId,
-`📊 *VOX · STATISTICHE LIVE*
-
-🌐 *Server status:* 🟢 ONLINE
-🏠 *Stanze attive:* ${rooms}
-👥 *Persone online ora:* ${online}
-🎙️ *Voci pubblicate oggi:* ${Math.floor(Math.random() * 1500 + 800)}
-❤️ *Reazioni oggi:* ${Math.floor(Math.random() * 4000 + 2000)}
-⏱️ *Tempo medio sessione:* ${Math.floor(Math.random() * 10 + 12)} min
-🔥 *Trending:* 🌙 Insonni alle 3
-
-📈 *Crescita ultimi 7 giorni:* +${Math.floor(Math.random() * 25 + 15)}%`,
-                {
-                    parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [[{ text: '📱 Apri VOX', web_app: { url: freshUrl() } }]] }
-                }
-            );
-        });
-    });
-    req.on('error', () => {
-        bot.sendMessage(chatId, '⚠️ Server momentaneamente offline. Riprova tra 1 minuto!');
-    });
-    req.end();
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🔗 Invita ancora', callback_data: 'invite_card' }],
+        [{ text: '💎 Vedi cornici', callback_data: 'frames_list' }]
+      ]
+    }
+  });
 }
-bot.onText(/^\/stats/, (msg) => sendStats(msg.chat.id));
+bot.onText(/^\/guadagni$/i, (msg) => sendEarnings(msg.chat.id));
 
-// ============== /crediti ==============
-function sendCrediti(chatId) {
-    bot.sendMessage(chatId,
-`💰 *CREDITI VOX — PREZZI*
+// ============================================================
+// /stanze — lista stanze vocali
+// ============================================================
+const ROOMS = [
+  { slug: 'lounge-velluto',    label: 'Lounge Velluto',     desc: 'Conversazioni sottili e raffinate',         emoji: '🍷' },
+  { slug: 'jazz-after-dark',   label: 'Jazz After Dark',    desc: 'Vinili, smoking e voci basse',              emoji: '🎷' },
+  { slug: 'parigi-by-night',   label: 'Parigi by Night',    desc: 'Romance, charme, lingua francese',          emoji: '🗼' },
+  { slug: 'cinema-noir',       label: 'Cinema Noir',        desc: 'Recensioni di film cult e contemporanei',   emoji: '🎬' },
+  { slug: 'segreti-di-cucina', label: 'Segreti di Cucina',  desc: 'Ricette gourmet e racconti dai grandi chef',emoji: '🥂' },
+  { slug: 'arte-e-poesia',     label: 'Arte e Poesia',      desc: 'Letture, mostre, ispirazioni',              emoji: '🎭' },
+  { slug: 'salotto-business',  label: 'Salotto Business',   desc: 'Networking, idee, mentor',                  emoji: '💼' }
+];
 
-🛍️ *Pacchetti:*
-• 50 crediti → ₿ 0.001 BTC
-• 100 crediti → ₿ 0.002 BTC
-• 500 crediti → ₿ 0.009 BTC (sconto!)
-• 1000 crediti → ₿ 0.017 BTC (sconto MAX!)
+function sendRooms(chatId) {
+  const lines = ROOMS.map(r => `${r.emoji}  *${r.label}* — _${r.desc}_`).join('\n\n');
+  const text =
+`🎙️  *Stanze vocali Kouverte*
 
-💎 *Cosa compri:*
-✨ 25 cosmetics, frames, themes
-🔥 Voice effects (Echo, Glitch)
-⭐ Rarity (Spada, Crown, Crystal)
-🚀 Boost per il feed
-👑 VIP subscription
+Conversazioni in tempo reale con persone selezionate:
 
-💜 *Bonus:*
-• Welcome bonus: 50 crediti gratis
-• Daily quest: 10-50 crediti/giorno
-• Referral: 50 crediti per amico
-• Quiz Master: 25 crediti
+${lines}
 
-🔒 *Sicurezza:*
-Bitcoin con 4 conferme blockchain prima dell'accredito.`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '💳 Vai allo Shop', web_app: { url: freshUrl('#shop') } }]] }
-        }
-    );
+✨ Entra in una stanza dall'app — la tua voce è la tua firma.`;
+
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🎙️ Apri Stanze', web_app: { url: freshUrl('#rooms') } }],
+        ...ROOMS.slice(0, 3).map(r => ([{
+          text: `${r.emoji} ${r.label}`,
+          web_app: { url: freshUrl('#rooms') }
+        }]))
+      ]
+    }
+  });
 }
-bot.onText(/^\/crediti|^\/credits/, (msg) => sendCrediti(msg.chat.id));
+bot.onText(/^\/stanze$/i, (msg) => sendRooms(msg.chat.id));
 
-// ============== /stanze ==============
-bot.onText(/^\/stanze|^\/rooms/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🏠 *7 STANZE PUBBLICHE*
+// ============================================================
+// /premium — piani come nel sito
+// ============================================================
+function sendPremium(chatId) {
+  const text =
+`👑 *Kouverte Premium*
 
-🌙 *Voci Notturne* — Chat di notte
-💔 *Single Italiani* — Per chi cerca connessione
-🧠 *Deep Talks* — Conversazioni profonde
-🎵 *Vibes Musicali* — Cantano e parlano di musica
-✈️ *Travel Lovers* — Gente che ama viaggiare
-🌃 *Late Night* — Per gli insonnaci
-🛍️ *Shop Lounge* — Parla di cosmetics e rarity
+Scegli il piano che fa per te:
 
-Tutti i messaggi spariscono dopo 1 ora.`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🏠 Apri Stanze', web_app: { url: freshUrl('#rooms') } }]] }
-        }
-    );
-});
+*Vox Pro* · 4,99 € / mese
+◆ Storie per 14 giorni
+◆ Profilo verificato
+◆ Badge Premium
 
-// ============== /help ==============
+*Vox Elite* · 9,99 € / mese  ⭐ CONSIGLIATO
+◆ Storie per 30 giorni
+◆ Visibilità prioritaria
+◆ Badge Premium
+
+*Vox Infinity* · 19,99 € / mese
+◆ Storie permanenti
+◆ Tutte le funzioni Elite
+◆ Supporto dedicato
+◆ Eventi esclusivi`;
+
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '👑 Attiva Premium', web_app: { url: freshUrl('#premium') } }],
+        [{ text: '₿ Paga in Bitcoin', callback_data: 'btc_info' }]
+      ]
+    }
+  });
+}
+bot.onText(/^\/premium$/i, (msg) => sendPremium(msg.chat.id));
+
+// ============================================================
+// /bitcoin — info pagamenti
+// ============================================================
+function sendBtcInfo(chatId) {
+  const text =
+`₿ *Pagamenti in Bitcoin*
+
+Tutti gli acquisti su Kouverte (cornici, Premium) si pagano in Bitcoin.
+
+🔐 *Indirizzo ufficiale:*
+\`${BTC_ADDRESS}\`
+
+⚙️ *Come funziona:*
+1. Scegli una cornice o un piano dall'app
+2. Si apre un *QR code* con importo preciso in sats
+3. Paghi dal tuo wallet (Phoenix, Muun, Wallet of Satoshi, ecc.)
+4. Dopo *4 conferme* sblocchiamo l'acquisto
+
+💡 *Non hai BTC?* Invita amici e ricevi le cornici in regalo con /invita!`;
+
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '💎 Vai alle cornici', callback_data: 'frames_list' }],
+        [{ text: '🔗 Modalità regalo (gratis)', callback_data: 'invite_card' }]
+      ]
+    }
+  });
+}
+bot.onText(/^\/bitcoin$/i, (msg) => sendBtcInfo(msg.chat.id));
+
+// ============================================================
+// /aiuto — comandi completi
+// ============================================================
 function sendHelp(chatId) {
-    bot.sendMessage(chatId,
-`📚 *TUTTI I COMANDI*
+  const text =
+`❓ *Aiuto — Comandi Kouverte*
 
-*🎯 Principali:*
-/start — Welcome con menu
-/menu — Menu rapido in basso
-/reset — Pulisci cache + link fresco
+🏠 /start — Benvenuto + il tuo profilo
+⌨️ /menu — Menu rapido in basso
+👤 /profilo — Mostra la tua foto + info
+🎙️ /stanze — Stanze vocali attive
+💎 /cornici — Catalogo cornici premium
+🔗 /invita — Il tuo link referral
+🪙 /guadagni — Cornici sbloccate
+👑 /premium — Piani Premium
+₿ /bitcoin — Pagamenti in Bitcoin
+❓ /aiuto — Questa lista
 
-*📱 App:*
-/stanze — 7 voice rooms
-/crediti — Pacchetti BTC
-/vip — Premium plans
+🔗 *Vuoi guadagnare?* Invita amici con /invita e ricevi cornici esclusive — fino al Diamante 💎 (vale 50.000 sats!).`;
 
-*🎮 Giochi:*
-/daily — Quest quotidiana
-/quiz — Mini quiz (5 livelli)
-/surprise — Sorpresa casuale
-
-*📊 Info:*
-/stats — Statistiche live
-/leaderboard — Top 10 utenti
-/about — Cos'è VOX
-
-*💜 Community:*
-/invite — Invita amici (+50 crediti)
-/tip — Dona con Bitcoin
-
-*ℹ️ Altri:*
-/help — Questo messaggio
-
-💡 *Tip*: scrivi semplicemente "ciao", "shop", "voce" e il bot risponde!`,
-        { parse_mode: 'Markdown' }
-    );
+  bot.sendMessage(chatId, text, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🚀 Apri Kouverte', web_app: { url: freshUrl() } }]
+      ]
+    }
+  });
 }
-bot.onText(/^\/help/, (msg) => sendHelp(msg.chat.id));
+bot.onText(/^\/(aiuto|help|start_help)$/i, (msg) => sendHelp(msg.chat.id));
 
-// ============== /about ==============
-bot.onText(/^\/about/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🎙️ *KOUVERTE VOX*
+// ============================================================
+// CALLBACK QUERIES (bottoni inline)
+// ============================================================
+bot.on('callback_query', async (cq) => {
+  const chatId = cq.message.chat.id;
+  const data = cq.data;
+  bot.answerCallbackQuery(cq.id).catch(() => {});
 
-*Vanishing Voice · La voce non mente*
-
-L'unica app dove condividi la tua voce, non la tua faccia.
-
-✨ *Caratteristiche:*
-• 🎙️ Voci che spariscono in 24h
-• 💔 Voice match (no foto)
-• 🎭 Voice Universe (AI voices)
-• 🏠 7 stanze tematiche
-• 👑 Premium plans
-• ₿ Bitcoin payments (4 conferme)
-
-🇮🇹 *Made in Italy*
-🔒 *100% anonimo*
-🛡️ *Nessun tracking*
-
-🌐 [www.kouverte.com](https://www.kouverte.com)
-📱 @${BOT_USERNAME}`,
-        {
-            parse_mode: 'Markdown',
-            disable_web_page_preview: true,
-            reply_markup: { inline_keyboard: [[{ text: '🚀 Inizia', web_app: { url: freshUrl() } }]] }
-        }
-    );
+  switch (data) {
+    case 'frames_list':  return sendFramesList(chatId);
+    case 'rooms_list':   return sendRooms(chatId);
+    case 'invite_card':  return sendInviteCard(chatId);
+    case 'earnings':     return sendEarnings(chatId);
+    case 'my_frames':    return sendFramesList(chatId);
+    case 'btc_info':     return sendBtcInfo(chatId);
+    case 'premium':      return sendPremium(chatId);
+    case 'profilo':      return sendProfile(chatId, cq.from.first_name || 'tu');
+  }
 });
 
-// ============== CALLBACK QUERY HANDLER ==============
-bot.on('callback_query', (q) => {
-    const chatId = q.message.chat.id;
-    const data = q.data;
-    bot.answerCallbackQuery(q.id);
+// ============================================================
+// REPLY KEYBOARD HANDLER
+// ============================================================
+bot.on('message', (msg) => {
+  if (!msg.text || msg.text.startsWith('/')) return;
+  const chatId = msg.chat.id;
+  const text = msg.text.trim().toLowerCase();
+  const name = msg.from.first_name || 'tu';
 
-    if (data === 'daily') return sendDailyQuest(chatId);
-    if (data === 'daily_claim') {
-        const state = getState(chatId);
-        state.dailyClaimed = new Date().toDateString();
-        return bot.sendMessage(chatId, '🎉 *Quest completata!*\n\n+20 XP e +10 crediti aggiunti!\n\nTorna domani per una nuova quest 🎁', { parse_mode: 'Markdown' });
+  const actions = {
+    '🏠 home':     () => bot.sendMessage(chatId, '🏠 Apri la *Home* di Kouverte', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl() } }]] } }),
+    '🔍 esplora':  () => bot.sendMessage(chatId, '🔍 Esplora i profili', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl('#explore') } }]] } }),
+    '🎙️ stanze':   () => sendRooms(chatId),
+    '💬 chat':     () => bot.sendMessage(chatId, '💬 Le tue conversazioni', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl('#chat') } }]] } }),
+    '👑 premium':  () => sendPremium(chatId),
+    '👤 profilo':  () => sendProfile(chatId, name),
+    '💎 cornici':  () => sendFramesList(chatId),
+    '🔗 invita':   () => sendInviteCard(chatId),
+    '🪙 guadagni': () => sendEarnings(chatId),
+    '₿ bitcoin':   () => sendBtcInfo(chatId),
+    '❓ aiuto':    () => sendHelp(chatId)
+  };
+
+  for (const key in actions) {
+    if (text === key) return actions[key]();
+  }
+
+  // Risposte naturali
+  if (/ciao|salve|hey/i.test(text)) {
+    return bot.sendMessage(chatId, `🕯️ Ciao ${name}. Usa /menu per i comandi.`);
+  }
+  if (/grazie/i.test(text)) {
+    return bot.sendMessage(chatId, '🤍 Sempre un piacere.');
+  }
+  if (/cornic/i.test(text)) return sendFramesList(chatId);
+  if (/invit|amic/i.test(text)) return sendInviteCard(chatId);
+  if (/bitcoin|btc|paga/i.test(text)) return sendBtcInfo(chatId);
+  if (/profilo|account/i.test(text)) return sendProfile(chatId, name);
+  if (/aiuto|help/i.test(text)) return sendHelp(chatId);
+
+  bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu o /aiuto.');
+});
+
+// ============================================================
+// REFERRAL: notifica + assegnazione cornice
+// ============================================================
+async function notifyReferralEarned(inviterId, newUserName) {
+  const inviter = getUser(inviterId);
+  const count = inviter.invitedUsers.length;
+
+  // Verifica se ha raggiunto un tier di reward
+  const justUnlocked = REFERRAL_REWARDS.find(r => r.invites === count);
+  let rewardMsg = '';
+  if (justUnlocked) {
+    if (!inviter.ownedFrames.includes(justUnlocked.frame)) {
+      inviter.ownedFrames.push(justUnlocked.frame);
+      const f = frameById(justUnlocked.frame);
+      inviter.earnedSats += (f?.price || 0);
+      saveDB();
+      rewardMsg = `\n\n🎉 *PREMIO SBLOCCATO!*\nHai vinto la cornice ${f.emoji} *${f.name}* (valore ${formatSats(f.price)} sats).`;
     }
-    if (data === 'quiz_start') return startQuiz(chatId);
-    if (data.startsWith('quiz_a_')) {
-        const ans = parseInt(data.split('_')[2]);
-        const state = getState(chatId);
-        const q_obj = QUIZ_QUESTIONS[state.quizStep];
-        const correct = ans === q_obj.correct;
-        if (correct) state.score++;
-        bot.sendMessage(chatId,
-            `${correct ? '✅' : '❌'} ${correct ? '*Esatto!*' : '*Sbagliato!*'}\n\n💡 ${q_obj.explain}`,
-            { parse_mode: 'Markdown' }
-        );
-        state.quizStep++;
-        setTimeout(() => sendQuizQuestion(chatId), 1500);
-        return;
-    }
-});
+  } else {
+    saveDB();
+  }
 
-// ============== /top - TRENDING ==============
-bot.onText(/^\/top$/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🔥 *TOP VOCI DI OGGI*
+  const next = nextRewardFor(inviter);
+  const nextMsg = next
+    ? `\n🎯 Prossima cornice: *${next.label}* tra ${next.invites - count} inviti.`
+    : '\n🏆 Hai sbloccato tutte le cornici premio!';
 
-🥇 *#1 — "Ho scelto il silenzio"*
-   👤 @NotturnaBella — ❤️ 847
+  const text =
+`🎊 *${newUserName}* si è iscritto col tuo link!
 
-🥈 *#2 — "Primo giorno lontano da casa"*
-   👤 @VagabondoLosco — ❤️ 623
+👥 Amici invitati totali: *${count}*${rewardMsg}${nextMsg}`;
 
-🥉 *#3 — "La canzone che non ho mai cantato"*
-   👤 @AnimaLirica — ❤️ 541
+  try {
+    await bot.sendMessage(inviterId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '🪙 Vedi guadagni', callback_data: 'earnings' }],
+          [{ text: '🚀 Apri app', web_app: { url: freshUrl('#profile') } }]
+        ]
+      }
+    });
+  } catch (e) {
+    console.error('Notify referral error:', e.message);
+  }
+}
 
-👉 Ascolta le voci che conquistano VOX!`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🎧 Ascolta TOP', web_app: { url: freshUrl() } }]] }
-        }
-    );
-});
-
-// ============== /badge ==============
-bot.onText(/^\/badge|^\/badges/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🏆 *BADGE & ACHIEVEMENT*
-
-🎤 *Voice Master* — 50 voci pubblicate
-💗 *Charmer* — 1000 reazioni ricevute
-🔥 *Streak Master* — 7 giorni consecutivi
-🌙 *Night Owl* — 100 voci tra 22:00-06:00
-💬 *Social Butterfly* — 50 reazioni date
-👑 *Leggendario* — Collectible legendary
-🎯 *Influencer* — 5 referral
-🌟 *Star* — 10 referral
-👑 *Legend* — 25 referral
-🧠 *Quiz Master* — 100% al quiz
-☕ *Supporter* — Donazione Bitcoin
-
-I badge appaiono sul profilo!`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🏅 Vedi i tuoi', web_app: { url: freshUrl('#achievements') } }]] }
-        }
-    );
-});
-
-// ============== INLINE QUERY (share viral) ==============
-bot.on('inline_query', (query) => {
-    const chatId = query.from.id;
-    const refLink = `https://t.me/${BOT_USERNAME}?start=ref_${chatId}`;
-    const results = [
-        {
-            type: 'article',
-            id: '1',
-            title: '🎙️ Invita su VOX (+50 crediti)',
-            description: 'Guadagna 50 crediti per ogni amico',
-            input_message_content: {
-                message_text: `🎙️ *VOX — La voce non mente*\n\nUnisciti a me su Kouverte Vox! Voci che spariscono in 24h, niente foto, solo te.\n\n${refLink}`,
-                parse_mode: 'Markdown'
-            }
-        },
-        {
-            type: 'article',
-            id: '2',
-            title: '🔥 Voci Trending oggi',
-            description: 'Le 3 voci più amate del giorno',
-            input_message_content: {
-                message_text: `🔥 *Trending su VOX oggi:*\n\n🥇 "Ho scelto il silenzio"\n🥈 "Primo giorno lontano da casa"\n🥉 "La canzone che non ho mai cantato"\n\nApri @${BOT_USERNAME} per ascoltarle.`,
-                parse_mode: 'Markdown'
-            }
-        },
-        {
-            type: 'article',
-            id: '3',
-            title: '👑 Premium Plans (-50%)',
-            description: 'Yearly $60 invece di $120',
-            input_message_content: {
-                message_text: `👑 *KOUVERTE VOX PREMIUM*\n\n• Yearly $60 (50% off!)\n• Monthly $24\n• Weekly $8.4\n\nApri @${BOT_USERNAME} per scegliere.`,
-                parse_mode: 'Markdown'
-            }
-        }
-    ];
-    bot.answerInlineQuery(query.id, results);
-});
-
-// ============== VOICE MESSAGE FORWARDING ==============
-bot.on('voice', (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🎙️ *Bella voce!*
-
-Ti piacerebbe pubblicarla su VOX? Le tue voci saranno ascoltate da chi conta davvero — niente filtri, niente giudizi.
-
-Apri l'app e tieni premuto il microfono!`,
-        {
-            parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🎙️ Pubblica su VOX', web_app: { url: freshUrl() } }]] }
-        }
-    );
-});
-
-// ============== WEB APP DATA ==============
-bot.on('web_app_data', (msg) => {
-    const data = msg.web_app_data.data;
-    bot.sendMessage(msg.chat.id, `📩 Ricevuto: ${data}`);
-});
-
-// ============== ERROR HANDLING ==============
-bot.on('polling_error', (err) => {
-    console.error('[POLLING]', err.code, err.message);
-});
+// ============================================================
+// ERROR HANDLING
+// ============================================================
+bot.on('polling_error', (err) => console.error('Polling error:', err.message));
+bot.on('error', (err) => console.error('Bot error:', err.message));
 
 process.on('SIGINT', () => {
-    console.log('\n🛑 Bot stopping...');
-    bot.stopPolling();
-    process.exit(0);
+  saveDB();
+  console.log('\n💾 DB salvato. Arrivederci.');
+  process.exit(0);
 });
-
-console.log('✨ MONSTER bot ready with 18+ commands and smart replies!');
