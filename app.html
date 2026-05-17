@@ -69,19 +69,49 @@ a { text-decoration: none; color: inherit; }
 .splash-bg {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(ellipse at center, transparent 0%, #000 75%),
-    url('https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=900&q=80&auto=format&fit=crop');
-  background-size: cover;
-  background-position: center top;
-  opacity: 0.45;
-  filter: grayscale(0.3) contrast(1.1);
+  background:
+    radial-gradient(ellipse 70% 90% at 50% 25%, rgba(201,169,97,0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 35% 50% at 28% 58%, rgba(201,169,97,0.03) 0%, transparent 55%),
+    radial-gradient(ellipse 35% 50% at 72% 58%, rgba(201,169,97,0.03) 0%, transparent 55%),
+    #000;
+}
+/* Silhouette nascosta in CSS — visibile solo fissandola */
+.splash-bg::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 240px;
+  height: 480px;
+  background: linear-gradient(180deg,
+    rgba(201,169,97,0.055) 0%,
+    rgba(201,169,97,0.035) 40%,
+    rgba(201,169,97,0.02)  70%,
+    transparent 100%
+  );
+  clip-path: polygon(
+    30% 0%, 70% 0%,
+    82% 8%, 88% 20%, 86% 36%,
+    78% 48%, 70% 54%, 62% 57%,
+    60% 62%, 60% 68%,
+    70% 74%, 80% 82%, 88% 94%, 90% 100%,
+    10% 100%, 12% 94%, 20% 82%, 30% 74%,
+    40% 68%, 40% 62%, 38% 57%,
+    30% 54%, 22% 48%, 14% 36%,
+    12% 20%, 18% 8%
+  );
 }
 .splash-bg::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.95) 100%);
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0.55) 0%,
+    rgba(0,0,0,0.05) 28%,
+    rgba(0,0,0,0.05) 58%,
+    rgba(0,0,0,0.92) 100%
+  );
 }
 .splash-content {
   position: relative;
