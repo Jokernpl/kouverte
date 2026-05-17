@@ -2605,7 +2605,7 @@ async function renderChats() {
     const preview = m.last_message || 'Nuovo match — di\' qualcosa!';
     const unread = m.unread > 0 ? '<span style="color:var(--gold);margin-left:6px">●</span>' : '';
     return `
-      <div class="chat-row" onclick="openMatchChat('${m.match_id}','${escHtml(m.username)}')">
+      <div class="chat-row" onclick="openMatchChat('${m.match_id}','${escHtml(m.username)}','${m.user_id}')">
         <div class="user-card-avatar" style="width:48px;height:48px;font-size:18px">${escHtml(m.avatar_letter)}</div>
         <div class="chat-meta">
           <div class="chat-name">${escHtml(m.username)}${unread}</div>
@@ -2618,11 +2618,15 @@ async function renderChats() {
 
 // ============= MATCH CHAT PANEL =============
 let _currentMatchId = null;
+let _currentMatchOtherId = null;
+let _currentMatchOtherName = null;
 let _matchPollInterval = null;
 
-async function openMatchChat(matchId, username) {
+async function openMatchChat(matchId, username, otherUserId) {
   if (!state.token) { showAuthModal(); return; }
   _currentMatchId = matchId;
+  _currentMatchOtherId = otherUserId || null;
+  _currentMatchOtherName = username;
   document.getElementById('matchPanelTitle').textContent = username;
   document.getElementById('matchPanelStatus').textContent = 'Match';
   document.getElementById('matchMsgs').innerHTML = `<div class="empty-state" style="padding:24px"><div class="empty-state-icon">⏳</div></div>`;
@@ -2670,6 +2674,18 @@ async function sendMatchMsg() {
   const r = await api(`/matches/${_currentMatchId}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
   if (r?.ok) await pollMatchMsgs();
   else { toast(r?.error || 'Errore invio'); input.value = text; }
+}
+
+function callFromMatch() {
+  if (!_currentMatchOtherId || !_currentMatchOtherName) {
+    toast('Apri prima la chat del match');
+    return;
+  }
+  if (typeof startCall !== 'function') {
+    toast('Chiamate non disponibili');
+    return;
+  }
+  startCall(_currentMatchId, _currentMatchOtherId, _currentMatchOtherName);
 }
 
 // ============= ROOMS =============
