@@ -1382,13 +1382,129 @@ a { text-decoration: none; color: inherit; }
   font-size: 12px;
 }
 
+/* ============= EMPTY STATE ============= */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+.empty-state-icon {
+  font-size: 36px;
+  margin-bottom: 14px;
+  opacity: 0.7;
+}
+.empty-state-text {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+.empty-state-sub {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ============= PROFILE COVER GRADIENT ============= */
+.profile-cover-grad {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(160deg, #0d0a00 0%, #1a1200 40%, #0a0a0a 100%);
+  position: relative;
+}
+.profile-cover-grad::after {
+  content: 'K';
+  font-family: var(--serif);
+  font-size: 80px;
+  font-weight: 500;
+  color: rgba(201,169,97,0.07);
+  position: absolute;
+  right: 24px;
+  bottom: 10px;
+  line-height: 1;
+  letter-spacing: -2px;
+}
+
+/* ============= PROFILE AVATAR PLACEHOLDER ============= */
+.profile-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--serif);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* ============= BTC VERIFYING STATE ============= */
+.btc-verify-view {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 12px;
+}
+.btc-verify-view.active { display: flex; }
+.btc-verify-spinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 3px solid rgba(201,169,97,0.2);
+  border-top-color: var(--gold);
+  animation: spin 1s linear infinite;
+  margin: 12px auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btc-verify-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  color: var(--white);
+  margin-bottom: 8px;
+}
+.btc-verify-sub {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+  text-align: center;
+}
+.btc-verify-countdown {
+  font-size: 11px;
+  color: var(--gold);
+  margin-bottom: 18px;
+  font-weight: 500;
+}
+.btc-verify-hint {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ============= CATEGORY TILE (no photo) ============= */
+.cat-tile {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin-bottom: 6px;
+}
+
 /* ============= RESPONSIVE ============= */
 @media (max-width: 360px) {
   .splash-k { font-size: 110px; }
   .splash-title { font-size: 22px; letter-spacing: 6px; }
   .new-profiles { grid-template-columns: repeat(3, 1fr); }
   .profile-categories { grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .cat-img { width: 48px; height: 48px; }
+  .cat-tile { width: 48px; height: 48px; }
 }
 </style>
 </head>
@@ -1435,18 +1551,11 @@ a { text-decoration: none; color: inherit; }
         <h3 class="section-title">Trending</h3>
         <a class="see-all" onclick="toast('Vedi tutto')">Vedi tutto</a>
       </div>
-      <div class="trending">
-        <div class="trending-card" onclick="openSection('profile')">
-          <img class="trending-img" src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=800&q=85&auto=format&fit=crop" alt="Alessia">
-          <div class="trending-overlay"></div>
-          <div class="trending-info">
-            <div class="trending-name">Alessia <span class="verified-tick">✓</span></div>
-            <div class="trending-location">Milano, Italia</div>
-            <div class="trending-meta">
-              <span class="premium-badge">👑 Premium</span>
-              <span class="likes-chip"><span class="heart">❤</span> 1.2K</span>
-            </div>
-          </div>
+      <div class="trending" id="trendingList">
+        <div class="empty-state" style="min-width:calc(100vw - 36px);margin:0 18px;border:1px solid var(--border);border-radius:16px;min-height:170px">
+          <div class="empty-state-icon">✨</div>
+          <div class="empty-state-text">I profili trending appaiono qui</div>
+          <div class="empty-state-sub">Sii il primo a registrarti su Kouverte</div>
         </div>
       </div>
 
@@ -1487,7 +1596,7 @@ a { text-decoration: none; color: inherit; }
     <!-- ============= PROFILE ============= -->
     <section class="section" id="section-profile">
       <div class="profile-cover">
-        <img class="profile-cover-img" src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=900&q=85&auto=format&fit=crop" alt="Cover">
+        <div class="profile-cover-img profile-cover-grad" id="profileCoverEl"></div>
         <div class="cover-actions">
           <button class="icon-btn" onclick="openSection('home')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1498,7 +1607,8 @@ a { text-decoration: none; color: inherit; }
         </div>
         <div class="profile-avatar-wrap">
           <div class="profile-avatar-ring frame-gold" id="profileAvatarRing">
-            <img class="profile-avatar-img" id="profileAvatarImg" src="https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=400&q=85&auto=format&fit=crop" alt="Profile">
+            <img class="profile-avatar-img" id="profileAvatarImg" src="" alt="Profile" style="display:none">
+            <div class="profile-avatar-placeholder" id="profileAvatarPlaceholder">K</div>
           </div>
           <div class="profile-crown">♛</div>
           <label class="avatar-upload" for="avatarFileInput" title="Cambia foto profilo">
@@ -1613,19 +1723,35 @@ a { text-decoration: none; color: inherit; }
 <!-- BITCOIN MODAL -->
 <div class="modal" id="btcModal">
   <div class="btc-modal-box">
-    <button class="modal-close" onclick="closeModal('btcModal')">×</button>
-    <div class="btc-frame-preview" id="btcFramePreview">
-      <div class="btc-inner" id="btcFrameInner">K</div>
+    <button class="modal-close" onclick="closeBtcModal()">×</button>
+
+    <!-- Vista pagamento (default) -->
+    <div id="btcPayView">
+      <div class="btc-frame-preview" id="btcFramePreview">
+        <div class="btc-inner" id="btcFrameInner">K</div>
+      </div>
+      <div class="btc-modal-title" id="btcModalTitle">Cornice</div>
+      <div class="btc-modal-sub">Pagamento in Bitcoin</div>
+      <div class="btc-amount" id="btcAmount">0,00 €</div>
+      <div class="btc-amount-sub" id="btcAmountSub">≈ 0 BTC</div>
+      <img class="btc-qr" id="btcQR" src="" alt="QR Bitcoin">
+      <div class="btc-address" id="btcAddress" onclick="copyBtcAddress()">bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00</div>
+      <div class="btc-copy-hint">Tocca l'indirizzo per copiarlo · Min. 4 conferme</div>
+      <button class="btc-confirm-btn" onclick="confirmBtcPayment()">Ho effettuato il pagamento</button>
+      <button class="btc-cancel-btn" onclick="closeBtcModal()">Annulla</button>
     </div>
-    <div class="btc-modal-title" id="btcModalTitle">Cornice Smeraldo</div>
-    <div class="btc-modal-sub">Pagamento in Bitcoin</div>
-    <div class="btc-amount" id="btcAmount">8.000 sats</div>
-    <div class="btc-amount-sub" id="btcAmountSub">≈ 4,50 €</div>
-    <img class="btc-qr" id="btcQR" src="" alt="QR Bitcoin">
-    <div class="btc-address" id="btcAddress" onclick="copyBtcAddress()">bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00</div>
-    <div class="btc-copy-hint">Tocca l'indirizzo per copiarlo · Min. 4 conferme</div>
-    <button class="btc-confirm-btn" onclick="confirmBtcPayment()">Ho effettuato il pagamento</button>
-    <button class="btc-cancel-btn" onclick="closeModal('btcModal')">Annulla</button>
+
+    <!-- Vista verifica (mostrata dopo conferma) -->
+    <div class="btc-verify-view" id="btcVerifyView">
+      <div class="btc-modal-title" id="btcVerifyTitle" style="margin-bottom:4px"></div>
+      <div class="btc-modal-sub">In attesa di conferma blockchain</div>
+      <div class="btc-verify-spinner"></div>
+      <div class="btc-verify-title">Verifica in corso...</div>
+      <div class="btc-verify-sub">La transazione sarà sbloccata dopo 4 conferme</div>
+      <div class="btc-verify-countdown" id="btcCountdown">Prossimo controllo tra 60s</div>
+      <div class="btc-verify-hint">Tempo stimato: 20–40 minuti<br>Puoi chiudere l'app, riprende al rientro</div>
+      <button class="btc-cancel-btn" onclick="cancelBtcPayment()">Annulla pagamento</button>
+    </div>
   </div>
 </div>
 
@@ -1663,54 +1789,16 @@ const PREMIUM_PLANS = [
   { id: 'infinity', name: 'Vox Infinity', price_eur: 20,  features: ['Storie permanenti', 'Tutte le funzioni Elite', 'Supporto dedicato', 'Eventi esclusivi'] }
 ];
 
-// Photo data (real models from randomuser.me + Unsplash for warm dark portraits)
+// No fake profiles — only real registered users will appear
 const STORY_DATA = [
-  { name: 'La tua storia', add: true },
-  { name: 'Alessia', img: 'https://randomuser.me/api/portraits/women/65.jpg' },
-  { name: 'Martina', img: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { name: 'Veronica', img: 'https://randomuser.me/api/portraits/women/68.jpg' },
-  { name: 'Giulia', img: 'https://randomuser.me/api/portraits/women/79.jpg' },
-  { name: 'Sofia', img: 'https://randomuser.me/api/portraits/women/12.jpg' },
-  { name: 'Chiara', img: 'https://randomuser.me/api/portraits/women/33.jpg' }
-];
-
-const NEW_PROFILES = [
-  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=300&q=80&auto=format&fit=crop'
+  { name: 'La tua storia', add: true }
 ];
 
 const PROFILE_CATEGORIES = [
-  { label: 'Viaggi', img: 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=200&q=80&auto=format&fit=crop' },
-  { label: 'Serate', img: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=200&q=80&auto=format&fit=crop' },
-  { label: 'Momenti', img: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=200&q=80&auto=format&fit=crop' },
-  { label: 'Lifestyle', img: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=200&q=80&auto=format&fit=crop' }
-];
-
-const PROFILE_POSTS = [
-  'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&q=80&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&q=80&auto=format&fit=crop'
-];
-
-const EXPLORE_PROFILES = [
-  { name: 'Alessia', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=500&q=80&auto=format&fit=crop' },
-  { name: 'Martina', img: 'https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=500&q=80&auto=format&fit=crop' },
-  { name: 'Veronica', img: 'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=500&q=80&auto=format&fit=crop' },
-  { name: 'Giulia', img: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=500&q=80&auto=format&fit=crop' },
-  { name: 'Sofia', img: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=500&q=80&auto=format&fit=crop' },
-  { name: 'Chiara', img: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80&auto=format&fit=crop' }
+  { label: 'Viaggi',    emoji: '✈️',  grad: 'linear-gradient(135deg,#0d1b2a,#1a3a5c)' },
+  { label: 'Serate',   emoji: '🍾',  grad: 'linear-gradient(135deg,#1a0a00,#3a1500)' },
+  { label: 'Momenti',  emoji: '📸',  grad: 'linear-gradient(135deg,#0a0a1a,#1a0a2a)' },
+  { label: 'Lifestyle',emoji: '✨',  grad: 'linear-gradient(135deg,#0f0f00,#2a2500)' }
 ];
 
 const ROOMS_FALLBACK = [
@@ -1723,12 +1811,7 @@ const ROOMS_FALLBACK = [
   { slug: 'salotto-business',  label: 'Salotto Business',   desc: 'Networking, idee, mentor',                  emoji: '💼', participants_count: 19,  is_active: false }
 ];
 
-const CHATS = [
-  { name: 'Alessia', preview: 'Ciao, come stai?', time: 'ora', img: 'https://randomuser.me/api/portraits/women/65.jpg' },
-  { name: 'Martina', preview: 'A più tardi 💛', time: '2h', img: 'https://randomuser.me/api/portraits/women/44.jpg' },
-  { name: 'Veronica', preview: 'Hai visto la mia storia?', time: 'ieri', img: 'https://randomuser.me/api/portraits/women/68.jpg' },
-  { name: 'Sofia', preview: 'Grazie del messaggio', time: 'lun', img: 'https://randomuser.me/api/portraits/women/12.jpg' }
-];
+const CHATS = []; // populated from real registered users
 
 // (PLANS legacy rimosso — si usa PREMIUM_PLANS in cima)
 
@@ -1755,18 +1838,19 @@ function renderStories() {
 
 function renderNewProfiles() {
   const el = document.getElementById('newProfilesGrid');
-  el.innerHTML = NEW_PROFILES.map(src => `
-    <div class="np-card" onclick="openSection('profile')">
-      <img src="${src}" alt="">
-    </div>
-  `).join('');
+  el.innerHTML = `
+    <div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-state-icon">🌟</div>
+      <div class="empty-state-text">Nessun nuovo profilo</div>
+      <div class="empty-state-sub">Sii tra i primi a registrarti su Kouverte</div>
+    </div>`;
 }
 
 function renderProfileCategories() {
   const el = document.getElementById('profileCategories');
   el.innerHTML = PROFILE_CATEGORIES.map(c => `
     <div class="category" onclick="toast('${c.label}')">
-      <img class="cat-img" src="${c.img}" alt="${c.label}">
+      <div class="cat-tile" style="background:${c.grad}">${c.emoji}</div>
       <span class="cat-label">${c.label}</span>
     </div>
   `).join('');
@@ -1774,25 +1858,35 @@ function renderProfileCategories() {
 
 function renderProfileGrid() {
   const el = document.getElementById('profileGrid');
-  el.innerHTML = PROFILE_POSTS.map(src => `
-    <div class="profile-grid-item" onclick="toast('Post')">
-      <img src="${src}" alt="">
-    </div>
-  `).join('');
+  el.innerHTML = `
+    <div class="empty-state" style="grid-column:1/-1;padding:32px 20px">
+      <div class="empty-state-icon">📷</div>
+      <div class="empty-state-text">Nessuna foto ancora</div>
+      <div class="empty-state-sub">Carica le tue prime foto</div>
+    </div>`;
 }
 
 function renderExplore() {
   const el = document.getElementById('exploreGrid');
-  el.innerHTML = EXPLORE_PROFILES.map(p => `
-    <div class="explore-card" onclick="openSection('profile')">
-      <img src="${p.img}" alt="${p.name}">
-      <div class="explore-card-name">${p.name}</div>
-    </div>
-  `).join('');
+  el.innerHTML = `
+    <div class="empty-state" style="grid-column:1/-1;padding:64px 24px">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-text">Nessun profilo da esplorare</div>
+      <div class="empty-state-sub">I profili appariranno qui dopo le prime registrazioni</div>
+    </div>`;
 }
 
 function renderChats() {
   const el = document.getElementById('chatList');
+  if (CHATS.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state" style="padding:64px 24px">
+        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-text">Nessun messaggio</div>
+        <div class="empty-state-sub">I tuoi match appariranno qui</div>
+      </div>`;
+    return;
+  }
   el.innerHTML = CHATS.map(c => `
     <div class="chat-row" onclick="toast('Chat con ${c.name}')">
       <img class="chat-avatar" src="${c.img}" alt="${c.name}">
@@ -1917,11 +2011,8 @@ function applyFrame(id) {
 }
 
 function applyAvatarPhoto(dataUrl) {
-  state.myAvatar = dataUrl;
   saveLocal();
-  const img = document.getElementById('profileAvatarImg');
-  if (img) img.src = dataUrl;
-  renderFrames();
+  setAvatarPhoto(dataUrl);
   toast('Foto profilo aggiornata');
 }
 
@@ -1994,40 +2085,120 @@ function copyBtcAddress() {
     .catch(() => toast('Tocca e tieni premuto per copiare'));
 }
 
-async function confirmBtcPayment() {
-  // Cornice
-  if (state.pendingFrame) {
-    const id = state.pendingFrame;
-    state.pendingFrame = null;
-    if (!state.ownedFrames.includes(id)) state.ownedFrames.push(id);
-    applyFrame(id);
-    closeModal('btcModal');
-    toast('Verifica del pagamento in corso...');
-    try {
-      await api('/bitcoin/verify', {
-        method: 'POST',
-        body: JSON.stringify({ kind: 'frame', frame: id, address: state.btcAddress })
-      });
-    } catch (e) {}
-    return;
-  }
-  // Premium
-  if (state.pendingPremium) {
-    const id = state.pendingPremium;
-    state.pendingPremium = null;
-    state.activePremium = id;
+function closeBtcModal() {
+  // If verifying, keep the pending payment but close the modal
+  document.getElementById('btcModal').classList.remove('show');
+}
+
+function showBtcVerifyView(itemName) {
+  document.getElementById('btcPayView').style.display = 'none';
+  document.getElementById('btcVerifyView').classList.add('active');
+  document.getElementById('btcVerifyTitle').textContent = itemName;
+}
+
+function showBtcPayView() {
+  document.getElementById('btcPayView').style.display = '';
+  document.getElementById('btcVerifyView').classList.remove('active');
+}
+
+// BTC polling state
+let _btcPollInterval = null;
+let _btcCountdownInterval = null;
+let _btcCountdownSec = 60;
+
+function startBtcPolling(pendingPayment) {
+  stopBtcPolling();
+  _btcCountdownSec = 60;
+  updateBtcCountdown();
+
+  _btcCountdownInterval = setInterval(() => {
+    _btcCountdownSec--;
+    if (_btcCountdownSec <= 0) _btcCountdownSec = 60;
+    updateBtcCountdown();
+  }, 1000);
+
+  _btcPollInterval = setInterval(() => pollBtcPayment(pendingPayment), 60000);
+}
+
+function stopBtcPolling() {
+  if (_btcPollInterval) { clearInterval(_btcPollInterval); _btcPollInterval = null; }
+  if (_btcCountdownInterval) { clearInterval(_btcCountdownInterval); _btcCountdownInterval = null; }
+}
+
+function updateBtcCountdown() {
+  const el = document.getElementById('btcCountdown');
+  if (el) el.textContent = `Prossimo controllo tra ${_btcCountdownSec}s`;
+}
+
+async function pollBtcPayment(pending) {
+  if (!pending) return;
+  try {
+    const r = await api('/bitcoin/verify', {
+      method: 'POST',
+      body: JSON.stringify(pending)
+    });
+    if (r?.confirmed) {
+      onBtcConfirmed(pending);
+    }
+  } catch (e) {}
+}
+
+function onBtcConfirmed(pending) {
+  stopBtcPolling();
+  try { localStorage.removeItem('kouverte-btc-pending'); } catch (e) {}
+
+  if (pending.kind === 'frame') {
+    if (!state.ownedFrames.includes(pending.id)) state.ownedFrames.push(pending.id);
+    saveLocal();
+    applyFrame(pending.id);
+    document.getElementById('btcModal').classList.remove('show');
+    showBtcPayView();
+    toast(`Cornice ${pending.name} sbloccata!`);
+  } else if (pending.kind === 'premium') {
+    state.activePremium = pending.id;
     state.premiumExpiresAt = Date.now() + 30 * 24 * 60 * 60 * 1000;
     saveLocal();
-    closeModal('btcModal');
-    const p = PREMIUM_PLANS.find(x => x.id === id);
-    toast(`${p?.name || 'Premium'} attivato per 30 giorni`);
-    try {
-      await api('/bitcoin/verify', {
-        method: 'POST',
-        body: JSON.stringify({ kind: 'premium', plan: id, address: state.btcAddress })
-      });
-    } catch (e) {}
+    document.getElementById('btcModal').classList.remove('show');
+    showBtcPayView();
+    toast(`${pending.name} attivato!`);
   }
+}
+
+function confirmBtcPayment() {
+  const pending = {
+    kind: state.pendingFrame ? 'frame' : 'premium',
+    id:   state.pendingFrame || state.pendingPremium,
+    name: '',
+    address: state.btcAddress,
+    amount_btc: 0
+  };
+
+  if (pending.kind === 'frame') {
+    const f = FRAMES.find(x => x.id === pending.id);
+    pending.name = f?.name || '';
+    pending.amount_btc = f ? (f.price_eur / state.btcRate) : 0;
+  } else {
+    const p = PREMIUM_PLANS.find(x => x.id === pending.id);
+    pending.name = p?.name || '';
+    pending.amount_btc = p ? (p.price_eur / state.btcRate) : 0;
+  }
+
+  state.pendingFrame = null;
+  state.pendingPremium = null;
+
+  // Save to localStorage so it survives page reload
+  try { localStorage.setItem('kouverte-btc-pending', JSON.stringify(pending)); } catch (e) {}
+
+  showBtcVerifyView(pending.name);
+  startBtcPolling(pending);
+}
+
+function cancelBtcPayment() {
+  stopBtcPolling();
+  try { localStorage.removeItem('kouverte-btc-pending'); } catch (e) {}
+  showBtcPayView();
+  document.getElementById('btcModal').classList.remove('show');
+  toast('Pagamento annullato');
 }
 
 // ============= LOCAL STORAGE =============
@@ -2129,6 +2300,19 @@ async function doLogin() {
   }
 }
 
+// ============= AVATAR HELPER =============
+function setAvatarPhoto(src) {
+  state.myAvatar = src;
+  const img = document.getElementById('profileAvatarImg');
+  const ph  = document.getElementById('profileAvatarPlaceholder');
+  if (img && ph) {
+    img.src = src;
+    img.style.display = 'block';
+    ph.style.display  = 'none';
+  }
+  renderFrames();
+}
+
 // ============= INIT =============
 function init() {
   loadLocal();
@@ -2145,16 +2329,35 @@ function init() {
 
   setupAvatarUpload();
 
-  // Apply saved avatar photo
+  // Apply saved avatar photo or show placeholder
   if (state.myAvatar) {
-    const img = document.getElementById('profileAvatarImg');
-    if (img) img.src = state.myAvatar;
+    setAvatarPhoto(state.myAvatar);
   }
+
   // Apply saved frame
   const f = FRAMES.find(x => x.id === state.activeFrame);
   if (f) {
     const ring = document.getElementById('profileAvatarRing');
     if (ring) ring.className = 'profile-avatar-ring ' + f.class;
+  }
+
+  // Load Telegram user data (photo + name)
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (tgUser) {
+    // Update profile name
+    const nameEl = document.getElementById('profileName');
+    if (nameEl && tgUser.first_name) {
+      nameEl.textContent = tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '');
+    }
+    // Use Telegram photo if no saved avatar
+    if (tgUser.photo_url && !state.myAvatar) {
+      setAvatarPhoto(tgUser.photo_url);
+    }
+    // Update placeholder initials
+    const ph = document.getElementById('profileAvatarPlaceholder');
+    if (ph && tgUser.first_name) {
+      ph.textContent = tgUser.first_name.charAt(0).toUpperCase();
+    }
   }
 
   // Restore session
@@ -2167,7 +2370,20 @@ function init() {
     }
   } catch (e) {}
 
-  // Refresh BTC rate (CoinGecko), poi re-render frames & plans con valore aggiornato
+  // Resume pending BTC payment (survives page reload)
+  try {
+    const raw = localStorage.getItem('kouverte-btc-pending');
+    if (raw) {
+      const pending = JSON.parse(raw);
+      document.getElementById('btcModal').classList.add('show');
+      showBtcVerifyView(pending.name);
+      startBtcPolling(pending);
+      // Immediate first check
+      pollBtcPayment(pending);
+    }
+  } catch (e) {}
+
+  // Refresh BTC rate (CoinGecko)
   fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur')
     .then(r => r.json())
     .then(d => {
