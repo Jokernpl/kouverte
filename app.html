@@ -1669,6 +1669,70 @@ a { text-decoration: none; color: inherit; }
 /* ============= UTILITIES ============= */
 .hidden { display: none !important; }
 
+/* ============= PROFILE EDIT ============= */
+.profile-edit { display: flex; flex-direction: column; gap: 6px; }
+.pe-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 10px;
+  margin-bottom: 4px;
+}
+.pe-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--sans);
+  outline: none;
+  width: 100%;
+}
+.pe-input:focus { border-color: rgba(201,169,97,0.4); }
+.pe-textarea { resize: none; line-height: 1.4; }
+.pe-row { display: flex; gap: 10px; }
+
+/* ============= EXPLORE FILTERS ============= */
+.explore-filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 18px 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.explore-filters::-webkit-scrollbar { display: none; }
+.filter-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  padding: 7px 14px;
+  border-radius: 18px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.filter-chip.active {
+  background: rgba(201,169,97,0.15);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.daily-likes-badge {
+  background: rgba(201,169,97,0.08);
+  border: 1px solid rgba(201,169,97,0.2);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin: 0 18px 12px;
+  font-size: 12px;
+  color: var(--gold);
+  text-align: center;
+}
+
 /* ============= AUTH MODAL FORMS ============= */
 .auth-mode { display: block; }
 .auth-mode.hidden { display: none !important; }
@@ -2081,6 +2145,16 @@ a { text-decoration: none; color: inherit; }
         <h3 class="section-title">Esplora</h3>
       </div>
       <div class="daily-likes-badge hidden" id="dailyLikesBadge">— like rimasti oggi</div>
+      <div class="explore-filters" id="exploreFilters">
+        <div class="filter-chip active" data-gender="" onclick="setGenderFilter(this,'')">Tutti</div>
+        <div class="filter-chip" data-gender="f" onclick="setGenderFilter(this,'f')">♀ Donne</div>
+        <div class="filter-chip" data-gender="m" onclick="setGenderFilter(this,'m')">♂ Uomini</div>
+        <div class="filter-chip" data-age="18-25" onclick="setAgeFilter(this,18,25)">18-25</div>
+        <div class="filter-chip" data-age="26-35" onclick="setAgeFilter(this,26,35)">26-35</div>
+        <div class="filter-chip" data-age="36-50" onclick="setAgeFilter(this,36,50)">36-50</div>
+        <div class="filter-chip" data-age="50-99" onclick="setAgeFilter(this,50,99)">50+</div>
+        <div class="filter-chip" data-clip="1" onclick="setClipFilter(this)">🎙 Solo con voce</div>
+      </div>
       <div class="explore-grid" id="exploreGrid"></div>
     </section>
 
@@ -2175,6 +2249,44 @@ a { text-decoration: none; color: inherit; }
         <div class="clips-section" id="profileClipsSection">
           <div class="clips-title">CLIP VOCALI</div>
           <div id="clipsListEl"></div>
+        </div>
+
+        <!-- PROFILE EDIT -->
+        <div class="clips-section">
+          <div class="clips-title">IL TUO PROFILO</div>
+          <div class="profile-edit" id="profileEditForm">
+            <label class="pe-label">Nome visualizzato</label>
+            <input type="text" id="peDisplayName" class="pe-input" placeholder="Come ti chiami?" maxlength="40">
+
+            <label class="pe-label">Bio</label>
+            <textarea id="peBio" class="pe-input pe-textarea" placeholder="Raccontati in poche parole..." rows="3" maxlength="280"></textarea>
+
+            <div class="pe-row">
+              <div style="flex:1">
+                <label class="pe-label">Genere</label>
+                <select id="peGender" class="pe-input">
+                  <option value="">—</option>
+                  <option value="f">Donna</option>
+                  <option value="m">Uomo</option>
+                  <option value="x">Altro</option>
+                </select>
+              </div>
+              <div style="flex:1">
+                <label class="pe-label">Cerco</label>
+                <select id="peLookingFor" class="pe-input">
+                  <option value="all">Chiunque</option>
+                  <option value="f">Donne</option>
+                  <option value="m">Uomini</option>
+                  <option value="x">Altro</option>
+                </select>
+              </div>
+            </div>
+
+            <label class="pe-label">Anno di nascita</label>
+            <input type="number" id="peBirthYear" class="pe-input" placeholder="es. 1995" min="1925" max="2008">
+
+            <button class="form-submit" id="peSaveBtn" onclick="saveProfile()" style="margin-top:14px">Salva profilo</button>
+          </div>
         </div>
 
         <div class="policy-links">
@@ -3033,10 +3145,81 @@ async function renderProfileClips() {
   }).join('');
 }
 
+// ============= PROFILE EDIT =============
+async function loadProfileForm() {
+  if (!state.token) return;
+  try {
+    const r = await api('/auth/me');
+    const p = r?.user?.profile;
+    if (!p) return;
+    const setVal = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+    setVal('peDisplayName', p.display_name || '');
+    setVal('peBio', p.bio || '');
+    setVal('peGender', p.gender || '');
+    setVal('peLookingFor', p.looking_for || 'all');
+    setVal('peBirthYear', p.birth_year || '');
+  } catch(e) {}
+}
+
+async function saveProfile() {
+  if (!state.token) { showAuthModal(); return; }
+  const btn = document.getElementById('peSaveBtn');
+  const payload = {
+    display_name: document.getElementById('peDisplayName').value.trim(),
+    bio:          document.getElementById('peBio').value.trim(),
+    gender:       document.getElementById('peGender').value || undefined,
+    looking_for:  document.getElementById('peLookingFor').value || undefined,
+    birth_year:   parseInt(document.getElementById('peBirthYear').value) || undefined
+  };
+  btn.disabled = true; btn.textContent = 'Salvataggio...';
+  const r = await api('/profile/update', { method: 'POST', body: JSON.stringify(payload) });
+  btn.disabled = false; btn.textContent = 'Salva profilo';
+  if (r?.ok) {
+    toast('Profilo aggiornato');
+  } else {
+    toast(r?.error || 'Errore salvataggio');
+  }
+}
+
 // ============= EXPLORE FEED (real users) =============
 let _exploreLoading = false;
 let _explorePage = 0;
 const _likedUsers = new Set();
+const _exploreFilters = { gender: '', age_min: 18, age_max: 99, has_clip: false };
+
+function setGenderFilter(el, gender) {
+  document.querySelectorAll('#exploreFilters .filter-chip[data-gender]').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  _exploreFilters.gender = gender;
+  loadExploreFeed(true);
+}
+function setAgeFilter(el, min, max) {
+  const wasActive = el.classList.contains('active');
+  document.querySelectorAll('#exploreFilters .filter-chip[data-age]').forEach(c => c.classList.remove('active'));
+  if (!wasActive) {
+    el.classList.add('active');
+    _exploreFilters.age_min = min;
+    _exploreFilters.age_max = max;
+  } else {
+    _exploreFilters.age_min = 18;
+    _exploreFilters.age_max = 99;
+  }
+  loadExploreFeed(true);
+}
+function setClipFilter(el) {
+  el.classList.toggle('active');
+  _exploreFilters.has_clip = el.classList.contains('active');
+  loadExploreFeed(true);
+}
+
+function buildFeedQueryString() {
+  const p = new URLSearchParams({ page: _explorePage });
+  if (_exploreFilters.gender)   p.set('gender', _exploreFilters.gender);
+  if (_exploreFilters.age_min)  p.set('age_min', _exploreFilters.age_min);
+  if (_exploreFilters.age_max)  p.set('age_max', _exploreFilters.age_max);
+  if (_exploreFilters.has_clip) p.set('has_clip', '1');
+  return p.toString();
+}
 
 async function loadExploreFeed(reset = true) {
   if (_exploreLoading) return;
@@ -3059,7 +3242,7 @@ async function loadExploreFeed(reset = true) {
     el.id = 'exploreGrid';
   }
 
-  const r = await api(`/users/feed?page=${_explorePage}`);
+  const r = await api(`/users/feed?${buildFeedQueryString()}`);
   _exploreLoading = false;
 
   if (!r || !r.users) {
@@ -3450,7 +3633,7 @@ function openSection(name) {
   document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
 
   if (name === 'explore') loadExploreFeed(true);
-  if (name === 'profile') renderProfileClips();
+  if (name === 'profile') { renderProfileClips(); loadProfileForm(); }
   if (name === 'chat') renderChats();
 }
 

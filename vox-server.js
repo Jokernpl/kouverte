@@ -58,6 +58,15 @@ app.use((req, res, next) => {
     }
     next();
 });
+// Uploads dir (audio + avatars on filesystem, NOT in JSON DB)
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const AUDIO_DIR   = path.join(UPLOADS_DIR, 'audio');
+const AVATAR_DIR  = path.join(UPLOADS_DIR, 'avatars');
+fs.mkdirSync(AUDIO_DIR, { recursive: true });
+fs.mkdirSync(AVATAR_DIR, { recursive: true });
+
+app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '1d', fallthrough: true }));
+
 app.use(express.static(__dirname, {
     dotfiles: 'deny',
     index: ['index.html']
@@ -406,28 +415,62 @@ app.get('/api/profile/:username', (req, res) => {
 app.post('/api/profile/update', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    if (!user.profile) user.profile = { avatar_letter: (user.username||'K').charAt(0).toUpperCase(), bio: '', clips: [
+        { slot: 0, title: 'Chi sono', audio_id: null, duration: 0 },
+        { slot: 1, title: 'Mi piace', audio_id: null, duration: 0 },
+        { slot: 2, title: 'Cerco',    audio_id: null, duration: 0 }
+    ]};
 
-    const { bio } = req.body || {};
-    if (bio !== undefined) user.profile.bio = sanitizeBio(bio);
+    const { bio, gender, birth_year, display_name, looking_for } = req.body || {};
+    if (bio !== undefined)         user.profile.bio = sanitizeBio(bio);
+    if (display_name !== undefined) user.profile.display_name = String(display_name).replace(/[<>]/g, '').slice(0, 40);
+    if (gender !== undefined && ['m','f','x'].includes(gender)) user.profile.gender = gender;
+    if (looking_for !== undefined && ['m','f','x','all'].includes(looking_for)) user.profile.looking_for = looking_for;
+    if (birth_year !== undefined) {
+        const y = parseInt(birth_year);
+        const thisYear = new Date().getFullYear();
+        if (y >= 1925 && y <= thisYear - 18) user.profile.birth_year = y;
+    }
     user.updated_at = now();
     markDirty();
     res.json({ ok: true, profile: user.profile });
 });
 
-// Save voice clip
+// Save voice clip — writes file to /uploads/audio, NOT base64 in DB
 app.post('/api/profile/clip/save', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    if (!user.profile) user.profile = { avatar_letter: (user.username||'K').charAt(0).toUpperCase(), bio: '', clips: [
+        { slot: 0, title: 'Chi sono', audio_id: null, duration: 0 },
+        { slot: 1, title: 'Mi piace', audio_id: null, duration: 0 },
+        { slot: 2, title: 'Cerco',    audio_id: null, duration: 0 }
+    ]};
+    if (!user.stats) user.stats = { stories_count: 0, matches_count: 0, likes_received: 0 };
 
     const { slot, audioData, durationMs, mood } = req.body || {};
     if (slot === undefined || !audioData) return res.status(400).json({ error: 'slot e audioData richiesti' });
     if (slot < 0 || slot > 2) return res.status(400).json({ error: 'slot 0-2' });
 
+    // Parse data URL: "data:audio/webm;base64,..."
+    const match = String(audioData).match(/^data:audio\/(webm|ogg|mp4|mpeg|wav);base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: 'Formato audio non valido' });
+    const ext = match[1] === 'mpeg' ? 'mp3' : match[1];
+    const buf = Buffer.from(match[2], 'base64');
+    if (buf.length > 2 * 1024 * 1024) return res.status(413).json({ error: 'Audio troppo grande (max 2MB)' });
+
+    const storyId = genId('story');
+    const filename = `${storyId}.${ext}`;
+    try {
+        fs.writeFileSync(path.join(AUDIO_DIR, filename), buf);
+    } catch (e) {
+        return res.status(500).json({ error: 'Errore salvataggio file' });
+    }
+
     const expiresAt = now() + 24 * 60 * 60 * 1000;
     const story = {
-        id: genId('story'),
+        id: storyId,
         user_id: user.id,
-        audio_data: audioData,
+        audio_url: '/uploads/audio/' + filename,
         duration_ms: durationMs || 0,
         mood: mood || 'vibe',
         expires_at: expiresAt,
@@ -435,7 +478,7 @@ app.post('/api/profile/clip/save', verifyToken, (req, res) => {
     };
     DB.stories.push(story);
 
-    user.profile.clips[slot] = { slot, title: user.profile.clips[slot].title, audio_id: story.id, duration: durationMs };
+    user.profile.clips[slot] = { slot, title: user.profile.clips[slot]?.title || ['Chi sono','Mi piace','Cerco'][slot], audio_id: story.id, duration: durationMs };
     user.stats.stories_count++;
     user.updated_at = now();
     saveDB(DB);
@@ -492,12 +535,15 @@ app.get('/api/stories', (req, res) => {
     res.json({ stories });
 });
 
-// Get story audio
+// Get story audio (returns URL if on disk, base64 if legacy)
 app.get('/api/stories/:id/audio', (req, res) => {
     const story = DB.stories.find(s => s.id === req.params.id);
     if (!story) return res.status(404).json({ error: 'Story non trovata' });
     if (story.expires_at < now()) return res.status(410).json({ error: 'Story scaduta' });
-    res.json({ audioData: story.audio_data });
+    res.json({
+        audioUrl:  story.audio_url || null,
+        audioData: story.audio_url || story.audio_data || null
+    });
 });
 
 // React to story
@@ -699,23 +745,43 @@ app.get('/api/users/feed', (req, res) => {
     const page = parseInt(req.query.page) || 0;
     const limit = 20;
     const nowMs = Date.now();
+    const thisYear = new Date().getFullYear();
+
+    // Filtri opzionali da query string
+    const filterGender = req.query.gender; // 'm' | 'f' | 'x' | undefined
+    const ageMin = parseInt(req.query.age_min) || 18;
+    const ageMax = parseInt(req.query.age_max) || 99;
+    const hasClipOnly = req.query.has_clip === '1';
 
     const users = (DB.users || [])
         .filter(u => u.id && u.username && !u.id.startsWith('u_test'))
         .map(u => {
             const clips = (u.profile?.clips || []).filter(c => c.audio_id);
             const activeClip = clips.map(c => DB.stories?.find(s => s.id === c.audio_id && s.expires_at > nowMs)).find(Boolean);
+            const age = u.profile?.birth_year ? (thisYear - u.profile.birth_year) : null;
             return {
                 id: u.id,
                 username: u.username,
                 firstName: u.firstName || u.username,
+                display_name: u.profile?.display_name || null,
                 avatar_letter: u.profile?.avatar_letter || (u.username || 'K').charAt(0).toUpperCase(),
+                avatar_url: u.avatar_url || null,
                 bio: u.profile?.bio || '',
+                gender: u.profile?.gender || null,
+                age,
                 clip_id: activeClip?.id || null,
                 clip_duration: activeClip?.duration_ms || 0,
                 likes_received: u.stats?.likes_received || 0,
                 created_at: u.created_at || nowMs
             };
+        })
+        .filter(u => {
+            if (hasClipOnly && !u.clip_id) return false;
+            if (filterGender && u.gender && u.gender !== filterGender) return false;
+            if (u.age !== null) {
+                if (u.age < ageMin || u.age > ageMax) return false;
+            }
+            return true;
         })
         .sort((a, b) => b.likes_received - a.likes_received || b.created_at - a.created_at);
 
