@@ -17,6 +17,7 @@ Thumbs.db
 
 # Backup files
 *.bak
+*.bak.json
 *-old.*
 
 # Archive (file vecchi da non usare)
@@ -25,3 +26,14 @@ _archive/
 # Build
 dist/
 build/
+
+# Local Claude / IDE state
+.claude/settings.local.json
+.claude/worktrees/
+
+# Runtime
+server.pid
+kouverte-bot.json
+
+# Local docs / examples
+.env.example
