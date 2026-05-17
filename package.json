@@ -4,7 +4,7 @@
   "description": "KOUVERTE - The Voice Dating · La voce non mente.",
   "main": "server.js",
   "scripts": {
-    "start": "node vox-server.js",
+    "start": "node server.js",
     "bot": "node tg-bot.js"
   },
   "dependencies": {
