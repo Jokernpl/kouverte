@@ -587,17 +587,22 @@ Bitcoin con 4 conferme blockchain prima dell'accredito.`,
 bot.onText(/^\/crediti|^\/credits/, (msg) => sendCrediti(msg.chat.id));
 
 // ============== /stanze ==============
-bot.onText(/^\/stanze|^\/rooms/, (msg) => {
-    bot.sendMessage(msg.chat.id,
-`🏠 *7 STANZE PUBBLICHE*
+// Slug ALIGNED al server (VALID_ROOMS): notte, cuori, confess, cinema, viaggi, musica
+const TG_ROOMS = [
+    { slug: 'notte',   label: '🌙 Notte',    desc: 'Chat dopo mezzanotte' },
+    { slug: 'cuori',   label: '💔 Cuori',    desc: 'Per chi cerca connessione' },
+    { slug: 'confess', label: '🤫 Confess',  desc: 'Confessioni anonime' },
+    { slug: 'cinema',  label: '🎬 Cinema',   desc: 'Film e serie tv' },
+    { slug: 'viaggi',  label: '✈️ Viaggi',   desc: 'Travel lovers' },
+    { slug: 'musica',  label: '🎵 Musica',   desc: 'Vibes musicali' }
+];
 
-🌙 *Voci Notturne* — Chat di notte
-💔 *Single Italiani* — Per chi cerca connessione
-🧠 *Deep Talks* — Conversazioni profonde
-🎵 *Vibes Musicali* — Cantano e parlano di musica
-✈️ *Travel Lovers* — Gente che ama viaggiare
-🌃 *Late Night* — Per gli insonnaci
-🛍️ *Shop Lounge* — Parla di cosmetics e rarity
+bot.onText(/^\/stanze|^\/rooms/, (msg) => {
+    const lines = TG_ROOMS.map(r => `${r.label} — ${r.desc}`).join('\n');
+    bot.sendMessage(msg.chat.id,
+`🏠 *6 STANZE PUBBLICHE*
+
+${lines}
 
 Tutti i messaggi spariscono dopo 1 ora.`,
         {
@@ -811,6 +816,46 @@ bot.on('web_app_data', (msg) => {
     const data = msg.web_app_data.data;
     bot.sendMessage(msg.chat.id, `📩 Ricevuto: ${data}`);
 });
+
+// ============== NOTIFICATION POLLING ==============
+// Polls the server every 30s and forwards pending Telegram notifications.
+const NOTIFY_SECRET = process.env.BOT_NOTIFY_SECRET || 'kouverte-internal';
+const NOTIFY_URL = (process.env.SERVER_URL || SERVER_API) + '/api/notifications/pending';
+
+async function pollNotifications() {
+    try {
+        const url = new URL(NOTIFY_URL);
+        const isHttps = url.protocol === 'https:';
+        const httpMod = isHttps ? require('https') : require('http');
+        const data = await new Promise((resolve, reject) => {
+            const req = httpMod.get(NOTIFY_URL, {
+                headers: { 'x-bot-secret': NOTIFY_SECRET, 'bypass-tunnel-reminder': 'true' },
+                timeout: 5000
+            }, (r) => {
+                let buf = '';
+                r.on('data', (c) => { buf += c; });
+                r.on('end', () => {
+                    try { resolve(JSON.parse(buf)); }
+                    catch(e) { resolve({ notifications: [] }); }
+                });
+            });
+            req.on('error', reject);
+            req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+        });
+        const list = data?.notifications || [];
+        for (const n of list) {
+            try {
+                await bot.sendMessage(n.telegram_id, n.message, { parse_mode: 'Markdown' });
+            } catch(e) {
+                // ignore single send errors (user blocked etc)
+            }
+        }
+    } catch(e) {
+        // silent
+    }
+}
+setInterval(pollNotifications, 30 * 1000);
+setTimeout(pollNotifications, 5000); // also one quick first run
 
 // ============== ERROR HANDLING ==============
 bot.on('polling_error', (err) => {

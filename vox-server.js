@@ -58,6 +58,11 @@ app.use((req, res, next) => {
     }
     next();
 });
+// Avatar uploads directory (served as static below)
+const AVATAR_DIR = path.join(__dirname, 'uploads', 'avatars');
+try { fs.mkdirSync(AVATAR_DIR, { recursive: true }); } catch(e) {}
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), { maxAge: '1d' }));
+
 app.use(express.static(__dirname, {
     dotfiles: 'deny',
     index: ['index.html']
@@ -212,6 +217,99 @@ function genId(prefix) {
 
 function now() {
     return Date.now();
+}
+
+// ============ PRICING (server-side authoritative) ============
+const FRAME_PRICES_EUR = {
+    ivory: 0, gold: 3, emerald: 5, ruby: 5, sapphire: 8,
+    amethyst: 8, topaz: 12, onyx: 15, platinum: 20, diamond: 50
+};
+const PREMIUM_PRICES_EUR = { pro: 5, elite: 10, infinity: 20 };
+
+// ============ BTC RATE CACHE (CoinGecko, 5min TTL) ============
+let _btcRateCache = { eurPerBtc: null, fetched_at: 0 };
+async function getBtcEurRate() {
+    const FIVE_MIN = 5 * 60 * 1000;
+    if (_btcRateCache.eurPerBtc && (Date.now() - _btcRateCache.fetched_at) < FIVE_MIN) {
+        return _btcRateCache.eurPerBtc;
+    }
+    return new Promise((resolve) => {
+        const https = require('https');
+        const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur';
+        const req = https.get(url, { timeout: 5000 }, (r) => {
+            let data = '';
+            r.on('data', (chunk) => { data += chunk; });
+            r.on('end', () => {
+                try {
+                    const j = JSON.parse(data);
+                    const rate = j?.bitcoin?.eur;
+                    if (rate && typeof rate === 'number') {
+                        _btcRateCache = { eurPerBtc: rate, fetched_at: Date.now() };
+                        resolve(rate);
+                    } else {
+                        resolve(_btcRateCache.eurPerBtc || 60000); // fallback
+                    }
+                } catch(e) { resolve(_btcRateCache.eurPerBtc || 60000); }
+            });
+        });
+        req.on('error', () => resolve(_btcRateCache.eurPerBtc || 60000));
+        req.on('timeout', () => { req.destroy(); resolve(_btcRateCache.eurPerBtc || 60000); });
+    });
+}
+
+// ============ USER SHAPE & GRANTING ============
+function ensureUserShape(user) {
+    if (!user) return;
+    if (!user.profile) {
+        user.profile = {
+            avatar_letter: (user.username || user.firstName || 'K').charAt(0).toUpperCase(),
+            bio: '',
+            clips: [
+                { slot: 0, title: 'Chi sono', audio_id: null, duration: 0 },
+                { slot: 1, title: 'Mi piace', audio_id: null, duration: 0 },
+                { slot: 2, title: 'Cerco', audio_id: null, duration: 0 }
+            ]
+        };
+    }
+    if (!user.profile.clips || !Array.isArray(user.profile.clips) || user.profile.clips.length < 3) {
+        user.profile.clips = [
+            { slot: 0, title: 'Chi sono', audio_id: null, duration: 0 },
+            { slot: 1, title: 'Mi piace', audio_id: null, duration: 0 },
+            { slot: 2, title: 'Cerco', audio_id: null, duration: 0 }
+        ];
+    }
+    if (!user.stats) {
+        user.stats = { stories_count: 0, matches_count: 0, likes_received: 0, duels_participated: 0 };
+    }
+}
+
+function grantItemToUser(userId, kind, itemId) {
+    DB.user_frames = DB.user_frames || {};
+    DB.user_premium = DB.user_premium || {};
+    if (kind === 'frame') {
+        const owned = DB.user_frames[userId] || [];
+        if (!owned.includes(itemId)) owned.push(itemId);
+        DB.user_frames[userId] = owned;
+    } else if (kind === 'premium') {
+        const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+        DB.user_premium[userId] = { plan: itemId, expires_at: now() + THIRTY_DAYS };
+    }
+    markDirty();
+}
+
+// ============ TELEGRAM NOTIFICATIONS QUEUE ============
+function notifyTelegramUser(userId, message) {
+    DB.pending_notifications = DB.pending_notifications || [];
+    const user = (DB.users || []).find(u => u.id === userId);
+    if (!user) return;
+    const telegramId = user.telegramId || (user.id && user.id.startsWith('tg_') ? user.id.slice(3) : null);
+    if (!telegramId) return;
+    DB.pending_notifications.push({
+        telegram_id: telegramId,
+        message,
+        created_at: Date.now()
+    });
+    markDirty();
 }
 
 // ============ INPUT VALIDATION ============
@@ -406,6 +504,7 @@ app.get('/api/profile/:username', (req, res) => {
 app.post('/api/profile/update', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    ensureUserShape(user);
 
     const { bio } = req.body || {};
     if (bio !== undefined) user.profile.bio = sanitizeBio(bio);
@@ -414,10 +513,40 @@ app.post('/api/profile/update', verifyToken, (req, res) => {
     res.json({ ok: true, profile: user.profile });
 });
 
+// Upload avatar (base64 -> file). Returns URL stored on server.
+app.post('/api/profile/avatar', verifyToken, (req, res) => {
+    const { dataUrl } = req.body || {};
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+        return res.status(400).json({ error: 'Immagine non valida' });
+    }
+    const match = dataUrl.match(/^data:image\/(png|jpeg|jpg|webp);base64,(.+)$/);
+    if (!match) return res.status(400).json({ error: 'Formato non supportato (png/jpg/webp)' });
+    const ext = match[1] === 'jpeg' ? 'jpg' : match[1];
+    let buf;
+    try { buf = Buffer.from(match[2], 'base64'); }
+    catch(e) { return res.status(400).json({ error: 'Base64 invalido' }); }
+    if (buf.length > 4 * 1024 * 1024) return res.status(413).json({ error: 'File troppo grande (max 4MB)' });
+
+    const safeUserId = String(req.user.userId).replace(/[^a-zA-Z0-9_-]/g, '');
+    const filename = safeUserId + '.' + ext;
+    try { fs.writeFileSync(path.join(AVATAR_DIR, filename), buf); }
+    catch(e) { return res.status(500).json({ error: 'Errore salvataggio file' }); }
+    const url = '/uploads/avatars/' + filename;
+
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (user) {
+        ensureUserShape(user);
+        user.avatar_url = url;
+        markDirty();
+    }
+    res.json({ ok: true, url });
+});
+
 // Save voice clip
 app.post('/api/profile/clip/save', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    ensureUserShape(user);
 
     const { slot, audioData, durationMs, mood } = req.body || {};
     if (slot === undefined || !audioData) return res.status(400).json({ error: 'slot e audioData richiesti' });
@@ -535,7 +664,7 @@ app.post('/api/duels', verifyToken, (req, res) => {
         id: genId('duel'),
         theme: theme.replace(/[<>]/g, '').slice(0, 100),
         user1_id: userId,
-        user2_id: userId,
+        user2_id: null,
         clip1_id: null,
         clip2_id: null,
         expires_at: now() + 2 * 60 * 60 * 1000,
@@ -550,7 +679,7 @@ app.post('/api/duels/:id/join', verifyToken, (req, res) => {
     const userId = req.user.userId;
     const duel = DB.duels.find(d => d.id === req.params.id);
     if (!duel) return res.status(404).json({ error: 'Duello non trovato' });
-    if (duel.user2_id !== duel.user1_id) return res.status(400).json({ error: 'Duello pieno' });
+    if (duel.user2_id) return res.status(400).json({ error: 'Duello pieno' });
     if (duel.user1_id === userId) return res.status(400).json({ error: 'Non puoi joinare il tuo duello' });
     duel.user2_id = userId;
     saveDB(DB);
@@ -579,16 +708,162 @@ app.post('/api/duels/:id/vote', verifyToken, (req, res) => {
 app.get('/api/duels', (req, res) => {
     const duels = DB.duels.filter(d => d.expires_at > now()).map(d => {
         const u1 = DB.users.find(u => u.id === d.user1_id);
-        const u2 = DB.users.find(u => u.id === d.user2_id);
+        const u2 = d.user2_id ? DB.users.find(u => u.id === d.user2_id) : null;
         const total_votes = DB.votes.filter(v => v.duel_id === d.id).length;
         return {
             ...d,
             user1_name: u1 ? u1.username : '...',
             user2_name: u2 ? u2.username : 'In attesa...',
+            is_open: !d.user2_id,
             total_votes
         };
     }).sort((a, b) => b.created_at - a.created_at).slice(0, 20);
     res.json({ duels });
+});
+
+// ============ LIKES & MATCHES ============
+
+DB.likes = DB.likes || [];       // [{from, to, created_at}]
+DB.matches = DB.matches || [];   // [{id, u1, u2, created_at}]
+DB.match_messages = DB.match_messages || {}; // {matchId: [msg, ...]}
+
+app.post('/api/users/:id/like', verifyToken, (req, res) => {
+    const fromId = req.user.userId;
+    const toId = req.params.id;
+    if (!toId || toId === fromId) return res.status(400).json({ error: 'Like non valido' });
+
+    const fromUser = DB.users.find(u => u.id === fromId);
+    const toUser = DB.users.find(u => u.id === toId);
+    if (!toUser) return res.status(404).json({ error: 'Utente non trovato' });
+
+    DB.likes = DB.likes || [];
+    DB.matches = DB.matches || [];
+
+    // De-dup
+    const existing = DB.likes.find(l => l.from === fromId && l.to === toId);
+    if (!existing) {
+        DB.likes.push({ from: fromId, to: toId, created_at: now() });
+    }
+
+    // Reverse like => match
+    const reciprocal = DB.likes.find(l => l.from === toId && l.to === fromId);
+    let matched = false;
+    let matchId = null;
+    if (reciprocal) {
+        // already matched?
+        const existingMatch = DB.matches.find(m =>
+            (m.u1 === fromId && m.u2 === toId) || (m.u1 === toId && m.u2 === fromId)
+        );
+        if (!existingMatch) {
+            matchId = genId('match');
+            DB.matches.push({ id: matchId, u1: fromId, u2: toId, created_at: now() });
+            // Increment stats
+            ensureUserShape(fromUser); ensureUserShape(toUser);
+            fromUser.stats.matches_count = (fromUser.stats.matches_count || 0) + 1;
+            toUser.stats.matches_count = (toUser.stats.matches_count || 0) + 1;
+            matched = true;
+            // Notify both
+            notifyTelegramUser(fromId, `🎉 Match con ${toUser.username || 'qualcuno'}!`);
+            notifyTelegramUser(toId, `🎉 Match con ${fromUser?.username || 'qualcuno'}!`);
+        } else {
+            matchId = existingMatch.id;
+            matched = true;
+        }
+    } else {
+        // Like senza match: notifica al destinatario
+        ensureUserShape(toUser);
+        toUser.stats.likes_received = (toUser.stats.likes_received || 0) + 1;
+        notifyTelegramUser(toId, '❤️ Qualcuno ti ha messo like su Kouverte!');
+    }
+
+    markDirty();
+    res.json({ ok: true, matched, match_id: matchId });
+});
+
+// List my matches
+app.get('/api/matches', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.matches = DB.matches || [];
+    const myMatches = DB.matches
+        .filter(m => m.u1 === userId || m.u2 === userId)
+        .map(m => {
+            const otherId = m.u1 === userId ? m.u2 : m.u1;
+            const other = DB.users.find(u => u.id === otherId);
+            if (!other) return null;
+            DB.match_messages = DB.match_messages || {};
+            const msgs = DB.match_messages[m.id] || [];
+            const lastMsg = msgs[msgs.length - 1];
+            return {
+                match_id: m.id,
+                user_id: otherId,
+                username: other.username,
+                avatar_letter: other.profile?.avatar_letter || other.username?.charAt(0).toUpperCase() || 'K',
+                created_at: m.created_at,
+                last_message: lastMsg?.text || null,
+                last_message_at: lastMsg?.created_at || m.created_at,
+                unread: msgs.filter(x => x.from !== userId && !(x.read_by || []).includes(userId)).length
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.last_message_at - a.last_message_at);
+    res.json({ matches: myMatches });
+});
+
+// Get messages for a match
+app.get('/api/matches/:matchId/messages', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const match = (DB.matches || []).find(m => m.id === req.params.matchId);
+    if (!match || (match.u1 !== userId && match.u2 !== userId)) return res.status(404).json({ error: 'Match non trovato' });
+    DB.match_messages = DB.match_messages || {};
+    const msgs = DB.match_messages[req.params.matchId] || [];
+    msgs.forEach(m => {
+        if (m.from !== userId) {
+            m.read_by = m.read_by || [];
+            if (!m.read_by.includes(userId)) m.read_by.push(userId);
+        }
+    });
+    markDirty();
+    res.json({ messages: msgs });
+});
+
+// Send a message to a match
+app.post('/api/matches/:matchId/messages', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const { text } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) return res.status(400).json({ error: 'Testo richiesto' });
+    if (text.length > 1000) return res.status(400).json({ error: 'Messaggio troppo lungo' });
+    const match = (DB.matches || []).find(m => m.id === req.params.matchId);
+    if (!match || (match.u1 !== userId && match.u2 !== userId)) return res.status(404).json({ error: 'Match non trovato' });
+    DB.match_messages = DB.match_messages || {};
+    DB.match_messages[req.params.matchId] = DB.match_messages[req.params.matchId] || [];
+    const msg = {
+        id: genId('mm'),
+        match_id: req.params.matchId,
+        from: userId,
+        text: text.trim().replace(/[<>]/g, '').slice(0, 1000),
+        created_at: now(),
+        read_by: [userId]
+    };
+    DB.match_messages[req.params.matchId].push(msg);
+
+    // Telegram notification to recipient
+    const otherId = match.u1 === userId ? match.u2 : match.u1;
+    notifyTelegramUser(otherId, `💬 Nuovo messaggio: "${msg.text.slice(0, 80)}"`);
+
+    markDirty();
+    res.json({ ok: true, message: msg });
+});
+
+// Bot polling endpoint for pending notifications
+app.get('/api/notifications/pending', (req, res) => {
+    const secret = req.headers['x-bot-secret'];
+    if (secret !== process.env.BOT_NOTIFY_SECRET && secret !== 'kouverte-internal') {
+        return res.status(403).json({ error: 'Forbidden' });
+    }
+    const pending = DB.pending_notifications || [];
+    DB.pending_notifications = [];
+    markDirty();
+    res.json({ notifications: pending });
 });
 
 // ============ SHOP API ============
@@ -726,6 +1001,100 @@ app.get('/api/shop/bitcoin-status/:paymentId', verifyToken, (req, res) => {
         credits: payment.credits_requested,
         expiresAt: payment.expires_at,
         confirmedAt: payment.confirmed_at || null
+    });
+});
+
+// ============ SECURE BITCOIN VERIFY (server-side pricing, JWT) ============
+// Verifica server-side: il client invia SOLO item_kind + item_id + tx_hash
+// Il server calcola l'importo atteso in BTC dal listino EUR e il rate corrente.
+app.post('/api/bitcoin/verify', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { item_kind, item_id, tx_hash } = req.body || {};
+
+    if (!['frame', 'premium'].includes(item_kind)) {
+        return res.status(400).json({ error: 'item_kind non valido (frame | premium)' });
+    }
+    const priceTable = item_kind === 'frame' ? FRAME_PRICES_EUR : PREMIUM_PRICES_EUR;
+    if (!Object.prototype.hasOwnProperty.call(priceTable, item_id)) {
+        return res.status(400).json({ error: 'item_id non valido' });
+    }
+    const priceEur = priceTable[item_id];
+    if (priceEur <= 0) {
+        // Free item: grant immediately
+        grantItemToUser(userId, item_kind, item_id);
+        return res.json({ ok: true, granted: true, free: true });
+    }
+
+    // Calcola BTC atteso dal listino EUR
+    const eurPerBtc = await getBtcEurRate();
+    if (!eurPerBtc || eurPerBtc <= 0) return res.status(503).json({ error: 'BTC rate non disponibile' });
+    const expectedBtc = +(priceEur / eurPerBtc).toFixed(8);
+
+    // Verifica blockchain sull'indirizzo SERVER (mai dal client)
+    try {
+        const check = await checkBlockchainConfirmations(
+            expectedBtc.toFixed(8),
+            BITCOIN_ADDRESS,
+            BITCOIN_MIN_CONFIRMATIONS
+        );
+        if (!check.verified) {
+            return res.status(402).json({
+                error: 'Pagamento non verificato',
+                current_confirmations: check.confirmations || 0,
+                required_confirmations: BITCOIN_MIN_CONFIRMATIONS,
+                expected_btc: expectedBtc.toFixed(8),
+                tx_hash: check.txHash || tx_hash || null
+            });
+        }
+
+        // Registra il pagamento e concedi l'item
+        DB.bitcoin_payments = DB.bitcoin_payments || [];
+        DB.bitcoin_payments.push({
+            id: genId('btc_v'),
+            user_id: userId,
+            item_kind,
+            item_id,
+            amount_btc_expected: expectedBtc.toFixed(8),
+            tx_hash: check.txHash || tx_hash || null,
+            confirmations: check.confirmations || BITCOIN_MIN_CONFIRMATIONS,
+            confirmed_at: now()
+        });
+        grantItemToUser(userId, item_kind, item_id);
+        saveDB(DB);
+        res.json({
+            ok: true,
+            granted: true,
+            item_kind,
+            item_id,
+            amount_btc: expectedBtc.toFixed(8),
+            tx_hash: check.txHash || tx_hash || null,
+            confirmations: check.confirmations || BITCOIN_MIN_CONFIRMATIONS
+        });
+    } catch(e) {
+        console.error('[BTC verify]', e?.message);
+        res.status(500).json({ error: 'Errore verifica blockchain' });
+    }
+});
+
+// ============ /api/me/items — source of truth for ownership ============
+app.get('/api/me/items', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.user_frames = DB.user_frames || {};
+    DB.user_premium = DB.user_premium || {};
+    const frames = DB.user_frames[userId] || [];
+    let premium = DB.user_premium[userId] || null;
+    if (premium && premium.expires_at && premium.expires_at < now()) {
+        premium = null; // scaduto
+    }
+    // daily_likes_left: best-effort counter da DB.daily_likes
+    DB.daily_likes = DB.daily_likes || {};
+    const todayKey = new Date().toISOString().slice(0, 10);
+    const usedToday = (DB.daily_likes[userId]?.[todayKey]) || 0;
+    const dailyCap = premium ? 9999 : 20;
+    res.json({
+        frames,
+        premium,
+        daily_likes_left: Math.max(0, dailyCap - usedToday)
     });
 });
 
@@ -985,7 +1354,7 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
 app.get('/api/admin/duels', verifyAdmin, (req, res) => {
     const duels = DB.duels.map(d => {
         const u1 = DB.users.find(u => u.id === d.user1_id);
-        const u2 = DB.users.find(u => u.id === d.user2_id);
+        const u2 = d.user2_id ? DB.users.find(u => u.id === d.user2_id) : null;
         const total_votes = DB.votes.filter(v => v.duel_id === d.id).length;
         return {
             id: d.id, theme: d.theme,
@@ -1089,14 +1458,17 @@ app.post('/api/tg/auth', rateLimit('tg-auth', 10, 5 * 60 * 1000), (req, res) => 
             is_admin: false,
             created_at: now()
         };
+        ensureUserShape(user);
         DB.users = DB.users || [];
         DB.users.push(user);
         saveDB(DB);
     } else {
         user.username = username;
         user.firstName = firstName;
+        user.telegramId = tgIdRaw;
         user.verified = true;
         user.last_seen = now();
+        ensureUserShape(user);
         markDirty();
     }
     // Emetti JWT così l'utente TG può usare endpoint protetti
