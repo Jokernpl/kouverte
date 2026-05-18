@@ -1115,6 +1115,19 @@ app.post('/api/battles/:id/accept', verifyToken, (req, res) => {
     res.json({ ok: true, battle: publicBattle(b) });
 });
 
+// Creator cancels their own pending invite
+app.post('/api/battles/:id/cancel', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: 'Battle non trovata' });
+    if (b.userA !== userId) return res.status(403).json({ error: 'Solo il creatore può cancellare' });
+    if (b.status !== 'pending') return res.status(400).json({ error: 'Solo battle in attesa' });
+    b.status = 'cancelled';
+    markDirty();
+    res.json({ ok: true });
+});
+
 app.post('/api/battles/:id/decline', verifyToken, (req, res) => {
     const userId = req.user.userId;
     DB.battles = DB.battles || [];
@@ -1142,6 +1155,16 @@ app.get('/api/battles/pending', verifyToken, (req, res) => {
         .filter(b => b.status === 'pending' && b.userB === userId)
         .map(publicBattle);
     res.json({ ok: true, battles: pending });
+});
+
+// My outgoing pending invites (as creator)
+app.get('/api/battles/outgoing', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.battles = DB.battles || [];
+    const outgoing = DB.battles
+        .filter(b => b.status === 'pending' && b.userA === userId)
+        .map(publicBattle);
+    res.json({ ok: true, battles: outgoing });
 });
 
 app.get('/api/battles/:id', (req, res) => {

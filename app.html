@@ -2533,6 +2533,7 @@ a { text-decoration: none; color: inherit; }
       <div class="battle-top">
         <button class="icon-btn" onclick="closeBattle()">✕</button>
         <div class="battle-timer" id="battleTimer">3:00</div>
+        <button class="icon-btn" id="battleMuteBtn" onclick="toggleBattleMute()" title="Silenzia audio">🔊</button>
         <div class="battle-pot" id="battlePot">⚡ 0</div>
       </div>
       <div class="battle-versus">
@@ -4700,18 +4701,28 @@ async function loadArena() {
   // balance
   const bRes = await api('/me/balance');
   if (bRes?.ok) document.getElementById('arenaBalanceSats').textContent = bRes.sats || 0;
-  // pending invites
-  const pRes = await api('/battles/pending');
+  // pending invites (incoming + outgoing)
+  const [pRes, oRes] = await Promise.all([api('/battles/pending'), api('/battles/outgoing')]);
   const pBox = document.getElementById('arenaPending');
+  let html = '';
   if (pRes?.battles?.length) {
-    pBox.innerHTML = pRes.battles.map(b => `
+    html += pRes.battles.map(b => `
       <div class="pending-battle-card">
         <div class="pb-text">⚔️ <b>${escHtml(b.userA?.firstName || 'Sfidante')}</b> ti sfida!</div>
         <button class="pb-accept" onclick="acceptBattle('${b.id}')">Accetta</button>
         <button class="pb-decline" onclick="declineBattle('${b.id}')">Rifiuta</button>
       </div>
     `).join('');
-  } else { pBox.innerHTML = ''; }
+  }
+  if (oRes?.battles?.length) {
+    html += oRes.battles.map(b => `
+      <div class="pending-battle-card">
+        <div class="pb-text">⏳ In attesa che <b>${escHtml(b.userB?.firstName || 'avversario')}</b> accetti…</div>
+        <button class="pb-decline" onclick="cancelBattle('${b.id}')">Annulla</button>
+      </div>
+    `).join('');
+  }
+  pBox.innerHTML = html;
   // live list
   const lRes = await api('/battles/live');
   const lBox = document.getElementById('arenaLiveList');
@@ -4777,6 +4788,12 @@ async function declineBattle(id) {
   const r = await api('/battles/' + id + '/decline', { method: 'POST' });
   if (r?.ok) loadArena();
 }
+async function cancelBattle(id) {
+  if (!confirm('Annullare la sfida?')) return;
+  const r = await api('/battles/' + id + '/cancel', { method: 'POST' });
+  if (r?.ok) { toast('Sfida annullata'); loadArena(); }
+  else toast(r?.error || 'Errore');
+}
 
 async function openBattle(id) {
   const r = await api('/battles/' + id);
@@ -4822,6 +4839,14 @@ async function joinBattleVoice(battleId, role) {
     }
   }
   s.emit('battle-voice:join', { battleId, userId: state.user?.id, role });
+}
+
+let _battleMuted = false;
+function toggleBattleMute() {
+  _battleMuted = !_battleMuted;
+  Object.values(_battleVoicePeers).forEach(p => { if (p.audioEl) p.audioEl.muted = _battleMuted; });
+  const btn = document.getElementById('battleMuteBtn');
+  if (btn) btn.textContent = _battleMuted ? '🔇' : '🔊';
 }
 
 async function leaveBattleVoice(battleId) {
