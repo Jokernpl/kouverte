@@ -13,7 +13,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
 
-const BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '';
+// ⚠️ TEMP FALLBACK: rimuovere dopo aver impostato BOT_TOKEN corretto su Render
+// Questo token sarà revocato appena la env è configurata
+const BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
 const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
 const BTC_ADDRESS  = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
