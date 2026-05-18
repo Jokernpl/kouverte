@@ -356,6 +356,54 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
     }
 });
 
+// Forgot password — sends reset token via Telegram bot if linked, otherwise returns error
+app.post('/api/auth/forgot-password', rateLimit('forgot', 5, 15 * 60 * 1000), (req, res) => {
+    const emailIn = sanitizeEmail(req.body?.email);
+    if (!emailIn) return res.status(400).json({ error: 'Email non valida' });
+    const user = DB.users.find(u => u.email === emailIn);
+    // Always return same message to prevent email enumeration
+    const okResp = { ok: true, message: 'Se l\'email è registrata, riceverai le istruzioni di recupero' };
+    if (!user) return res.json(okResp);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = now() + 60 * 60 * 1000;
+    DB.password_resets = DB.password_resets || [];
+    DB.password_resets = DB.password_resets.filter(r => r.user_id !== user.id);
+    DB.password_resets.push({ user_id: user.id, token, expires_at: expires, created_at: now() });
+    markDirty();
+
+    const resetUrl = (process.env.PUBLIC_URL || 'https://www.kouverte.com') + '/app.html#reset=' + token;
+    if (user.telegramId) {
+        notifyTelegramUser(user.id, `🔐 Richiesta reset password\n\nClicca per impostare una nuova password (valido 60 min):\n${resetUrl}`);
+    }
+    return res.json(okResp);
+});
+
+// Reset password with token
+app.post('/api/auth/reset-password', rateLimit('reset', 10, 15 * 60 * 1000), async (req, res) => {
+    const { token, password } = req.body || {};
+    if (!token || !password) return res.status(400).json({ error: 'Token e password richiesti' });
+    if (typeof password !== 'string' || password.length < 6 || password.length > 200) {
+        return res.status(400).json({ error: 'Password 6-200 caratteri' });
+    }
+    DB.password_resets = DB.password_resets || [];
+    const entry = DB.password_resets.find(r => r.token === token);
+    if (!entry || entry.expires_at < now()) return res.status(400).json({ error: 'Token scaduto o non valido' });
+
+    const user = DB.users.find(u => u.id === entry.user_id);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    try {
+        user.password_hash = await bcrypt.hash(password, 10);
+        DB.password_resets = DB.password_resets.filter(r => r.token !== token);
+        markDirty();
+        const newToken = generateToken(user.id);
+        res.json({ ok: true, token: newToken, user: publicUser(user) });
+    } catch(e) {
+        res.status(500).json({ error: 'Errore reset password' });
+    }
+});
+
 // Login — rate limited 5/15min per IP
 app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, res) => {
     const emailIn = sanitizeEmail(req.body?.email);
