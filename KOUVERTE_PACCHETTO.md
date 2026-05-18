@@ -166,7 +166,19 @@ TELEGRAM_BOT_TOKEN=<token-da-BotFather>
 BOT_USERNAME=Kouverte_bot
 WEBAPP_URL=https://www.kouverte.com/app.html
 PUBLIC_URL=https://www.kouverte.com
+
+# Lightning Network (opzionale)
+LIGHTNING_ENABLED=1
+LNBITS_URL=https://legend.lnbits.com
+LNBITS_INVOICE_KEY=<chiave-invoice-LNbits>
 ```
+
+### Setup Lightning (opzionale ma raccomandato)
+1. Crea wallet su https://legend.lnbits.com (o self-hosted)
+2. Copia "Invoice/read key" dalle API Info
+3. Setta le 3 env vars sopra su Render
+4. Redeploy → tab "⚡ Lightning" in Topup Sats diventa funzionante
+5. Pagamenti accreditati in <5 secondi anziché 30+ min on-chain
 
 ---
 
@@ -224,14 +236,22 @@ Kouverte-Voice/
 ## 8. PROSSIMI PASSI POSSIBILI
 
 **Quick wins:**
-- ✅ ~~Audio WebRTC live nella battle~~ (FATTO)
-- ✅ ~~Champion badge + cronologia W/L sul profilo~~ (FATTO)
-- ✅ ~~Notifica in-app real-time (toast su socket) per inviti battle~~ (FATTO)
-- ✅ ~~Form reset password nel frontend~~ (FATTO)
-- ✅ ~~Pannello admin UI (admin.html)~~ (FATTO)
-- TURN server per WebRTC NAT simmetrico (es. coturn o servizio gestito)
-- Cancel battle da parte del creator (ritiro invito pending)
-- Spectator mute toggle nella battle view
+- ✅ ~~Audio WebRTC live nella battle~~
+- ✅ ~~Champion badge + cronologia W/L sul profilo~~
+- ✅ ~~Notifica in-app real-time per inviti battle~~
+- ✅ ~~Form reset password nel frontend~~
+- ✅ ~~Pannello admin UI (admin.html)~~
+- ✅ ~~Cancel battle + spectator mute toggle~~
+- ✅ ~~Onboarding lazy + 10 voice prompts guidati~~
+- ✅ ~~Match reveal animato (avatar pulse + heart rain + auto-call)~~
+- ✅ ~~30 profili seed italiani + città nel feed~~
+- ✅ ~~Effetti boost (particelle + screen shake + floating number)~~
+- ✅ ~~Filtri distanza GPS (≤10/50/200km)~~
+- ✅ ~~Lightning Network (LNbits) per topup istantaneo~~
+- TURN server per WebRTC NAT simmetrico (coturn esterno o servizio gestito)
+- Multi-lingua (EN/ES/PT)
+- AI moderation voice clip
+- Referral con sats reali
 
 **Monetizzazione:**
 - Super Like / Boost profilo

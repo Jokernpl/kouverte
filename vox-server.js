@@ -472,11 +472,19 @@ app.post('/api/profile/update', verifyToken, (req, res) => {
         { slot: 2, title: 'Cerco',    audio_id: null, duration: 0 }
     ]};
 
-    const { bio, gender, birth_year, display_name, looking_for } = req.body || {};
+    const { bio, gender, birth_year, display_name, looking_for, city, lat, lng } = req.body || {};
     if (bio !== undefined)         user.profile.bio = sanitizeBio(bio);
     if (display_name !== undefined) user.profile.display_name = String(display_name).replace(/[<>]/g, '').slice(0, 40);
     if (gender !== undefined && ['m','f','x'].includes(gender)) user.profile.gender = gender;
     if (looking_for !== undefined && ['m','f','x','all'].includes(looking_for)) user.profile.looking_for = looking_for;
+    if (city !== undefined) user.profile.city = String(city).replace(/[<>]/g, '').slice(0, 60);
+    if (lat !== undefined && lng !== undefined) {
+        const la = parseFloat(lat), ln = parseFloat(lng);
+        if (Number.isFinite(la) && Number.isFinite(ln) && la >= -90 && la <= 90 && ln >= -180 && ln <= 180) {
+            user.profile.lat = la; user.profile.lng = ln;
+            user.profile.geo_updated_at = now();
+        }
+    }
     if (birth_year !== undefined) {
         const y = parseInt(birth_year);
         const thisYear = new Date().getFullYear();
@@ -740,6 +748,18 @@ app.get('/api/users/feed', (req, res) => {
     const ageMin = parseInt(req.query.age_min) || 18;
     const ageMax = parseInt(req.query.age_max) || 99;
     const hasClipOnly = req.query.has_clip === '1';
+    const myLat = parseFloat(req.query.lat);
+    const myLng = parseFloat(req.query.lng);
+    const maxKm = parseInt(req.query.max_km);
+    const wantsGeo = Number.isFinite(myLat) && Number.isFinite(myLng) && Number.isFinite(maxKm) && maxKm > 0;
+
+    const haversineKm = (lat1, lon1, lat2, lon2) => {
+        const R = 6371;
+        const dLat = (lat2-lat1) * Math.PI/180;
+        const dLon = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    };
 
     const users = (DB.users || [])
         .filter(u => u.id && u.username && !u.id.startsWith('u_test'))
@@ -747,6 +767,8 @@ app.get('/api/users/feed', (req, res) => {
             const clips = (u.profile?.clips || []).filter(c => c.audio_id);
             const activeClip = clips.map(c => DB.stories?.find(s => s.id === c.audio_id && s.expires_at > nowMs)).find(Boolean);
             const age = u.profile?.birth_year ? (thisYear - u.profile.birth_year) : null;
+            const distKm = (wantsGeo && Number.isFinite(u.profile?.lat) && Number.isFinite(u.profile?.lng))
+                ? haversineKm(myLat, myLng, u.profile.lat, u.profile.lng) : null;
             return {
                 id: u.id,
                 username: u.username,
@@ -761,6 +783,7 @@ app.get('/api/users/feed', (req, res) => {
                 clip_duration: activeClip?.duration_ms || 0,
                 likes_received: u.stats?.likes_received || 0,
                 city: u.profile?.city || null,
+                distance_km: distKm !== null ? Math.round(distKm) : null,
                 is_seed: !!u.seed,
                 created_at: u.created_at || nowMs
             };
@@ -771,6 +794,7 @@ app.get('/api/users/feed', (req, res) => {
             if (u.age !== null) {
                 if (u.age < ageMin || u.age > ageMax) return false;
             }
+            if (wantsGeo && u.distance_km !== null && u.distance_km > maxKm) return false;
             return true;
         })
         .sort((a, b) => b.likes_received - a.likes_received || b.created_at - a.created_at);
@@ -1235,6 +1259,65 @@ app.post('/api/sats/topup-btc', verifyToken, rateLimit('sats-topup', 10, 60 * 60
         expiresAt,
         instructions: `Invia ${p.btc} BTC entro 15 min per ricevere ${p.sats} sats`
     });
+});
+
+// ============ LIGHTNING NETWORK (LNbits) ============
+const lightning = require('./lightning-service.js');
+
+// Crea invoice LN per topup sats (immediato dopo pagamento)
+app.post('/api/sats/topup-ln', verifyToken, rateLimit('sats-ln', 15, 60 * 60 * 1000), async (req, res) => {
+    if (!lightning.ENABLED) return res.status(503).json({ error: 'Lightning non attivo. Imposta LNBITS_URL/LNBITS_INVOICE_KEY/LIGHTNING_ENABLED=1.' });
+    const userId = req.user.userId;
+    const { pack } = req.body || {};
+    const p = SATS_PACKS[Number(pack)];
+    if (!p) return res.status(400).json({ error: 'Pack non valido' });
+    try {
+        const inv = await lightning.createInvoice(p.sats, `Kouverte topup ${p.sats} sats`);
+        const paymentId = genId('ln_sats');
+        DB.bitcoin_payments = DB.bitcoin_payments || [];
+        DB.bitcoin_payments.push({
+            id: paymentId,
+            user_id: userId,
+            kind: 'sats_ln',
+            sats_requested: p.sats,
+            bolt11: inv.bolt11,
+            payment_hash: inv.paymentHash,
+            status: 'pending',
+            created_at: now(),
+            expires_at: now() + 60 * 60 * 1000 // 1h
+        });
+        markDirty();
+        res.json({ paymentId, bolt11: inv.bolt11, sats: p.sats });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Polling status invoice LN
+app.get('/api/sats/topup-ln/:paymentId', verifyToken, async (req, res) => {
+    const userId = req.user.userId;
+    const payment = (DB.bitcoin_payments || []).find(p => p.id === req.params.paymentId && p.user_id === userId);
+    if (!payment) return res.status(404).json({ error: 'Pagamento non trovato' });
+    if (payment.status === 'confirmed') return res.json({ status: 'confirmed', sats: payment.sats_requested });
+    try {
+        const r = await lightning.checkInvoice(payment.payment_hash);
+        if (r.paid) {
+            addBalance(userId, payment.sats_requested);
+            payment.status = 'confirmed';
+            payment.confirmed_at = now();
+            DB.transactions = DB.transactions || [];
+            DB.transactions.push({
+                id: genId('txn'), user_id: userId, type: 'lightning_sats',
+                sats: payment.sats_requested, status: 'completed', created_at: now()
+            });
+            markDirty();
+            notifyTelegramUser(userId, `⚡ Topup LN confermato: +${payment.sats_requested} sats istantanei.`);
+            return res.json({ status: 'confirmed', sats: payment.sats_requested });
+        }
+        return res.json({ status: 'pending' });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // Boost: deduct sats from spectator balance, add to chosen side score
