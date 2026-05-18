@@ -2260,6 +2260,21 @@ a { text-decoration: none; color: inherit; }
 }
 .battle-feed .bf-line { padding: 3px 0; }
 
+.topup-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.topup-tab {
+  flex: 1; padding: 8px; background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text-dim); cursor: pointer; font-size: 12px; font-weight: 600;
+}
+.topup-tab.active { background: rgba(247,147,26,0.15); border-color: #f7931a; color: #f7931a; }
+.sats-pack {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px; margin-bottom: 8px;
+  background: rgba(247,147,26,0.06); border: 1px solid rgba(247,147,26,0.3);
+  border-radius: 12px; cursor: pointer; color: #fff;
+}
+.sats-pack:hover { background: rgba(247,147,26,0.12); }
+
 </style>
 </head>
 <body>
@@ -2552,6 +2567,57 @@ a { text-decoration: none; color: inherit; }
         </div>
       </div>
       <div class="battle-feed" id="battleFeed"></div>
+    </div>
+
+    <!-- Topup sats modal -->
+    <div id="topupSatsModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h3 style="color:var(--gold);margin:0 0 10px;">⚡ Ricarica Sats</h3>
+        <div class="topup-tabs">
+          <button class="topup-tab active" data-tab="convert" onclick="switchTopupTab('convert')">Da Crediti</button>
+          <button class="topup-tab" data-tab="btc" onclick="switchTopupTab('btc')">Bitcoin</button>
+        </div>
+
+        <div id="topupConvert" class="topup-panel">
+          <p style="color:var(--text-dim);font-size:12px;margin:0 0 12px;">1 credito = 5.000 sats</p>
+          <div id="topupConvertBalance" style="font-size:13px;color:#fff;margin-bottom:10px;">Crediti disponibili: —</div>
+          <input type="number" id="topupConvertInput" min="1" max="10000" placeholder="Quanti crediti convertire?" style="width:100%;padding:12px;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:10px;color:#fff;font-size:14px;margin-bottom:10px;">
+          <button class="btn-primary" style="width:100%;" onclick="doConvertCredits()">Converti</button>
+        </div>
+
+        <div id="topupBtc" class="topup-panel" style="display:none;">
+          <p style="color:var(--text-dim);font-size:12px;margin:0 0 12px;">Paga in Bitcoin · accredito dopo 4 conferme on-chain</p>
+          <div class="sats-pack" onclick="buySatsPack(1000)">
+            <div><b style="color:#f7931a;">⚡ 1.000 sats</b><div style="font-size:11px;color:var(--text-dim);">0.00001050 BTC</div></div>
+            <span>Acquista →</span>
+          </div>
+          <div class="sats-pack" onclick="buySatsPack(5000)">
+            <div><b style="color:#f7931a;">⚡ 5.000 sats</b><div style="font-size:11px;color:var(--text-dim);">0.00005250 BTC</div></div>
+            <span>Acquista →</span>
+          </div>
+          <div class="sats-pack" onclick="buySatsPack(25000)">
+            <div><b style="color:#f7931a;">⚡ 25.000 sats</b><div style="font-size:11px;color:var(--text-dim);">0.00026250 BTC</div></div>
+            <span>Acquista →</span>
+          </div>
+        </div>
+
+        <button class="btn-secondary" style="margin-top:14px;width:100%;" onclick="closeTopUp()">Chiudi</button>
+      </div>
+    </div>
+
+    <!-- BTC QR overlay for sats -->
+    <div id="satsBtcQrModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h3 style="color:var(--gold);margin:0 0 12px;">Paga in Bitcoin</h3>
+        <div style="text-align:center;">
+          <img id="satsBtcQr" src="" alt="QR" style="width:240px;height:240px;border-radius:12px;background:#fff;padding:8px;">
+          <div style="margin-top:10px;color:#f7931a;font-weight:700;font-size:18px;"><span id="satsBtcAmount">—</span> BTC</div>
+          <div style="margin-top:4px;color:#fff;">→ ⚡ <span id="satsBtcSats">—</span> sats</div>
+          <div style="margin-top:14px;font-size:11px;color:var(--text-dim);word-break:break-all;font-family:monospace;" id="satsBtcAddr">—</div>
+          <div style="margin-top:8px;font-size:11px;color:var(--text-dim);">Stato: <span id="satsBtcStatus">In attesa…</span></div>
+        </div>
+        <button class="btn-secondary" style="margin-top:14px;width:100%;" onclick="closeSatsBtcQr()">Chiudi</button>
+      </div>
     </div>
 
     <!-- Invite battle modal -->
@@ -4711,8 +4777,61 @@ function addBattleFeedLine(text) {
   while (f.children.length > 20) f.removeChild(f.lastChild);
 }
 
-function openTopUp() {
-  toast('Vinci battle o acquista sats dal Premium per ricaricare');
+async function openTopUp() {
+  if (!state.token) { showAuthModal(); return; }
+  // Carica crediti disponibili
+  const r = await api('/shop/credits');
+  document.getElementById('topupConvertBalance').textContent = 'Crediti disponibili: ' + (r?.credits ?? 0);
+  switchTopupTab('convert');
+  document.getElementById('topupSatsModal').style.display = 'flex';
+}
+function closeTopUp() { document.getElementById('topupSatsModal').style.display = 'none'; }
+function switchTopupTab(name) {
+  document.querySelectorAll('.topup-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.getElementById('topupConvert').style.display = name === 'convert' ? 'block' : 'none';
+  document.getElementById('topupBtc').style.display = name === 'btc' ? 'block' : 'none';
+}
+async function doConvertCredits() {
+  const n = Number(document.getElementById('topupConvertInput').value);
+  if (!n || n < 1) { toast('Inserisci un numero valido'); return; }
+  const r = await api('/sats/convert-credits', { method: 'POST', body: JSON.stringify({ credits: n }) });
+  if (r?.ok) {
+    toast(`+${r.converted} sats accreditati`);
+    document.getElementById('arenaBalanceSats').textContent = r.sats;
+    document.getElementById('topupConvertBalance').textContent = 'Crediti disponibili: ' + r.credits;
+    document.getElementById('topupConvertInput').value = '';
+  } else {
+    toast(r?.error || 'Errore conversione');
+  }
+}
+
+let _satsPaymentPoll = null;
+async function buySatsPack(pack) {
+  const r = await api('/sats/topup-btc', { method: 'POST', body: JSON.stringify({ pack }) });
+  if (!r?.paymentId) { toast(r?.error || 'Errore'); return; }
+  document.getElementById('satsBtcQr').src = r.qrCodeUrl;
+  document.getElementById('satsBtcAmount').textContent = r.btcAmount;
+  document.getElementById('satsBtcSats').textContent = r.sats;
+  document.getElementById('satsBtcAddr').textContent = r.btcAddress;
+  document.getElementById('satsBtcStatus').textContent = 'In attesa di conferme on-chain…';
+  closeTopUp();
+  document.getElementById('satsBtcQrModal').style.display = 'flex';
+  if (_satsPaymentPoll) clearInterval(_satsPaymentPoll);
+  _satsPaymentPoll = setInterval(async () => {
+    const s = await api('/shop/bitcoin-status/' + r.paymentId);
+    if (s?.status === 'confirmed') {
+      clearInterval(_satsPaymentPoll); _satsPaymentPoll = null;
+      document.getElementById('satsBtcStatus').textContent = '✅ Confermato!';
+      toast(`+${r.sats} sats accreditati`);
+      const bal = await api('/me/balance');
+      if (bal?.ok) document.getElementById('arenaBalanceSats').textContent = bal.sats;
+      setTimeout(closeSatsBtcQr, 1500);
+    }
+  }, 8000);
+}
+function closeSatsBtcQr() {
+  document.getElementById('satsBtcQrModal').style.display = 'none';
+  if (_satsPaymentPoll) { clearInterval(_satsPaymentPoll); _satsPaymentPoll = null; }
 }
 
 // Hook battle socket events when getSocket is called

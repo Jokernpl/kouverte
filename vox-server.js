@@ -1201,6 +1201,64 @@ app.get('/api/battles/:id', (req, res) => {
     res.json({ ok: true, battle: publicBattle(b) });
 });
 
+// Convert existing internal credits → sats (1 credit = 5000 sats)
+const CREDITS_TO_SATS = 5000;
+app.post('/api/sats/convert-credits', verifyToken, rateLimit('sats-convert', 20, 60 * 60 * 1000), (req, res) => {
+    const userId = req.user.userId;
+    const { credits } = req.body || {};
+    const c = Number(credits);
+    if (!Number.isFinite(c) || c <= 0 || c > 10000) return res.status(400).json({ error: 'Crediti non validi (1-10000)' });
+    let row = DB.user_credits.find(r => r.user_id === userId);
+    if (!row || row.credits < c) return res.status(402).json({ error: 'Crediti insufficienti' });
+    row.credits -= c;
+    row.updated_at = now();
+    const sats = c * CREDITS_TO_SATS;
+    addBalance(userId, sats);
+    DB.transactions = DB.transactions || [];
+    DB.transactions.push({ id: genId('txn'), user_id: userId, type: 'sats_convert', credits: -c, sats: +sats, created_at: now() });
+    markDirty();
+    res.json({ ok: true, sats: getBalance(userId), credits: row.credits, converted: sats });
+});
+
+// Topup sats via BTC — creates a pending payment with kind='sats'
+// Tier-based: 1000/5000/25000 sats. Rate fissa: 1 sat = 0.00000001 BTC + 5% markup piattaforma.
+const SATS_PACKS = {
+    1000:  { sats: 1000,  btc: '0.00001050' },
+    5000:  { sats: 5000,  btc: '0.00005250' },
+    25000: { sats: 25000, btc: '0.00026250' }
+};
+app.post('/api/sats/topup-btc', verifyToken, rateLimit('sats-topup', 10, 60 * 60 * 1000), (req, res) => {
+    const userId = req.user.userId;
+    const { pack } = req.body || {};
+    const p = SATS_PACKS[Number(pack)];
+    if (!p) return res.status(400).json({ error: 'Pack non valido (1000/5000/25000)' });
+    const paymentId = genId('btc_sats');
+    const expiresAt = now() + 15 * 60 * 1000;
+    if (!DB.bitcoin_payments) DB.bitcoin_payments = [];
+    DB.bitcoin_payments.push({
+        id: paymentId,
+        user_id: userId,
+        kind: 'sats',
+        sats_requested: p.sats,
+        btc_amount: p.btc,
+        status: 'pending',
+        created_at: now(),
+        expires_at: expiresAt
+    });
+    markDirty();
+    const paymentUri = `bitcoin:${BITCOIN_ADDRESS}?amount=${p.btc}&label=Kouverte%20Sats&message=Topup%20${paymentId}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(paymentUri)}`;
+    res.json({
+        paymentId,
+        btcAddress: BITCOIN_ADDRESS,
+        btcAmount: p.btc,
+        sats: p.sats,
+        qrCodeUrl,
+        expiresAt,
+        instructions: `Invia ${p.btc} BTC entro 15 min per ricevere ${p.sats} sats`
+    });
+});
+
 // Boost: deduct sats from spectator balance, add to chosen side score
 app.post('/api/battles/:id/boost', verifyToken, rateLimit('battle-boost', 60, 60 * 1000), (req, res) => {
     const userId = req.user.userId;
@@ -1392,7 +1450,29 @@ app.post('/api/admin/bitcoin-confirm', verifyAdmin, async (req, res) => {
 
     console.log(`✅ Bitcoin verified: ${blockchainCheck.confirmations} confirmations, TxHash: ${blockchainCheck.txHash}`);
 
-    // Aggiorna crediti utente
+    // Branch: sats topup vs credits topup
+    if (payment.kind === 'sats') {
+        addBalance(payment.user_id, payment.sats_requested);
+        payment.status = 'confirmed';
+        payment.confirmed_at = now();
+        payment.tx_hash = blockchainCheck.txHash;
+        payment.confirmations_verified = blockchainCheck.confirmations;
+        payment.verified_at = now();
+        DB.transactions.push({
+            id: genId('txn'),
+            user_id: payment.user_id,
+            type: 'bitcoin_sats',
+            btc_amount: payment.btc_amount,
+            sats: payment.sats_requested,
+            status: 'completed',
+            created_at: now()
+        });
+        saveDB(DB);
+        notifyTelegramUser(payment.user_id, `⚡ Topup confermato: +${payment.sats_requested} sats nel tuo balance Arena.`);
+        return res.json({ ok: true, message: `Pagamento confermato. ${payment.sats_requested} sats aggiunti.` });
+    }
+
+    // Aggiorna crediti utente (flow originale)
     let creditsRow = DB.user_credits.find(c => c.user_id === payment.user_id);
     if (!creditsRow) {
         creditsRow = { user_id: payment.user_id, credits: 0, updated_at: now() };
