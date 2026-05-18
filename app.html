@@ -2141,6 +2141,96 @@ a { text-decoration: none; color: inherit; }
 .policy-links a { color: var(--text-soft); text-decoration: none; }
 .policy-links a:hover { color: var(--gold); }
 
+.leaderboard-tabs { display: flex; gap: 6px; margin: 20px 0 10px; }
+.lb-tab {
+  flex: 1; padding: 8px;
+  background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-dim); cursor: pointer;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px;
+}
+.lb-tab.active { background: rgba(247,147,26,0.15); border-color: var(--btc); color: var(--btc); }
+.lb-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; margin-bottom: 6px;
+  background: rgba(255,255,255,0.03); border-radius: 10px;
+}
+.lb-rank {
+  width: 28px; text-align: center; font-weight: 700;
+  font-size: 14px; color: var(--gold);
+}
+.lb-rank.top1 { color: #ffd700; font-size: 18px; }
+.lb-rank.top2 { color: #c0c0c0; font-size: 16px; }
+.lb-rank.top3 { color: #cd7f32; font-size: 16px; }
+.lb-av {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, #c9a961, #4a3a1a);
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-weight: 700; font-size: 13px;
+}
+.lb-name { flex: 1; color: #fff; font-size: 13px; font-weight: 600; }
+.lb-stat { color: var(--btc); font-size: 13px; font-weight: 700; }
+
+.event-card {
+  background: linear-gradient(135deg, rgba(255,30,90,0.08), rgba(247,147,26,0.06));
+  border: 1px solid rgba(255,30,90,0.3);
+  border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px;
+}
+.event-card.live { border-color: #34c759; background: linear-gradient(135deg, rgba(52,199,89,0.18), rgba(247,147,26,0.06)); }
+.event-info { flex: 1; min-width: 0; }
+.event-title { color: #fff; font-weight: 700; font-size: 14px; }
+.event-desc { color: var(--text-dim); font-size: 11px; margin-top: 2px; }
+.event-prize { color: var(--btc); font-size: 11px; margin-top: 4px; font-weight: 700; }
+.event-countdown {
+  text-align: right; font-family: monospace; color: var(--gold);
+  font-size: 13px; font-weight: 700; min-width: 80px;
+}
+.event-card.live .event-countdown { color: #34c759; }
+.event-live-pulse {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #34c759; margin-right: 4px; animation: pulse-live 1.2s infinite;
+}
+
+.referral-card {
+  margin: 20px 16px 8px; padding: 18px 16px;
+  background: linear-gradient(135deg, rgba(247,147,26,0.12), rgba(201,169,97,0.05));
+  border: 1px solid rgba(247,147,26,0.4);
+  border-radius: 14px;
+}
+.referral-title {
+  font-family: var(--serif); color: var(--gold);
+  letter-spacing: 2px; font-size: 13px; margin-bottom: 6px;
+}
+.referral-desc { color: var(--text-soft); font-size: 12px; margin-bottom: 12px; }
+.referral-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 12px;
+}
+.referral-stats > div {
+  background: rgba(0,0,0,0.4); padding: 10px; border-radius: 10px;
+  text-align: center;
+}
+.referral-stats b { color: var(--gold); font-size: 22px; font-weight: 700; }
+.ref-lbl { color: var(--text-dim); font-size: 10px; letter-spacing: 1px; margin-top: 2px; }
+.referral-link-row {
+  display: flex; gap: 6px; margin-bottom: 8px;
+}
+.referral-link-row input {
+  flex: 1; padding: 8px 10px; background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border); color: #fff; border-radius: 8px;
+  font-size: 11px; font-family: monospace;
+}
+.referral-link-row button {
+  padding: 8px 14px; background: var(--gold); color: #000;
+  border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px;
+}
+.referral-share {
+  width: 100%; padding: 11px;
+  background: linear-gradient(135deg, #0088cc, #00a3e0);
+  color: #fff; border: none; border-radius: 10px;
+  font-weight: 700; cursor: pointer; font-size: 13px; letter-spacing: 1px;
+}
+
 .support-card {
   margin: 20px 16px 8px;
   padding: 18px 16px;
@@ -2193,6 +2283,73 @@ a { text-decoration: none; color: inherit; }
 .tg-banner:hover { background: rgba(0,136,204,0.25); }
 .tg-banner .tg-icon { font-size: 20px; flex-shrink: 0; }
 .tg-banner .tg-arrow { margin-left: auto; color: #0088cc; font-weight: 700; }
+
+/* ============= TOUR INTERATTIVO ============= */
+.tour-overlay {
+  position: fixed; inset: 0; z-index: 9998;
+  background: radial-gradient(ellipse at center, rgba(247,147,26,0.18), rgba(0,0,0,0.95));
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  animation: tour-fade 0.4s;
+}
+@keyframes tour-fade { from { opacity: 0; } to { opacity: 1; } }
+.tour-card {
+  background: linear-gradient(180deg, #1a1410, #0a0805);
+  border: 1px solid rgba(201,169,97,0.4);
+  border-radius: 20px;
+  width: 100%; max-width: 380px;
+  padding: 24px 22px 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(247,147,26,0.15);
+}
+.tour-progress {
+  height: 3px; background: rgba(255,255,255,0.08); border-radius: 999px;
+  margin-bottom: 22px; overflow: hidden;
+}
+.tour-progress span {
+  display: block; height: 100%; background: linear-gradient(90deg, #f7931a, #c9a961);
+  width: 20%; transition: width 0.4s ease;
+}
+.tour-slide { text-align: center; min-height: 220px; }
+.tour-emoji {
+  font-size: 64px; margin-bottom: 12px;
+  animation: tour-bounce 1.2s cubic-bezier(.34,1.56,.64,1);
+  filter: drop-shadow(0 0 30px rgba(247,147,26,0.5));
+}
+@keyframes tour-bounce {
+  0% { transform: scale(0) rotate(-20deg); opacity: 0; }
+  60% { transform: scale(1.2) rotate(8deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); }
+}
+.tour-title {
+  font-family: var(--serif); font-size: 22px; color: var(--gold);
+  letter-spacing: 2px; margin-bottom: 10px;
+}
+.tour-body {
+  color: var(--text-soft); font-size: 13.5px; line-height: 1.55; padding: 0 6px;
+}
+.tour-actions { display: flex; gap: 10px; margin-top: 20px; }
+.tour-skip {
+  flex: 1; padding: 12px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 12px;
+  font-weight: 600; cursor: pointer; font-size: 13px;
+}
+.tour-next {
+  flex: 2; padding: 12px;
+  background: linear-gradient(135deg, #f7931a, #c9a961);
+  border: none; color: #000; border-radius: 12px;
+  font-weight: 700; cursor: pointer; font-size: 14px; letter-spacing: 1px;
+}
+.tour-dots {
+  display: flex; gap: 6px; justify-content: center; margin-top: 14px;
+}
+.tour-dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s;
+}
+.tour-dots span.active {
+  background: var(--btc); width: 18px; border-radius: 999px;
+}
 .auth-tos {
   font-size: 11px; color: var(--text-dim);
   text-align: center; margin-top: 10px; line-height: 1.5;
@@ -2678,6 +2835,20 @@ a { text-decoration: none; color: inherit; }
           </div>
         </div>
 
+        <div class="referral-card" id="referralCard">
+          <div class="referral-title">🤝 INVITA AMICI · GUADAGNA SATS</div>
+          <div class="referral-desc">Per ogni amico che si registra col tuo link ricevi <b>500 sats</b>.</div>
+          <div class="referral-stats">
+            <div><b id="refInvitedCount">0</b><div class="ref-lbl">Invitati</div></div>
+            <div><b id="refEarnedSats">0</b><div class="ref-lbl">⚡ Sats guadagnati</div></div>
+          </div>
+          <div class="referral-link-row">
+            <input id="refLink" readonly value="" onclick="this.select()">
+            <button onclick="copyRefLink()">Copia</button>
+          </div>
+          <button class="referral-share" onclick="shareRefLink()">📲 Condividi su Telegram</button>
+        </div>
+
         <div class="support-card">
           <div class="support-title">💬 Hai bisogno di aiuto?</div>
           <p class="support-text">
@@ -2724,10 +2895,19 @@ a { text-decoration: none; color: inherit; }
         <button class="btn-primary" onclick="openInviteBattle()">⚔️ Sfida un match</button>
       </div>
 
+      <h3 style="color:var(--text-soft);font-size:13px;letter-spacing:2px;margin:20px 0 10px;">📅 PROSSIMI EVENTI</h3>
+      <div id="battleEventsList"></div>
+
       <div id="arenaPending" style="margin-top:14px;"></div>
 
       <h3 style="color:var(--text-soft);font-size:13px;letter-spacing:2px;margin:20px 0 10px;">🔥 LIVE NOW</h3>
       <div id="arenaLiveList"></div>
+
+      <div class="leaderboard-tabs">
+        <button class="lb-tab active" data-lb="champions" onclick="switchLeaderboard('champions')">👑 Top Champions</button>
+        <button class="lb-tab" data-lb="boosters" onclick="switchLeaderboard('boosters')">⚡ Top Boosters</button>
+      </div>
+      <div id="leaderboardList"></div>
     </section>
 
     <!-- Battle View overlay -->
@@ -3045,6 +3225,23 @@ a { text-decoration: none; color: inherit; }
 </div>
 
 <!-- ONBOARDING WIZARD -->
+<!-- INTERACTIVE TOUR (primo accesso) -->
+<div id="tourOverlay" class="tour-overlay" style="display:none;">
+  <div class="tour-card">
+    <div class="tour-progress"><span id="tourProgressFill"></span></div>
+    <div class="tour-slide" id="tourSlide">
+      <div class="tour-emoji" id="tourEmoji">⚡</div>
+      <div class="tour-title" id="tourTitle">—</div>
+      <div class="tour-body" id="tourBody">—</div>
+    </div>
+    <div class="tour-actions">
+      <button class="tour-skip" onclick="tourSkip()">Salta</button>
+      <button class="tour-next" id="tourNextBtn" onclick="tourNext()">Avanti →</button>
+    </div>
+    <div class="tour-dots" id="tourDots"></div>
+  </div>
+</div>
+
 <div class="onboarding" id="onboarding">
   <div class="onb-step" id="onbStep1">
     <div class="onb-icon">⚡</div>
@@ -4305,7 +4502,7 @@ function openSection(name) {
   document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
 
   if (name === 'explore') loadExploreFeed(true);
-  if (name === 'profile') { renderProfileClips(); loadProfileForm(); }
+  if (name === 'profile') { renderProfileClips(); loadProfileForm(); loadReferral(); }
   if (name === 'chat') renderChats();
   if (name === 'arena') loadArena();
 }
@@ -4401,7 +4598,8 @@ async function doRegister() {
   if (password !== confirm) return toast('Le password non coincidono');
 
   btn.disabled = true; btn.textContent = 'Creazione...';
-  const r = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username, email, password }) });
+  const ref = localStorage.getItem('kv-ref') || '';
+  const r = await api('/auth/register', { method: 'POST', body: JSON.stringify({ username, email, password, ref }) });
   btn.disabled = false; btn.textContent = 'Crea account';
 
   if (r?.token) {
@@ -4491,6 +4689,12 @@ function setAvatarPhoto(src) {
 // ============= INIT =============
 function init() {
   loadLocal();
+  // Cattura referral code da URL e salva per il register
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) localStorage.setItem('kv-ref', ref);
+  } catch(e) {}
 
   renderStories();
   renderNewProfiles();
@@ -4606,6 +4810,145 @@ function init() {
   }
 }
 
+// ============= LEADERBOARD =============
+let _lbCache = null;
+let _lbActiveTab = 'champions';
+async function loadLeaderboard() {
+  const r = await api('/leaderboard/weekly');
+  if (!r?.ok) return;
+  _lbCache = r;
+  renderLeaderboard();
+}
+function switchLeaderboard(tab) {
+  _lbActiveTab = tab;
+  document.querySelectorAll('.lb-tab').forEach(t => t.classList.toggle('active', t.dataset.lb === tab));
+  renderLeaderboard();
+}
+function renderLeaderboard() {
+  const box = document.getElementById('leaderboardList');
+  if (!box || !_lbCache) return;
+  const list = _lbActiveTab === 'champions' ? _lbCache.topChampions : _lbCache.topBoosters;
+  if (!list.length) {
+    box.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;font-size:12px;">Nessun dato negli ultimi 7 giorni</div>';
+    return;
+  }
+  box.innerHTML = list.map((item, i) => {
+    const rankClass = i === 0 ? 'top1' : (i === 1 ? 'top2' : (i === 2 ? 'top3' : ''));
+    const medal = i === 0 ? '🥇' : (i === 1 ? '🥈' : (i === 2 ? '🥉' : `#${i + 1}`));
+    const stat = _lbActiveTab === 'champions'
+      ? `${item.wins} W · ⚡${(item.sats_earned || 0).toLocaleString()}`
+      : `⚡${(item.sats_boosted || 0).toLocaleString()}`;
+    return `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass}">${medal}</div>
+        <div class="lb-av">${item.user.avatar}</div>
+        <div class="lb-name">${escHtml(item.user.firstName)}${item.user.is_champion ? ' 👑' : ''}</div>
+        <div class="lb-stat">${stat}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============= BATTLE EVENTS =============
+let _eventsTimer = null;
+let _eventsCache = null;
+async function loadBattleEvents() {
+  const r = await api('/battle-events');
+  if (!r?.ok) return;
+  _eventsCache = r.events;
+  renderBattleEvents();
+  if (_eventsTimer) clearInterval(_eventsTimer);
+  _eventsTimer = setInterval(renderBattleEvents, 1000);
+}
+function renderBattleEvents() {
+  const box = document.getElementById('battleEventsList');
+  if (!box || !_eventsCache) return;
+  const nowMs = Date.now();
+  box.innerHTML = _eventsCache.map(e => {
+    const isLive = e.isLive && nowMs >= e.startsAt && nowMs <= e.endsAt;
+    const diff = Math.max(0, e.startsAt - nowMs);
+    const d = Math.floor(diff / (24*60*60*1000));
+    const h = Math.floor((diff / (60*60*1000)) % 24);
+    const m = Math.floor((diff / (60*1000)) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+    const cd = isLive
+      ? '<span class="event-live-pulse"></span>LIVE'
+      : (d > 0 ? `${d}g ${h}h` : (h > 0 ? `${h}h ${m}m` : `${m}m ${String(s).padStart(2,'0')}s`));
+    return `
+      <div class="event-card ${isLive ? 'live' : ''}">
+        <div class="event-info">
+          <div class="event-title">${e.title}</div>
+          <div class="event-desc">${e.desc}</div>
+          <div class="event-prize">🏆 Pool premi: ⚡${e.prize_sats.toLocaleString()} sats</div>
+        </div>
+        <div class="event-countdown">${cd}</div>
+      </div>`;
+  }).join('');
+}
+
+// ============= REFERRAL =============
+let _refLink = '';
+async function loadReferral() {
+  if (!state.token) return;
+  const r = await api('/me/referral');
+  if (!r?.ok) return;
+  _refLink = r.link;
+  document.getElementById('refLink').value = r.link;
+  document.getElementById('refInvitedCount').textContent = r.invited_count;
+  document.getElementById('refEarnedSats').textContent = r.earned_sats;
+}
+function copyRefLink() {
+  const el = document.getElementById('refLink');
+  el.select();
+  try { document.execCommand('copy'); toast('Link copiato'); }
+  catch(e) { navigator.clipboard?.writeText(_refLink).then(() => toast('Link copiato')); }
+}
+function shareRefLink() {
+  const text = encodeURIComponent('🎙 Unisciti a Kouverte — il voice dating su Bitcoin. Registrati col mio link e iniziamo:');
+  window.open(`https://t.me/share/url?url=${encodeURIComponent(_refLink)}&text=${text}`, '_blank');
+}
+
+// ============= TOUR INTERATTIVO =============
+const TOUR_SLIDES = [
+  { emoji: '⚡', title: 'BENVENUTO SU KOUVERTE', body: 'Il primo voice dating su Bitcoin. Le persone si scelgono per come parlano, non per come appaiono. 30 secondi e ti spiego tutto.' },
+  { emoji: '🎙️', title: 'LA VOCE È IL TUO PROFILO', body: 'Scegli un prompt guidato ("il tuo posto del cuore", "la tua canzone…") e rispondi in 30 secondi. I profili con voce ricevono 5× like.' },
+  { emoji: '🔍', title: 'ESPLORA E ASCOLTA', body: 'Filtra per età, genere, distanza GPS. Ascolta le voci, metti like dove senti una connessione. Match reciproci ti permettono di chiamare subito.' },
+  { emoji: '⚔️', title: 'VOICE BATTLE = ARENA', body: 'Sfida un match in una battle vocale di 3 minuti. Il pubblico boosta con sats. Vincitore prende 70% del pot e il Champion badge 24h.' },
+  { emoji: '₿', title: 'GUADAGNA IN BITCOIN', body: 'Tutti i boost sono in sats reali. Vinci battle → ricevi sats accreditati istantanei. Pagamenti BTC on-chain con verifica blockchain.' }
+];
+let _tourIdx = 0;
+
+function startTour() {
+  if (localStorage.getItem('kv-tour-done')) return;
+  _tourIdx = 0;
+  const dots = document.getElementById('tourDots');
+  dots.innerHTML = TOUR_SLIDES.map((_, i) => `<span class="${i === 0 ? 'active' : ''}"></span>`).join('');
+  renderTourSlide();
+  document.getElementById('tourOverlay').style.display = 'flex';
+}
+function renderTourSlide() {
+  const s = TOUR_SLIDES[_tourIdx];
+  const slide = document.getElementById('tourSlide');
+  // re-trigger animation
+  slide.style.animation = 'none';
+  void slide.offsetWidth;
+  slide.style.animation = '';
+  document.getElementById('tourEmoji').textContent = s.emoji;
+  document.getElementById('tourTitle').textContent = s.title;
+  document.getElementById('tourBody').textContent = s.body;
+  document.getElementById('tourProgressFill').style.width = (((_tourIdx + 1) / TOUR_SLIDES.length) * 100) + '%';
+  document.querySelectorAll('#tourDots span').forEach((d, i) => d.classList.toggle('active', i === _tourIdx));
+  document.getElementById('tourNextBtn').textContent = _tourIdx === TOUR_SLIDES.length - 1 ? 'Inizia ora ⚡' : 'Avanti →';
+}
+function tourNext() {
+  if (_tourIdx < TOUR_SLIDES.length - 1) { _tourIdx++; renderTourSlide(); }
+  else tourFinish();
+}
+function tourSkip() { tourFinish(); }
+function tourFinish() {
+  localStorage.setItem('kv-tour-done', '1');
+  document.getElementById('tourOverlay').style.display = 'none';
+}
+
 // ============= ONBOARDING (LAZY) =============
 function shouldShowOnboarding() {
   if (localStorage.getItem('kv-onb-done')) return false;
@@ -4619,6 +4962,8 @@ function onbFinish() {
   localStorage.setItem('kv-age-confirmed', '1');
   localStorage.setItem('kv-onb-done', '1');
   document.getElementById('onboarding').classList.remove('show');
+  // Tour interattivo dopo onboarding
+  setTimeout(() => startTour(), 200);
   openSection('explore');
   // Nudge gentile dopo 60s se ancora non registra
   setTimeout(() => { if (!_userHasClip) showRecordNudge(); }, 60000);
@@ -5083,6 +5428,9 @@ async function loadArena() {
   // balance
   const bRes = await api('/me/balance');
   if (bRes?.ok) document.getElementById('arenaBalanceSats').textContent = bRes.sats || 0;
+  // eventi + leaderboard
+  loadBattleEvents();
+  loadLeaderboard();
   // pending invites (incoming + outgoing)
   const [pRes, oRes] = await Promise.all([api('/battles/pending'), api('/battles/outgoing')]);
   const pBox = document.getElementById('arenaPending');

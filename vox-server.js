@@ -171,6 +171,20 @@ let DB = loadDB();
             markDirty();
         } catch(e) { console.error('Failed to hash test password:', e); }
     }
+
+    // Auto-seed al primo deploy se non ci sono ancora profili seed e il feed è vuoto/piccolo
+    try {
+        const seedCount = (DB.users || []).filter(u => u.seed).length;
+        const realCount = (DB.users || []).filter(u => !u.seed && !u.id.startsWith('u_test')).length;
+        if (seedCount === 0 && realCount < 5 && process.env.AUTO_SEED !== '0') {
+            const { spawnSync } = require('child_process');
+            const r = spawnSync('node', [path.join(__dirname, 'seed-users.js')], { encoding: 'utf8', timeout: 60000 });
+            if (!r.error) {
+                console.log('[AUTO-SEED]', (r.stdout || '').trim().slice(0, 200));
+                DB = loadDB(); // reload
+            }
+        }
+    } catch(e) { console.error('Auto-seed failed:', e.message); }
 })();
 
 // Salva periodicamente solo se dirty
@@ -297,6 +311,112 @@ app.get('/api/health', (req, res) => {
 });
 
 // Register — rate limited 3/15min per IP
+// ============ LEADERBOARD SETTIMANALE ============
+app.get('/api/leaderboard/weekly', (req, res) => {
+    const nowMs = now();
+    const weekAgo = nowMs - 7 * 24 * 60 * 60 * 1000;
+    DB.battles = DB.battles || [];
+
+    // Top Champions: utenti con più vittorie negli ultimi 7gg
+    const winsByUser = {};
+    const sumScoreByUser = {};
+    DB.battles.filter(b => b.status === 'ended' && b.endedAt >= weekAgo).forEach(b => {
+        if (b.winnerId) winsByUser[b.winnerId] = (winsByUser[b.winnerId] || 0) + 1;
+        sumScoreByUser[b.userA] = (sumScoreByUser[b.userA] || 0) + (b.scoreA || 0);
+        sumScoreByUser[b.userB] = (sumScoreByUser[b.userB] || 0) + (b.scoreB || 0);
+    });
+
+    // Top Boosters: utenti che hanno boostato più sats negli ultimi 7gg
+    const boostsByUser = {};
+    DB.battles.filter(b => (b.boosts || []).length).forEach(b => {
+        (b.boosts || []).filter(x => x.at >= weekAgo).forEach(x => {
+            boostsByUser[x.userId] = (boostsByUser[x.userId] || 0) + (x.amount || 0);
+        });
+    });
+
+    const mapUser = (id) => {
+        const u = DB.users.find(x => x.id === id);
+        if (!u) return null;
+        return {
+            id: u.id,
+            firstName: u.firstName || u.username,
+            username: u.username,
+            avatar: (u.firstName || u.username || '?').charAt(0).toUpperCase(),
+            is_champion: !!(u.champion_until && u.champion_until > nowMs)
+        };
+    };
+
+    const topChampions = Object.entries(winsByUser)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([id, wins]) => ({ user: mapUser(id), wins, sats_earned: sumScoreByUser[id] || 0 }))
+        .filter(x => x.user);
+
+    const topBoosters = Object.entries(boostsByUser)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([id, sats]) => ({ user: mapUser(id), sats_boosted: sats }))
+        .filter(x => x.user);
+
+    res.json({ ok: true, period: 'week', topChampions, topBoosters });
+});
+
+// ============ BATTLE EVENTS (calendario ricorrente) ============
+// Eventi settimanali con countdown live. Tutti i tempi in Europe/Rome (UTC+1/2).
+// Day: 0=Domenica, 1=Lunedì, ..., 6=Sabato
+const BATTLE_EVENTS = [
+    { id: 'fri_prime', title: '🔥 FRIDAY PRIME', desc: 'Battle royale del weekend', day: 5, hour: 21, durationMin: 120, prize_sats: 5000 },
+    { id: 'sat_night', title: '🌙 SATURDAY NIGHT', desc: 'Notte di sfide vocali', day: 6, hour: 22, durationMin: 180, prize_sats: 10000 },
+    { id: 'sun_chill', title: '☕ SUNDAY CHILL', desc: 'Battle rilassate domenicali', day: 0, hour: 18, durationMin: 90, prize_sats: 2000 },
+    { id: 'wed_warm', title: '⚡ WEDNESDAY WARM-UP', desc: 'Mid-week training battles', day: 3, hour: 20, durationMin: 60, prize_sats: 1500 }
+];
+
+function nextOccurrence(event, fromMs) {
+    const from = new Date(fromMs);
+    const target = new Date(from);
+    const daysAhead = (event.day - from.getDay() + 7) % 7;
+    target.setDate(from.getDate() + daysAhead);
+    target.setHours(event.hour, 0, 0, 0);
+    if (target.getTime() <= fromMs) target.setDate(target.getDate() + 7);
+    return target.getTime();
+}
+
+app.get('/api/battle-events', (req, res) => {
+    const nowMs = now();
+    const events = BATTLE_EVENTS.map(e => {
+        const startsAt = nextOccurrence(e, nowMs);
+        const endsAt = startsAt + (e.durationMin * 60 * 1000);
+        const isLive = nowMs >= (startsAt - 60 * 60 * 1000) && nowMs <= endsAt; // live within window
+        return { ...e, startsAt, endsAt, isLive };
+    }).sort((a, b) => a.startsAt - b.startsAt);
+    res.json({ ok: true, events });
+});
+
+// ============ REFERRAL ============
+const REFERRAL_REWARD_SATS = 500;
+
+app.get('/api/me/referral', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    const user = DB.users.find(u => u.id === userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    if (!user.referral_code) {
+        user.referral_code = 'ref_' + (user.username || user.id.slice(-6)).toLowerCase() + Math.floor(Math.random() * 1000);
+        markDirty();
+    }
+    const link = (process.env.PUBLIC_URL || 'https://www.kouverte.com') + '/app.html?ref=' + user.referral_code;
+    DB.referrals = DB.referrals || [];
+    const invited = DB.referrals.filter(r => r.from === userId);
+    const earned = invited.reduce((a, r) => a + (r.reward_sats || 0), 0);
+    res.json({
+        ok: true,
+        code: user.referral_code,
+        link,
+        invited_count: invited.length,
+        earned_sats: earned,
+        reward_per_referral: REFERRAL_REWARD_SATS
+    });
+});
+
 app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (req, res) => {
     const emailIn = sanitizeEmail(req.body?.email);
     const usernameIn = sanitizeUsername(req.body?.username);
@@ -349,6 +469,25 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
             credits: 50,
             updated_at: now()
         });
+
+        // Referral reward: se è stato passato un codice valido, accredita sats al referrer
+        const refCode = (req.body?.ref || '').toString().trim();
+        if (refCode) {
+            const referrer = DB.users.find(u => u.referral_code === refCode);
+            if (referrer && referrer.id !== user.id) {
+                user.referred_by = referrer.id;
+                DB.referrals = DB.referrals || [];
+                DB.referrals.push({
+                    id: genId('rfr'),
+                    from: referrer.id,
+                    to: user.id,
+                    reward_sats: REFERRAL_REWARD_SATS,
+                    created_at: now()
+                });
+                addBalance(referrer.id, REFERRAL_REWARD_SATS);
+                notifyTelegramUser(referrer.id, `🎉 Hai invitato un nuovo utente! +${REFERRAL_REWARD_SATS} sats accreditati.`);
+            }
+        }
 
         saveDB(DB);
 
