@@ -5363,6 +5363,15 @@ async function openTopUp() {
   // Carica crediti disponibili
   const r = await api('/shop/credits');
   document.getElementById('topupConvertBalance').textContent = 'Crediti disponibili: ' + (r?.credits ?? 0);
+  // Hide Lightning tab if disabled
+  try {
+    const s = await api('/lightning/status');
+    const lnTab = document.querySelector('.topup-tab[data-tab="ln"]');
+    if (lnTab) lnTab.style.display = s?.enabled ? '' : 'none';
+  } catch(e) {
+    const lnTab = document.querySelector('.topup-tab[data-tab="ln"]');
+    if (lnTab) lnTab.style.display = 'none';
+  }
   switchTopupTab('convert');
   document.getElementById('topupSatsModal').style.display = 'flex';
 }

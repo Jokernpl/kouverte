@@ -1761,6 +1761,11 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
     res.json({ stories });
 });
 
+// Lightning: status pubblico (frontend usa questo per nascondere tab se non attivo)
+app.get('/api/lightning/status', (req, res) => {
+    res.json({ enabled: !!lightning.ENABLED, provider: lightning.PROVIDER });
+});
+
 // Lightning: smoke test connessione provider
 app.post('/api/admin/lightning-test', verifyAdmin, async (req, res) => {
     if (!lightning.ENABLED) {
