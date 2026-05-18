@@ -305,6 +305,14 @@ function renderBtc(box) {
     <div id="confirmRes" style="margin-top:14px;font-size:13px;"></div>
 
     <hr style="margin:30px 0;border:none;border-top:1px solid var(--border);">
+    <h3 style="color:var(--gold);margin:0 0 8px;letter-spacing:2px;">⚡ Lightning</h3>
+    <p style="color:var(--text-dim);font-size:13px;margin:0 0 10px;">
+      Verifica la connessione al provider Lightning (Coinos/LNbits) usando le env var del server.
+    </p>
+    <button class="btn-action btn-confirm" onclick="testLightning()">🧪 Test connessione</button>
+    <pre id="lnTestRes" style="margin-top:14px;font-size:11px;color:var(--text-dim);background:rgba(0,0,0,0.4);padding:10px;border-radius:6px;white-space:pre-wrap;max-height:200px;overflow:auto;"></pre>
+
+    <hr style="margin:30px 0;border:none;border-top:1px solid var(--border);">
     <h3 style="color:var(--gold);margin:0 0 8px;letter-spacing:2px;">🌱 Seed profili</h3>
     <p style="color:var(--text-dim);font-size:13px;margin:0 0 10px;">
       Popola il feed Esplora con ~30 profili italiani realistici (no audio).
@@ -320,6 +328,23 @@ async function seedUsers() {
   const r = await api('/admin/seed-users', { method: 'POST' });
   if (r?.ok) { res.style.color = 'var(--green)'; res.textContent = r.output || 'OK'; loadStats(); }
   else { res.style.color = 'var(--red)'; res.textContent = '❌ ' + (r?.error || 'Errore'); }
+}
+
+async function testLightning() {
+  const res = document.getElementById('lnTestRes');
+  res.textContent = 'Test in corso…';
+  const r = await api('/admin/lightning-test', { method: 'POST' });
+  if (r?.ok) {
+    res.style.color = 'var(--green)';
+    res.textContent = `✅ Provider: ${r.provider}\nInvoice di test generato:\n${r.bolt11_preview}\n\n${r.note}`;
+  } else {
+    res.style.color = 'var(--red)';
+    if (!r?.enabled) {
+      res.textContent = `❌ Lightning non attivo (provider: ${r?.provider})\n\n${r?.hint || ''}`;
+    } else {
+      res.textContent = `❌ Errore connessione (provider: ${r?.provider}):\n${r?.error}`;
+    }
+  }
 }
 async function confirmBtc() {
   const pid = document.getElementById('confirmPid').value.trim();

@@ -1761,6 +1761,31 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
     res.json({ stories });
 });
 
+// Lightning: smoke test connessione provider
+app.post('/api/admin/lightning-test', verifyAdmin, async (req, res) => {
+    if (!lightning.ENABLED) {
+        return res.json({
+            ok: false,
+            enabled: false,
+            provider: lightning.PROVIDER,
+            hint: 'Imposta LIGHTNING_ENABLED=1 + COINOS_TOKEN (o LNBITS_URL+LNBITS_INVOICE_KEY) e fai redeploy.'
+        });
+    }
+    try {
+        const inv = await lightning.createInvoice(10, 'Kouverte test');
+        res.json({
+            ok: true,
+            enabled: true,
+            provider: lightning.PROVIDER,
+            bolt11_preview: (inv.bolt11 || '').slice(0, 40) + '…',
+            payment_hash: inv.paymentHash,
+            note: 'Invoice di test da 10 sat generato. Non pagarlo — è solo per verifica connessione.'
+        });
+    } catch(e) {
+        res.json({ ok: false, enabled: true, provider: lightning.PROVIDER, error: e.message });
+    }
+});
+
 // Seed users: trigger one-shot from admin panel
 app.post('/api/admin/seed-users', verifyAdmin, async (req, res) => {
     try {
