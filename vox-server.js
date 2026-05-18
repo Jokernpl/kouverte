@@ -602,6 +602,28 @@ app.get('/api/profile/:username', (req, res) => {
 });
 
 // Update profile
+// Cambia username (1 volta ogni 7 giorni per evitare squatting)
+app.post('/api/profile/username', verifyToken, rateLimit('username-change', 3, 24 * 60 * 60 * 1000), (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const next = sanitizeUsername(req.body?.username);
+    if (!next) return res.status(400).json({ error: 'Username non valido (3-20 caratteri, lettere/numeri/_)' });
+    if (next === user.username) return res.json({ ok: true, username: user.username });
+    if (DB.users.find(u => u.username === next && u.id !== user.id)) {
+        return res.status(409).json({ error: 'Username già in uso' });
+    }
+    // Limite anti-squatting: max 1 cambio ogni 7 giorni
+    const last = user.username_changed_at || 0;
+    if (now() - last < 7 * 24 * 60 * 60 * 1000) {
+        const days = Math.ceil((7 * 24 * 60 * 60 * 1000 - (now() - last)) / (24 * 60 * 60 * 1000));
+        return res.status(429).json({ error: `Puoi cambiare username ogni 7 giorni (attendi ${days}g)` });
+    }
+    user.username = next;
+    user.username_changed_at = now();
+    markDirty();
+    res.json({ ok: true, username: next });
+});
+
 app.post('/api/profile/update', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
@@ -1898,6 +1920,35 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
         };
     }).sort((a, b) => b.created_at - a.created_at).slice(0, 100);
     res.json({ stories });
+});
+
+// ICE servers (STUN + TURN) — config via env per audio robusto su NAT simmetrici
+// Setup TURN (opzionale ma raccomandato per produzione):
+//   TURN_URL=turn:turn.example.com:3478
+//   TURN_USERNAME=<utente>
+//   TURN_CREDENTIAL=<password>
+// Provider gratuiti/economici: Metered.ca (50GB free/mese), Twilio NTS, coturn self-hosted.
+app.get('/api/ice-servers', (req, res) => {
+    const ice = [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+    ];
+    if (process.env.TURN_URL && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+        ice.push({
+            urls: process.env.TURN_URL,
+            username: process.env.TURN_USERNAME,
+            credential: process.env.TURN_CREDENTIAL
+        });
+    }
+    // Aggiuntivi via env CSV: TURN_EXTRA_URLS=turns:foo:5349,turn:bar:3478
+    if (process.env.TURN_EXTRA_URLS && process.env.TURN_USERNAME && process.env.TURN_CREDENTIAL) {
+        process.env.TURN_EXTRA_URLS.split(',').forEach(u => {
+            const url = u.trim();
+            if (url) ice.push({ urls: url, username: process.env.TURN_USERNAME, credential: process.env.TURN_CREDENTIAL });
+        });
+    }
+    res.json({ iceServers: ice });
 });
 
 // Lightning: status pubblico (frontend usa questo per nascondere tab se non attivo)

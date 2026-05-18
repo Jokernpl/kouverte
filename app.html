@@ -2860,8 +2860,8 @@ a { text-decoration: none; color: inherit; }
       </div>
 
       <div class="profile-body">
-        <div class="profile-name"><span id="profileNameTxt">Alessia</span> <span class="verified-tick">✓</span> <span id="profileChampion" style="display:none;color:#f7931a;" title="Champion (24h)">👑</span></div>
-        <div class="profile-location">Milano, Italia</div>
+        <div class="profile-name"><span id="profileNameTxt">—</span> <span class="verified-tick" id="profileVerifiedTick" style="display:none;">✓</span> <span id="profileChampion" style="display:none;color:#f7931a;" title="Champion (24h)">👑</span></div>
+        <div class="profile-location" id="profileLocation"></div>
 
         <div class="profile-stats" id="profileStatsArena">
           <div class="stat"><div class="stat-num" id="statWins">0</div><div class="stat-lbl">⚔️ Vittorie</div></div>
@@ -2869,14 +2869,7 @@ a { text-decoration: none; color: inherit; }
           <div class="stat"><div class="stat-num" id="statSats">0</div><div class="stat-lbl">⚡ Sats</div></div>
         </div>
 
-        <div class="profile-bio">
-          "Vivo ogni giorno come un'opera d'arte. Eleganza non è farsi notare, ma farsi ricordare."
-        </div>
-
-        <div class="profile-actions">
-          <button class="btn-primary" onclick="toast('Messaggio inviato')">Messaggio</button>
-          <button class="btn-outline" onclick="toast('Seguendo')">Segui già</button>
-        </div>
+        <div class="profile-bio" id="profileBioDisplay"></div>
 
         <div class="profile-categories" id="profileCategories"></div>
 
@@ -2914,8 +2907,14 @@ a { text-decoration: none; color: inherit; }
         <div class="clips-section">
           <div class="clips-title">IL TUO PROFILO</div>
           <div class="profile-edit" id="profileEditForm">
+            <label class="pe-label">Username (univoco)</label>
+            <input type="text" id="peUsername" class="pe-input" placeholder="esempio_user" maxlength="20" pattern="[a-zA-Z0-9_]{3,20}">
+
             <label class="pe-label">Nome visualizzato</label>
             <input type="text" id="peDisplayName" class="pe-input" placeholder="Come ti chiami?" maxlength="40">
+
+            <label class="pe-label">Città</label>
+            <input type="text" id="peCity" class="pe-input" placeholder="es. Milano" maxlength="60">
 
             <label class="pe-label">Bio</label>
             <textarea id="peBio" class="pe-input pe-textarea" placeholder="Raccontati in poche parole..." rows="3" maxlength="280"></textarea>
@@ -3561,7 +3560,7 @@ function renderStories() {
   el.innerHTML = STORY_DATA.map(s => {
     if (s.add) {
       return `
-        <div class="story" onclick="toast('Aggiungi storia')">
+        <div class="story" onclick="openVoicePrompts(0)">
           <div class="story-add">+</div>
           <span class="story-label">${s.name}</span>
         </div>`;
@@ -4090,16 +4089,31 @@ async function loadProfileForm() {
   if (!state.token) return;
   try {
     const r = await api('/auth/me');
-    const u = r?.user;
+    if (!r?.ok || !r?.user) {
+      // Token scaduto o utente non esiste — pulisci e mostra login
+      localStorage.removeItem('kouverte');
+      state.token = null; state.user = null;
+      toast('Sessione scaduta, accedi di nuovo');
+      showAuthModal();
+      return;
+    }
+    const u = r.user;
     const p = u?.profile;
     const setVal = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+    setVal('peUsername', u.username || '');
     if (p) {
       setVal('peDisplayName', p.display_name || '');
       setVal('peBio', p.bio || '');
+      setVal('peCity', p.city || '');
       setVal('peGender', p.gender || '');
       setVal('peLookingFor', p.looking_for || 'all');
       setVal('peBirthYear', p.birth_year || '');
     }
+    // Aggiorna display in alto
+    const dispName = p?.display_name || u.firstName || u.username || 'Tu';
+    document.getElementById('profileNameTxt').textContent = dispName;
+    document.getElementById('profileLocation').textContent = p?.city || '';
+    document.getElementById('profileBioDisplay').textContent = p?.bio ? '"' + p.bio + '"' : '';
     // Arena stats
     if (u) {
       const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
@@ -4117,18 +4131,39 @@ async function loadProfileForm() {
 async function saveProfile() {
   if (!state.token) { showAuthModal(); return; }
   const btn = document.getElementById('peSaveBtn');
+  const newUsername = document.getElementById('peUsername').value.trim();
   const payload = {
     display_name: document.getElementById('peDisplayName').value.trim(),
     bio:          document.getElementById('peBio').value.trim(),
+    city:         document.getElementById('peCity').value.trim() || undefined,
     gender:       document.getElementById('peGender').value || undefined,
     looking_for:  document.getElementById('peLookingFor').value || undefined,
     birth_year:   parseInt(document.getElementById('peBirthYear').value) || undefined
   };
   btn.disabled = true; btn.textContent = 'Salvataggio...';
+
+  // Username change (separato perché tocca tabella users)
+  if (newUsername && newUsername !== state.user?.username) {
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(newUsername)) {
+      toast('Username 3-20 caratteri (lettere/numeri/_)');
+      btn.disabled = false; btn.textContent = 'Salva profilo';
+      return;
+    }
+    const u = await api('/profile/username', { method: 'POST', body: JSON.stringify({ username: newUsername }) });
+    if (!u?.ok) {
+      toast(u?.error || 'Errore username');
+      btn.disabled = false; btn.textContent = 'Salva profilo';
+      return;
+    }
+    if (state.user) state.user.username = newUsername;
+    localStorage.setItem('kouverte', JSON.stringify({ token: state.token, user: state.user }));
+  }
+
   const r = await api('/profile/update', { method: 'POST', body: JSON.stringify(payload) });
   btn.disabled = false; btn.textContent = 'Salva profilo';
   if (r?.ok) {
     toast('Profilo aggiornato');
+    loadProfileForm(); // refresh display
   } else {
     toast(r?.error || 'Errore salvataggio');
   }
@@ -5476,7 +5511,22 @@ let _callTimerInterval = null;
 let _callStartTime = 0;
 let _incomingCall = null;
 
-const STUN = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+// ICE servers: STUN + TURN dinamici dal server (per audio robusto dietro NAT)
+let ICE_SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+const STUN = ICE_SERVERS; // backward compat
+(async function loadIceServers() {
+  try {
+    const r = await fetch('/api/ice-servers');
+    if (r.ok) {
+      const d = await r.json();
+      if (d?.iceServers?.length) {
+        ICE_SERVERS = { iceServers: d.iceServers };
+        // Aggiorna STUN ref per pc esistenti che la riusano
+        Object.assign(STUN, ICE_SERVERS);
+      }
+    }
+  } catch(e) {}
+})();
 
 function getSocket() {
   if (_socket) return _socket;
@@ -5956,7 +6006,7 @@ async function leaveBattleVoice(battleId) {
 
 function _createBattlePeer(remoteSocketId, isInitiator) {
   if (_battleVoicePeers[remoteSocketId]) return _battleVoicePeers[remoteSocketId];
-  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  const pc = new RTCPeerConnection(ICE_SERVERS);
   const audioEl = new Audio();
   audioEl.autoplay = true;
   document.body.appendChild(audioEl);
