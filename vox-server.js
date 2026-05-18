@@ -760,6 +760,8 @@ app.get('/api/users/feed', (req, res) => {
                 clip_id: activeClip?.id || null,
                 clip_duration: activeClip?.duration_ms || 0,
                 likes_received: u.stats?.likes_received || 0,
+                city: u.profile?.city || null,
+                is_seed: !!u.seed,
                 created_at: u.created_at || nowMs
             };
         })
@@ -1674,6 +1676,20 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
         };
     }).sort((a, b) => b.created_at - a.created_at).slice(0, 100);
     res.json({ stories });
+});
+
+// Seed users: trigger one-shot from admin panel
+app.post('/api/admin/seed-users', verifyAdmin, async (req, res) => {
+    try {
+        const { spawnSync } = require('child_process');
+        const r = spawnSync('node', [path.join(__dirname, 'seed-users.js')], { encoding: 'utf8', timeout: 60000 });
+        if (r.error) return res.status(500).json({ error: 'seed failed', detail: r.error.message });
+        // Reload DB
+        DB = loadDB();
+        res.json({ ok: true, output: (r.stdout || '') + (r.stderr || '') });
+    } catch(e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.get('/api/admin/battles', verifyAdmin, (req, res) => {

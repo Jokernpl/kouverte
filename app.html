@@ -3772,7 +3772,7 @@ function renderUserCard(u) {
     <div class="user-card" id="ucard_${u.id}">
       <div class="user-card-avatar">${letter}</div>
       <div class="user-card-body">
-        <div class="user-card-name">${escHtml(u.username)}</div>
+        <div class="user-card-name">${escHtml(u.username)}${u.age ? ` <span style="color:var(--text-dim);font-weight:400;">· ${u.age}</span>` : ''}${u.city ? ` <span style="color:var(--text-dim);font-weight:400;font-size:11px;">📍 ${escHtml(u.city)}</span>` : ''}</div>
         ${u.bio ? `<div class="user-card-bio">${escHtml(u.bio)}</div>` : ''}
         <div class="user-card-actions">
           ${hasClip ? `
