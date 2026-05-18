@@ -4774,15 +4774,145 @@ async function openBattle(id) {
   const s = getSocket();
   if (s) s.emit('battle:join', id);
   startBattleTick();
+  // Audio mesh
+  const myId = state.user?.id;
+  const role = (myId && (myId === r.battle.userA?.id || myId === r.battle.userB?.id)) ? 'speaker' : 'listener';
+  await joinBattleVoice(id, role);
 }
-function closeBattle() {
+async function closeBattle() {
   document.getElementById('battleView').style.display = 'none';
   const s = getSocket();
   if (s && _activeBattle) s.emit('battle:leave', _activeBattle.id);
+  await leaveBattleVoice(_activeBattle?.id);
   _activeBattle = null;
   if (_battleTickTimer) { clearInterval(_battleTickTimer); _battleTickTimer = null; }
   loadArena();
 }
+
+// ===== BATTLE VOICE MESH =====
+let _battleVoicePeers = {}; // socketId -> { pc, audioEl }
+let _battleVoiceStream = null;
+let _battleVoiceBattleId = null;
+let _battleVoiceRole = null;
+
+async function joinBattleVoice(battleId, role) {
+  _battleVoiceBattleId = battleId;
+  _battleVoiceRole = role;
+  const s = getSocket();
+  if (!s) return;
+  if (role === 'speaker') {
+    try {
+      _battleVoiceStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch(e) {
+      toast('Microfono non accessibile');
+      return;
+    }
+  }
+  s.emit('battle-voice:join', { battleId, userId: state.user?.id, role });
+}
+
+async function leaveBattleVoice(battleId) {
+  if (!battleId) return;
+  const s = getSocket();
+  if (s) s.emit('battle-voice:leave', { battleId });
+  Object.values(_battleVoicePeers).forEach(p => { try { p.pc.close(); } catch(e){}; if (p.audioEl) p.audioEl.remove(); });
+  _battleVoicePeers = {};
+  if (_battleVoiceStream) { _battleVoiceStream.getTracks().forEach(t => t.stop()); _battleVoiceStream = null; }
+  _battleVoiceBattleId = null;
+  _battleVoiceRole = null;
+}
+
+function _createBattlePeer(remoteSocketId, isInitiator) {
+  if (_battleVoicePeers[remoteSocketId]) return _battleVoicePeers[remoteSocketId];
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  const audioEl = new Audio();
+  audioEl.autoplay = true;
+  document.body.appendChild(audioEl);
+  pc.ontrack = (e) => { audioEl.srcObject = e.streams[0]; };
+  pc.onicecandidate = (e) => {
+    if (e.candidate) {
+      const s = getSocket();
+      if (s) s.emit('battle-voice:ice', { to: remoteSocketId, candidate: e.candidate, battleId: _battleVoiceBattleId });
+    }
+  };
+  if (_battleVoiceStream) {
+    _battleVoiceStream.getTracks().forEach(t => pc.addTrack(t, _battleVoiceStream));
+  }
+  _battleVoicePeers[remoteSocketId] = { pc, audioEl };
+  if (isInitiator) {
+    pc.createOffer().then(o => pc.setLocalDescription(o)).then(() => {
+      const s = getSocket();
+      if (s) s.emit('battle-voice:offer', { to: remoteSocketId, offer: pc.localDescription, battleId: _battleVoiceBattleId });
+    });
+  }
+  return _battleVoicePeers[remoteSocketId];
+}
+
+// Wire socket events (one-time, lazy)
+let _battleVoiceWired = false;
+function _wireBattleVoiceEvents() {
+  if (_battleVoiceWired) return;
+  const s = getSocket();
+  if (!s) return;
+  _battleVoiceWired = true;
+  s.on('battle-voice:peer-list', (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    // I'm new. For each existing peer X:
+    //   - If X.role=speaker → existing initiates to me, so I wait (create PC passive)
+    //   - If I'm speaker AND X.role=listener → I initiate
+    data.peers.forEach(p => {
+      const iAmSpeaker = _battleVoiceRole === 'speaker';
+      const xIsSpeaker = p.role === 'speaker';
+      if (iAmSpeaker && !xIsSpeaker) {
+        _createBattlePeer(p.socketId, true);
+      } else if (xIsSpeaker) {
+        _createBattlePeer(p.socketId, false);
+      }
+    });
+  });
+  s.on('battle-voice:peer-joined', (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    // Existing peer perspective: someone joined.
+    // If I'm speaker → I initiate to newcomer
+    // Otherwise wait (newcomer is speaker who initiates)
+    if (_battleVoiceRole === 'speaker') {
+      _createBattlePeer(data.socketId, true);
+    }
+  });
+  s.on('battle-voice:peer-left', (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    const peer = _battleVoicePeers[data.socketId];
+    if (peer) { try { peer.pc.close(); } catch(e){} if (peer.audioEl) peer.audioEl.remove(); }
+    delete _battleVoicePeers[data.socketId];
+  });
+  s.on('battle-voice:offer', async (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    let p = _battleVoicePeers[data.from];
+    if (!p) p = _createBattlePeer(data.from, false);
+    try {
+      await p.pc.setRemoteDescription(data.offer);
+      const answer = await p.pc.createAnswer();
+      await p.pc.setLocalDescription(answer);
+      s.emit('battle-voice:answer', { to: data.from, answer: p.pc.localDescription, battleId: _battleVoiceBattleId });
+    } catch(e) { console.error('battle-voice offer error', e); }
+  });
+  s.on('battle-voice:answer', async (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    const p = _battleVoicePeers[data.from];
+    if (p) { try { await p.pc.setRemoteDescription(data.answer); } catch(e) { console.error(e); } }
+  });
+  s.on('battle-voice:ice', async (data) => {
+    if (data.battleId !== _battleVoiceBattleId) return;
+    const p = _battleVoicePeers[data.from];
+    if (p && data.candidate) { try { await p.pc.addIceCandidate(data.candidate); } catch(e) {} }
+  });
+}
+
+// Wire as soon as socket is available
+(function bootstrapBattleVoice(){
+  const tryWire = () => { const s = getSocket(); if (s) { _wireBattleVoiceEvents(); } else setTimeout(tryWire, 1000); };
+  setTimeout(tryWire, 500);
+})();
 
 function renderBattle(b) {
   const aName = b.userA?.firstName || b.userA?.username || 'A';

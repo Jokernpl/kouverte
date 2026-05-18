@@ -2085,6 +2085,7 @@ app.get('/api/online-now', (req, res) => {
 const activeCalls = new Map();
 const userSockets = new Map();
 const userVoiceRooms = new Map(); // userId -> {roomSlug, socketId}
+const battleVoicePeers = {}; // battleId -> Map<socketId, {userId, role}>
 
 io.on('connection', (socket) => {
     console.log('[WEBRTC] Utente connesso:', socket.id);
@@ -2107,6 +2108,48 @@ io.on('connection', (socket) => {
         if (typeof battleId === 'string' && battleId.startsWith('battle_')) {
             socket.leave('battle-' + battleId);
         }
+    });
+
+    // ===== Battle Voice (WebRTC mesh) =====
+    // role: 'speaker' (participant A/B) o 'listener' (spettatore)
+    socket.on('battle-voice:join', (data) => {
+        const { battleId, userId, role } = data || {};
+        if (typeof battleId !== 'string' || !battleId.startsWith('battle_')) return;
+        if (role !== 'speaker' && role !== 'listener') return;
+        battleVoicePeers[battleId] = battleVoicePeers[battleId] || new Map();
+        // lista peer esistenti per il newcomer
+        const existing = [];
+        battleVoicePeers[battleId].forEach((p, sid) => {
+            if (sid !== socket.id) existing.push({ socketId: sid, userId: p.userId, role: p.role });
+        });
+        battleVoicePeers[battleId].set(socket.id, { userId, role });
+        socket.join('battle-voice-' + battleId);
+        socket.emit('battle-voice:peer-list', { battleId, peers: existing });
+        socket.to('battle-voice-' + battleId).emit('battle-voice:peer-joined', { battleId, socketId: socket.id, userId, role });
+    });
+
+    socket.on('battle-voice:leave', (data) => {
+        const { battleId } = data || {};
+        if (!battleId) return;
+        if (battleVoicePeers[battleId]) {
+            battleVoicePeers[battleId].delete(socket.id);
+            if (battleVoicePeers[battleId].size === 0) delete battleVoicePeers[battleId];
+        }
+        socket.leave('battle-voice-' + battleId);
+        socket.to('battle-voice-' + battleId).emit('battle-voice:peer-left', { battleId, socketId: socket.id });
+    });
+
+    socket.on('battle-voice:offer', (data) => {
+        const { to, offer, battleId } = data || {};
+        if (to) io.to(to).emit('battle-voice:offer', { from: socket.id, offer, battleId });
+    });
+    socket.on('battle-voice:answer', (data) => {
+        const { to, answer, battleId } = data || {};
+        if (to) io.to(to).emit('battle-voice:answer', { from: socket.id, answer, battleId });
+    });
+    socket.on('battle-voice:ice', (data) => {
+        const { to, candidate, battleId } = data || {};
+        if (to) io.to(to).emit('battle-voice:ice', { from: socket.id, candidate, battleId });
     });
 
     // Messaging
@@ -2241,6 +2284,15 @@ io.on('connection', (socket) => {
             if (socketId === socket.id) {
                 userSockets.delete(username);
                 break;
+            }
+        }
+
+        // Clean up battle voice peers
+        for (const battleId of Object.keys(battleVoicePeers)) {
+            if (battleVoicePeers[battleId].has(socket.id)) {
+                battleVoicePeers[battleId].delete(socket.id);
+                io.to('battle-voice-' + battleId).emit('battle-voice:peer-left', { battleId, socketId: socket.id });
+                if (battleVoicePeers[battleId].size === 0) delete battleVoicePeers[battleId];
             }
         }
 
