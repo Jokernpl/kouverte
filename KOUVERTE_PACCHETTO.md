@@ -167,18 +167,35 @@ BOT_USERNAME=Kouverte_bot
 WEBAPP_URL=https://www.kouverte.com/app.html
 PUBLIC_URL=https://www.kouverte.com
 
-# Lightning Network (opzionale)
+# Lightning Network (opzionale) — supporta 2 provider
+
+# OPZIONE A: Coinos (raccomandato, no-KYC, no setup)
 LIGHTNING_ENABLED=1
+LIGHTNING_PROVIDER=coinos
+COINOS_TOKEN=<Bearer JWT da Settings/API del tuo account Coinos>
+
+# OPZIONE B: LNbits (self-hosted o istanza pubblica)
+LIGHTNING_ENABLED=1
+LIGHTNING_PROVIDER=lnbits
 LNBITS_URL=https://legend.lnbits.com
-LNBITS_INVOICE_KEY=<chiave-invoice-LNbits>
+LNBITS_INVOICE_KEY=<chiave invoice/admin>
 ```
 
-### Setup Lightning (opzionale ma raccomandato)
-1. Crea wallet su https://legend.lnbits.com (o self-hosted)
+### Setup Lightning con Coinos (più rapido, raccomandato)
+1. Registrati su https://coinos.io (no KYC, gratis)
+2. **Cambia password** dopo il primo login
+3. Vai su Settings → API → copia il Bearer token JWT
+4. Su Render dashboard imposta:
+   - `LIGHTNING_ENABLED=1`
+   - `LIGHTNING_PROVIDER=coinos`
+   - `COINOS_TOKEN=<il-tuo-jwt>`
+5. Redeploy → tab "⚡ Lightning" in Topup Sats diventa attiva
+6. Pagamenti accreditati in <5 secondi anziché 30+ min on-chain
+
+### Setup alternativo con LNbits
+1. Crea wallet su LNbits (legend.lnbits.com o self-hosted)
 2. Copia "Invoice/read key" dalle API Info
-3. Setta le 3 env vars sopra su Render
-4. Redeploy → tab "⚡ Lightning" in Topup Sats diventa funzionante
-5. Pagamenti accreditati in <5 secondi anziché 30+ min on-chain
+3. Imposta `LIGHTNING_PROVIDER=lnbits` + `LNBITS_URL` + `LNBITS_INVOICE_KEY`
 
 ---
 
