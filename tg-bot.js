@@ -240,7 +240,8 @@ Qui sotto il tuo profilo. Apri l'app per personalizzarlo:
 👑 *Premium* · Piani Pro / Elite / Infinity
 👤 *Profilo* · Avatar, cornici, post
 
-✨ Usa /menu per i comandi rapidi.`;
+✨ Usa /menu per i comandi rapidi.
+💬 Per info dirette: @losangelesbroker`;
 
   const keyboard = {
     inline_keyboard: [
