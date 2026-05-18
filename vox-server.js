@@ -92,9 +92,9 @@ function loadDB() {
             ],
             stories: [],
             reactions: [],
-            duels: [],
-            votes: [],
             messages: [],
+            battles: [],
+            user_balance: {},
             voice_rooms: [
                 { id: 'room_1', name: 'Voci Notturne', desc: 'Chat vocale di notte', icon: '🌙', users_count: 6, created_at: 1777900000000 },
                 { id: 'room_2', name: 'Single Italiani', desc: 'Persone sole che cercano connessione', icon: '❤️', users_count: 6, created_at: 1777900000000 },
@@ -620,70 +620,7 @@ app.post('/api/stories/:id/react', (req, res) => {
 
 // ============ DUELS ============
 
-app.post('/api/duels', verifyToken, (req, res) => {
-    const userId = req.user.userId;
-    const theme = req.body?.theme;
-    if (!theme || typeof theme !== 'string') return res.status(400).json({ error: 'theme richiesto' });
-
-    const duel = {
-        id: genId('duel'),
-        theme: theme.replace(/[<>]/g, '').slice(0, 100),
-        user1_id: userId,
-        user2_id: userId,
-        clip1_id: null,
-        clip2_id: null,
-        expires_at: now() + 2 * 60 * 60 * 1000,
-        created_at: now()
-    };
-    DB.duels.push(duel);
-    saveDB(DB);
-    res.json({ ok: true, duelId: duel.id });
-});
-
-app.post('/api/duels/:id/join', verifyToken, (req, res) => {
-    const userId = req.user.userId;
-    const duel = DB.duels.find(d => d.id === req.params.id);
-    if (!duel) return res.status(404).json({ error: 'Duello non trovato' });
-    if (duel.user2_id !== duel.user1_id) return res.status(400).json({ error: 'Duello pieno' });
-    if (duel.user1_id === userId) return res.status(400).json({ error: 'Non puoi joinare il tuo duello' });
-    duel.user2_id = userId;
-    saveDB(DB);
-    res.json({ ok: true });
-});
-
-app.post('/api/duels/:id/vote', verifyToken, (req, res) => {
-    const { clipId } = req.body || {};
-    if (!clipId) return res.status(400).json({ error: 'clipId richiesto' });
-
-    const userId = req.user.userId;
-    const existing = DB.votes.find(v => v.duel_id === req.params.id && v.user_id === userId);
-    if (existing) return res.status(409).json({ error: 'Hai già votato' });
-
-    DB.votes.push({
-        id: genId('vote'),
-        duel_id: req.params.id,
-        clip_id: clipId,
-        user_id: userId,
-        created_at: now()
-    });
-    saveDB(DB);
-    res.json({ ok: true });
-});
-
-app.get('/api/duels', (req, res) => {
-    const duels = DB.duels.filter(d => d.expires_at > now()).map(d => {
-        const u1 = DB.users.find(u => u.id === d.user1_id);
-        const u2 = DB.users.find(u => u.id === d.user2_id);
-        const total_votes = DB.votes.filter(v => v.duel_id === d.id).length;
-        return {
-            ...d,
-            user1_name: u1 ? u1.username : '...',
-            user2_name: u2 ? u2.username : 'In attesa...',
-            total_votes
-        };
-    }).sort((a, b) => b.created_at - a.created_at).slice(0, 20);
-    res.json({ duels });
-});
+// Legacy /api/duels endpoints rimossi — sostituiti da /api/battles (Voice Battles in Arena)
 
 // ============ BITCOIN VERIFY (frontend polling) ============
 // Server-side pricing tables — single source of truth
@@ -1657,9 +1594,9 @@ app.get('/api/admin/stats', verifyAdmin, (req, res) => {
     const totalUsers = DB.users.length;
     const activeStories = DB.stories.filter(s => s.expires_at > now()).length;
     const totalReactions = DB.reactions.length;
-    const activeDuels = DB.duels.filter(d => d.expires_at > now()).length;
+    const activeBattles = (DB.battles || []).filter(b => b.status === 'live').length;
     const totalRevenue = 0;
-    res.json({ totalUsers, activeStories, totalReactions, activeDuels, totalRevenue });
+    res.json({ totalUsers, activeStories, totalReactions, activeBattles, totalRevenue });
 });
 
 app.get('/api/admin/users', verifyAdmin, (req, res) => {
@@ -1694,21 +1631,9 @@ app.get('/api/admin/stories', verifyAdmin, (req, res) => {
     res.json({ stories });
 });
 
-app.get('/api/admin/duels', verifyAdmin, (req, res) => {
-    const duels = DB.duels.map(d => {
-        const u1 = DB.users.find(u => u.id === d.user1_id);
-        const u2 = DB.users.find(u => u.id === d.user2_id);
-        const total_votes = DB.votes.filter(v => v.duel_id === d.id).length;
-        return {
-            id: d.id, theme: d.theme,
-            user1_id: d.user1_id, user2_id: d.user2_id,
-            expires_at: d.expires_at, created_at: d.created_at,
-            user1_name: u1 ? u1.username : '...',
-            user2_name: u2 ? u2.username : 'In attesa...',
-            total_votes
-        };
-    }).sort((a, b) => b.created_at - a.created_at).slice(0, 50);
-    res.json({ duels });
+app.get('/api/admin/battles', verifyAdmin, (req, res) => {
+    const battles = (DB.battles || []).map(publicBattle).sort((a, b) => (b?.startedAt || 0) - (a?.startedAt || 0)).slice(0, 50);
+    res.json({ battles });
 });
 
 app.delete('/api/admin/users/:id', verifyAdmin, (req, res) => {
@@ -1718,11 +1643,7 @@ app.delete('/api/admin/users/:id', verifyAdmin, (req, res) => {
         return story && story.user_id !== userId;
     });
     DB.stories = DB.stories.filter(s => s.user_id !== userId);
-    DB.votes = DB.votes.filter(v => {
-        const duel = DB.duels.find(d => d.id === v.duel_id);
-        return duel && duel.user1_id !== userId && duel.user2_id !== userId;
-    });
-    DB.duels = DB.duels.filter(d => d.user1_id !== userId && d.user2_id !== userId);
+    DB.battles = (DB.battles || []).filter(b => b.userA !== userId && b.userB !== userId);
     // FIX: cleanup orfani crediti, inventario, transazioni
     DB.user_credits = (DB.user_credits || []).filter(c => c.user_id !== userId);
     DB.user_inventory = (DB.user_inventory || []).filter(i => i.user_id !== userId);
@@ -1739,9 +1660,8 @@ app.delete('/api/admin/stories/:id', verifyAdmin, (req, res) => {
     res.json({ ok: true });
 });
 
-app.delete('/api/admin/duels/:id', verifyAdmin, (req, res) => {
-    DB.votes = DB.votes.filter(v => v.duel_id !== req.params.id);
-    DB.duels = DB.duels.filter(d => d.id !== req.params.id);
+app.delete('/api/admin/battles/:id', verifyAdmin, (req, res) => {
+    DB.battles = (DB.battles || []).filter(b => b.id !== req.params.id);
     saveDB(DB);
     res.json({ ok: true });
 });
@@ -2332,7 +2252,6 @@ server.listen(PORT, HOST, () => {
     console.log('🎙  VO✕ · Voice Stories');
     console.log('────────────────────────────────────');
     console.log('   Server:  http://' + HOST + ':' + PORT);
-    console.log('   Pubblico: http://109.55.120.242:' + PORT);
     console.log('   Data file:', DB_FILE);
     console.log('────────────────────────────────────');
 });
