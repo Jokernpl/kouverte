@@ -3,6 +3,8 @@ services:
     name: kouverte-vox
     runtime: node
     plan: free
+    autoDeploy: true
+    branch: main
     buildCommand: npm install
     startCommand: node vox-server.js
     healthCheckPath: /
