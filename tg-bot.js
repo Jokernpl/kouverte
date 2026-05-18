@@ -13,7 +13,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
 
-const BOT_TOKEN    = process.env.BOT_TOKEN    || '8782933185:AAEsR_3FfeSBlox5OPZb18WA-hcPDVq5oGU';
+const BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '8782933185:AAEsR_3FfeSBlox5OPZb18WA-hcPDVq5oGU';
 const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
 const BTC_ADDRESS  = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
@@ -27,6 +27,12 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 console.log('🕯️  Kouverte Bot avviato · @' + BOT_USERNAME);
 console.log('    WebApp: ' + WEBAPP_URL);
 console.log('    BTC:    ' + BTC_ADDRESS);
+
+// Cleanup: rimuovi eventuali webhook fantasma che bloccano il polling
+// (succede se in passato qualcuno ha provato a impostare un webhook al bot)
+bot.deleteWebHook({ drop_pending_updates: false })
+   .then(() => console.log('    Webhook: cleared (polling mode active)'))
+   .catch(() => {});
 
 // ============================================================
 // CATALOGO CORNICI (sincronizzato con app.html — prezzi in EURO)

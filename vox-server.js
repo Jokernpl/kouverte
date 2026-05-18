@@ -2671,3 +2671,16 @@ server.listen(PORT, HOST, () => {
     console.log('   Data file:', DB_FILE);
     console.log('────────────────────────────────────');
 });
+
+// Avvia anche il bot Telegram nello stesso processo (richiesto su Render free tier)
+// Disabilitabile con env BOT_DISABLED=1
+if (process.env.BOT_DISABLED !== '1' && (process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN)) {
+    try {
+        require('./tg-bot.js');
+        console.log('[BOT] Telegram bot started in-process');
+    } catch (e) {
+        console.error('[BOT] Failed to start tg-bot:', e.message);
+    }
+} else {
+    console.log('[BOT] Skipped (BOT_DISABLED=1 or missing token)');
+}
