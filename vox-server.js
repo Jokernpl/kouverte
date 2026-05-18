@@ -1030,6 +1030,199 @@ app.post('/api/matches/:matchId/messages', verifyToken, (req, res) => {
     res.json({ ok: true, message: msg });
 });
 
+// ============ VOICE BATTLES (Arena) ============
+// Sats-based 1v1 voice battles. Spectators pay sats to boost their favorite.
+// Pot distribution: winner 70%, loser 20%, platform 10%.
+
+const BATTLE_DURATION_MS = 3 * 60 * 1000; // 3 min
+const BOOST_TIERS = { 10: 10, 50: 50, 200: 200 }; // sats
+const battleTimers = new Map();
+
+function getBalance(userId) {
+    DB.user_balance = DB.user_balance || {};
+    return DB.user_balance[userId] || 0;
+}
+function addBalance(userId, sats) {
+    DB.user_balance = DB.user_balance || {};
+    DB.user_balance[userId] = (DB.user_balance[userId] || 0) + sats;
+    markDirty();
+}
+function deductBalance(userId, sats) {
+    DB.user_balance = DB.user_balance || {};
+    const cur = DB.user_balance[userId] || 0;
+    if (cur < sats) return false;
+    DB.user_balance[userId] = cur - sats;
+    markDirty();
+    return true;
+}
+
+function publicBattle(b) {
+    if (!b) return null;
+    const uA = DB.users.find(u => u.id === b.userA);
+    const uB = DB.users.find(u => u.id === b.userB);
+    return {
+        id: b.id,
+        status: b.status,
+        userA: uA ? { id: uA.id, username: uA.username, firstName: uA.firstName, avatarFrame: uA.avatarFrame } : null,
+        userB: uB ? { id: uB.id, username: uB.username, firstName: uB.firstName, avatarFrame: uB.avatarFrame } : null,
+        scoreA: b.scoreA || 0,
+        scoreB: b.scoreB || 0,
+        pot: (b.scoreA || 0) + (b.scoreB || 0),
+        startedAt: b.startedAt,
+        endsAt: b.endsAt,
+        winnerId: b.winnerId || null,
+        boostsCount: (b.boosts || []).length
+    };
+}
+
+function endBattle(battleId) {
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === battleId);
+    if (!b || b.status !== 'live') return;
+    b.status = 'ended';
+    b.endedAt = now();
+    const pot = (b.scoreA || 0) + (b.scoreB || 0);
+    let winnerId = null, loserId = null;
+    if (b.scoreA > b.scoreB) { winnerId = b.userA; loserId = b.userB; }
+    else if (b.scoreB > b.scoreA) { winnerId = b.userB; loserId = b.userA; }
+    b.winnerId = winnerId;
+    if (winnerId) {
+        const winnerCut = Math.floor(pot * 0.70);
+        const loserCut = Math.floor(pot * 0.20);
+        addBalance(winnerId, winnerCut);
+        if (loserId) addBalance(loserId, loserCut);
+        b.payout = { winner: winnerCut, loser: loserCut, platform: pot - winnerCut - loserCut };
+        const winName = DB.users.find(u => u.id === winnerId)?.firstName || 'qualcuno';
+        notifyTelegramUser(winnerId, `👑 Hai vinto la battle! +${winnerCut} sats`);
+        if (loserId) notifyTelegramUser(loserId, `⚔️ Battle finita. Consolation: +${loserCut} sats`);
+    } else {
+        // Pareggio o nessun boost: rimborso 100% ai partecipanti su pot diviso
+        if (pot > 0) {
+            const half = Math.floor(pot / 2);
+            addBalance(b.userA, half);
+            addBalance(b.userB, pot - half);
+        }
+        b.payout = { tie: true };
+    }
+    markDirty();
+    if (battleTimers.has(battleId)) {
+        clearTimeout(battleTimers.get(battleId));
+        battleTimers.delete(battleId);
+    }
+    io.to('battle-' + battleId).emit('battle:ended', publicBattle(b));
+}
+
+// Get my sats balance
+app.get('/api/me/balance', verifyToken, (req, res) => {
+    res.json({ ok: true, sats: getBalance(req.user.userId) });
+});
+
+// Create battle invite
+app.post('/api/battles/create', verifyToken, rateLimit('battle-create', 10, 60 * 60 * 1000), (req, res) => {
+    const userId = req.user.userId;
+    const { opponentId } = req.body || {};
+    if (!opponentId || opponentId === userId) return res.status(400).json({ error: 'Avversario non valido' });
+    const opp = DB.users.find(u => u.id === opponentId);
+    if (!opp) return res.status(404).json({ error: 'Avversario non trovato' });
+    DB.battles = DB.battles || [];
+    // Already pending/live between these two?
+    const existing = DB.battles.find(b =>
+        (b.status === 'pending' || b.status === 'live') &&
+        ((b.userA === userId && b.userB === opponentId) || (b.userA === opponentId && b.userB === userId))
+    );
+    if (existing) return res.status(409).json({ error: 'Battle già in corso con questo utente', battle: publicBattle(existing) });
+    const battle = {
+        id: genId('battle'),
+        userA: userId,
+        userB: opponentId,
+        scoreA: 0,
+        scoreB: 0,
+        boosts: [],
+        status: 'pending',
+        createdAt: now()
+    };
+    DB.battles.push(battle);
+    markDirty();
+    const fromName = DB.users.find(u => u.id === userId)?.firstName || 'qualcuno';
+    notifyTelegramUser(opponentId, `⚔️ ${fromName} ti ha sfidato in una Voice Battle! Apri Kouverte per accettare.`);
+    res.json({ ok: true, battle: publicBattle(battle) });
+});
+
+// Accept battle → goes live, auto-end after BATTLE_DURATION_MS
+app.post('/api/battles/:id/accept', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: 'Battle non trovata' });
+    if (b.userB !== userId) return res.status(403).json({ error: 'Non sei l\'avversario' });
+    if (b.status !== 'pending') return res.status(400).json({ error: 'Battle non in attesa' });
+    b.status = 'live';
+    b.startedAt = now();
+    b.endsAt = b.startedAt + BATTLE_DURATION_MS;
+    markDirty();
+    battleTimers.set(b.id, setTimeout(() => endBattle(b.id), BATTLE_DURATION_MS));
+    io.to('battle-' + b.id).emit('battle:started', publicBattle(b));
+    res.json({ ok: true, battle: publicBattle(b) });
+});
+
+app.post('/api/battles/:id/decline', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: 'Battle non trovata' });
+    if (b.userB !== userId && b.userA !== userId) return res.status(403).json({ error: 'Non autorizzato' });
+    if (b.status !== 'pending') return res.status(400).json({ error: 'Battle non in attesa' });
+    b.status = 'declined';
+    markDirty();
+    res.json({ ok: true });
+});
+
+// List live battles
+app.get('/api/battles/live', (req, res) => {
+    DB.battles = DB.battles || [];
+    const live = DB.battles.filter(b => b.status === 'live').map(publicBattle);
+    res.json({ ok: true, battles: live });
+});
+
+// My pending invites (as opponent)
+app.get('/api/battles/pending', verifyToken, (req, res) => {
+    const userId = req.user.userId;
+    DB.battles = DB.battles || [];
+    const pending = DB.battles
+        .filter(b => b.status === 'pending' && b.userB === userId)
+        .map(publicBattle);
+    res.json({ ok: true, battles: pending });
+});
+
+app.get('/api/battles/:id', (req, res) => {
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: 'Battle non trovata' });
+    res.json({ ok: true, battle: publicBattle(b) });
+});
+
+// Boost: deduct sats from spectator balance, add to chosen side score
+app.post('/api/battles/:id/boost', verifyToken, rateLimit('battle-boost', 60, 60 * 1000), (req, res) => {
+    const userId = req.user.userId;
+    const { side, amount } = req.body || {};
+    const sats = Number(amount);
+    if (!BOOST_TIERS[sats]) return res.status(400).json({ error: 'Tier boost non valido (10/50/200)' });
+    if (side !== 'A' && side !== 'B') return res.status(400).json({ error: 'Lato non valido' });
+    DB.battles = DB.battles || [];
+    const b = DB.battles.find(x => x.id === req.params.id);
+    if (!b) return res.status(404).json({ error: 'Battle non trovata' });
+    if (b.status !== 'live') return res.status(400).json({ error: 'Battle non attiva' });
+    if (userId === b.userA || userId === b.userB) return res.status(403).json({ error: 'I partecipanti non possono boostare' });
+    if (!deductBalance(userId, sats)) return res.status(402).json({ error: 'Saldo sats insufficiente' });
+    if (side === 'A') b.scoreA = (b.scoreA || 0) + sats;
+    else b.scoreB = (b.scoreB || 0) + sats;
+    b.boosts = b.boosts || [];
+    b.boosts.push({ userId, side, amount: sats, at: now() });
+    markDirty();
+    io.to('battle-' + b.id).emit('battle:boost', { battleId: b.id, side, amount: sats, scoreA: b.scoreA, scoreB: b.scoreB, byUserId: userId });
+    res.json({ ok: true, scoreA: b.scoreA, scoreB: b.scoreB, balance: getBalance(userId) });
+});
+
 // ============ SHOP API ============
 
 // FIX: protetto da verifyToken — usa userId dal token, mai dal body/query
@@ -1899,6 +2092,18 @@ io.on('connection', (socket) => {
         activeCalls.set(userId, socket.id);
         userSockets.set(username, socket.id);
         console.log(`[SOCKET] ${username} (${userId}) registrato come ${socket.id}`);
+    });
+
+    // Battle room join/leave (spectators + participants)
+    socket.on('battle:join', (battleId) => {
+        if (typeof battleId === 'string' && battleId.startsWith('battle_')) {
+            socket.join('battle-' + battleId);
+        }
+    });
+    socket.on('battle:leave', (battleId) => {
+        if (typeof battleId === 'string' && battleId.startsWith('battle_')) {
+            socket.leave('battle-' + battleId);
+        }
     });
 
     // Messaging

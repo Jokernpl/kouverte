@@ -2154,6 +2154,112 @@ a { text-decoration: none; color: inherit; }
   .profile-categories { grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .cat-tile { width: 48px; height: 48px; }
 }
+
+/* ============= ARENA / VOICE BATTLES ============= */
+.arena-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; gap: 10px;
+}
+.arena-balance {
+  background: linear-gradient(135deg, rgba(247,147,26,0.15), rgba(201,169,97,0.1));
+  border: 1px solid rgba(247,147,26,0.4);
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  color: #fff; cursor: pointer; white-space: nowrap;
+}
+.arena-actions { display: flex; gap: 10px; }
+.arena-actions .btn-primary {
+  flex: 1; padding: 12px;
+  background: linear-gradient(135deg, #f7931a, #c9a961);
+  border: none; color: #000; border-radius: 12px; font-weight: 700;
+  cursor: pointer; letter-spacing: 1px;
+}
+.live-battle-card {
+  background: linear-gradient(135deg, rgba(247,147,26,0.08), rgba(0,0,0,0.5));
+  border: 1px solid rgba(247,147,26,0.3);
+  border-radius: 14px; padding: 12px; margin-bottom: 10px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+}
+.live-battle-card .lb-side { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+.live-battle-card .lb-name { font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-battle-card .lb-score { font-size: 11px; color: #f7931a; font-weight: 700; }
+.live-battle-card .lb-vs { color: #c9a961; font-weight: 700; font-size: 12px; letter-spacing: 2px; }
+.live-battle-card .lb-pot { font-size: 11px; color: var(--text-dim); margin-left: auto; }
+.lb-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #c9a961, #6b5430);
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.live-pulse {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #ff3b30; margin-right: 6px;
+  animation: pulse-live 1.2s infinite;
+}
+@keyframes pulse-live { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.pending-battle-card {
+  background: rgba(247,147,26,0.08);
+  border: 1px solid rgba(247,147,26,0.4);
+  border-radius: 12px; padding: 12px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 10px;
+}
+.pending-battle-card .pb-text { flex: 1; font-size: 13px; color: #fff; }
+.pending-battle-card button { padding: 6px 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; font-size: 12px; }
+.pb-accept { background: #34c759; color: #fff; }
+.pb-decline { background: #3a3a3a; color: #fff; }
+
+/* Battle overlay */
+.battle-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: radial-gradient(ellipse at top, #1a0d05, #000);
+  display: flex; flex-direction: column; padding: 16px;
+  overflow-y: auto;
+}
+.battle-top {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.battle-timer { font-family: var(--serif); font-size: 28px; color: #f7931a; font-weight: 700; letter-spacing: 2px; }
+.battle-pot { color: #f7931a; font-weight: 700; }
+.battle-versus { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 20px 0; }
+.bv-fighter { flex: 1; text-align: center; }
+.bv-avatar {
+  width: 90px; height: 90px; border-radius: 50%; margin: 0 auto 8px;
+  background: linear-gradient(135deg, #c9a961, #4a3a1a);
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-size: 32px; font-weight: 700;
+  box-shadow: 0 0 30px rgba(247,147,26,0.4);
+  animation: fighter-glow 2s ease-in-out infinite;
+}
+@keyframes fighter-glow { 0%,100% { box-shadow: 0 0 30px rgba(247,147,26,0.4); } 50% { box-shadow: 0 0 50px rgba(247,147,26,0.7); } }
+.bv-name { color: #fff; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.bv-score { color: #f7931a; font-weight: 700; font-size: 18px; }
+.bv-vs { font-family: var(--serif); font-size: 34px; color: #ff3b30; font-weight: 700; letter-spacing: 2px; text-shadow: 0 0 20px rgba(255,59,48,0.6); }
+.battle-hpbar {
+  position: relative; height: 22px; border-radius: 11px;
+  background: rgba(255,255,255,0.06); overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1); display: flex;
+  margin-bottom: 20px;
+}
+.hp-a { background: linear-gradient(90deg, #34c759, #00d4ff); transition: width 0.5s; }
+.hp-b { background: linear-gradient(270deg, #ff3b30, #ff9500); transition: width 0.5s; }
+.battle-boosts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.boost-side { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.boost-label { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 4px; }
+.boost-btn {
+  width: 100%; padding: 10px;
+  background: rgba(247,147,26,0.15); border: 1px solid rgba(247,147,26,0.4);
+  color: #f7931a; font-weight: 700; border-radius: 10px; cursor: pointer;
+  font-size: 14px;
+}
+.boost-btn:hover { background: rgba(247,147,26,0.3); }
+.boost-pro { background: linear-gradient(135deg, #f7931a, #ffaa3a); color: #000; border: none; }
+.battle-feed {
+  max-height: 100px; overflow-y: auto; margin-top: 14px;
+  font-size: 11px; color: var(--text-dim);
+}
+.battle-feed .bf-line { padding: 3px 0; }
+
 </style>
 </head>
 <body>
@@ -2384,6 +2490,80 @@ a { text-decoration: none; color: inherit; }
       <div class="plan-list" id="planList"></div>
     </section>
 
+    <!-- ============= ARENA (Voice Battles) ============= -->
+    <section class="section" id="section-arena">
+      <div class="arena-header">
+        <div>
+          <h2 style="font-family:var(--serif);color:var(--gold);letter-spacing:3px;margin:0;">⚔️ ARENA</h2>
+          <p style="color:var(--text-dim);font-size:12px;margin:4px 0 0;letter-spacing:1px;">Voice Battles · Boost your favorite ⚡</p>
+        </div>
+        <div class="arena-balance" id="arenaBalance" onclick="openTopUp()">
+          <span style="color:#f7931a;font-weight:700;">⚡</span>
+          <span id="arenaBalanceSats">0</span> sats
+        </div>
+      </div>
+
+      <div class="arena-actions">
+        <button class="btn-primary" onclick="openInviteBattle()">⚔️ Sfida un match</button>
+      </div>
+
+      <div id="arenaPending" style="margin-top:14px;"></div>
+
+      <h3 style="color:var(--text-soft);font-size:13px;letter-spacing:2px;margin:20px 0 10px;">🔥 LIVE NOW</h3>
+      <div id="arenaLiveList"></div>
+    </section>
+
+    <!-- Battle View overlay -->
+    <div id="battleView" class="battle-overlay" style="display:none;">
+      <div class="battle-top">
+        <button class="icon-btn" onclick="closeBattle()">✕</button>
+        <div class="battle-timer" id="battleTimer">3:00</div>
+        <div class="battle-pot" id="battlePot">⚡ 0</div>
+      </div>
+      <div class="battle-versus">
+        <div class="bv-fighter" id="bvA">
+          <div class="bv-avatar" id="bvAvatarA">A</div>
+          <div class="bv-name" id="bvNameA">—</div>
+          <div class="bv-score" id="bvScoreA">0</div>
+        </div>
+        <div class="bv-vs">VS</div>
+        <div class="bv-fighter" id="bvB">
+          <div class="bv-avatar" id="bvAvatarB">B</div>
+          <div class="bv-name" id="bvNameB">—</div>
+          <div class="bv-score" id="bvScoreB">0</div>
+        </div>
+      </div>
+      <div class="battle-hpbar">
+        <div class="hp-a" id="hpA" style="width:50%;"></div>
+        <div class="hp-b" id="hpB" style="width:50%;"></div>
+      </div>
+      <div class="battle-boosts">
+        <div class="boost-side">
+          <div class="boost-label">Boost A</div>
+          <button class="boost-btn" onclick="sendBoost('A',10)">⚡10</button>
+          <button class="boost-btn" onclick="sendBoost('A',50)">⚡50</button>
+          <button class="boost-btn boost-pro" onclick="sendBoost('A',200)">⚡200</button>
+        </div>
+        <div class="boost-side">
+          <div class="boost-label">Boost B</div>
+          <button class="boost-btn" onclick="sendBoost('B',10)">⚡10</button>
+          <button class="boost-btn" onclick="sendBoost('B',50)">⚡50</button>
+          <button class="boost-btn boost-pro" onclick="sendBoost('B',200)">⚡200</button>
+        </div>
+      </div>
+      <div class="battle-feed" id="battleFeed"></div>
+    </div>
+
+    <!-- Invite battle modal -->
+    <div id="inviteBattleModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h3 style="color:var(--gold);margin:0 0 10px;">⚔️ Sfida un match</h3>
+        <p style="color:var(--text-dim);font-size:12px;margin:0 0 14px;">Scegli un match con cui combattere. Durata: 3 minuti.</p>
+        <div id="inviteBattleList" style="max-height:50vh;overflow-y:auto;"></div>
+        <button class="btn-secondary" style="margin-top:12px;width:100%;" onclick="closeInviteBattle()">Annulla</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- BOTTOM NAV -->
@@ -2399,6 +2579,10 @@ a { text-decoration: none; color: inherit; }
     <a class="nav-item" data-target="rooms" onclick="openSection('rooms')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
       Stanze
+    </a>
+    <a class="nav-item" data-target="arena" onclick="openSection('arena')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14.5 9.5L12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12z"/></svg></span>
+      Arena
     </a>
     <a class="nav-item" data-target="chat" onclick="openSection('chat')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></span>
@@ -3720,6 +3904,7 @@ function openSection(name) {
   if (name === 'explore') loadExploreFeed(true);
   if (name === 'profile') { renderProfileClips(); loadProfileForm(); }
   if (name === 'chat') renderChats();
+  if (name === 'arena') loadArena();
 }
 
 // ============= AUTH =============
@@ -4368,6 +4553,194 @@ function endCall(silent) {
   document.getElementById('callOverlay').classList.remove('show');
   document.getElementById('callAvatar').classList.remove('connected');
 }
+
+// ============= ARENA / VOICE BATTLES =============
+let _activeBattle = null;
+let _battleTickTimer = null;
+
+async function loadArena() {
+  if (!state.token) { showAuthModal(); return; }
+  // balance
+  const bRes = await api('/me/balance');
+  if (bRes?.ok) document.getElementById('arenaBalanceSats').textContent = bRes.sats || 0;
+  // pending invites
+  const pRes = await api('/battles/pending');
+  const pBox = document.getElementById('arenaPending');
+  if (pRes?.battles?.length) {
+    pBox.innerHTML = pRes.battles.map(b => `
+      <div class="pending-battle-card">
+        <div class="pb-text">⚔️ <b>${escHtml(b.userA?.firstName || 'Sfidante')}</b> ti sfida!</div>
+        <button class="pb-accept" onclick="acceptBattle('${b.id}')">Accetta</button>
+        <button class="pb-decline" onclick="declineBattle('${b.id}')">Rifiuta</button>
+      </div>
+    `).join('');
+  } else { pBox.innerHTML = ''; }
+  // live list
+  const lRes = await api('/battles/live');
+  const lBox = document.getElementById('arenaLiveList');
+  if (lRes?.battles?.length) {
+    lBox.innerHTML = lRes.battles.map(b => `
+      <div class="live-battle-card" onclick="openBattle('${b.id}')">
+        <div class="lb-side">
+          <div class="lb-avatar">${(b.userA?.firstName||'A').charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="lb-name">${escHtml(b.userA?.firstName || '—')}</div>
+            <div class="lb-score">⚡ ${b.scoreA}</div>
+          </div>
+        </div>
+        <div class="lb-vs">VS</div>
+        <div class="lb-side">
+          <div class="lb-avatar">${(b.userB?.firstName||'B').charAt(0).toUpperCase()}</div>
+          <div>
+            <div class="lb-name">${escHtml(b.userB?.firstName || '—')}</div>
+            <div class="lb-score">⚡ ${b.scoreB}</div>
+          </div>
+        </div>
+        <div class="lb-pot"><span class="live-pulse"></span>⚡${b.pot}</div>
+      </div>
+    `).join('');
+  } else {
+    lBox.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:30px;font-size:13px;">Nessuna battle live. Sii il primo!</div>';
+  }
+}
+
+function escHtml(s) { return String(s||'').replace(/[<>&"]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c])); }
+
+async function openInviteBattle() {
+  if (!state.token) { showAuthModal(); return; }
+  const m = await api('/matches');
+  const list = document.getElementById('inviteBattleList');
+  if (m?.matches?.length) {
+    list.innerHTML = m.matches.map(x => `
+      <div class="pending-battle-card" onclick="createBattle('${x.user.id}','${escHtml(x.user.firstName||x.user.username||'')}')">
+        <div class="lb-avatar">${(x.user.firstName||'?').charAt(0).toUpperCase()}</div>
+        <div class="pb-text">${escHtml(x.user.firstName || x.user.username)}</div>
+        <button class="pb-accept">Sfida</button>
+      </div>
+    `).join('');
+  } else {
+    list.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:20px;">Nessun match disponibile</div>';
+  }
+  document.getElementById('inviteBattleModal').style.display = 'flex';
+}
+function closeInviteBattle() { document.getElementById('inviteBattleModal').style.display = 'none'; }
+
+async function createBattle(opponentId, name) {
+  const r = await api('/battles/create', { method: 'POST', body: JSON.stringify({ opponentId }) });
+  closeInviteBattle();
+  if (r?.ok) { toast('Sfida inviata a ' + name); loadArena(); }
+  else toast(r?.error || 'Errore');
+}
+async function acceptBattle(id) {
+  const r = await api('/battles/' + id + '/accept', { method: 'POST' });
+  if (r?.ok) { openBattle(id); loadArena(); }
+  else toast(r?.error || 'Errore');
+}
+async function declineBattle(id) {
+  const r = await api('/battles/' + id + '/decline', { method: 'POST' });
+  if (r?.ok) loadArena();
+}
+
+async function openBattle(id) {
+  const r = await api('/battles/' + id);
+  if (!r?.ok) { toast('Battle non trovata'); return; }
+  _activeBattle = r.battle;
+  renderBattle(r.battle);
+  document.getElementById('battleView').style.display = 'flex';
+  const s = getSocket();
+  if (s) s.emit('battle:join', id);
+  startBattleTick();
+}
+function closeBattle() {
+  document.getElementById('battleView').style.display = 'none';
+  const s = getSocket();
+  if (s && _activeBattle) s.emit('battle:leave', _activeBattle.id);
+  _activeBattle = null;
+  if (_battleTickTimer) { clearInterval(_battleTickTimer); _battleTickTimer = null; }
+  loadArena();
+}
+
+function renderBattle(b) {
+  const aName = b.userA?.firstName || b.userA?.username || 'A';
+  const bName = b.userB?.firstName || b.userB?.username || 'B';
+  document.getElementById('bvNameA').textContent = aName;
+  document.getElementById('bvNameB').textContent = bName;
+  document.getElementById('bvAvatarA').textContent = aName.charAt(0).toUpperCase();
+  document.getElementById('bvAvatarB').textContent = bName.charAt(0).toUpperCase();
+  updateBattleScores(b.scoreA, b.scoreB);
+}
+function updateBattleScores(a, b) {
+  document.getElementById('bvScoreA').textContent = a;
+  document.getElementById('bvScoreB').textContent = b;
+  document.getElementById('battlePot').textContent = '⚡ ' + (a+b);
+  const total = a + b;
+  const pctA = total === 0 ? 50 : Math.max(5, Math.min(95, (a/total)*100));
+  document.getElementById('hpA').style.width = pctA + '%';
+  document.getElementById('hpB').style.width = (100-pctA) + '%';
+}
+function startBattleTick() {
+  if (_battleTickTimer) clearInterval(_battleTickTimer);
+  _battleTickTimer = setInterval(() => {
+    if (!_activeBattle?.endsAt) return;
+    const ms = _activeBattle.endsAt - Date.now();
+    if (ms <= 0) { document.getElementById('battleTimer').textContent = '0:00'; return; }
+    const sec = Math.floor(ms/1000);
+    document.getElementById('battleTimer').textContent = Math.floor(sec/60) + ':' + String(sec%60).padStart(2,'0');
+  }, 500);
+}
+
+async function sendBoost(side, amount) {
+  if (!_activeBattle) return;
+  if (!state.token) { showAuthModal(); return; }
+  const r = await api('/battles/' + _activeBattle.id + '/boost', { method: 'POST', body: JSON.stringify({ side, amount }) });
+  if (r?.ok) {
+    updateBattleScores(r.scoreA, r.scoreB);
+    document.getElementById('arenaBalanceSats').textContent = r.balance;
+    addBattleFeedLine(`Tu hai boostato ${side} ⚡${amount}`);
+  } else {
+    toast(r?.error || 'Errore boost');
+  }
+}
+function addBattleFeedLine(text) {
+  const f = document.getElementById('battleFeed');
+  if (!f) return;
+  const d = document.createElement('div');
+  d.className = 'bf-line';
+  d.textContent = '• ' + text;
+  f.prepend(d);
+  while (f.children.length > 20) f.removeChild(f.lastChild);
+}
+
+function openTopUp() {
+  toast('Vinci battle o acquista sats dal Premium per ricaricare');
+}
+
+// Hook battle socket events when getSocket is called
+const _origGetSocket = getSocket;
+let _battleSocketWired = false;
+window.getSocket = function() {
+  const s = _origGetSocket();
+  if (s && !_battleSocketWired) {
+    _battleSocketWired = true;
+    s.on('battle:boost', (d) => {
+      if (_activeBattle && d.battleId === _activeBattle.id) {
+        updateBattleScores(d.scoreA, d.scoreB);
+        addBattleFeedLine(`⚡${d.amount} → ${d.side === 'A' ? 'Sfidante A' : 'Sfidante B'}`);
+      }
+    });
+    s.on('battle:started', (b) => {
+      if (_activeBattle && b.id === _activeBattle.id) { _activeBattle = b; renderBattle(b); }
+    });
+    s.on('battle:ended', (b) => {
+      if (_activeBattle && b.id === _activeBattle.id) {
+        const winName = b.winnerId === b.userA?.id ? b.userA.firstName : (b.winnerId === b.userB?.id ? b.userB.firstName : null);
+        toast(winName ? `👑 ${winName} ha vinto!` : 'Battle pareggiata');
+        addBattleFeedLine(winName ? `👑 ${winName} ha VINTO la battle!` : 'Pareggio — pot rimborsato');
+      }
+    });
+  }
+  return s;
+};
 
 document.addEventListener('DOMContentLoaded', init);
 
