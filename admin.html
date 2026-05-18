@@ -312,22 +312,7 @@ function renderBtc(box) {
     <button class="btn-action btn-confirm" onclick="testLightning()">🧪 Test connessione</button>
     <pre id="lnTestRes" style="margin-top:14px;font-size:11px;color:var(--text-dim);background:rgba(0,0,0,0.4);padding:10px;border-radius:6px;white-space:pre-wrap;max-height:200px;overflow:auto;"></pre>
 
-    <hr style="margin:30px 0;border:none;border-top:1px solid var(--border);">
-    <h3 style="color:var(--gold);margin:0 0 8px;letter-spacing:2px;">🌱 Seed profili</h3>
-    <p style="color:var(--text-dim);font-size:13px;margin:0 0 10px;">
-      Popola il feed Esplora con ~30 profili italiani realistici (no audio).
-      Idempotente: utenti già esistenti vengono saltati.
-    </p>
-    <button class="btn-action btn-confirm" onclick="seedUsers()">🌱 Avvia seed</button>
-    <pre id="seedRes" style="margin-top:14px;font-size:11px;color:var(--text-dim);background:rgba(0,0,0,0.4);padding:10px;border-radius:6px;white-space:pre-wrap;max-height:200px;overflow:auto;"></pre>
   `;
-}
-async function seedUsers() {
-  const res = document.getElementById('seedRes');
-  res.textContent = 'Esecuzione…';
-  const r = await api('/admin/seed-users', { method: 'POST' });
-  if (r?.ok) { res.style.color = 'var(--green)'; res.textContent = r.output || 'OK'; loadStats(); }
-  else { res.style.color = 'var(--red)'; res.textContent = '❌ ' + (r?.error || 'Errore'); }
 }
 
 async function testLightning() {

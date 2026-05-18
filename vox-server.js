@@ -172,19 +172,28 @@ let DB = loadDB();
         } catch(e) { console.error('Failed to hash test password:', e); }
     }
 
-    // Auto-seed al primo deploy se non ci sono ancora profili seed e il feed è vuoto/piccolo
+    // CLEANUP: rimuovi tutti gli utenti seed (fake) e i loro dati associati
+    // Solo utenti reali da qui in poi.
     try {
-        const seedCount = (DB.users || []).filter(u => u.seed).length;
-        const realCount = (DB.users || []).filter(u => !u.seed && !u.id.startsWith('u_test')).length;
-        if (seedCount === 0 && realCount < 5 && process.env.AUTO_SEED !== '0') {
-            const { spawnSync } = require('child_process');
-            const r = spawnSync('node', [path.join(__dirname, 'seed-users.js')], { encoding: 'utf8', timeout: 60000 });
-            if (!r.error) {
-                console.log('[AUTO-SEED]', (r.stdout || '').trim().slice(0, 200));
-                DB = loadDB(); // reload
-            }
+        const seedIds = (DB.users || []).filter(u => u.seed).map(u => u.id);
+        if (seedIds.length > 0) {
+            const seedIdSet = new Set(seedIds);
+            DB.users = (DB.users || []).filter(u => !u.seed);
+            // Cleanup dati associati ai seed users
+            DB.likes = (DB.likes || []).filter(l => !seedIdSet.has(l.from) && !seedIdSet.has(l.to));
+            DB.matches = (DB.matches || []).filter(m => !seedIdSet.has(m.u1) && !seedIdSet.has(m.u2));
+            DB.stories = (DB.stories || []).filter(s => !seedIdSet.has(s.user_id));
+            DB.reactions = (DB.reactions || []).filter(r => !seedIdSet.has(r.user_id));
+            DB.messages = (DB.messages || []).filter(m => !seedIdSet.has(m.from) && !seedIdSet.has(m.to));
+            DB.user_credits = (DB.user_credits || []).filter(c => !seedIdSet.has(c.user_id));
+            DB.user_inventory = (DB.user_inventory || []).filter(i => !seedIdSet.has(i.user_id));
+            DB.battles = (DB.battles || []).filter(b => !seedIdSet.has(b.userA) && !seedIdSet.has(b.userB));
+            DB.referrals = (DB.referrals || []).filter(r => !seedIdSet.has(r.from) && !seedIdSet.has(r.to));
+            seedIds.forEach(id => { if (DB.user_balance) delete DB.user_balance[id]; });
+            saveDB(DB);
+            console.log(`[CLEANUP] Rimossi ${seedIds.length} utenti seed (fake) e dati associati`);
         }
-    } catch(e) { console.error('Auto-seed failed:', e.message); }
+    } catch(e) { console.error('Seed cleanup failed:', e.message); }
 })();
 
 // Salva periodicamente solo se dirty
@@ -1981,18 +1990,9 @@ app.post('/api/admin/lightning-test', verifyAdmin, async (req, res) => {
     }
 });
 
-// Seed users: trigger one-shot from admin panel
-app.post('/api/admin/seed-users', verifyAdmin, async (req, res) => {
-    try {
-        const { spawnSync } = require('child_process');
-        const r = spawnSync('node', [path.join(__dirname, 'seed-users.js')], { encoding: 'utf8', timeout: 60000 });
-        if (r.error) return res.status(500).json({ error: 'seed failed', detail: r.error.message });
-        // Reload DB
-        DB = loadDB();
-        res.json({ ok: true, output: (r.stdout || '') + (r.stderr || '') });
-    } catch(e) {
-        res.status(500).json({ error: e.message });
-    }
+// Seed users disabilitato — solo utenti reali
+app.post('/api/admin/seed-users', verifyAdmin, (req, res) => {
+    res.status(410).json({ ok: false, error: 'Seed users disabilitato. Solo utenti reali su questa piattaforma.' });
 });
 
 app.get('/api/admin/battles', verifyAdmin, (req, res) => {
