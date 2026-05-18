@@ -820,6 +820,9 @@ app.post('/api/users/:id/like', verifyToken, (req, res) => {
         if (!exists) DB.matches.push({ id: genId('match'), u1: fromId, u2: toId, created_at: Date.now() });
         notifyTelegramUser(fromId, `🎉 Match con ${toName}! Apri Kouverte per scrivere.`);
         notifyTelegramUser(toId,   `🎉 Match con ${fromName}! Apri Kouverte per scrivere.`);
+        // Realtime in-app match event to the OTHER user (the one who liked first earlier)
+        const otherSocketId = activeCalls.get(toId);
+        if (otherSocketId) io.to(otherSocketId).emit('match:new', { userId: fromId, username: fromName });
     } else {
         notifyTelegramUser(toId, `❤️ ${fromName} ti ha messo like su Kouverte!`);
     }
