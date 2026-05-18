@@ -2141,6 +2141,92 @@ a { text-decoration: none; color: inherit; }
 .policy-links a { color: var(--text-soft); text-decoration: none; }
 .policy-links a:hover { color: var(--gold); }
 
+/* ============= FYP (Audio Stories) ============= */
+#section-fyp { padding: 0; height: calc(100vh - 60px); overflow: hidden; }
+.fyp-container {
+  position: relative; height: 100%; width: 100%;
+  scroll-snap-type: y mandatory; overflow-y: scroll;
+  background: #000; scroll-behavior: smooth;
+}
+.fyp-container::-webkit-scrollbar { display: none; }
+.fyp-loading { color: var(--text-dim); text-align: center; padding: 40px; }
+.fyp-card {
+  position: relative; height: 100%; width: 100%;
+  scroll-snap-align: start;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at top, #1a1410, #000);
+  padding: 40px 24px 100px;
+}
+.fyp-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--card-bg, radial-gradient(circle at 50% 30%, rgba(247,147,26,0.15), transparent 60%));
+  z-index: 0;
+}
+.fyp-content { position: relative; z-index: 1; width: 100%; text-align: center; }
+.fyp-avatar {
+  width: 130px; height: 130px; border-radius: 50%; margin: 0 auto 20px;
+  background: linear-gradient(135deg, #c9a961, #4a3a1a);
+  display: flex; align-items: center; justify-content: center;
+  color: #000; font-size: 54px; font-weight: 700;
+  box-shadow: 0 0 60px rgba(247,147,26,0.4);
+  animation: fyp-pulse 2s ease-in-out infinite;
+}
+@keyframes fyp-pulse {
+  0%, 100% { box-shadow: 0 0 60px rgba(247,147,26,0.4); }
+  50% { box-shadow: 0 0 90px rgba(247,147,26,0.7); }
+}
+.fyp-name { color: #fff; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.fyp-meta { color: var(--text-dim); font-size: 12px; margin-bottom: 14px; }
+.fyp-bio {
+  color: var(--text-soft); font-size: 13px; line-height: 1.5;
+  max-width: 320px; margin: 0 auto 24px; font-style: italic;
+}
+.fyp-play-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; margin-bottom: 20px;
+}
+.fyp-play-btn {
+  width: 70px; height: 70px; border-radius: 50%; border: none;
+  background: linear-gradient(135deg, #f7931a, #c9a961);
+  color: #000; font-size: 28px; cursor: pointer;
+  box-shadow: 0 8px 30px rgba(247,147,26,0.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.fyp-wave {
+  flex: 1; max-width: 140px; display: flex;
+  align-items: center; gap: 3px; height: 40px;
+}
+.fyp-wave span {
+  display: block; flex: 1; background: rgba(247,147,26,0.4);
+  border-radius: 2px; height: 30%;
+}
+.fyp-wave.playing span { animation: fyp-bar 0.8s ease-in-out infinite; }
+.fyp-wave.playing span:nth-child(2) { animation-delay: 0.1s; }
+.fyp-wave.playing span:nth-child(3) { animation-delay: 0.2s; }
+.fyp-wave.playing span:nth-child(4) { animation-delay: 0.15s; }
+.fyp-wave.playing span:nth-child(5) { animation-delay: 0.25s; }
+.fyp-wave.playing span:nth-child(6) { animation-delay: 0.3s; }
+.fyp-wave.playing span:nth-child(7) { animation-delay: 0.05s; }
+@keyframes fyp-bar { 0%, 100% { height: 30%; } 50% { height: 100%; } }
+
+.fyp-actions {
+  position: absolute; right: 14px; bottom: 110px; z-index: 2;
+  display: flex; flex-direction: column; gap: 16px; align-items: center;
+}
+.fyp-action-btn {
+  width: 50px; height: 50px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer;
+}
+.fyp-action-btn.liked { background: rgba(255,30,90,0.3); color: #ff3b6e; }
+.fyp-action-lbl { color: #fff; font-size: 10px; margin-top: 2px; text-align: center; }
+.fyp-empty {
+  height: 100%; display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 14px; text-align: center; padding: 30px;
+}
+
 .leaderboard-tabs { display: flex; gap: 6px; margin: 20px 0 10px; }
 .lb-tab {
   flex: 1; padding: 8px;
@@ -2190,6 +2276,26 @@ a { text-decoration: none; color: inherit; }
   display: inline-block; width: 8px; height: 8px; border-radius: 50%;
   background: #34c759; margin-right: 4px; animation: pulse-live 1.2s infinite;
 }
+
+.sticker-row {
+  display: flex; gap: 6px; padding: 6px 10px; overflow-x: auto;
+  background: rgba(0,0,0,0.4); border-top: 1px solid var(--border);
+}
+.sticker-row::-webkit-scrollbar { display: none; }
+.sticker-btn {
+  flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+  font-size: 20px; cursor: pointer; transition: all 0.15s;
+}
+.sticker-btn:hover { background: rgba(247,147,26,0.2); transform: scale(1.1); }
+.sticker-btn:active { transform: scale(0.95); }
+
+.lang-btn {
+  padding: 6px 12px; background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border); color: var(--text-soft);
+  border-radius: 999px; font-size: 11px; cursor: pointer;
+}
+.lang-btn.active { background: rgba(247,147,26,0.18); border-color: var(--btc); color: var(--btc); }
 
 .referral-card {
   margin: 20px 16px 8px; padding: 18px 16px;
@@ -2676,6 +2782,13 @@ a { text-decoration: none; color: inherit; }
 
     </section>
 
+    <!-- ============= FYP (Audio Stories Autoplay) ============= -->
+    <section class="section" id="section-fyp">
+      <div class="fyp-container" id="fypContainer">
+        <div class="fyp-loading">Carico le voci…</div>
+      </div>
+    </section>
+
     <!-- ============= EXPLORE ============= -->
     <section class="section" id="section-explore">
       <div class="section-header">
@@ -2860,7 +2973,14 @@ a { text-decoration: none; color: inherit; }
           </p>
         </div>
 
+        <div style="display:flex;gap:6px;justify-content:center;margin:14px 0;">
+          <button class="lang-btn" onclick="setLang('it');" id="langIt">🇮🇹 IT</button>
+          <button class="lang-btn" onclick="setLang('en');" id="langEn">🇬🇧 EN</button>
+        </div>
+
         <div class="policy-links">
+          <a href="/about.html" target="_blank">Chi siamo</a>
+          <span style="opacity:.3">·</span>
           <a href="/terms.html" target="_blank">Termini di servizio</a>
           <span style="opacity:.3">·</span>
           <a href="/privacy.html" target="_blank">Privacy Policy</a>
@@ -3051,31 +3171,35 @@ a { text-decoration: none; color: inherit; }
   <nav class="bottom-nav">
     <a class="nav-item active" data-target="home" onclick="openSection('home')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12L12 4l9 8M5 10v10h14V10"/></svg></span>
-      Home
+      <span data-i18n-text="home">Home</span>
+    </a>
+    <a class="nav-item" data-target="fyp" onclick="openSection('fyp')">
+      <span class="nav-icon"><svg viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>
+      <span data-i18n="voci">Voci</span>
     </a>
     <a class="nav-item" data-target="explore" onclick="openSection('explore')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
-      Esplora
+      <span data-i18n="explore">Esplora</span>
     </a>
     <a class="nav-item" data-target="rooms" onclick="openSection('rooms')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></span>
-      Stanze
+      <span data-i18n="rooms">Stanze</span>
     </a>
     <a class="nav-item" data-target="arena" onclick="openSection('arena')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14.5 9.5L12 2 9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12z"/></svg></span>
-      Arena
+      <span data-i18n="arena">Arena</span>
     </a>
     <a class="nav-item" data-target="chat" onclick="openSection('chat')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg></span>
-      Chat
+      <span data-i18n="chat">Chat</span>
     </a>
     <a class="nav-item" data-target="premium" onclick="openSection('premium')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M2 9l4 8 6-12 6 12 4-8M4 17h16"/></svg></span>
-      Premium
+      <span data-i18n="premium">Premium</span>
     </a>
     <a class="nav-item" data-target="profile" onclick="openSection('profile')">
       <span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2"/></svg></span>
-      Profilo
+      <span data-i18n="profile">Profilo</span>
     </a>
   </nav>
 
@@ -3215,6 +3339,15 @@ a { text-decoration: none; color: inherit; }
     <button class="room-back-btn" style="color:var(--gold)" onclick="callFromMatch()" title="Chiama">📞</button>
   </header>
   <div class="room-msgs" id="matchMsgs"></div>
+  <div class="sticker-row">
+    <button class="sticker-btn" onclick="sendSticker('🎙 Ciao, com'è la tua giornata?')">👋</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 La tua voce mi piace, parliamo?')">❤️</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 Hai un secondo per una battle?')">⚔️</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 Buonanotte, sogni d'oro')">🌙</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 Buongiorno!')">☀️</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 LOL')">😂</button>
+    <button class="sticker-btn" onclick="sendSticker('🎙 Che dici, ci sentiamo in chiamata?')">📞</button>
+  </div>
   <div class="room-input-wrap">
     <input class="room-text-input" id="matchMsgInput" placeholder="Scrivi un messaggio..." maxlength="1000"
       onkeydown="if(event.key==='Enter')sendMatchMsg()">
@@ -3571,6 +3704,13 @@ async function pollMatchMsgs() {
     </div>`;
   }).join('');
   if (wasAtBottom) el.scrollTop = el.scrollHeight;
+}
+
+async function sendSticker(text) {
+  if (!_currentMatchId) { toast('Apri prima una chat'); return; }
+  const r = await api(`/matches/${_currentMatchId}/messages`, { method: 'POST', body: JSON.stringify({ text }) });
+  if (r?.ok) await pollMatchMsgs();
+  else toast(r?.error || 'Errore invio');
 }
 
 async function sendMatchMsg() {
@@ -4163,6 +4303,7 @@ function renderUserCard(u) {
           <button class="like-btn ${liked ? 'liked' : ''}"
             onclick="event.stopPropagation();toggleLike('${u.id}', this)">${liked ? '❤️' : '🤍'}</button>
           <span class="likes-count" id="lc_${u.id}">${u.likes_received || 0}</span>
+          <button class="like-btn" onclick="event.stopPropagation();skipCard('${u.id}')" title="Salta">⏭</button>
           <button class="like-btn" onclick="event.stopPropagation();openUserMenu('${u.id}','${escHtml(u.username)}')" title="Altro">⋯</button>
         </div>
       </div>
@@ -4173,6 +4314,21 @@ async function loadMoreExplore() {
   const btn = document.querySelector('.user-feed button.form-submit');
   if (btn) btn.remove();
   await loadExploreFeed(false);
+}
+
+function skipCard(userId) {
+  const card = document.getElementById('ucard_' + userId);
+  if (!card) return;
+  card.style.transition = 'all 0.3s cubic-bezier(.34,1.56,.64,1)';
+  card.style.transform = 'translateX(120%) rotate(8deg)';
+  card.style.opacity = '0';
+  setTimeout(() => card.remove(), 320);
+  // Memorizza skip in localStorage per non rivederlo in questa sessione
+  try {
+    const skips = JSON.parse(localStorage.getItem('kv-skips') || '[]');
+    skips.push(userId);
+    localStorage.setItem('kv-skips', JSON.stringify(skips.slice(-200)));
+  } catch(e) {}
 }
 
 async function toggleLike(userId, btnEl) {
@@ -4491,6 +4647,9 @@ function renderPlans() {
 
 // ============= NAVIGATION =============
 function openSection(name) {
+  // Stop FYP audio se non siamo più in /fyp
+  if (name !== 'fyp') { try { stopFypAudio(); } catch(e) {} }
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   const sec = document.getElementById('section-' + name);
   if (sec) sec.classList.add('active');
@@ -4502,6 +4661,7 @@ function openSection(name) {
   document.querySelector('.content').scrollTo({ top: 0, behavior: 'smooth' });
 
   if (name === 'explore') loadExploreFeed(true);
+  if (name === 'fyp') loadFyp();
   if (name === 'profile') { renderProfileClips(); loadProfileForm(); loadReferral(); }
   if (name === 'chat') renderChats();
   if (name === 'arena') loadArena();
@@ -4695,6 +4855,8 @@ function init() {
     const ref = params.get('ref');
     if (ref) localStorage.setItem('kv-ref', ref);
   } catch(e) {}
+  // Applica lingua
+  try { applyI18n(); document.documentElement.lang = _lang; } catch(e) {}
 
   renderStories();
   renderNewProfiles();
@@ -4808,6 +4970,208 @@ function init() {
   if (shouldShowOnboarding()) {
     setTimeout(() => showOnboarding(), 2500);
   }
+}
+
+// ============= I18N (Italian + English) =============
+const I18N = {
+  it: {
+    welcome: 'Benvenuto su Kouverte',
+    voice_dating: 'Voice Dating on Bitcoin',
+    explore_now: 'Esplora ora',
+    add_voice: 'Aggiungi la tua voce',
+    choose_prompt: 'Scegli un prompt',
+    arena: 'Arena',
+    voci: 'Voci',
+    explore: 'Esplora',
+    rooms: 'Stanze',
+    chat: 'Chat',
+    premium: 'Premium',
+    profile: 'Profilo',
+    invite_friends: 'Invita amici · Guadagna sats',
+    need_help: 'Hai bisogno di aiuto?',
+    skip: 'Salta',
+    next: 'Avanti',
+    challenge: 'Sfida',
+    its_a_match: 'È UN MATCH!',
+    call_now: '📞 Chiama subito',
+    message: '💬 Scrivi',
+    later: 'Più tardi'
+  },
+  en: {
+    welcome: 'Welcome to Kouverte',
+    voice_dating: 'Voice Dating on Bitcoin',
+    explore_now: 'Explore now',
+    add_voice: 'Add your voice',
+    choose_prompt: 'Pick a prompt',
+    arena: 'Arena',
+    voci: 'Voices',
+    explore: 'Explore',
+    rooms: 'Rooms',
+    chat: 'Chat',
+    premium: 'Premium',
+    profile: 'Profile',
+    invite_friends: 'Invite friends · Earn sats',
+    need_help: 'Need help?',
+    skip: 'Skip',
+    next: 'Next',
+    challenge: 'Challenge',
+    its_a_match: "IT'S A MATCH!",
+    call_now: '📞 Call now',
+    message: '💬 Message',
+    later: 'Later'
+  }
+};
+function detectLang() {
+  const stored = localStorage.getItem('kv-lang');
+  if (stored && I18N[stored]) return stored;
+  const browser = (navigator.language || 'it').toLowerCase().slice(0, 2);
+  return I18N[browser] ? browser : 'it';
+}
+let _lang = detectLang();
+function t(key) { return I18N[_lang]?.[key] || I18N.it[key] || key; }
+function setLang(code) {
+  if (!I18N[code]) return;
+  _lang = code;
+  localStorage.setItem('kv-lang', code);
+  applyI18n();
+  document.documentElement.lang = code;
+}
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    const v = t(k);
+    if (v) el.textContent = v;
+  });
+  document.getElementById('langIt')?.classList.toggle('active', _lang === 'it');
+  document.getElementById('langEn')?.classList.toggle('active', _lang === 'en');
+}
+
+// ============= FYP (Audio Stories Autoplay) =============
+let _fypAudio = null;
+let _fypObserver = null;
+let _fypCards = [];
+
+async function loadFyp() {
+  const box = document.getElementById('fypContainer');
+  if (!box) return;
+  box.innerHTML = '<div class="fyp-loading">Carico le voci…</div>';
+  const r = await api('/users/feed?has_clip=1');
+  const users = (r?.users || []).filter(u => u.clip_id);
+  if (!users.length) {
+    box.innerHTML = '<div class="fyp-empty">Nessuna voce disponibile ancora.<br>Sii il primo a registrare la tua!</div>';
+    return;
+  }
+  box.innerHTML = users.map((u, i) => fypCardHtml(u, i)).join('');
+  setupFypObserver();
+}
+
+function fypCardHtml(u, i) {
+  const letter = (u.firstName || u.username || 'K').charAt(0).toUpperCase();
+  const liked = (_likedUsers && _likedUsers.has?.(u.id)) ? 'liked' : '';
+  const heart = liked ? '❤️' : '🤍';
+  return `
+    <div class="fyp-card" data-uid="${u.id}" data-clip="${u.clip_id}" data-idx="${i}">
+      <div class="fyp-content">
+        <div class="fyp-avatar">${letter}</div>
+        <div class="fyp-name">${escHtml(u.firstName || u.username)}${u.age ? ` · ${u.age}` : ''}</div>
+        <div class="fyp-meta">${u.city ? '📍 ' + escHtml(u.city) : ''}${u.distance_km !== null && u.distance_km !== undefined ? ' · ' + u.distance_km + ' km' : ''}</div>
+        <div class="fyp-bio">${u.bio ? '"' + escHtml(u.bio) + '"' : ''}</div>
+        <div class="fyp-play-row">
+          <button class="fyp-play-btn" onclick="fypTogglePlay(this)">▶</button>
+          <div class="fyp-wave"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div class="fyp-actions">
+        <button class="fyp-action-btn ${liked}" onclick="fypLike('${u.id}', this)">${heart}</button>
+        <div class="fyp-action-lbl">${u.likes_received || 0}</div>
+        <button class="fyp-action-btn" onclick="fypMessage('${u.id}')">💬</button>
+        <button class="fyp-action-btn" onclick="fypChallenge('${u.id}','${escHtml(u.firstName||u.username)}')">⚔️</button>
+        <button class="fyp-action-btn" onclick="openUserMenu('${u.id}','${escHtml(u.username)}')">⋯</button>
+      </div>
+    </div>`;
+}
+
+function setupFypObserver() {
+  if (_fypObserver) _fypObserver.disconnect();
+  _fypCards = Array.from(document.querySelectorAll('#fypContainer .fyp-card'));
+  _fypObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.intersectionRatio >= 0.7) {
+        fypAutoplay(e.target);
+      }
+    });
+  }, { root: document.getElementById('fypContainer'), threshold: [0, 0.5, 0.7, 1.0] });
+  _fypCards.forEach(c => _fypObserver.observe(c));
+}
+
+async function fypAutoplay(card) {
+  // Pause previous
+  if (_fypAudio) { try { _fypAudio.pause(); } catch(e) {} }
+  document.querySelectorAll('.fyp-wave.playing').forEach(w => w.classList.remove('playing'));
+  document.querySelectorAll('.fyp-play-btn').forEach(b => b.textContent = '▶');
+
+  const clipId = card.dataset.clip;
+  if (!clipId) return;
+  try {
+    const r = await fetch('/api/stories/' + clipId + '/audio');
+    if (!r.ok) return;
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    _fypAudio = new Audio(url);
+    _fypAudio.play().catch(() => {});
+    const wave = card.querySelector('.fyp-wave');
+    const btn = card.querySelector('.fyp-play-btn');
+    if (wave) wave.classList.add('playing');
+    if (btn) btn.textContent = '⏸';
+    _fypAudio.onended = () => {
+      if (wave) wave.classList.remove('playing');
+      if (btn) btn.textContent = '▶';
+      // Auto-advance al prossimo
+      const next = card.nextElementSibling;
+      if (next && next.classList.contains('fyp-card')) {
+        next.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+  } catch(e) {}
+}
+
+function fypTogglePlay(btn) {
+  if (!_fypAudio) return;
+  if (_fypAudio.paused) { _fypAudio.play(); btn.textContent = '⏸'; btn.closest('.fyp-card')?.querySelector('.fyp-wave')?.classList.add('playing'); }
+  else { _fypAudio.pause(); btn.textContent = '▶'; btn.closest('.fyp-card')?.querySelector('.fyp-wave')?.classList.remove('playing'); }
+}
+
+async function fypLike(userId, btn) {
+  if (!state.token) { showAuthModal(); return; }
+  const r = await api(`/users/${userId}/like`, { method: 'POST', body: '{}' });
+  if (!r?.ok) return;
+  if (r.liked) {
+    btn.textContent = '❤️';
+    btn.classList.add('liked');
+    _likedUsers.add(userId);
+    if (r.match) {
+      const card = btn.closest('.fyp-card');
+      const name = card?.querySelector('.fyp-name')?.textContent.split('·')[0].trim() || 'Utente';
+      const letter = card?.querySelector('.fyp-avatar')?.textContent || '?';
+      setTimeout(() => showMatchReveal({ userId, name, letter }), 250);
+    }
+  } else {
+    btn.textContent = '🤍';
+    btn.classList.remove('liked');
+    _likedUsers.delete(userId);
+  }
+}
+function fypMessage(userId) {
+  toast('Apri la chat dal match');
+  openSection('chat');
+}
+function fypChallenge(userId, name) {
+  createBattle(userId, name);
+}
+
+function stopFypAudio() {
+  if (_fypAudio) { try { _fypAudio.pause(); } catch(e) {} }
+  document.querySelectorAll('.fyp-wave.playing').forEach(w => w.classList.remove('playing'));
 }
 
 // ============= LEADERBOARD =============
