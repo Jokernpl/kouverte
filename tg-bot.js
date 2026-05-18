@@ -13,14 +13,18 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
 
-const BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '8782933185:AAEsR_3FfeSBlox5OPZb18WA-hcPDVq5oGU';
+const BOT_TOKEN    = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '';
 const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
 const BTC_ADDRESS  = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
 
-if (!BOT_TOKEN || BOT_TOKEN.startsWith('INSERISCI')) {
-  console.error('\n❌ BOT_TOKEN mancante in .env\n');
-  process.exit(1);
+if (!BOT_TOKEN || BOT_TOKEN.startsWith('INSERISCI') || BOT_TOKEN.length < 30) {
+  console.error('\n❌ BOT_TOKEN mancante o invalido.');
+  console.error('   Imposta la env var BOT_TOKEN (o TELEGRAM_BOT_TOKEN) con il token di BotFather.');
+  console.error('   Il bot non verrà avviato — l\'applicazione web continua a funzionare.\n');
+  // Esporta uno stub no-op così require('./tg-bot.js') non crasha
+  module.exports = { ok: false, error: 'BOT_TOKEN_MISSING' };
+  return;
 }
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
