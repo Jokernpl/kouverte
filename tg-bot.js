@@ -227,8 +227,8 @@ bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
   const photoUrl = await getTgPhotoUrl(chatId);
 
   const caption =
-`🕯️  *KOUVERTE*
-_Il velo non si rompe. Si depone._
+`⚡ *KOUVERTE* ₿
+_Voice Dating on Bitcoin_
 
 Benvenuto, *${firstName}*.
 
