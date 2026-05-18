@@ -2699,12 +2699,29 @@ if (process.env.BOT_DISABLED === '1') {
 }
 
 // Endpoint diagnostico (sicuro: non rivela il token, solo se è settato)
-app.get('/api/bot/status', (req, res) => {
-    res.json({
+app.get('/api/bot/status', async (req, res) => {
+    const token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '';
+    const out = {
         running: _botStatus.running,
         reason: _botStatus.reason,
         tokenSet: _botStatus.tokenSet,
+        tokenPrefix: token ? token.substring(0, 12) + '...' : '',
         botUsername: process.env.BOT_USERNAME || 'Kouverte_bot',
-        error: _botStatus.error ? String(_botStatus.error).slice(0, 200) : null
-    });
+        error: _botStatus.error ? String(_botStatus.error).slice(0, 200) : null,
+        tokenValid: null,
+        telegramSays: null
+    };
+    // Live test del token contro l'API Telegram
+    if (token && token.length >= 30) {
+        try {
+            const r = await fetch('https://api.telegram.org/bot' + token + '/getMe');
+            const d = await r.json();
+            out.tokenValid = !!d.ok;
+            out.telegramSays = d.ok ? `OK: @${d.result.username} (id ${d.result.id})` : d.description;
+        } catch(e) {
+            out.tokenValid = false;
+            out.telegramSays = 'fetch error: ' + e.message;
+        }
+    }
+    res.json(out);
 });
