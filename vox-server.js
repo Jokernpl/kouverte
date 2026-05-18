@@ -246,7 +246,10 @@ function publicUser(u) {
     return {
         id: u.id, email: u.email, username: u.username,
         profile: u.profile, stats: u.stats,
-        created_at: u.created_at
+        created_at: u.created_at,
+        battle_wins: u.battle_wins || 0,
+        battle_losses: u.battle_losses || 0,
+        is_champion: !!(u.champion_until && u.champion_until > now())
     };
 }
 
@@ -997,11 +1000,12 @@ function publicBattle(b) {
     if (!b) return null;
     const uA = DB.users.find(u => u.id === b.userA);
     const uB = DB.users.find(u => u.id === b.userB);
+    const champ = (u) => !!(u && u.champion_until && u.champion_until > now());
     return {
         id: b.id,
         status: b.status,
-        userA: uA ? { id: uA.id, username: uA.username, firstName: uA.firstName, avatarFrame: uA.avatarFrame } : null,
-        userB: uB ? { id: uB.id, username: uB.username, firstName: uB.firstName, avatarFrame: uB.avatarFrame } : null,
+        userA: uA ? { id: uA.id, username: uA.username, firstName: uA.firstName, avatarFrame: uA.avatarFrame, is_champion: champ(uA), wins: uA.battle_wins || 0, losses: uA.battle_losses || 0 } : null,
+        userB: uB ? { id: uB.id, username: uB.username, firstName: uB.firstName, avatarFrame: uB.avatarFrame, is_champion: champ(uB), wins: uB.battle_wins || 0, losses: uB.battle_losses || 0 } : null,
         scoreA: b.scoreA || 0,
         scoreB: b.scoreB || 0,
         pot: (b.scoreA || 0) + (b.scoreB || 0),
@@ -1012,6 +1016,7 @@ function publicBattle(b) {
     };
 }
 
+const CHAMPION_DURATION_MS = 24 * 60 * 60 * 1000;
 function endBattle(battleId) {
     DB.battles = DB.battles || [];
     const b = DB.battles.find(x => x.id === battleId);
@@ -1029,8 +1034,13 @@ function endBattle(battleId) {
         addBalance(winnerId, winnerCut);
         if (loserId) addBalance(loserId, loserCut);
         b.payout = { winner: winnerCut, loser: loserCut, platform: pot - winnerCut - loserCut };
-        const winName = DB.users.find(u => u.id === winnerId)?.firstName || 'qualcuno';
-        notifyTelegramUser(winnerId, `👑 Hai vinto la battle! +${winnerCut} sats`);
+        // W/L stats + Champion badge
+        const winner = DB.users.find(u => u.id === winnerId);
+        const loser = DB.users.find(u => u.id === loserId);
+        if (winner) { winner.battle_wins = (winner.battle_wins || 0) + 1; winner.champion_until = now() + CHAMPION_DURATION_MS; }
+        if (loser) { loser.battle_losses = (loser.battle_losses || 0) + 1; }
+        const winName = winner?.firstName || 'qualcuno';
+        notifyTelegramUser(winnerId, `👑 Hai vinto la battle! +${winnerCut} sats · Champion badge 24h attivo`);
         if (loserId) notifyTelegramUser(loserId, `⚔️ Battle finita. Consolation: +${loserCut} sats`);
     } else {
         // Pareggio o nessun boost: rimborso 100% ai partecipanti su pot diviso
@@ -1200,6 +1210,7 @@ app.post('/api/sats/topup-btc', verifyToken, rateLimit('sats-topup', 10, 60 * 60
 });
 
 // Boost: deduct sats from spectator balance, add to chosen side score
+const MAX_BOOST_PER_USER_PER_BATTLE = 5000; // anti-whale: 5k sats max per spettatore per battle
 app.post('/api/battles/:id/boost', verifyToken, rateLimit('battle-boost', 60, 60 * 1000), (req, res) => {
     const userId = req.user.userId;
     const { side, amount } = req.body || {};
@@ -1211,6 +1222,11 @@ app.post('/api/battles/:id/boost', verifyToken, rateLimit('battle-boost', 60, 60
     if (!b) return res.status(404).json({ error: 'Battle non trovata' });
     if (b.status !== 'live') return res.status(400).json({ error: 'Battle non attiva' });
     if (userId === b.userA || userId === b.userB) return res.status(403).json({ error: 'I partecipanti non possono boostare' });
+    // Anti-cheat: cap sats per utente per battle
+    const myBoosted = (b.boosts || []).filter(x => x.userId === userId).reduce((a, x) => a + (x.amount || 0), 0);
+    if (myBoosted + sats > MAX_BOOST_PER_USER_PER_BATTLE) {
+        return res.status(403).json({ error: `Limite raggiunto: max ${MAX_BOOST_PER_USER_PER_BATTLE} sats per battle (boostato finora: ${myBoosted})` });
+    }
     if (!deductBalance(userId, sats)) return res.status(402).json({ error: 'Saldo sats insufficiente' });
     if (side === 'A') b.scoreA = (b.scoreA || 0) + sats;
     else b.scoreB = (b.scoreB || 0) + sats;

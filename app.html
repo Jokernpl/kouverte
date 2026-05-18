@@ -2399,13 +2399,13 @@ a { text-decoration: none; color: inherit; }
       </div>
 
       <div class="profile-body">
-        <div class="profile-name">Alessia <span class="verified-tick">✓</span></div>
+        <div class="profile-name"><span id="profileNameTxt">Alessia</span> <span class="verified-tick">✓</span> <span id="profileChampion" style="display:none;color:#f7931a;" title="Champion (24h)">👑</span></div>
         <div class="profile-location">Milano, Italia</div>
 
-        <div class="profile-stats">
-          <div class="stat"><div class="stat-num">128</div><div class="stat-lbl">Post</div></div>
-          <div class="stat"><div class="stat-num">3.2K</div><div class="stat-lbl">Follower</div></div>
-          <div class="stat"><div class="stat-num">152</div><div class="stat-lbl">Seguiti</div></div>
+        <div class="profile-stats" id="profileStatsArena">
+          <div class="stat"><div class="stat-num" id="statWins">0</div><div class="stat-lbl">⚔️ Vittorie</div></div>
+          <div class="stat"><div class="stat-num" id="statLosses">0</div><div class="stat-lbl">Sconfitte</div></div>
+          <div class="stat"><div class="stat-num" id="statSats">0</div><div class="stat-lbl">⚡ Sats</div></div>
         </div>
 
         <div class="profile-bio">
@@ -3504,14 +3504,27 @@ async function loadProfileForm() {
   if (!state.token) return;
   try {
     const r = await api('/auth/me');
-    const p = r?.user?.profile;
-    if (!p) return;
+    const u = r?.user;
+    const p = u?.profile;
     const setVal = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
-    setVal('peDisplayName', p.display_name || '');
-    setVal('peBio', p.bio || '');
-    setVal('peGender', p.gender || '');
-    setVal('peLookingFor', p.looking_for || 'all');
-    setVal('peBirthYear', p.birth_year || '');
+    if (p) {
+      setVal('peDisplayName', p.display_name || '');
+      setVal('peBio', p.bio || '');
+      setVal('peGender', p.gender || '');
+      setVal('peLookingFor', p.looking_for || 'all');
+      setVal('peBirthYear', p.birth_year || '');
+    }
+    // Arena stats
+    if (u) {
+      const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      setTxt('statWins', u.battle_wins || 0);
+      setTxt('statLosses', u.battle_losses || 0);
+      const ch = document.getElementById('profileChampion');
+      if (ch) ch.style.display = u.is_champion ? 'inline' : 'none';
+      if (u.username) setTxt('profileNameTxt', u.username);
+    }
+    const bal = await api('/me/balance');
+    if (bal?.ok) document.getElementById('statSats').textContent = bal.sats || 0;
   } catch(e) {}
 }
 
@@ -4917,8 +4930,10 @@ function _wireBattleVoiceEvents() {
 function renderBattle(b) {
   const aName = b.userA?.firstName || b.userA?.username || 'A';
   const bName = b.userB?.firstName || b.userB?.username || 'B';
-  document.getElementById('bvNameA').textContent = aName;
-  document.getElementById('bvNameB').textContent = bName;
+  const crownA = b.userA?.is_champion ? ' 👑' : '';
+  const crownB = b.userB?.is_champion ? ' 👑' : '';
+  document.getElementById('bvNameA').textContent = aName + crownA;
+  document.getElementById('bvNameB').textContent = bName + crownB;
   document.getElementById('bvAvatarA').textContent = aName.charAt(0).toUpperCase();
   document.getElementById('bvAvatarB').textContent = bName.charAt(0).toUpperCase();
   updateBattleScores(b.scoreA, b.scoreB);
