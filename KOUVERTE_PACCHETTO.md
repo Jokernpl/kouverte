@@ -42,12 +42,16 @@
 
 ### 🎯 ARENA (Voice Battles) — feature flagship
 - 2 utenti si sfidano live per **3 minuti**
+- **Audio WebRTC live**: i 2 sfidanti parlano in tempo reale, spettatori ascoltano (mesh con STUN)
 - Spettatori boostano con **sats** (10/50/200 a tier)
 - Barra HP centrale si sposta in tempo reale
 - **Distribuzione pot**: 70% vincitore, 20% perdente, 10% piattaforma
 - Pareggio → rimborso 50/50
 - Notifica TG al vincitore con sats accreditati
-- Champion badge sul profilo (futuro)
+- **👑 Champion badge** sul vincitore per 24h (mostrato in battle view e profilo)
+- **W/L tracking**: ogni battle aggiorna `battle_wins`/`battle_losses` sul profilo
+- **Anti-whale**: max 5.000 sats di boost per utente per battle
+- **Notifiche realtime in-app** (socket) + Telegram per inviti sfida
 
 **Ricarica sats:**
 - **Da Crediti interni**: 1 credito = 5.000 sats (immediato)
@@ -220,10 +224,14 @@ Kouverte-Voice/
 ## 8. PROSSIMI PASSI POSSIBILI
 
 **Quick wins:**
-- Audio WebRTC live nella battle (i 2 sfidanti parlano, pubblico ascolta muto)
-- Champion badge + cronologia W/L sul profilo
-- Notifica in-app real-time (toast su socket) per inviti battle
-- Form reset password nel frontend
+- ✅ ~~Audio WebRTC live nella battle~~ (FATTO)
+- ✅ ~~Champion badge + cronologia W/L sul profilo~~ (FATTO)
+- ✅ ~~Notifica in-app real-time (toast su socket) per inviti battle~~ (FATTO)
+- ✅ ~~Form reset password nel frontend~~ (FATTO)
+- ✅ ~~Pannello admin UI (admin.html)~~ (FATTO)
+- TURN server per WebRTC NAT simmetrico (es. coturn o servizio gestito)
+- Cancel battle da parte del creator (ritiro invito pending)
+- Spectator mute toggle nella battle view
 
 **Monetizzazione:**
 - Super Like / Boost profilo
@@ -240,6 +248,9 @@ Kouverte-Voice/
 
 | Commit | Cosa |
 |---|---|
+| `5344799` | Champion badge + W/L stats + Anti-cheat boost cap |
+| `77a4139` | Audio live nelle battle: WebRTC mesh per Arena |
+| `d4a8e06` | Setup completo: admin panel + reset password UI + invite realtime |
 | `46d0d31` | Cleanup: rimosso /api/duels legacy + IP hardcoded |
 | `1040696` | Sats topup: convert da crediti + acquisto BTC |
 | `193f1a2` | Voice Battles (Arena): TikTok-style 1v1 |
