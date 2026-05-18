@@ -2710,7 +2710,26 @@ a { text-decoration: none; color: inherit; }
       <input type="email" id="loginEmail" placeholder="Email" class="form-input" autocomplete="email">
       <input type="password" id="loginPassword" placeholder="Password" class="form-input" autocomplete="current-password">
       <button class="form-submit" id="loginBtn" onclick="doLogin()">Accedi</button>
+      <a class="form-link" onclick="showAuthMode('forgot')" style="display:block;margin-top:8px;font-size:12px;">Password dimenticata?</a>
       <a class="form-link" onclick="showAuthMode('register')">Non hai un account? <span>Registrati</span></a>
+    </div>
+
+    <!-- FORGOT PASSWORD -->
+    <div class="auth-mode hidden" id="authForgot">
+      <div class="modal-title">Recupera password</div>
+      <div class="modal-sub">Ti invieremo un link via Telegram bot se hai collegato l'account</div>
+      <input type="email" id="forgotEmail" placeholder="Email registrata" class="form-input" autocomplete="email">
+      <button class="form-submit" id="forgotBtn" onclick="doForgot()">Invia link reset</button>
+      <a class="form-link" onclick="showAuthMode('login')">Torna al login</a>
+    </div>
+
+    <!-- RESET PASSWORD (via #reset=token) -->
+    <div class="auth-mode hidden" id="authReset">
+      <div class="modal-title">Nuova password</div>
+      <div class="modal-sub">Imposta una nuova password per il tuo account</div>
+      <input type="password" id="resetPassword" placeholder="Nuova password (min 6)" class="form-input" autocomplete="new-password">
+      <input type="password" id="resetConfirm" placeholder="Conferma password" class="form-input" autocomplete="new-password">
+      <button class="form-submit" id="resetBtn" onclick="doReset()">Aggiorna password</button>
     </div>
 
     <!-- REGISTER -->
@@ -3984,7 +4003,46 @@ function closeModal(id) {
 function showAuthMode(mode) {
   document.getElementById('authLogin').classList.toggle('hidden', mode !== 'login');
   document.getElementById('authRegister').classList.toggle('hidden', mode !== 'register');
+  const f = document.getElementById('authForgot'); if (f) f.classList.toggle('hidden', mode !== 'forgot');
+  const r = document.getElementById('authReset'); if (r) r.classList.toggle('hidden', mode !== 'reset');
 }
+
+async function doForgot() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  if (!email) { toast('Inserisci la tua email'); return; }
+  const r = await api('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+  if (r?.ok) {
+    toast('Se l\'email è registrata e hai collegato Telegram, riceverai il link');
+    showAuthMode('login');
+  } else { toast(r?.error || 'Errore'); }
+}
+
+async function doReset() {
+  const token = (window.location.hash.match(/reset=([a-f0-9]+)/) || [])[1];
+  if (!token) { toast('Token mancante. Apri il link dal bot.'); return; }
+  const p = document.getElementById('resetPassword').value;
+  const c = document.getElementById('resetConfirm').value;
+  if (!p || p.length < 6) { toast('Password min 6 caratteri'); return; }
+  if (p !== c) { toast('Le password non coincidono'); return; }
+  const r = await api('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password: p }) });
+  if (r?.ok) {
+    state.token = r.token; state.user = r.user;
+    localStorage.setItem('kouverte', JSON.stringify({ token: r.token, user: r.user }));
+    toast('Password aggiornata');
+    closeModal('authModal');
+    history.replaceState(null, '', window.location.pathname);
+  } else { toast(r?.error || 'Token scaduto o non valido'); }
+}
+
+// Auto-open reset form if hash contains reset token
+(function checkResetHash() {
+  if (/reset=[a-f0-9]+/.test(window.location.hash)) {
+    setTimeout(() => {
+      showAuthMode('reset');
+      document.getElementById('authModal').classList.add('show');
+    }, 300);
+  }
+})();
 
 async function doLogin() {
   const btn = document.getElementById('loginBtn');
@@ -4849,6 +4907,9 @@ window.getSocket = function() {
     });
     s.on('battle:started', (b) => {
       if (_activeBattle && b.id === _activeBattle.id) { _activeBattle = b; renderBattle(b); }
+    });
+    s.on('battle:invited', (d) => {
+      toast(`⚔️ ${d.fromName} ti ha sfidato! Apri Arena per accettare`);
     });
     s.on('battle:ended', (b) => {
       if (_activeBattle && b.id === _activeBattle.id) {

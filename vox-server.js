@@ -1082,6 +1082,9 @@ app.post('/api/battles/create', verifyToken, rateLimit('battle-create', 10, 60 *
     markDirty();
     const fromName = DB.users.find(u => u.id === userId)?.firstName || 'qualcuno';
     notifyTelegramUser(opponentId, `⚔️ ${fromName} ti ha sfidato in una Voice Battle! Apri Kouverte per accettare.`);
+    // Realtime in-app notif via socket
+    const oppSocketId = activeCalls.get(opponentId);
+    if (oppSocketId) io.to(oppSocketId).emit('battle:invited', { battleId: battle.id, fromName, fromUserId: userId });
     res.json({ ok: true, battle: publicBattle(battle) });
 });
 

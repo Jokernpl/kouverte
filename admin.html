@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>KOUVERTE Admin</title>
+<style>
+:root {
+  --bg: #0a0a0a;
+  --panel: #14110d;
+  --gold: #c9a961;
+  --btc: #f7931a;
+  --border: rgba(201,169,97,0.2);
+  --text: #f0e6d2;
+  --text-dim: #8a8275;
+  --red: #ff3b30;
+  --green: #34c759;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height: 100vh; padding: 20px;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+}
+header h1 {
+  font-family: Georgia, serif; color: var(--gold); margin: 0;
+  letter-spacing: 4px; font-size: 22px;
+}
+header .btc-tag { color: var(--btc); font-size: 11px; letter-spacing: 1px; }
+header button {
+  background: rgba(255,59,48,0.1); border: 1px solid var(--red); color: var(--red);
+  padding: 8px 14px; border-radius: 8px; cursor: pointer; font-weight: 600;
+}
+.login-box {
+  max-width: 380px; margin: 80px auto; padding: 30px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+}
+.login-box h2 { color: var(--gold); margin: 0 0 20px; font-family: Georgia,serif; letter-spacing: 3px; }
+.login-box input {
+  width: 100%; padding: 12px; margin-bottom: 10px;
+  background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px;
+  color: #fff; font-size: 14px;
+}
+.login-box button {
+  width: 100%; padding: 12px;
+  background: linear-gradient(135deg, var(--btc), var(--gold));
+  border: none; border-radius: 8px; color: #000; font-weight: 700; cursor: pointer;
+  letter-spacing: 1px;
+}
+.login-err { color: var(--red); font-size: 12px; margin-top: 8px; }
+
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px;
+}
+.stat-card .label { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
+.stat-card .val { color: var(--gold); font-size: 26px; font-weight: 700; margin-top: 6px; }
+
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+.tab {
+  padding: 8px 16px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text-dim); cursor: pointer; font-size: 13px;
+}
+.tab.active { background: rgba(247,147,26,0.15); border-color: var(--btc); color: var(--btc); }
+
+.panel {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; min-height: 200px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+th { color: var(--text-dim); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 1px;
+}
+.badge.admin { background: rgba(247,147,26,0.2); color: var(--btc); }
+.badge.live { background: rgba(52,199,89,0.2); color: var(--green); }
+.badge.ended { background: rgba(255,255,255,0.06); color: var(--text-dim); }
+.badge.pending { background: rgba(201,169,97,0.2); color: var(--gold); }
+
+.btn-action {
+  padding: 5px 10px; font-size: 11px; border-radius: 6px; border: none;
+  cursor: pointer; font-weight: 600; margin-right: 4px;
+}
+.btn-delete { background: var(--red); color: #fff; }
+.btn-confirm { background: var(--green); color: #fff; }
+
+.hidden { display: none !important; }
+.loading { color: var(--text-dim); padding: 20px; text-align: center; }
+.empty { color: var(--text-dim); padding: 30px; text-align: center; font-style: italic; }
+
+input.confirm-pid {
+  width: 100%; padding: 10px; background: rgba(0,0,0,0.5);
+  border: 1px solid var(--border); border-radius: 8px; color: #fff;
+  font-family: monospace; font-size: 12px; margin-bottom: 8px;
+}
+</style>
+</head>
+<body>
+
+<div id="loginBox" class="login-box">
+  <h2>⚡ KOUVERTE ADMIN</h2>
+  <input type="email" id="loginEmail" placeholder="email admin" autocomplete="username">
+  <input type="password" id="loginPassword" placeholder="password" autocomplete="current-password">
+  <button onclick="doLogin()">Accedi</button>
+  <div id="loginErr" class="login-err"></div>
+</div>
+
+<div id="adminApp" class="container hidden">
+  <header>
+    <div>
+      <h1>⚡ KOUVERTE <span class="btc-tag">ADMIN ₿</span></h1>
+      <div id="adminUser" style="color:var(--text-dim);font-size:12px;margin-top:4px;"></div>
+    </div>
+    <button onclick="doLogout()">Esci</button>
+  </header>
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="users" onclick="switchTab('users')">👥 Utenti</div>
+    <div class="tab" data-tab="battles" onclick="switchTab('battles')">⚔️ Battles</div>
+    <div class="tab" data-tab="stories" onclick="switchTab('stories')">🎙 Storie</div>
+    <div class="tab" data-tab="btc" onclick="switchTab('btc')">₿ Pagamenti BTC</div>
+  </div>
+
+  <div class="panel" id="tabContent">
+    <div class="loading">Caricamento…</div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('kouverte_admin_token') || '';
+let currentUser = null;
+
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const r = await fetch('/api' + path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
+  if (r.status === 401 || r.status === 403) { doLogout(); throw new Error('forbidden'); }
+  return r.json();
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  if (!email || !password) { err.textContent = 'Email e password richiesti'; return; }
+  try {
+    const r = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const d = await r.json();
+    if (!d.ok) { err.textContent = d.error || 'Login fallito'; return; }
+    if (!d.user.is_admin) { err.textContent = 'Accesso negato: non sei admin'; return; }
+    token = d.token;
+    currentUser = d.user;
+    localStorage.setItem('kouverte_admin_token', token);
+    enterAdmin();
+  } catch(e) {
+    err.textContent = 'Errore di rete';
+  }
+}
+
+function doLogout() {
+  token = '';
+  localStorage.removeItem('kouverte_admin_token');
+  document.getElementById('loginBox').classList.remove('hidden');
+  document.getElementById('adminApp').classList.add('hidden');
+}
+
+async function enterAdmin() {
+  document.getElementById('loginBox').classList.add('hidden');
+  document.getElementById('adminApp').classList.remove('hidden');
+  // verify token
+  if (!currentUser) {
+    const me = await api('/auth/me');
+    if (!me?.ok || !me.user?.is_admin) { doLogout(); return; }
+    currentUser = me.user;
+  }
+  document.getElementById('adminUser').textContent = 'Loggato come: ' + (currentUser.email || currentUser.username);
+  loadStats();
+  switchTab('users');
+}
+
+async function loadStats() {
+  const s = await api('/admin/stats');
+  if (!s) return;
+  const grid = document.getElementById('statsGrid');
+  grid.innerHTML = `
+    <div class="stat-card"><div class="label">Utenti totali</div><div class="val">${s.totalUsers ?? 0}</div></div>
+    <div class="stat-card"><div class="label">Storie attive</div><div class="val">${s.activeStories ?? 0}</div></div>
+    <div class="stat-card"><div class="label">Reazioni</div><div class="val">${s.totalReactions ?? 0}</div></div>
+    <div class="stat-card"><div class="label">Battles live</div><div class="val">${s.activeBattles ?? 0}</div></div>
+  `;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  const box = document.getElementById('tabContent');
+  box.innerHTML = '<div class="loading">Caricamento…</div>';
+  if (name === 'users') renderUsers(box);
+  else if (name === 'battles') renderBattles(box);
+  else if (name === 'stories') renderStories(box);
+  else if (name === 'btc') renderBtc(box);
+}
+
+function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('it-IT') : '—'; }
+
+async function renderUsers(box) {
+  const d = await api('/admin/users');
+  if (!d?.users?.length) { box.innerHTML = '<div class="empty">Nessun utente</div>'; return; }
+  box.innerHTML = `<table>
+    <thead><tr><th>Email</th><th>Username</th><th>Admin</th><th>Storie</th><th>Creato</th><th>Azioni</th></tr></thead>
+    <tbody>${d.users.map(u => `
+      <tr>
+        <td>${esc(u.email || '—')}</td>
+        <td>${esc(u.username)}</td>
+        <td>${u.is_admin ? '<span class="badge admin">ADMIN</span>' : ''}</td>
+        <td>${u.story_count}</td>
+        <td>${fmtDate(u.created_at)}</td>
+        <td><button class="btn-action btn-delete" onclick="delUser('${u.id}', '${esc(u.username)}')">Elimina</button></td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+async function delUser(id, name) {
+  if (!confirm(`Eliminare definitivamente l'utente "${name}" e tutti i suoi dati?`)) return;
+  const r = await api('/admin/users/' + id, { method: 'DELETE' });
+  if (r?.ok) { loadStats(); renderUsers(document.getElementById('tabContent')); }
+  else alert(r?.error || 'Errore');
+}
+
+async function renderBattles(box) {
+  const d = await api('/admin/battles');
+  if (!d?.battles?.length) { box.innerHTML = '<div class="empty">Nessuna battle</div>'; return; }
+  box.innerHTML = `<table>
+    <thead><tr><th>Sfidante A</th><th>vs</th><th>Sfidante B</th><th>Score</th><th>Pot</th><th>Stato</th><th>Azioni</th></tr></thead>
+    <tbody>${d.battles.map(b => `
+      <tr>
+        <td>${esc(b.userA?.firstName || b.userA?.username || '—')}</td>
+        <td style="color:var(--text-dim)">VS</td>
+        <td>${esc(b.userB?.firstName || b.userB?.username || '—')}</td>
+        <td><b style="color:var(--btc)">⚡${b.scoreA}</b> / <b style="color:var(--btc)">⚡${b.scoreB}</b></td>
+        <td style="color:var(--btc)">⚡${b.pot}</td>
+        <td><span class="badge ${b.status}">${b.status.toUpperCase()}</span></td>
+        <td><button class="btn-action btn-delete" onclick="delBattle('${b.id}')">×</button></td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+async function delBattle(id) {
+  if (!confirm('Eliminare questa battle?')) return;
+  const r = await api('/admin/battles/' + id, { method: 'DELETE' });
+  if (r?.ok) { loadStats(); renderBattles(document.getElementById('tabContent')); }
+}
+
+async function renderStories(box) {
+  const d = await api('/admin/stories');
+  if (!d?.stories?.length) { box.innerHTML = '<div class="empty">Nessuna storia</div>'; return; }
+  box.innerHTML = `<table>
+    <thead><tr><th>Utente</th><th>Durata</th><th>Mood</th><th>Reazioni</th><th>Creata</th><th>Scade</th><th></th></tr></thead>
+    <tbody>${d.stories.map(s => `
+      <tr>
+        <td>${esc(s.username)}</td>
+        <td>${Math.round((s.duration_ms || 0)/1000)}s</td>
+        <td>${esc(s.mood || '—')}</td>
+        <td>${s.reactions_count}</td>
+        <td>${fmtDate(s.created_at)}</td>
+        <td>${fmtDate(s.expires_at)}</td>
+        <td><button class="btn-action btn-delete" onclick="delStory('${s.id}')">×</button></td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+async function delStory(id) {
+  if (!confirm('Eliminare questa storia?')) return;
+  const r = await api('/admin/stories/' + id, { method: 'DELETE' });
+  if (r?.ok) renderStories(document.getElementById('tabContent'));
+}
+
+function renderBtc(box) {
+  box.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13px;">
+      Inserisci l'ID del pagamento BTC pending per confermarlo dopo aver verificato le 4 conferme on-chain.
+      Il sistema verificherà automaticamente via mempool.space prima di accreditare.
+    </p>
+    <input class="confirm-pid" id="confirmPid" placeholder="btc_pay_xxx o btc_sats_xxx">
+    <button class="btn-action btn-confirm" onclick="confirmBtc()">Conferma pagamento</button>
+    <div id="confirmRes" style="margin-top:14px;font-size:13px;"></div>
+  `;
+}
+async function confirmBtc() {
+  const pid = document.getElementById('confirmPid').value.trim();
+  if (!pid) return;
+  const res = document.getElementById('confirmRes');
+  res.style.color = 'var(--text-dim)';
+  res.textContent = 'Verifica in corso…';
+  const r = await api('/admin/bitcoin-confirm', { method: 'POST', body: JSON.stringify({ paymentId: pid }) });
+  if (r?.ok) { res.style.color = 'var(--green)'; res.textContent = '✅ ' + r.message; }
+  else {
+    res.style.color = 'var(--red)';
+    res.textContent = '❌ ' + (r?.error || 'Errore') + (r?.current_confirmations !== undefined ? ` (conferme: ${r.current_confirmations}/${r.required_confirmations})` : '');
+  }
+}
+
+function esc(s) { return String(s||'').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Auto-login if token in storage
+if (token) {
+  api('/auth/me').then(me => {
+    if (me?.ok && me.user?.is_admin) { currentUser = me.user; enterAdmin(); }
+    else doLogout();
+  }).catch(() => doLogout());
+}
+</script>
+</body>
+</html>
