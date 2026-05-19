@@ -2799,12 +2799,15 @@ io.on('connection', (socket) => {
         if (!roomId || !msg?.text) return;
         // Sanitize base
         const clean = {
-            userId: String(msg.userId || 'anon').slice(0, 40),
-            name:   String(msg.name   || 'Anonimo').slice(0, 30),
-            color:  /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#a855f7',
-            mask:   String(msg.mask   || '🎭').slice(0, 4),
-            text:   String(msg.text).slice(0, 800),
-            ts:     Date.now(),
+            userId:    String(msg.userId || 'anon').slice(0, 40),
+            name:      String(msg.name   || 'Anonimo').slice(0, 30),
+            color:     /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#a855f7',
+            face:      String(msg.face   || '🎭').slice(0, 4),
+            mask:      String(msg.mask   || '🎭').slice(0, 4),
+            isPremium: !!msg.isPremium,
+            msgCount:  Math.max(0, Math.min(99999, parseInt(msg.msgCount) || 0)),
+            text:      String(msg.text).slice(0, 800),
+            ts:        Date.now(),
             roomId
         };
         // Salva in storia (max 100 per stanza)

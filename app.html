@@ -31,6 +31,25 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 @keyframes orbit{0%{transform:rotate(0deg) translateX(38px) rotate(0deg)}100%{transform:rotate(360deg) translateX(38px) rotate(-360deg)}}
 @keyframes neon-flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,24%,55%{opacity:.6}}
 @keyframes rank-fill{from{width:0}to{width:var(--rw)}}
+@keyframes hot-pulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.3)}}
+@keyframes join-glow{0%{box-shadow:0 0 0 0 rgba(168,85,247,.6),0 0 20px rgba(168,85,247,.4)}70%{box-shadow:0 0 0 20px rgba(168,85,247,0),0 0 40px rgba(168,85,247,.2)}100%{box-shadow:0 0 0 0 rgba(168,85,247,0)}}
+@keyframes count-bump{0%{transform:scale(1)}40%{transform:scale(1.3);color:#10b981}100%{transform:scale(1)}}
+@keyframes msg-slide-in{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes aura-rotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+.hot-badge{display:inline-block;font-size:9px;font-weight:900;color:#fff;
+  background:linear-gradient(90deg,#ea580c,#ef4444,#f97316);
+  border-radius:8px;padding:1px 5px;margin-left:4px;letter-spacing:.5px;
+  animation:hot-pulse 1.5s ease-in-out infinite;
+  box-shadow:0 0 8px rgba(239,68,68,.6)}
+.rc-num.bumping{animation:count-bump .6s ease-out}
+.room-card.just-joined{animation:join-glow 1.2s ease-out}
+.rc-msg{animation:msg-slide-in .3s ease-out}
+
+/* Aura attorno avatar utente premium / level alto */
+.mavatar.aura-prem{position:relative;box-shadow:0 0 12px currentColor}
+.mavatar.aura-prem::before{content:'';position:absolute;inset:-3px;border-radius:50%;
+  border:1.5px dashed currentColor;animation:aura-rotate 6s linear infinite;opacity:.6}
 
 /* Sparkles */
 .sparkles{position:absolute;inset:0;pointer-events:none}
@@ -506,12 +525,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <!-- Category tabs -->
     <div class="cat-row" id="catFilter">
       <div class="cat-btn active" data-cat="all">✨ Tutte</div>
-      <div class="cat-btn" data-cat="it">🇮🇹 Italia</div>
-      <div class="cat-btn" data-cat="eu">🇪🇺 Europa</div>
-      <div class="cat-btn" data-cat="world">🌍 Mondo</div>
-      <div class="cat-btn" data-cat="gaming">🎮 Gaming</div>
-      <div class="cat-btn" data-cat="music">🎵 Musica</div>
-      <div class="cat-btn" data-cat="fun">😂 Fun</div>
+      <div class="cat-btn" data-cat="pub">🌐 Pubbliche</div>
+      <div class="cat-btn" data-cat="event">⚡ Eventi</div>
+      <div class="cat-btn" data-cat="secret">🔒 Segrete</div>
     </div>
   </div>
 
@@ -716,26 +732,59 @@ const NEON = [
 // Avatar faccine stile screenshot
 const FACE_EMOJIS = ['😈','👻','🤖','👾','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂','🎭'];
 
+// ── Generatore nickname procedurali stile "Ghost", "NightTalker", "ShadowFox" ──
+const NICK_PREFIX = ['Ghost','Night','Shadow','Neon','Phantom','Cyber','Velvet','Dark','Silent','Wild','Mystic','Echo','Lone','Crimson','Frost','Midnight','Stellar','Lunar','Ember','Onyx'];
+const NICK_SUFFIX = ['Talker','Walker','Whisper','Fox','Wolf','Spirit','Vibe','Soul','Storm','Heart','Sky','Wave','Flame','Star','Shade','Hunter','Drift','Reaper','Sage','Moon'];
+function genNick(seed){
+  let h=0; for(const c of String(seed)) h=(h*31+c.charCodeAt(0))&0xffffff;
+  const a=NICK_PREFIX[h%NICK_PREFIX.length];
+  const b=NICK_SUFFIX[(h>>5)%NICK_SUFFIX.length];
+  return a+b;
+}
+
+// Livelli stile gaming: 0-10 XP base poi log scale
+function userLevel(msgCount){
+  const mc=msgCount||0;
+  return Math.max(1, Math.floor(1 + Math.log2(mc+1) * 2.2));
+}
+function levelLabel(lvl, isPremium){
+  if(isPremium && lvl>=10) return '👑 Anon VIP';
+  if(lvl>=15) return '🌟 Legendary';
+  if(lvl>=10) return '💎 Veteran';
+  if(lvl>=5)  return '🔥 Active';
+  return '🌱 Rookie';
+}
+
+// Stanze divise in 3 tier: pubbliche, segrete (locked), eventi (a tempo)
 const ROOMS = [
-  { id:'it-generale',  name:'🇮🇹 Italia',        emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani',   cat:'it',    color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
-  { id:'it-nord',      name:'Nord Italia',       emoji:'🏔️', desc:'Piemonte, Lombardia, Veneto...',         cat:'it',    color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#a7f3d0' },
-  { id:'it-centro',    name:'Centro Italia',     emoji:'🌺', desc:'Toscana, Lazio, Umbria...',              cat:'it',    color:'#10b981', dot1:'#34d399',dot2:'#6ee7b7',dot3:'#10b981' },
-  { id:'it-sud',       name:'Sud Italia',        emoji:'☀️', desc:'Campania, Puglia, Calabria...',          cat:'it',    color:'#10b981', dot1:'#fb923c',dot2:'#10b981',dot3:'#34d399' },
-  { id:'it-sicilia',   name:'Sicilia & Sardegna',emoji:'🌋', desc:"L'isola che non dorme mai",              cat:'it',    color:'#10b981', dot1:'#f472b6',dot2:'#10b981',dot3:'#34d399' },
-  { id:'eu-generale',  name:'🇪🇺 Europa',         emoji:'🇪🇺', desc:'Chat per tutti gli europei',            cat:'eu',    color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
-  { id:'eu-est',       name:'Est Europa',        emoji:'🌅', desc:'Polonia, Romania, Ucraina...',           cat:'eu',    color:'#60a5fa', dot1:'#38bdf8',dot2:'#60a5fa',dot3:'#93c5fd' },
-  { id:'eu-ovest',     name:'Ovest Europa',      emoji:'🗼', desc:'Francia, Spagna, Germania, UK...',       cat:'eu',    color:'#60a5fa', dot1:'#7dd3fc',dot2:'#60a5fa',dot3:'#38bdf8' },
-  { id:'w-generale',   name:'🌍 Chat Mondiale',  emoji:'🌍', desc:'Parla con persone da tutto il mondo!',   cat:'world', color:'#a78bfa', dot1:'#a78bfa',dot2:'#c084fc',dot3:'#e879f9' },
-  { id:'w-americhe',   name:'Americhe',          emoji:'🌎', desc:'Nord e Sud America, Canada...',          cat:'world', color:'#a78bfa', dot1:'#c084fc',dot2:'#a78bfa',dot3:'#e879f9' },
-  { id:'w-asia',       name:'Asia & Oceania',    emoji:'🌏', desc:'Giappone, India, Australia...',          cat:'world', color:'#a78bfa', dot1:'#e879f9',dot2:'#c084fc',dot3:'#a78bfa' },
-  { id:'w-africa',     name:'Africa & M. Oriente',emoji:'🌍', desc:'Tutto il continente africano...',       cat:'world', color:'#a78bfa', dot1:'#fb923c',dot2:'#a78bfa',dot3:'#c084fc' },
-  { id:'late-night',   name:'Late Night Talks',  emoji:'🌙', desc:'La notte porta pensieri profondi...',    cat:'fun',   color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
-  { id:'random',       name:'Random Room',       emoji:'💬', desc:'Anything can happen here 😄',            cat:'fun',   color:'#ec4899', dot1:'#ec4899',dot2:'#f472b6',dot3:'#fb7185' },
-  { id:'gaming',       name:'Gaming Room',       emoji:'🎮', desc:'Gamer unite! Console, PC, mobile.',      cat:'gaming',color:'#3b82f6', dot1:'#3b82f6',dot2:'#60a5fa',dot3:'#93c5fd' },
-  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Artisti, fan, amanti della musica.',     cat:'music', color:'#4ade80', dot1:'#4ade80',dot2:'#34d399',dot3:'#6ee7b7' },
-  { id:'divertimento', name:'Divertimento',      emoji:'😂', desc:'Meme, humor, risate assicurate!',        cat:'fun',   color:'#fb923c', dot1:'#fb923c',dot2:'#fbbf24',dot3:'#fcd34d' },
-  { id:'amicizia',     name:'Amicizia',          emoji:'❤️', desc:'Nuove amicizie, nuove storie.',         cat:'fun',   color:'#f472b6', dot1:'#f472b6',dot2:'#ec4899',dot3:'#fb7185' },
+  // ─── PUBBLICHE ───
+  { id:'italia',       name:'Italia',            emoji:'🇮🇹', desc:'Chat generale italiana',                 cat:'pub',   tier:'public', color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'gaming',       name:'Gaming',            emoji:'🎮', desc:'Console, PC, mobile, esports',           cat:'pub',   tier:'public', color:'#3b82f6', dot1:'#3b82f6',dot2:'#60a5fa',dot3:'#93c5fd' },
+  { id:'relazioni',    name:'Relazioni',         emoji:'❤️', desc:'Amore, amicizia, storie',                cat:'pub',   tier:'public', color:'#f472b6', dot1:'#f472b6',dot2:'#ec4899',dot3:'#fb7185' },
+  { id:'notturna',     name:'Notturna 🌙',       emoji:'🌙', desc:'La notte porta pensieri profondi...',    cat:'pub',   tier:'public', color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
+  { id:'confessioni',  name:'Confessioni',       emoji:'🤫', desc:'Quello che non diresti a nessuno',       cat:'pub',   tier:'public', color:'#a855f7', dot1:'#a855f7',dot2:'#c084fc',dot3:'#e879f9' },
+  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Tracce, generi, artisti',                cat:'pub',   tier:'public', color:'#4ade80', dot1:'#4ade80',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'horror',       name:'Horror 🎃',         emoji:'🎃', desc:'Storie, paure, leggende',                cat:'pub',   tier:'public', color:'#ea580c', dot1:'#ea580c',dot2:'#f97316',dot3:'#fb923c' },
+  { id:'deep-talk',    name:'Deep Talk',         emoji:'💭', desc:'Filosofia, vita, esistenza',             cat:'pub',   tier:'public', color:'#22d3ee', dot1:'#22d3ee',dot2:'#06b6d4',dot3:'#0891b2' },
+
+  // ─── SEGRETE (richiedono codice) ───
+  { id:'segreta-vip',     name:'VIP Lounge',     emoji:'👑', desc:'Solo per chi conosce il codice...',      cat:'secret', tier:'secret', color:'#fbbf24', code:'KOUVERTE2026', dot1:'#fbbf24',dot2:'#f59e0b',dot3:'#fcd34d' },
+  { id:'segreta-undergr', name:'Underground',    emoji:'🕳️', desc:'Una stanza che non dovresti conoscere',  cat:'secret', tier:'secret', color:'#7c3aed', code:'GHOST',       dot1:'#7c3aed',dot2:'#6d28d9',dot3:'#5b21b6' },
+
+  // ─── EVENTI A TEMPO ───
+  // Caos totale: solo dopo le 23 e prima delle 4
+  { id:'evento-caos',     name:'Ore 02:00 — Caos totale', emoji:'⚡', desc:'Stanza apertissima, attiva di notte', cat:'event', tier:'event', color:'#ef4444', eventHours:[23,0,1,2,3], dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
+  // Domande anonime: sempre attiva ma stile "ask me anything"
+  { id:'evento-ask',      name:'Domande Anonime', emoji:'❓', desc:'Chiedi tutto. Nessuno saprà chi sei.',  cat:'event', tier:'event', color:'#06b6d4', eventHours:'always', dot1:'#06b6d4',dot2:'#22d3ee',dot3:'#67e8f9' },
+  // Speed chat: solo dalle 18 alle 22
+  { id:'evento-speed',    name:'Speed Chat ⚡',  emoji:'⚡', desc:'Conversazioni rapide, dalle 18 alle 22', cat:'event', tier:'event', color:'#facc15', eventHours:[18,19,20,21], dot1:'#facc15',dot2:'#fde047',dot3:'#fef08a' },
 ];
+
+function isRoomActiveNow(r){
+  if(r.tier!=='event') return true;
+  if(r.eventHours==='always') return true;
+  return r.eventHours.includes(new Date().getHours());
+}
 
 const FRAMES_CFG = [
   { id:'none',    name:'Nessuna',  emoji:'🎭', price:0,   prem:false, css:'' },
@@ -796,7 +845,7 @@ function initUser(){
     const uid=tgU?.id?'tg_'+tgU.id:'anon_'+Math.random().toString(36).slice(2,9);
     const faces=FACE_EMOJIS;
     user={
-      id:uid, name:tgU?(tgU.first_name||'Utente'):'Anon_'+uid.slice(-4),
+      id:uid, name:genNick(uid), // nickname procedurale stile gaming
       face:faces[Math.floor(Math.random()*faces.length)],
       color:getColor(uid), msgCount:0, freeUsed:0,
       isPremium:false, premExpiry:0,
@@ -833,14 +882,16 @@ function updateProfileUI(){
     document.getElementById('joinDate').textContent='Con noi dal '+d.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
   }
 
-  // Rank bar
+  // Rank bar (level system stile gaming)
   const mc=user.msgCount||0;
-  const rank=getRank(mc);
-  const next=RANKS[RANKS.indexOf(rank)+1];
-  const pct=next?Math.min(((mc-rank.min)/(next.min-rank.min))*100,100):100;
-  document.getElementById('rankIcon').textContent=rank.icon;
-  document.getElementById('rankTitle').textContent=rank.title;
-  document.getElementById('rankSub').textContent=rank.sub+(next?` — ${next.min-mc} msg al prossimo rank`:'');
+  const lvl=userLevel(mc);
+  const xpNext=Math.pow(2,(lvl)/2.2)-1; // soglia prossimo lvl (inverso)
+  const xpCurr=Math.pow(2,(lvl-1)/2.2)-1;
+  const pct=Math.max(0,Math.min(((mc-xpCurr)/(xpNext-xpCurr))*100,100));
+  const tier=levelLabel(lvl,isPrem());
+  document.getElementById('rankIcon').textContent=tier.split(' ')[0]||'🌱';
+  document.getElementById('rankTitle').textContent=`${user.name} · lvl ${lvl}`;
+  document.getElementById('rankSub').textContent=`${tier} — ${Math.max(0,Math.ceil(xpNext-mc))} msg al lvl ${lvl+1}`;
   document.getElementById('rankXp').textContent=mc+' XP';
   const bar=document.getElementById('rankBar');
   bar.style.setProperty('--rw',pct+'%');
@@ -928,9 +979,19 @@ function connectSocket(){
     delete typingUsers[userId]; renderTyping();
   });
   socket.on('room-online',({roomId,count})=>{
+    const prev=roomOnline[roomId]||0;
     roomOnline[roomId]=count;
     const el=document.getElementById('ron_'+roomId);
-    if(el) el.textContent=count;
+    if(el){
+      el.textContent=count;
+      if(count>prev){
+        // bump animation
+        el.classList.remove('bumping'); void el.offsetWidth; el.classList.add('bumping');
+        // glow whole card
+        const card=el.closest('.room-card');
+        if(card){card.classList.remove('just-joined');void card.offsetWidth;card.classList.add('just-joined');}
+      }
+    }
     if(room?.id===roomId) document.getElementById('chatOnline').textContent=count+' online';
   });
   socket.on('global-online',({count})=>{
@@ -951,26 +1012,31 @@ function connectSocket(){
 
 function pubUser(){
   return {id:user.id,name:user.name,color:user.color,face:user.face,
-    frame:user.activeFrame,isPremium:isPrem()};
+    frame:user.activeFrame,isPremium:isPrem(),msgCount:user.msgCount||0};
 }
 
 // ══ ROOMS ══
 function renderRooms(cat){
-  const filtered=cat==='all'?ROOMS:ROOMS.filter(r=>r.cat===cat);
   let html='';
   if(cat==='all'){
     const groups=[
-      {label:'🇮🇹 Italia',cats:['it']},
-      {label:'🌍 Mondo & Europa',cats:['eu','world']},
-      {label:'💬 Per mood',cats:['fun','gaming','music']},
+      {label:'🌐 Pubbliche',cat:'pub'},
+      {label:'⚡ Eventi attivi ora',cat:'event'},
+      {label:'🔒 Segrete',cat:'secret'},
     ];
     for(const g of groups){
-      const rooms=ROOMS.filter(r=>g.cats.includes(r.cat));
+      let rooms=ROOMS.filter(r=>r.cat===g.cat);
+      // Eventi: solo quelli attivi nell'ora corrente
+      if(g.cat==='event') rooms=rooms.filter(isRoomActiveNow);
+      if(rooms.length===0) continue;
       html+=`<div class="sec-label">${g.label}</div>`;
       html+=rooms.map(roomCard).join('');
     }
   } else {
-    html=filtered.map(roomCard).join('');
+    let rooms=ROOMS.filter(r=>r.cat===cat);
+    if(cat==='event') rooms=rooms.filter(isRoomActiveNow);
+    html=rooms.map(roomCard).join('');
+    if(rooms.length===0) html=`<div style="text-align:center;padding:40px 20px;color:#6b7280;font-size:13px">Nessuna stanza attiva in questa categoria adesso.<br><br>${cat==='event'?'Gli eventi si aprono a orari specifici 🌙':''}</div>`;
   }
   document.getElementById('roomsList').innerHTML=html;
 }
@@ -1000,10 +1066,10 @@ function roomCard(r){
     <!-- Header -->
     <div class="rc-top">
       <div class="rc-icon" style="background:${r.color}22;border:1px solid ${r.color}44">${r.emoji}</div>
-      <div class="rc-name">${r.name}</div>
+      <div class="rc-name">${r.name}${r.tier==='secret'?' <span style="font-size:11px;color:#fbbf24">🔒</span>':''}${cnt>=5?' <span class="hot-badge">🔥 HOT</span>':''}</div>
       <div class="rc-count">
         <span class="rc-count-icon">👥</span>
-        <span id="ron_${r.id}">${cnt}</span>
+        <span id="ron_${r.id}" class="rc-num">${cnt}</span>
       </div>
       <div class="rc-dots">
         <div class="rc-dot" style="background:${r.dot1}"></div>
@@ -1042,6 +1108,29 @@ function roomCard(r){
 function enterRoom(roomId){
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
+
+  // Stanze segrete: chiedi codice (memorizzato localmente)
+  if(cfg.tier==='secret'){
+    const unlocked=getLS('kv4_unlocked')||{};
+    if(!unlocked[cfg.id]){
+      const code=prompt(`🔒 ${cfg.name}\n\nInserisci il codice di accesso:`,'');
+      if(!code) return;
+      if(code.trim().toUpperCase()!==cfg.code){
+        showToast('❌ Codice errato');
+        return;
+      }
+      unlocked[cfg.id]=true;
+      setLS('kv4_unlocked',unlocked);
+      showToast('🔓 Accesso sbloccato!');
+    }
+  }
+
+  // Eventi a tempo: blocca se non è l'orario
+  if(cfg.tier==='event' && !isRoomActiveNow(cfg)){
+    showToast('⏰ Questo evento è chiuso adesso. Riprova nelle ore previste.');
+    return;
+  }
+
   room=cfg; lastSender=null; typingUsers={};
 
   const icon=document.getElementById('chatIcon');
@@ -1109,13 +1198,19 @@ function appendMsg(msg){
     // Stile screenshot: avatar + nome colorato + testo inline
     row.className='mrow';
     const nameGlow=prem?`;text-shadow:0 0 6px ${col}`:'';
+    // Mostra "Nick lvl X" stile gaming
+    const senderMc = msg.msgCount || 0;
+    const lvl = userLevel(senderMc);
+    const lvlBadge = !consec ? `<span style="font-size:9px;color:#9ca3af;margin-left:3px;font-weight:600">lvl ${lvl}</span>` : '';
+    const auraClass = (prem || lvl>=10) ? 'aura-prem' : '';
+    const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
     row.innerHTML=`
-      <div class="mavatar ${consec?'hidden':''}" style="background:${col}22;border:2px solid ${col}55;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+      <div class="mavatar ${auraClass} ${consec?'hidden':''}" style="${auraStyle}background:${col}22;border:2px solid ${col}55;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
         ${face}
       </div>
       <div class="mbody">
         <div class="mline">
-          ${!consec?`<span class="mname" style="color:${col}${nameGlow}">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}:</span> `:''}
+          ${!consec?`<span class="mname" style="color:${col}${nameGlow}">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
           <span class="mtext">${esc(msg.text)}</span>
         </div>
         ${!consec?`<div class="mtime">${time}</div>`:''}
@@ -1178,8 +1273,17 @@ function renderTyping(){
   const users=Object.values(typingUsers);
   if(!users.length){el?.remove();return;}
   if(!el){el=document.createElement('div');el.id='tind';el.className='trow';c.appendChild(el);}
-  const names=users.map(u=>`<span style="color:${u.color};font-weight:700">${esc(u.name)}</span>`).join(', ');
-  el.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🎭</div><div class="tbbl"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><span class="tnames">&nbsp;${names} sta scrivendo...</span>`;
+  // Mostra max 2 nomi, poi "+N altri"
+  const n=users.length;
+  let label;
+  if(n===1){
+    label=`<span style="color:${users[0].color};font-weight:700">${esc(users[0].name)}</span> sta scrivendo...`;
+  } else if(n===2){
+    label=`<span style="color:${users[0].color};font-weight:700">${esc(users[0].name)}</span> e <span style="color:${users[1].color};font-weight:700">${esc(users[1].name)}</span> stanno scrivendo...`;
+  } else {
+    label=`<span style="color:#a855f7;font-weight:700">${n} persone</span> stanno scrivendo...`;
+  }
+  el.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🎭</div><div class="tbbl"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><span class="tnames">&nbsp;${label}</span>`;
   scrollBot();
 }
 
