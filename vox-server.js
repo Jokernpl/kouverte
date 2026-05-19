@@ -1995,6 +1995,96 @@ app.post('/api/admin/seed-users', verifyAdmin, (req, res) => {
     res.status(410).json({ ok: false, error: 'Seed users disabilitato. Solo utenti reali su questa piattaforma.' });
 });
 
+// ── PREMIUM SUBSCRIPTION (Telegram Stars) ──
+const PREMIUM_PRICE_STARS = 100; // 100 Telegram Stars ≈ 1€
+const FRAME_PRICES = { gold: 30, diamond: 50, flame: 40 }; // in Stars
+
+app.post('/api/create-invoice', async (req, res) => {
+    const { userId, plan } = req.body || {};
+    if (!userId) return res.status(400).json({ ok: false, error: 'userId required' });
+    const BOT_TOKEN_ACTIVE = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+    try {
+        const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN_ACTIVE}/createInvoiceLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: 'KOUVERTE Premium',
+                description: 'Messaggi illimitati + cornici Gold, Diamond, Fiamma per 30 giorni',
+                payload: JSON.stringify({ userId, type: 'premium', plan: 'monthly' }),
+                currency: 'XTR', // Telegram Stars
+                prices: [{ label: 'Premium 30 giorni', amount: PREMIUM_PRICE_STARS }]
+            })
+        });
+        const data = await r.json();
+        if (data.ok) return res.json({ ok: true, invoiceLink: data.result });
+        return res.status(500).json({ ok: false, error: data.description });
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+app.post('/api/buy-frame', async (req, res) => {
+    const { userId, frameId } = req.body || {};
+    if (!userId || !frameId) return res.status(400).json({ ok: false, error: 'userId + frameId required' });
+    const price = FRAME_PRICES[frameId];
+    if (!price) return res.status(400).json({ ok: false, error: 'Cornice non vendibile' });
+    const BOT_TOKEN_ACTIVE = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+    const frameNames = { gold:'Gold ✨', diamond:'Diamond 💎', flame:'Fiamma 🔥' };
+    try {
+        const r = await fetch(`https://api.telegram.org/bot${BOT_TOKEN_ACTIVE}/createInvoiceLink`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: 'Cornice ' + (frameNames[frameId] || frameId),
+                description: 'Cornice profilo esclusiva per KOUVERTE Chat',
+                payload: JSON.stringify({ userId, type: 'frame', frameId }),
+                currency: 'XTR',
+                prices: [{ label: 'Cornice ' + frameId, amount: price }]
+            })
+        });
+        const data = await r.json();
+        if (data.ok) return res.json({ ok: true, invoiceLink: data.result });
+        return res.status(500).json({ ok: false, error: data.description });
+    } catch (e) {
+        return res.status(500).json({ ok: false, error: e.message });
+    }
+});
+
+// Telegram webhook: gestisce pre_checkout_query e successful_payment
+app.post('/api/telegram/webhook', express.json(), async (req, res) => {
+    res.sendStatus(200); // Rispondi subito a Telegram
+    const update = req.body;
+    const BOT_TOKEN_ACTIVE = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+
+    // Approva pre_checkout
+    if (update.pre_checkout_query) {
+        await fetch(`https://api.telegram.org/bot${BOT_TOKEN_ACTIVE}/answerPreCheckoutQuery`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pre_checkout_query_id: update.pre_checkout_query.id, ok: true })
+        });
+        return;
+    }
+
+    // Pagamento avvenuto
+    if (update.message?.successful_payment) {
+        const payload = JSON.parse(update.message.successful_payment.invoice_payload || '{}');
+        const { userId, type, frameId } = payload;
+        if (type === 'premium') {
+            // Salva stato premium nel DB
+            DB.premium = DB.premium || {};
+            DB.premium[userId] = { expiry: Date.now() + 30 * 24 * 60 * 60 * 1000, plan: 'monthly' };
+            markDirty();
+            console.log(`[PREMIUM] Attivato per ${userId}`);
+        } else if (type === 'frame' && frameId) {
+            DB.frames = DB.frames || {};
+            DB.frames[userId] = DB.frames[userId] || [];
+            if (!DB.frames[userId].includes(frameId)) DB.frames[userId].push(frameId);
+            markDirty();
+            console.log(`[FRAME] ${frameId} sbloccato per ${userId}`);
+        }
+    }
+});
+
 app.get('/api/admin/battles', verifyAdmin, (req, res) => {
     const battles = (DB.battles || []).map(publicBattle).sort((a, b) => (b?.startedAt || 0) - (a?.startedAt || 0)).slice(0, 50);
     res.json({ battles });

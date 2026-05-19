@@ -2,724 +2,1081 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>KOUVERTE</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>KOUVERTE — Chat Mondiale Anonima</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root {
-  --bg: #06020f;
-  --bg2: #0d0521;
-  --card: #130a2a;
-  --border: #2a1550;
-  --purple: #a855f7;
-  --pink: #ec4899;
-  --cyan: #06b6d4;
-  --green: #10b981;
-  --orange: #f97316;
-  --yellow: #eab308;
-  --white: #f0e6ff;
-  --muted: #7c5fa0;
-  --radius: 16px;
-  --radius-sm: 10px;
+:root{
+  --bg:#06020f;--bg2:#0d0521;--card:#130a2a;--border:#2a1550;
+  --purple:#a855f7;--pink:#ec4899;--cyan:#06b6d4;--green:#10b981;
+  --orange:#f97316;--yellow:#eab308;--white:#f0e6ff;--muted:#7c5fa0;
+  --r:16px;--rs:10px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .25s}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
 .screen.active{opacity:1;pointer-events:all}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px}
 
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px}
-
-/* ── SPLASH ── */
-#splash{align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#1a0535 0%,var(--bg) 70%)}
-.splash-logo{font-size:52px;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#c084fc,#ec4899,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:pulse-logo 2s ease-in-out infinite}
-.splash-tagline{color:var(--muted);font-size:13px;letter-spacing:2px;margin-top:8px;text-transform:uppercase}
-.splash-spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin .8s linear infinite;margin-top:40px}
+/* ──────────── SPLASH ──────────── */
+#splash{align-items:center;justify-content:center;
+  background:radial-gradient(ellipse at 50% 30%,#1a0535,var(--bg) 70%)}
+.sp-logo{font-size:56px;font-weight:900;letter-spacing:-3px;
+  background:linear-gradient(135deg,#c084fc,#ec4899,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  animation:logo-pulse 2s ease-in-out infinite}
+.sp-sub{color:var(--muted);font-size:12px;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
+.sp-spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);
+  border-radius:50%;animation:spin .8s linear infinite;margin-top:48px}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes pulse-logo{0%,100%{opacity:1}50%{opacity:.7}}
+@keyframes logo-pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-/* ── HOME ── */
+/* ──────────── HOME ──────────── */
 #home{background:var(--bg);overflow-y:auto}
-.home-header{padding:16px 16px 0;background:linear-gradient(180deg,#0d0521 0%,transparent 100%);position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
-.home-logo{font-size:28px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.home-sub{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
-.home-badge-row{display:flex;gap:8px;margin-top:12px;padding-bottom:12px;overflow-x:auto;scrollbar-width:none}
-.home-badge-row::-webkit-scrollbar{display:none}
-.badge-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;color:var(--muted);transition:all .2s;cursor:pointer}
-.badge-chip.active{border-color:var(--purple);color:var(--purple);background:#1a0a35}
 
-.home-body{padding:12px 16px 90px}
-.section-title{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin:16px 0 10px}
+/* Hero header */
+.home-hero{
+  padding:16px 16px 0;
+  background:linear-gradient(180deg,#0d0521 60%,transparent);
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)
+}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start}
+.hero-logo{font-size:30px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,#c084fc,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-tagline{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.anon-badge{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);
+  border-radius:20px;padding:4px 10px;font-size:10px;color:#10b981;font-weight:700}
+.chat-mondiale{display:flex;align-items:center;gap:6px;margin-top:10px;
+  background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(236,72,153,.1));
+  border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:8px 12px}
+.chat-mondiale-icon{font-size:20px}
+.chat-mondiale-text{font-size:11px;color:var(--purple);font-weight:700;line-height:1.3}
+
+/* Category tabs */
+.cat-scroll{display:flex;gap:6px;padding:10px 0 8px;overflow-x:auto;scrollbar-width:none}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-pill{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;
+  border:1px solid var(--border);color:var(--muted);background:var(--card);
+  cursor:pointer;transition:all .2s;white-space:nowrap}
+.cat-pill.active{border-color:var(--purple);color:var(--white);background:#1a0a35}
+
+/* Promo strip */
+.promo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  padding:0 16px;margin-top:4px}
+.promo-box{background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:8px;text-align:center}
+.promo-box-icon{font-size:18px;margin-bottom:3px}
+.promo-box-label{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+
+.home-body{padding:8px 16px 90px}
+.section-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;
+  margin:14px 0 8px;display:flex;align-items:center;gap:6px}
+.section-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
 
 /* Room card */
-.room-card{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
-.room-card:active{transform:scale(.97)}
-.room-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.room-card{display:flex;align-items:center;gap:12px;background:var(--card);
+  border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:8px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.room-card:active{transform:scale(.97);opacity:.9}
+.room-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;border-radius:var(--r);pointer-events:none}
+.room-card:hover .room-glow{opacity:1}
+.room-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .room-info{flex:1;min-width:0}
-.room-name{font-size:15px;font-weight:700;color:var(--white)}
-.room-desc{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.room-meta{display:flex;align-items:center;gap:8px;margin-top:6px}
-.room-online{font-size:11px;display:flex;align-items:center;gap:4px}
-.room-dot{width:6px;height:6px;border-radius:50%;animation:blink 1.5s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.room-tag{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:600;background:rgba(255,255,255,.06);color:var(--muted)}
-.room-arrow{font-size:18px;color:var(--border);flex-shrink:0}
+.room-name{font-size:14px;font-weight:800;color:var(--white)}
+.room-desc{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.room-meta{display:flex;align-items:center;gap:6px;margin-top:5px}
+.room-count{font-size:11px;display:flex;align-items:center;gap:3px}
+.r-dot{width:6px;height:6px;border-radius:50%;animation:rdot 1.5s ease-in-out infinite}
+@keyframes rdot{0%,100%{opacity:1}50%{opacity:.2}}
+.room-tag{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;
+  background:rgba(255,255,255,.06);color:var(--muted);text-transform:uppercase}
+.room-caret{font-size:16px;flex-shrink:0;opacity:.3}
 
-.room-chiacchiere .room-icon{background:linear-gradient(135deg,#581c87,#a855f7);box-shadow:0 4px 20px rgba(168,85,247,.3)}
-.room-amicizia   .room-icon{background:linear-gradient(135deg,#831843,#ec4899);box-shadow:0 4px 20px rgba(236,72,153,.3)}
-.room-gaming     .room-icon{background:linear-gradient(135deg,#1e3a8a,#3b82f6);box-shadow:0 4px 20px rgba(59,130,246,.3)}
-.room-musica     .room-icon{background:linear-gradient(135deg,#134e4a,#10b981);box-shadow:0 4px 20px rgba(16,185,129,.3)}
-.room-notte      .room-icon{background:linear-gradient(135deg,#1c1917,#44403c);box-shadow:0 4px 20px rgba(120,113,108,.3)}
-.room-divertimento .room-icon{background:linear-gradient(135deg,#78350f,#f97316);box-shadow:0 4px 20px rgba(249,115,22,.3)}
-
-.room-chiacchiere{border-color:rgba(168,85,247,.3)}
-.room-amicizia{border-color:rgba(236,72,153,.3)}
-.room-gaming{border-color:rgba(59,130,246,.3)}
-.room-musica{border-color:rgba(16,185,129,.3)}
-.room-notte{border-color:rgba(120,113,108,.2)}
-.room-divertimento{border-color:rgba(249,115,22,.3)}
-
-/* ── CHAT ── */
+/* ──────────── CHAT ──────────── */
 #chat{background:var(--bg);flex-direction:column}
-.chat-header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
-.chat-back{width:36px;height:36px;border:none;background:var(--card);border-radius:10px;color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.chat-room-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.chat-room-info{flex:1;min-width:0}
-.chat-room-name{font-size:15px;font-weight:700}
-.chat-room-online{font-size:11px;color:var(--muted);margin-top:1px}
-.chat-anon-badge{font-size:10px;padding:3px 10px;border-radius:20px;font-weight:700;border:1px solid;display:flex;align-items:center;gap:4px}
 
-.chat-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:1px}
+.chat-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.chat-back{width:34px;height:34px;border:none;background:var(--card);
+  border-radius:9px;color:var(--white);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-hdr-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.chat-hdr-info{flex:1;min-width:0}
+.chat-hdr-name{font-size:14px;font-weight:800}
+.chat-hdr-online{font-size:10px;color:var(--muted)}
+.chat-hdr-anon{font-size:9px;border:1px solid;border-radius:12px;padding:2px 8px;font-weight:700}
+
+.chat-msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:1px}
 
 /* Bubble */
-.msg-row{display:flex;align-items:flex-end;gap:8px;padding:2px 0;animation:msg-in .2s ease-out}
-@keyframes msg-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.msg-row.self{flex-direction:row-reverse}
+.mrow{display:flex;align-items:flex-end;gap:7px;padding:1px 0;animation:min .2s ease-out}
+@keyframes min{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.mrow.self{flex-direction:row-reverse}
+.mavatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;margin-bottom:2px;position:relative;flex-direction:column}
+.mavatar.hidden{visibility:hidden}
+/* Cornice frame sul avatar */
+.frame-silver .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid silver;animation:frame-spin 4s linear infinite}
+.frame-gold .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid gold;box-shadow:0 0 8px gold;animation:frame-pulse 1.5s ease-in-out infinite}
+.frame-diamond .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#38bdf8,#c084fc,#ec4899,#38bdf8) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;animation:frame-spin 2s linear infinite}
+@keyframes frame-spin{to{transform:rotate(360deg)}}
+@keyframes frame-pulse{0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 16px gold}}
 
-.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-bottom:2px}
-.msg-avatar.hidden{visibility:hidden}
-
-.msg-bubble{max-width:75%;border-radius:18px;padding:8px 14px;line-height:1.45}
-.msg-row:not(.self) .msg-bubble{border-bottom-left-radius:4px;background:var(--card);border:1px solid var(--border)}
-.msg-row.self .msg-bubble{border-bottom-right-radius:4px;background:linear-gradient(135deg,#581c87,#3b0764);border:1px solid rgba(168,85,247,.4)}
-
-.msg-name{font-size:11px;font-weight:700;margin-bottom:3px;letter-spacing:.3px}
-.msg-text{font-size:14px;color:var(--white);word-break:break-word;white-space:pre-wrap}
-.msg-time{font-size:10px;color:rgba(255,255,255,.3);margin-top:4px;text-align:right}
-.msg-row:not(.self) .msg-time{text-align:left}
+.mbubble{max-width:76%;border-radius:18px;padding:8px 13px;line-height:1.45}
+.mrow:not(.self) .mbubble{border-bottom-left-radius:4px;background:var(--card);border:1px solid var(--border)}
+.mrow.self .mbubble{border-bottom-right-radius:4px;background:linear-gradient(135deg,#4c1d95,#2e1065);border:1px solid rgba(168,85,247,.4)}
+.mname{font-size:10px;font-weight:800;margin-bottom:3px;letter-spacing:.3px}
+.mtext{font-size:14px;color:var(--white);word-break:break-word;white-space:pre-wrap}
+.mtime{font-size:9px;color:rgba(255,255,255,.25);margin-top:4px;text-align:right}
+.mrow:not(.self) .mtime{text-align:left}
 
 /* Typing */
-.typing-row{display:flex;align-items:center;gap:8px;padding:4px 0}
-.typing-bubble{background:var(--card);border:1px solid var(--border);border-radius:18px;border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:4px;align-items:center}
-.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:tdot .8s ease-in-out infinite}
-.typing-dot:nth-child(2){animation-delay:.15s}
-.typing-dot:nth-child(3){animation-delay:.3s}
-@keyframes tdot{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.typing-names{font-size:11px;color:var(--muted)}
+.trow{display:flex;align-items:center;gap:8px;padding:4px 0}
+.tbubble{background:var(--card);border:1px solid var(--border);border-radius:18px;
+  border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:4px;align-items:center}
+.tdot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:td .8s ease-in-out infinite}
+.tdot:nth-child(2){animation-delay:.15s}.tdot:nth-child(3){animation-delay:.3s}
+@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+.tnames{font-size:10px;color:var(--muted)}
+.msys{text-align:center;font-size:10px;color:var(--muted);padding:5px 0;font-style:italic}
 
-.msg-system{text-align:center;font-size:11px;color:var(--muted);padding:6px 0;font-style:italic}
+/* Input area */
+.chat-bar{padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));
+  background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
+.chat-bar-row{display:flex;gap:8px;align-items:flex-end}
+.cinput{flex:1;background:var(--card);border:1px solid var(--border);border-radius:22px;
+  padding:9px 16px;color:var(--white);font-size:14px;resize:none;max-height:110px;
+  overflow-y:auto;line-height:1.4;outline:none;transition:border-color .2s;font-family:inherit}
+.cinput:focus{border-color:var(--purple)}.cinput::placeholder{color:var(--muted)}
+.csend{width:40px;height:40px;border-radius:50%;border:none;flex-shrink:0;
+  background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;align-self:flex-end}
+.csend:active{transform:scale(.88)}
 
-/* Input */
-.chat-input-wrap{padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
-.chat-input-row{display:flex;gap:8px;align-items:flex-end}
-.chat-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:10px 16px;color:var(--white);font-size:14px;resize:none;max-height:120px;overflow-y:auto;line-height:1.4;outline:none;transition:border-color .2s;font-family:inherit}
-.chat-input:focus{border-color:var(--purple)}
-.chat-input::placeholder{color:var(--muted)}
-.chat-send{width:42px;height:42px;border-radius:50%;border:none;flex-shrink:0;background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;align-self:flex-end}
-.chat-send:active{transform:scale(.9)}
+/* Free messages counter bar */
+.free-bar{padding:4px 14px;background:rgba(168,85,247,.08);border-top:1px solid rgba(168,85,247,.15);
+  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.free-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px;margin:0 8px}
+.free-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--pink));transition:width .3s}
+.free-bar-label{font-size:9px;color:var(--muted);white-space:nowrap}
+.free-bar-label.warn{color:var(--orange)}
 
-/* ── PROFILE ── */
+/* ──────────── PROFILO ──────────── */
 #profile{background:var(--bg);overflow-y:auto;padding-bottom:80px}
-.profile-header{padding:32px 20px 20px;text-align:center;background:radial-gradient(ellipse at 50% 0%,#1a0535,transparent 70%)}
-.profile-mask{width:80px;height:80px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#581c87,#a855f7);box-shadow:0 0 30px rgba(168,85,247,.4)}
-.profile-name{font-size:22px;font-weight:800;margin-bottom:4px}
-.profile-anon{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:6px}
+.prof-hero{padding:28px 20px 16px;text-align:center;
+  background:radial-gradient(ellipse at 50% 0%,#1a0535,transparent 70%)}
+.prof-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 10px;
+  display:flex;align-items:center;justify-content:center;font-size:36px;position:relative}
+.prof-name{font-size:20px;font-weight:900;margin-bottom:4px}
+.prof-anon{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px}
+.premium-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+  background:linear-gradient(135deg,#78350f,#f97316);border-radius:20px;
+  padding:4px 12px;font-size:11px;font-weight:700;color:#fff}
 
-.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 20px;margin-top:20px}
-.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center}
-.stat-num{font-size:22px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px;margin-top:16px}
+.stat-b{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
+.stat-n{font-size:20px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
-.badges-section{padding:20px}
-.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
-.badge-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;text-align:center}
-.badge-card.earned{border-color:var(--purple);background:#1a0a35}
-.badge-card.locked{opacity:.4}
-.badge-emoji{font-size:28px;margin-bottom:6px}
-.badge-name{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
-.badge-card.earned .badge-name{color:var(--purple)}
+/* Frames shop */
+.frames-section{padding:16px}
+.frames-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.frame-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);
+  padding:14px;text-align:center;position:relative;cursor:pointer;transition:all .2s}
+.frame-card.owned{border-color:var(--purple);background:#1a0a35}
+.frame-card.active-frame{border-color:var(--green);background:#052318}
+.frame-card:active{transform:scale(.97)}
+.frame-preview{width:48px;height:48px;border-radius:50%;background:var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 8px;position:relative}
+.frame-name{font-size:11px;font-weight:700;margin-bottom:2px}
+.frame-price{font-size:10px;color:var(--muted)}
+.frame-price.free{color:var(--green)}
+.frame-owned-lbl{position:absolute;top:6px;right:6px;font-size:8px;background:var(--purple);
+  border-radius:10px;padding:1px 6px;font-weight:700}
+.frame-active-lbl{position:absolute;top:6px;right:6px;font-size:8px;background:var(--green);
+  border-radius:10px;padding:1px 6px;font-weight:700;color:#fff}
 
-/* ── BOTTOM NAV ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,5,33,.95);border-top:1px solid var(--border);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(20px)}
-.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;cursor:pointer;border:none;background:none;color:var(--muted);transition:color .2s;position:relative}
-.nav-btn.active{color:var(--purple)}
-.nav-icon{font-size:22px;line-height:1}
-.nav-label{font-size:9px;margin-top:3px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}
-.nav-notif{position:absolute;top:6px;right:50%;transform:translateX(14px);width:8px;height:8px;background:var(--pink);border-radius:50%;border:2px solid var(--bg2)}
+/* Badges */
+.badges-section{padding:0 16px 16px}
+.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.badge-c{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:14px;text-align:center}
+.badge-c.earned{border-color:var(--purple);background:#1a0a35}
+.badge-c.locked{opacity:.4}
+.badge-e{font-size:26px;margin-bottom:5px}
+.badge-n{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.badge-c.earned .badge-n{color:var(--purple)}
 
-/* ── ONLINE PILL ── */
-.online-pill{position:fixed;top:12px;right:16px;z-index:200;background:rgba(10,5,20,.85);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;backdrop-filter:blur(10px)}
-.online-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:blink 1.5s ease-in-out infinite}
+/* ──────────── PAYWALL MODAL ──────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px)}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;
+  padding:24px 20px 36px;width:100%;max-width:480px;
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
+.modal-overlay.open .modal-sheet{transform:translateY(0)}
+.modal-pill{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.modal-icon{font-size:48px;text-align:center;margin-bottom:12px}
+.modal-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;
+  background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal-desc{font-size:13px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:20px}
+.modal-perks{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px}
+.perk-row{display:flex;align-items:center;gap:10px;padding:6px 0}
+.perk-row+.perk-row{border-top:1px solid var(--border)}
+.perk-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.perk-text{font-size:12px;color:var(--white)}
+.perk-sub{font-size:10px;color:var(--muted);margin-top:1px}
+.btn-primary{width:100%;padding:15px;border-radius:var(--r);border:none;
+  background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-size:15px;font-weight:800;
+  cursor:pointer;margin-bottom:8px;letter-spacing:.3px;transition:opacity .2s}
+.btn-primary:active{opacity:.8}
+.btn-secondary{width:100%;padding:11px;border-radius:var(--r);border:1px solid var(--border);
+  background:none;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s}
+.btn-secondary:active{background:var(--card)}
 
-/* ── TOAST ── */
-.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card);border:1px solid var(--purple);border-radius:20px;padding:8px 20px;font-size:13px;color:var(--white);z-index:999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;max-width:90vw}
+/* ──────────── FRAME SHOP MODAL ──────────── */
+.frame-modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;
+  padding:20px 20px 36px;width:100%;max-width:480px;
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
+.modal-overlay.open .frame-modal{transform:translateY(0)}
+
+/* ──────────── BOTTOM NAV ──────────── */
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,5,33,.96);
+  border-top:1px solid var(--border);display:flex;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(20px)}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0;
+  cursor:pointer;border:none;background:none;color:var(--muted);transition:color .2s;position:relative}
+.nbtn.active{color:var(--purple)}
+.nicon{font-size:21px;line-height:1}
+.nlabel{font-size:9px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.nnotif{position:absolute;top:5px;right:50%;transform:translateX(12px);
+  width:7px;height:7px;background:var(--pink);border-radius:50%;border:2px solid var(--bg2)}
+
+/* ──────────── MISC ──────────── */
+.online-pill{position:fixed;top:10px;right:14px;z-index:300;background:rgba(10,5,20,.9);
+  border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:10px;color:var(--muted);
+  display:none;align-items:center;gap:4px;backdrop-filter:blur(10px)}
+.opd{width:5px;height:5px;border-radius:50%;background:#10b981;animation:rdot 1.5s ease-in-out infinite}
+.toast{position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-16px);
+  background:var(--card);border:1px solid var(--purple);border-radius:20px;padding:7px 18px;
+  font-size:12px;color:var(--white);z-index:999;opacity:0;transition:all .3s;
+  pointer-events:none;white-space:nowrap;max-width:88vw}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 
-<!-- SPLASH -->
+<!-- ░░ SPLASH ░░ -->
 <div id="splash" class="screen active">
-  <div class="splash-logo">KOUVERTE</div>
-  <div class="splash-tagline">Chatta · Conosci · Condividi</div>
-  <div class="splash-spinner"></div>
+  <div class="sp-logo">KOUVERTE</div>
+  <div class="sp-sub">Chatta · Conosci · Condividi</div>
+  <div class="sp-spin"></div>
 </div>
 
-<!-- HOME -->
+<!-- ░░ HOME ░░ -->
 <div id="home" class="screen">
-  <div class="home-header">
-    <div style="display:flex;align-items:center;justify-content:space-between">
+  <div class="home-hero">
+    <div class="hero-top">
       <div>
-        <div class="home-logo">KOUVERTE</div>
-        <div class="home-sub">Chatta. Conosci. Condividi.</div>
+        <div class="hero-logo">KOUVERTE</div>
+        <div class="hero-tagline">Chatta. Conosci. Condividi. Senza essere chi sei.</div>
       </div>
-      <div style="text-align:right">
-        <div style="font-size:10px;color:var(--muted)">100% Anonimo 🔒</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px">Nessun nome. Nessuna foto.</div>
+      <div class="anon-badge">🔒 100% Anonimo</div>
+    </div>
+    <div class="chat-mondiale" style="margin-top:8px">
+      <div class="chat-mondiale-icon">🌍</div>
+      <div>
+        <div class="chat-mondiale-text">CHAT MONDIALE</div>
+        <div style="font-size:9px;color:var(--muted)">Parla con persone da tutto il mondo!</div>
       </div>
     </div>
-    <div class="home-badge-row" id="categoryFilter">
-      <div class="badge-chip active" data-cat="all">✨ Tutte</div>
-      <div class="badge-chip" data-cat="chat">💬 Chat</div>
-      <div class="badge-chip" data-cat="gaming">🎮 Gaming</div>
-      <div class="badge-chip" data-cat="music">🎵 Musica</div>
-      <div class="badge-chip" data-cat="night">🌙 Notte</div>
-      <div class="badge-chip" data-cat="fun">😂 Fun</div>
+
+    <!-- 4 pillars strip -->
+    <div class="promo-strip" style="margin-top:8px;margin-left:-16px;margin-right:-16px;padding:0 16px">
+      <div class="promo-box"><div class="promo-box-icon">💬</div><div class="promo-box-label">Stanze</div></div>
+      <div class="promo-box"><div class="promo-box-icon">🎭</div><div class="promo-box-label">Anonimo</div></div>
+      <div class="promo-box"><div class="promo-box-icon">🏆</div><div class="promo-box-label">Badge</div></div>
+      <div class="promo-box"><div class="promo-box-icon">⚡</div><div class="promo-box-label">In tempo reale</div></div>
+    </div>
+
+    <!-- Category filter -->
+    <div class="cat-scroll" id="catFilter">
+      <div class="cat-pill active" data-cat="all">✨ Tutte</div>
+      <div class="cat-pill" data-cat="it">🇮🇹 Italia</div>
+      <div class="cat-pill" data-cat="eu">🇪🇺 Europa</div>
+      <div class="cat-pill" data-cat="world">🌍 Mondo</div>
+      <div class="cat-pill" data-cat="gaming">🎮 Gaming</div>
+      <div class="cat-pill" data-cat="music">🎵 Musica</div>
+      <div class="cat-pill" data-cat="fun">😂 Fun</div>
     </div>
   </div>
+
   <div class="home-body">
-    <div class="section-title">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
+
+    <!-- Come funziona -->
+    <div class="section-lbl">Come funziona</div>
+    <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
+      <div style="min-width:130px;text-align:center;padding:10px 6px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#1a0535;border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">1️⃣</div>
+        <div style="font-size:10px;font-weight:700;color:var(--purple);margin-bottom:2px">ENTRA</div>
+        <div style="font-size:9px;color:var(--muted)">Nessuna registrazione. 100% anonimo.</div>
+      </div>
+      <div style="min-width:16px;display:flex;align-items:center;color:var(--purple);font-size:14px">›</div>
+      <div style="min-width:130px;text-align:center;padding:10px 6px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#0a1f2e;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">2️⃣</div>
+        <div style="font-size:10px;font-weight:700;color:var(--cyan);margin-bottom:2px">SCEGLI</div>
+        <div style="font-size:9px;color:var(--muted)">Trova la stanza che fa per te.</div>
+      </div>
+      <div style="min-width:16px;display:flex;align-items:center;color:var(--cyan);font-size:14px">›</div>
+      <div style="min-width:130px;text-align:center;padding:10px 6px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#052318;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">3️⃣</div>
+        <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:2px">CHATTA</div>
+        <div style="font-size:9px;color:var(--muted)">Messaggi senza limiti (100 gratis).</div>
+      </div>
+      <div style="min-width:16px;display:flex;align-items:center;color:var(--green);font-size:14px">›</div>
+      <div style="min-width:130px;text-align:center;padding:10px 6px">
+        <div style="width:36px;height:36px;border-radius:50%;background:#1a1000;border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">4️⃣</div>
+        <div style="font-size:10px;font-weight:700;color:var(--yellow);margin-bottom:2px">GUADAGNA</div>
+        <div style="font-size:9px;color:var(--muted)">Badge, cornici, achievement!</div>
+      </div>
+    </div>
+
+    <!-- Bottom pillars -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px">
+      <div style="background:var(--card);border:1px solid rgba(16,185,129,.3);border-radius:var(--rs);padding:10px">
+        <div style="font-size:16px;margin-bottom:3px">🛡️</div>
+        <div style="font-size:11px;font-weight:700;color:#10b981">Sicuro e Rispettoso</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">La tua sicurezza è la nostra priorità</div>
+      </div>
+      <div style="background:var(--card);border:1px solid rgba(236,72,153,.3);border-radius:var(--rs);padding:10px">
+        <div style="font-size:16px;margin-bottom:3px">❤️</div>
+        <div style="font-size:11px;font-weight:700;color:var(--pink)">Comunità Positiva</div>
+        <div style="font-size:9px;color:var(--muted);margin-top:2px">Rispetto, empatia, nessun giudizio</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- CHAT -->
+<!-- ░░ CHAT ░░ -->
 <div id="chat" class="screen">
-  <div class="chat-header">
+  <div class="chat-hdr" id="chatHdr">
     <button class="chat-back" onclick="leaveRoom()">←</button>
-    <div class="chat-room-icon" id="chatRoomIcon"></div>
-    <div class="chat-room-info">
-      <div class="chat-room-name" id="chatRoomName">Stanza</div>
-      <div class="chat-room-online" id="chatRoomOnline">...</div>
+    <div class="chat-hdr-icon" id="chatIcon"></div>
+    <div class="chat-hdr-info">
+      <div class="chat-hdr-name" id="chatName">Stanza</div>
+      <div class="chat-hdr-online" id="chatOnline">...</div>
     </div>
-    <div class="chat-anon-badge" id="chatAnonBadge">🎭 Anon</div>
+    <div class="chat-hdr-anon" id="chatAnonBadge">🎭 Anon</div>
   </div>
-  <div class="chat-messages" id="chatMessages"></div>
-  <div class="chat-input-wrap">
-    <div class="chat-input-row">
-      <textarea class="chat-input" id="msgInput" placeholder="Scrivi un messaggio..." rows="1"></textarea>
-      <button class="chat-send" id="sendBtn" onclick="sendMessage()">➤</button>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="free-bar" id="freeBar">
+    <span class="free-bar-label" id="freeLabel">100 messaggi gratuiti</span>
+    <div class="free-bar-track"><div class="free-bar-fill" id="freeFill" style="width:0%"></div></div>
+    <span class="free-bar-label" id="freeCount">0/100</span>
+  </div>
+  <div class="chat-bar">
+    <div class="chat-bar-row">
+      <textarea class="cinput" id="msgInput" placeholder="Scrivi un messaggio..." rows="1"></textarea>
+      <button class="csend" onclick="sendMessage()">➤</button>
     </div>
   </div>
 </div>
 
-<!-- PROFILE -->
+<!-- ░░ PROFILO ░░ -->
 <div id="profile" class="screen">
-  <div class="profile-header">
-    <div class="profile-mask" id="profileMask">🎭</div>
-    <div class="profile-name" id="profileName">Anonimo</div>
-    <div class="profile-anon"><span>🔒</span> Nessun dato personale salvato</div>
+  <div class="prof-hero">
+    <div class="prof-avatar" id="profAvatar" style="background:linear-gradient(135deg,#581c87,#a855f7);box-shadow:0 0 30px rgba(168,85,247,.4)">🎭</div>
+    <div class="prof-name" id="profName">Anonimo</div>
+    <div class="prof-anon">🔒 Nessun dato personale salvato</div>
+    <div id="premiumBadge" style="display:none" class="premium-badge">⭐ Premium — Abbonato</div>
   </div>
-  <div class="profile-stats">
-    <div class="stat-box">
-      <div class="stat-num" id="statMsgs">0</div>
-      <div class="stat-label">Messaggi</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="statRooms">0</div>
-      <div class="stat-label">Stanze</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-num" id="statBadges">0</div>
-      <div class="stat-label">Badge</div>
-    </div>
+  <div class="prof-stats">
+    <div class="stat-b"><div class="stat-n" id="stMsgs">0</div><div class="stat-l">Messaggi</div></div>
+    <div class="stat-b"><div class="stat-n" id="stRooms">0</div><div class="stat-l">Stanze</div></div>
+    <div class="stat-b"><div class="stat-n" id="stBadges">0</div><div class="stat-l">Badge</div></div>
   </div>
+
+  <!-- Frames / Cornici -->
+  <div class="frames-section">
+    <div class="section-lbl">🖼️ Cornici profilo</div>
+    <div class="frames-grid" id="framesGrid"></div>
+  </div>
+
+  <!-- Badges -->
   <div class="badges-section">
-    <div class="section-title">🏆 Badge e Achievement</div>
+    <div class="section-lbl">🏆 Badge e Achievement</div>
     <div class="badges-grid" id="badgesGrid"></div>
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-screen="home" onclick="showScreen('home',this)">
-    <div class="nav-icon">🏠</div>
-    <div class="nav-label">Stanze</div>
+<!-- ░░ PAYWALL MODAL ░░ -->
+<div class="modal-overlay" id="paywallOverlay">
+  <div class="modal-sheet">
+    <div class="modal-pill"></div>
+    <div class="modal-icon">🎭✨</div>
+    <div class="modal-title">Hai usato i 100 messaggi gratuiti!</div>
+    <div class="modal-desc">Continua a chattare senza limiti con KOUVERTE Premium.<br>Solo <strong style="color:var(--purple)">1€ al mese</strong> — cancella quando vuoi.</div>
+    <div class="modal-perks">
+      <div class="perk-row">
+        <div class="perk-icon">💬</div>
+        <div><div class="perk-text">Messaggi illimitati</div><div class="perk-sub">Chatta senza limiti in tutte le stanze</div></div>
+      </div>
+      <div class="perk-row">
+        <div class="perk-icon">🖼️</div>
+        <div><div class="perk-text">Cornici premium esclusive</div><div class="perk-sub">Gold, Diamond e cornici animate</div></div>
+      </div>
+      <div class="perk-row">
+        <div class="perk-icon">🏆</div>
+        <div><div class="perk-text">Badge Premium</div><div class="perk-sub">Mostra il tuo status nella chat</div></div>
+      </div>
+      <div class="perk-row">
+        <div class="perk-icon">⭐</div>
+        <div><div class="perk-text">Nome in evidenza</div><div class="perk-sub">Il tuo nome brilla tra tutti gli utenti</div></div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="startPayment()">⭐ Abbonati per 1€/mese</button>
+    <button class="btn-secondary" onclick="closePaywall()">Non adesso</button>
+  </div>
+</div>
+
+<!-- ░░ FRAME SHOP MODAL ░░ -->
+<div class="modal-overlay" id="frameOverlay">
+  <div class="frame-modal">
+    <div class="modal-pill"></div>
+    <div class="modal-title" id="frameMTitle" style="font-size:18px;margin-bottom:8px"></div>
+    <div class="modal-desc" id="frameMDesc"></div>
+    <button class="btn-primary" id="frameMBtn" style="margin-top:12px" onclick="buyFrame()"></button>
+    <button class="btn-secondary" onclick="closeFrameModal()" style="margin-top:4px">Annulla</button>
+  </div>
+</div>
+
+<!-- ░░ NAV ░░ -->
+<nav class="bnav">
+  <button class="nbtn active" data-sc="home" onclick="showScreen('home',this)">
+    <div class="nicon">🏠</div><div class="nlabel">Stanze</div>
   </button>
-  <button class="nav-btn" data-screen="chat" id="navChat" onclick="goToChat(this)" style="display:none">
-    <div class="nav-icon">💬</div>
-    <div class="nav-label">Chat</div>
-    <div class="nav-notif" id="chatNotif" style="display:none"></div>
+  <button class="nbtn" data-sc="chat" id="navChat" onclick="goToChat(this)" style="display:none">
+    <div class="nicon">💬</div><div class="nlabel">Chat</div>
+    <div class="nnotif" id="chatNotif" style="display:none"></div>
   </button>
-  <button class="nav-btn" data-screen="profile" onclick="showScreen('profile',this)">
-    <div class="nav-icon">🎭</div>
-    <div class="nav-label">Profilo</div>
+  <button class="nbtn" data-sc="profile" onclick="showScreen('profile',this)">
+    <div class="nicon">🎭</div><div class="nlabel">Profilo</div>
   </button>
 </nav>
 
 <!-- Online pill -->
 <div class="online-pill" id="onlinePill" style="display:none">
-  <div class="online-dot"></div>
-  <span id="onlineCount">0</span> online
+  <div class="opd"></div><span id="onlineCount">0</span> online
 </div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── COLORI NEON per ogni utente ──
+// ══════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════
+const FREE_MSG_LIMIT = 100;
+
 const NEON_COLORS = [
   '#e879f9','#38bdf8','#4ade80','#fb923c',
   '#facc15','#f472b6','#a78bfa','#34d399',
   '#60a5fa','#f87171','#2dd4bf','#c084fc'
 ];
 
-// ── STANZE ──
-const ROOMS_CONFIG = [
-  { id:'chiacchiere',  name:'Chiacchiere',  emoji:'💬', desc:'Parla di tutto con il mondo intero', cat:'chat',   cls:'room-chiacchiere',  tag:'Generale', color:'#a855f7' },
-  { id:'amicizia',     name:'Amicizia',     emoji:'❤️', desc:'Conosci nuove persone, nuove storie', cat:'chat',  cls:'room-amicizia',     tag:'Social',   color:'#ec4899' },
-  { id:'gaming',       name:'Gaming',       emoji:'🎮', desc:'Gamer? Sei nel posto giusto!',        cat:'gaming', cls:'room-gaming',       tag:'Gaming',   color:'#3b82f6' },
-  { id:'musica',       name:'Musica',       emoji:'🎵', desc:'Artisti, fan, amanti della musica',   cat:'music',  cls:'room-musica',       tag:'Musica',   color:'#10b981' },
-  { id:'notte-fonda',  name:'Notte Fonda',  emoji:'🌙', desc:'La notte porta pensieri profondi...', cat:'night',  cls:'room-notte',        tag:'Notturno', color:'#78716c' },
-  { id:'divertimento', name:'Divertimento', emoji:'😂', desc:'Meme, battute, risate assicurate',    cat:'fun',    cls:'room-divertimento', tag:'Fun',      color:'#f97316' },
+// Stanze: Italia per regioni + mondo + mood globali
+const ROOMS = [
+  // ── ITALIA ──
+  { id:'it-generale',  name:'🇮🇹 Italia',        emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani!',  cat:'it',     color:'#10b981', tag:'Italia' },
+  { id:'it-nord',      name:'Nord Italia',       emoji:'🏔️', desc:'Piemonte, Lombardia, Veneto, Friuli...', cat:'it',     color:'#10b981', tag:'Nord' },
+  { id:'it-centro',    name:'Centro Italia',     emoji:'🌺', desc:'Toscana, Lazio, Umbria, Marche...',      cat:'it',     color:'#10b981', tag:'Centro' },
+  { id:'it-sud',       name:'Sud Italia',        emoji:'☀️', desc:'Campania, Puglia, Calabria, Basilicata', cat:'it',     color:'#10b981', tag:'Sud' },
+  { id:'it-sicilia',   name:'Sicilia & Sardegna',emoji:'🌋', desc:"L'isola che non dorme mai!",             cat:'it',     color:'#10b981', tag:'Isole' },
+  // ── EUROPA ──
+  { id:'eu-generale',  name:'🇪🇺 Europa',         emoji:'🇪🇺', desc:'Chat per tutti gli europei!',           cat:'eu',     color:'#3b82f6', tag:'Europa' },
+  { id:'eu-est',       name:'Est Europa',        emoji:'🌅', desc:'Polonia, Romania, Ucraina, Bulgaria...', cat:'eu',     color:'#3b82f6', tag:'Est EU' },
+  { id:'eu-ovest',     name:'Ovest Europa',      emoji:'🗼', desc:'Francia, Spagna, Germania, UK...',       cat:'eu',     color:'#3b82f6', tag:'Ovest EU' },
+  // ── MONDO ──
+  { id:'w-generale',   name:'🌍 Chat Mondiale',  emoji:'🌍', desc:'Parla con persone da ogni angolo del mondo!', cat:'world', color:'#a855f7', tag:'Global' },
+  { id:'w-americhe',   name:'Americhe',          emoji:'🌎', desc:'Nord e Sud America, Canada, Brasile...',  cat:'world',  color:'#a855f7', tag:'Americhe' },
+  { id:'w-asia',       name:'Asia & Oceania',    emoji:'🌏', desc:'Giappone, India, Australia, Cina...',    cat:'world',  color:'#a855f7', tag:'Asia' },
+  { id:'w-africa',     name:'Africa & M. Oriente',emoji:'🌍', desc:'Tutto il continente africano e medio oriente', cat:'world', color:'#a855f7', tag:'Africa' },
+  // ── MOOD (globali) ──
+  { id:'chiacchiere',  name:'Chiacchiere',       emoji:'💬', desc:'Parla di tutto con tutti!',               cat:'fun',    color:'#ec4899', tag:'Generale' },
+  { id:'gaming',       name:'Gaming',            emoji:'🎮', desc:'Gamer unite! Console, PC, mobile.',       cat:'gaming', color:'#60a5fa', tag:'Gaming' },
+  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Artisti, fan, amanti della musica.',      cat:'music',  color:'#4ade80', tag:'Musica' },
+  { id:'notte-fonda',  name:'Notte Fonda',       emoji:'🌙', desc:'La notte porta pensieri profondi...',     cat:'fun',    color:'#78716c', tag:'Notturno' },
+  { id:'divertimento', name:'Divertimento',      emoji:'😂', desc:'Meme, humor, risate assicurate!',         cat:'fun',    color:'#fb923c', tag:'Fun' },
+  { id:'amicizia',     name:'Amicizia',          emoji:'❤️', desc:'Nuove amicizie, nuove storie.',          cat:'fun',    color:'#f472b6', tag:'Social' },
+];
+
+const FRAMES_CONFIG = [
+  { id:'none',     name:'Nessuna',   emoji:'🎭', price:0,    premium:false, css:'' },
+  { id:'silver',   name:'Silver',    emoji:'🥈', price:0,    premium:false, css:'border:2px solid silver;box-shadow:0 0 6px silver' },
+  { id:'gold',     name:'Gold',      emoji:'🥇', price:199,  premium:true,  css:'border:2px solid gold;box-shadow:0 0 10px gold' },
+  { id:'diamond',  name:'Diamond',   emoji:'💎', price:499,  premium:true,  css:'border:2px solid #38bdf8;box-shadow:0 0 14px #38bdf8,0 0 30px rgba(56,189,248,.4)' },
+  { id:'flame',    name:'Fiamma',    emoji:'🔥', price:299,  premium:true,  css:'border:2px solid #f97316;box-shadow:0 0 10px #f97316' },
+  { id:'purple',   name:'Viola',     emoji:'💜', price:0,    premium:false, css:'border:2px solid #a855f7;box-shadow:0 0 8px #a855f7' },
 ];
 
 const BADGES_DEF = [
-  { id:'first_msg',  emoji:'💬', name:'Prima Parola'  },
-  { id:'chatter',    emoji:'🔥', name:'Chiacchierone' },
-  { id:'explorer',   emoji:'🌍', name:'Esploratore'   },
-  { id:'nocturnal',  emoji:'🌙', name:'Nottambulo'    },
-  { id:'legend',     emoji:'👑', name:'Leggenda'      },
-  { id:'friendly',   emoji:'❤️', name:'Amichevole'   },
+  { id:'first_msg',   emoji:'💬', name:'Prima Parola'   },
+  { id:'chatter',     emoji:'🔥', name:'Chiacchierone'  },
+  { id:'globe',       emoji:'🌍', name:'Cittadino Mondo' },
+  { id:'explorer',    emoji:'🗺️', name:'Esploratore'    },
+  { id:'nocturnal',   emoji:'🌙', name:'Nottambulo'     },
+  { id:'legend',      emoji:'👑', name:'Leggenda'       },
+  { id:'premium',     emoji:'⭐', name:'Premium'        },
+  { id:'italy',       emoji:'🇮🇹', name:'Made in Italy'  },
+  { id:'friendly',    emoji:'❤️', name:'Amichevole'    },
 ];
 
-// ── STATE ──
-let socket = null;
-let currentUser = null;
-let currentRoom = null;
-let typingTimer = null;
-let isTyping = false;
-let typingUsers = {};
-let roomOnlineMap = {};
-let lastMsgSender = null;
-let activeFilter = 'all';
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let socket = null, currentUser = null, currentRoom = null;
+let typingTimer = null, isTyping = false, typingUsers = {};
+let roomOnlineMap = {}, lastSender = null, activeFilter = 'all';
+let selectedFrameId = null; // per il modal shop
 
-// ── INIT ──
-document.addEventListener('DOMContentLoaded', async () => {
-  if (window.Telegram?.WebApp) {
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-    Telegram.WebApp.setHeaderColor('#06020f');
-    Telegram.WebApp.setBackgroundColor('#06020f');
-  }
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#06020f'); tg.setBackgroundColor('#06020f'); }
   initUser();
   connectSocket();
-  renderRooms();
+  renderRooms('all');
+  renderFrames();
   renderBadges();
   setupInput();
-  setTimeout(hideSplash, 1000);
+  setupCatFilter();
+  setTimeout(hideSplash, 1100);
 });
 
 function hideSplash() {
-  const sp = document.getElementById('splash');
-  sp.style.transition = 'opacity .4s';
-  sp.style.opacity = '0';
-  setTimeout(() => { sp.classList.remove('active'); showScreen('home'); }, 400);
+  const s = document.getElementById('splash');
+  s.style.transition = 'opacity .4s'; s.style.opacity = '0';
+  setTimeout(() => { s.classList.remove('active'); showScreen('home'); }, 400);
 }
 
-// ── USER ANONIMO ──
+// ══════════════════════════════════════
+// USER
+// ══════════════════════════════════════
 function initUser() {
-  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const stored = getLS('kv_user_v2');
+  const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const stored = getLS('kv3_user');
   if (stored) {
     currentUser = stored;
   } else {
-    const uid = tgUser?.id ? 'tg_' + tgUser.id : 'anon_' + crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
-    const masks = ['🎭','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂'];
+    const uid = tgU?.id ? 'tg_' + tgU.id : 'anon_' + Math.random().toString(36).slice(2,9);
+    const masks = ['🎭','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂','🐻','🦝'];
     currentUser = {
       id: uid,
-      displayName: tgUser ? (tgUser.first_name || 'Utente') : 'Anon_' + uid.slice(-4),
+      name: tgU ? (tgU.first_name || 'Utente') : 'Anon_' + uid.slice(-4),
       mask: masks[Math.floor(Math.random() * masks.length)],
       color: getColor(uid),
       msgCount: 0,
+      freeUsed: 0,
+      isPremium: false,
+      premiumExpiry: 0,
       roomsVisited: [],
       badges: [],
+      ownedFrames: ['none','silver','purple'],
+      activeFrame: 'none',
       joinedAt: Date.now()
     };
-    setLS('kv_user_v2', currentUser);
+    setLS('kv3_user', currentUser);
   }
   updateProfileUI();
+  updateFreeBar();
 }
 
 function updateProfileUI() {
-  const maskEl = document.getElementById('profileMask');
-  maskEl.textContent = currentUser.mask;
-  maskEl.style.background = `linear-gradient(135deg,${currentUser.color}33,${currentUser.color}88)`;
-  maskEl.style.boxShadow = `0 0 30px ${currentUser.color}44`;
-  document.getElementById('profileName').textContent = currentUser.displayName;
-  document.getElementById('statMsgs').textContent = currentUser.msgCount || 0;
-  document.getElementById('statRooms').textContent = (currentUser.roomsVisited || []).length;
-  document.getElementById('statBadges').textContent = (currentUser.badges || []).length;
+  const av = document.getElementById('profAvatar');
+  av.textContent = currentUser.mask;
+  av.style.background = `linear-gradient(135deg,${currentUser.color}33,${currentUser.color}99)`;
+  av.style.boxShadow = `0 0 28px ${currentUser.color}44`;
+  // Apply active frame to profile avatar
+  const fCfg = FRAMES_CONFIG.find(f => f.id === currentUser.activeFrame);
+  if (fCfg?.css) av.style.cssText += ';' + fCfg.css;
+  document.getElementById('profName').textContent = currentUser.name;
+  document.getElementById('stMsgs').textContent = currentUser.msgCount || 0;
+  document.getElementById('stRooms').textContent = (currentUser.roomsVisited || []).length;
+  document.getElementById('stBadges').textContent = (currentUser.badges || []).length;
+  document.getElementById('premiumBadge').style.display = isPremium() ? 'inline-flex' : 'none';
 }
 
-// ── COLORE UTENTE ──
+function isPremium() {
+  return currentUser.isPremium && Date.now() < (currentUser.premiumExpiry || 0);
+}
+
 function getColor(uid) {
   let h = 0;
   for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
   return NEON_COLORS[h % NEON_COLORS.length];
 }
 
-// ── SOCKET ──
+// ══════════════════════════════════════
+// FREE BAR
+// ══════════════════════════════════════
+function updateFreeBar() {
+  if (isPremium()) {
+    document.getElementById('freeBar').style.display = 'none'; return;
+  }
+  const used = currentUser.freeUsed || 0;
+  const pct = Math.min((used / FREE_MSG_LIMIT) * 100, 100);
+  document.getElementById('freeFill').style.width = pct + '%';
+  document.getElementById('freeCount').textContent = used + '/' + FREE_MSG_LIMIT;
+  const lbl = document.getElementById('freeLabel');
+  const left = FREE_MSG_LIMIT - used;
+  lbl.textContent = left > 0 ? left + ' messaggi gratuiti rimasti' : '0 messaggi rimasti';
+  lbl.className = 'free-bar-label' + (left <= 20 ? ' warn' : '');
+}
+
+// ══════════════════════════════════════
+// SOCKET
+// ══════════════════════════════════════
 function connectSocket() {
   socket = io({ transports: ['websocket','polling'] });
-
   socket.on('connect', () => {
-    if (currentRoom) socket.emit('join-chat-room', { roomId: currentRoom.id, user: publicUser() });
+    if (currentRoom) socket.emit('join-chat-room', { roomId: currentRoom.id, user: pubUser() });
   });
-
   socket.on('chat-message', ({ roomId, msg }) => {
     if (currentRoom?.id === roomId) {
-      if (msg.userId !== currentUser.id) {
-        appendMessage(msg);
-        scrollToBottom();
-      }
+      if (msg.userId !== currentUser.id) { appendMsg(msg); scrollBot(); }
     } else {
       document.getElementById('chatNotif').style.display = 'block';
     }
   });
-
   socket.on('chat-typing', ({ roomId, user }) => {
     if (roomId !== currentRoom?.id || user.id === currentUser.id) return;
-    typingUsers[user.id] = user;
-    renderTyping();
+    typingUsers[user.id] = user; renderTyping();
   });
-
   socket.on('chat-stop-typing', ({ roomId, userId }) => {
     if (roomId !== currentRoom?.id) return;
-    delete typingUsers[userId];
-    renderTyping();
+    delete typingUsers[userId]; renderTyping();
   });
-
   socket.on('room-online', ({ roomId, count }) => {
     roomOnlineMap[roomId] = count;
-    const el = document.getElementById('online_' + roomId);
+    const el = document.getElementById('ron_' + roomId);
     if (el) el.textContent = count + ' online';
-    if (currentRoom?.id === roomId) {
-      document.getElementById('chatRoomOnline').textContent = count + ' online';
-    }
+    if (currentRoom?.id === roomId) document.getElementById('chatOnline').textContent = count + ' online';
   });
-
   socket.on('global-online', ({ count }) => {
     document.getElementById('onlineCount').textContent = count;
     document.getElementById('onlinePill').style.display = 'flex';
   });
-
   socket.on('chat-history', ({ roomId, messages }) => {
     if (roomId !== currentRoom?.id) return;
-    const container = document.getElementById('chatMessages');
-    container.innerHTML = '';
-    lastMsgSender = null;
-    if (messages && messages.length) {
-      messages.forEach(m => appendMessage(m));
-      scrollToBottom();
-    }
-    addSystemMsg('Benvenuto in ' + currentRoom.name + ' 👋');
+    document.getElementById('chatMsgs').innerHTML = '';
+    lastSender = null;
+    (messages || []).forEach(m => appendMsg(m));
+    addSys('Benvenuto in ' + currentRoom.name + ' 👋 Solo tu, nessun giudizio.');
+    scrollBot();
   });
 }
 
-function publicUser() {
-  return { id: currentUser.id, name: currentUser.displayName, color: currentUser.color, mask: currentUser.mask };
+function pubUser() {
+  return {
+    id: currentUser.id, name: currentUser.name,
+    color: currentUser.color, mask: currentUser.mask,
+    frame: currentUser.activeFrame, isPremium: isPremium()
+  };
 }
 
-// ── ROOMS ──
-document.getElementById('categoryFilter').addEventListener('click', e => {
-  const chip = e.target.closest('.badge-chip');
-  if (!chip) return;
-  document.querySelectorAll('.badge-chip').forEach(c => c.classList.remove('active'));
-  chip.classList.add('active');
-  activeFilter = chip.dataset.cat;
-  renderRooms();
-});
+// ══════════════════════════════════════
+// ROOMS
+// ══════════════════════════════════════
+function setupCatFilter() {
+  document.getElementById('catFilter').addEventListener('click', e => {
+    const p = e.target.closest('.cat-pill');
+    if (!p) return;
+    document.querySelectorAll('.cat-pill').forEach(c => c.classList.remove('active'));
+    p.classList.add('active');
+    activeFilter = p.dataset.cat;
+    renderRooms(activeFilter);
+  });
+}
 
-function renderRooms() {
-  const list = document.getElementById('roomsList');
-  const filtered = activeFilter === 'all' ? ROOMS_CONFIG : ROOMS_CONFIG.filter(r => r.cat === activeFilter);
-  list.innerHTML = filtered.map(r => `
-    <div class="room-card ${r.cls}" onclick="enterRoom('${r.id}')">
-      <div class="room-icon">${r.emoji}</div>
-      <div class="room-info">
-        <div class="room-name">${r.name}</div>
-        <div class="room-desc">${r.desc}</div>
-        <div class="room-meta">
-          <div class="room-online">
-            <div class="room-dot" style="background:${r.color}"></div>
-            <span style="color:${r.color}" id="online_${r.id}">${roomOnlineMap[r.id] ?? 0} online</span>
-          </div>
-          <span class="room-tag">${r.tag}</span>
+function renderRooms(cat) {
+  const filtered = cat === 'all' ? ROOMS : ROOMS.filter(r => r.cat === cat);
+  // Group by category for 'all'
+  let html = '';
+  if (cat === 'all') {
+    const groups = [
+      { label:'🇮🇹 Italia', cats:['it'] },
+      { label:'🌍 Mondo & Europa', cats:['eu','world'] },
+      { label:'💬 Per mood', cats:['fun','gaming','music'] },
+    ];
+    for (const g of groups) {
+      const rooms = ROOMS.filter(r => g.cats.includes(r.cat));
+      html += `<div class="section-lbl">${g.label}</div>`;
+      html += rooms.map(roomCardHtml).join('');
+    }
+  } else {
+    html = filtered.map(roomCardHtml).join('');
+  }
+  document.getElementById('roomsList').innerHTML = html;
+}
+
+function roomCardHtml(r) {
+  const cnt = roomOnlineMap[r.id] ?? 0;
+  return `
+  <div class="room-card" onclick="enterRoom('${r.id}')" style="border-color:${r.color}33">
+    <div class="room-glow" style="background:radial-gradient(ellipse at 0% 50%,${r.color}18,transparent 60%)"></div>
+    <div class="room-icon" style="background:linear-gradient(135deg,${r.color}44,${r.color}88);box-shadow:0 4px 16px ${r.color}33">${r.emoji}</div>
+    <div class="room-info">
+      <div class="room-name">${r.name}</div>
+      <div class="room-desc">${r.desc}</div>
+      <div class="room-meta">
+        <div class="room-count">
+          <div class="r-dot" style="background:${r.color}"></div>
+          <span style="color:${r.color}" id="ron_${r.id}">${cnt} online</span>
         </div>
+        <span class="room-tag">${r.tag}</span>
       </div>
-      <div class="room-arrow" style="color:${r.color}66">›</div>
     </div>
-  `).join('');
+    <div class="room-caret" style="color:${r.color}88">›</div>
+  </div>`;
 }
 
-// ── ENTER / LEAVE ──
+// ══════════════════════════════════════
+// ENTER / LEAVE
+// ══════════════════════════════════════
 function enterRoom(roomId) {
-  const cfg = ROOMS_CONFIG.find(r => r.id === roomId);
+  const cfg = ROOMS.find(r => r.id === roomId);
   if (!cfg) return;
-  currentRoom = cfg;
-  lastMsgSender = null;
-  typingUsers = {};
+  currentRoom = cfg; lastSender = null; typingUsers = {};
 
-  // Header
-  const icon = document.getElementById('chatRoomIcon');
+  const icon = document.getElementById('chatIcon');
   icon.textContent = cfg.emoji;
-  icon.style.background = `linear-gradient(135deg,${cfg.color}44,${cfg.color})`;
-  document.getElementById('chatRoomName').textContent = cfg.name;
-  document.getElementById('chatRoomOnline').textContent = (roomOnlineMap[roomId] ?? 0) + ' online';
-  const badge = document.getElementById('chatAnonBadge');
-  badge.textContent = '🎭 Anonimo';
-  badge.style.cssText = `border-color:${cfg.color}44;color:${cfg.color};background:${cfg.color}11`;
+  icon.style.cssText = `background:linear-gradient(135deg,${cfg.color}44,${cfg.color});border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0`;
+  document.getElementById('chatName').textContent = cfg.name;
+  document.getElementById('chatOnline').textContent = (roomOnlineMap[roomId] ?? 0) + ' online';
+  const ab = document.getElementById('chatAnonBadge');
+  ab.textContent = '🎭 Anonimo'; ab.style.cssText = `border-color:${cfg.color}44;color:${cfg.color};background:${cfg.color}11;font-size:9px;border:1px solid;border-radius:12px;padding:2px 8px;font-weight:700`;
 
-  // Reset messages
-  document.getElementById('chatMessages').innerHTML = '';
+  document.getElementById('chatMsgs').innerHTML = '';
+  socket.emit('join-chat-room', { roomId, user: pubUser() });
 
-  // Socket
-  socket.emit('join-chat-room', { roomId, user: publicUser() });
-
-  // Track
   const visited = new Set(currentUser.roomsVisited || []);
   if (!visited.has(roomId)) {
-    visited.add(roomId);
-    currentUser.roomsVisited = [...visited];
-    document.getElementById('statRooms').textContent = visited.size;
+    visited.add(roomId); currentUser.roomsVisited = [...visited];
+    document.getElementById('stRooms').textContent = visited.size;
+    // Badge Italia
+    if (roomId.startsWith('it-') && !currentUser.badges.includes('italy')) addBadge('italy','Made in Italy');
+    // Badge globo
+    if (roomId.startsWith('w-') && !currentUser.badges.includes('globe')) addBadge('globe','Cittadino del Mondo');
+    if (visited.size >= 3 && !currentUser.badges.includes('explorer')) addBadge('explorer','Esploratore');
     saveUser();
-    checkBadges();
   }
 
   document.getElementById('navChat').style.display = 'flex';
   document.getElementById('chatNotif').style.display = 'none';
+  updateFreeBar();
   showScreen('chat', document.getElementById('navChat'));
-  setTimeout(scrollToBottom, 150);
+  setTimeout(scrollBot, 150);
 }
 
-function goToChat(btn) {
-  if (!currentRoom) return;
-  showScreen('chat', btn);
-}
+function goToChat(btn) { if (currentRoom) showScreen('chat', btn); }
 
 function leaveRoom() {
-  if (currentRoom) {
-    socket.emit('leave-chat-room', { roomId: currentRoom.id });
-    currentRoom = null;
-  }
-  showScreen('home', document.querySelector('[data-screen="home"]'));
+  if (currentRoom) { socket.emit('leave-chat-room', { roomId: currentRoom.id }); currentRoom = null; }
+  showScreen('home', document.querySelector('[data-sc="home"]'));
 }
 
-// ── MESSAGES ──
-function appendMessage(msg) {
-  if (!msg || !msg.text) return;
-  const container = document.getElementById('chatMessages');
-
+// ══════════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════════
+function appendMsg(msg) {
+  if (!msg?.text) return;
+  const c = document.getElementById('chatMsgs');
   if (msg.type === 'system') {
-    const el = document.createElement('div');
-    el.className = 'msg-system';
-    el.textContent = msg.text;
-    container.appendChild(el);
-    lastMsgSender = null;
-    return;
+    const d = document.createElement('div');
+    d.className = 'msys'; d.textContent = msg.text; c.appendChild(d);
+    lastSender = null; return;
   }
-
   const isSelf = msg.userId === currentUser.id;
-  const isConsecutive = lastMsgSender === msg.userId;
-  lastMsgSender = msg.userId;
-
-  const color = isSelf ? currentUser.color : (msg.color || getColor(msg.userId || ''));
-  const mask  = isSelf ? currentUser.mask  : (msg.mask || '🎭');
-  const name  = isSelf ? currentUser.displayName : (msg.name || 'Anonimo');
-  const time  = new Date(msg.ts || Date.now()).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  const consec = lastSender === msg.userId;
+  lastSender = msg.userId;
+  const col  = isSelf ? currentUser.color : (msg.color || getColor(msg.userId || ''));
+  const mask = isSelf ? currentUser.mask  : (msg.mask  || '🎭');
+  const name = isSelf ? currentUser.name  : (msg.name  || 'Anonimo');
+  const time = new Date(msg.ts || Date.now()).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  const frame = isSelf ? currentUser.activeFrame : (msg.frame || 'none');
+  const fCfg  = FRAMES_CONFIG.find(f => f.id === frame);
+  const fStyle = fCfg?.css ? fCfg.css + ';' : '';
+  const premGlow = (msg.isPremium && !isSelf) ? `;text-shadow:0 0 6px ${col}` : '';
 
   const row = document.createElement('div');
-  row.className = 'msg-row' + (isSelf ? ' self' : '');
-
+  row.className = 'mrow' + (isSelf ? ' self' : '');
   if (isSelf) {
-    row.innerHTML = `
-      <div class="msg-avatar hidden"></div>
-      <div>
-        <div class="msg-bubble">
-          <div class="msg-text">${escHtml(msg.text)}</div>
-          <div class="msg-time">${time}</div>
-        </div>
-      </div>`;
+    row.innerHTML = `<div class="mavatar hidden"></div><div><div class="mbubble"><div class="mtext">${esc(msg.text)}</div><div class="mtime">${time}</div></div></div>`;
   } else {
-    // Colore neon bordo sinistro sulla bubble per identificare l'utente
-    const borderStyle = `border-left:3px solid ${color};border-color:${color}44`;
+    const bStyle = `border-left:3px solid ${col}44;border-color:${col}33`;
     row.innerHTML = `
-      <div class="msg-avatar ${isConsecutive ? 'hidden' : ''}" style="background:${color}22;border:2px solid ${color}55">
+      <div class="mavatar ${consec?'hidden':''}" style="${fStyle}background:${col}22;border:2px solid ${col}55">
         <span>${mask}</span>
       </div>
-      <div style="max-width:75%">
-        ${!isConsecutive ? `<div class="msg-name" style="color:${color}">${escHtml(name)}</div>` : ''}
-        <div class="msg-bubble" style="${borderStyle}">
-          <div class="msg-text">${escHtml(msg.text)}</div>
-          <div class="msg-time">${time}</div>
-        </div>
+      <div style="max-width:76%">
+        ${!consec?`<div class="mname" style="color:${col}${premGlow}">${esc(name)}${msg.isPremium?'<span style="font-size:9px;margin-left:4px;opacity:.7">⭐</span>':''}</div>`:''}
+        <div class="mbubble" style="${bStyle}"><div class="mtext">${esc(msg.text)}</div><div class="mtime">${time}</div></div>
       </div>`;
   }
-  container.appendChild(row);
+  c.appendChild(row);
 }
 
-function addSystemMsg(text) {
-  appendMessage({ type:'system', text });
-  scrollToBottom();
-}
+function addSys(text) { appendMsg({ type:'system', text }); scrollBot(); }
 
 function sendMessage() {
-  const input = document.getElementById('msgInput');
-  const text = input.value.trim();
+  const inp = document.getElementById('msgInput');
+  const text = inp.value.trim();
   if (!text || !currentRoom || !socket?.connected) return;
 
+  // Paywall check
+  if (!isPremium() && (currentUser.freeUsed || 0) >= FREE_MSG_LIMIT) {
+    showPaywall(); return;
+  }
+
   const msg = {
-    userId: currentUser.id,
-    name: currentUser.displayName,
-    color: currentUser.color,
-    mask: currentUser.mask,
-    text,
-    ts: Date.now(),
-    roomId: currentRoom.id
+    userId: currentUser.id, name: currentUser.name,
+    color: currentUser.color, mask: currentUser.mask,
+    frame: currentUser.activeFrame, isPremium: isPremium(),
+    text, ts: Date.now(), roomId: currentRoom.id
   };
-
   socket.emit('chat-message', { roomId: currentRoom.id, msg });
-  appendMessage(msg);
-  scrollToBottom();
+  appendMsg(msg); scrollBot();
 
-  input.value = '';
-  input.style.height = 'auto';
+  inp.value = ''; inp.style.height = 'auto';
   stopTyping();
 
-  // Stats
+  // Update counters
   currentUser.msgCount = (currentUser.msgCount || 0) + 1;
-  document.getElementById('statMsgs').textContent = currentUser.msgCount;
-  saveUser();
+  if (!isPremium()) currentUser.freeUsed = (currentUser.freeUsed || 0) + 1;
+  document.getElementById('stMsgs').textContent = currentUser.msgCount;
+  updateFreeBar();
   checkBadges();
+  saveUser();
   document.getElementById('chatNotif').style.display = 'none';
-}
 
-// ── TYPING ──
-function setupInput() {
-  const input = document.getElementById('msgInput');
-  input.addEventListener('input', () => {
-    input.style.height = 'auto';
-    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
-    if (!isTyping && currentRoom) {
-      isTyping = true;
-      socket.emit('chat-typing', { roomId: currentRoom.id, user: publicUser() });
-    }
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(stopTyping, 2000);
-  });
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
-  });
-}
-
-function stopTyping() {
-  if (isTyping && currentRoom) {
-    isTyping = false;
-    socket.emit('chat-stop-typing', { roomId: currentRoom.id, userId: currentUser.id });
+  // Paywall soft warning at 80
+  if (!isPremium() && currentUser.freeUsed === 80) {
+    showToast('⚠️ 20 messaggi gratuiti rimasti!');
   }
+  // Hard paywall at limit
+  if (!isPremium() && currentUser.freeUsed >= FREE_MSG_LIMIT) {
+    setTimeout(showPaywall, 400);
+  }
+}
+
+// ══════════════════════════════════════
+// TYPING
+// ══════════════════════════════════════
+function setupInput() {
+  const inp = document.getElementById('msgInput');
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';
+    if (!isTyping && currentRoom) { isTyping = true; socket.emit('chat-typing',{ roomId:currentRoom.id, user:pubUser() }); }
+    clearTimeout(typingTimer); typingTimer = setTimeout(stopTyping, 2000);
+  });
+  inp.addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); } });
+}
+function stopTyping() {
+  if (isTyping && currentRoom) { isTyping=false; socket.emit('chat-stop-typing',{ roomId:currentRoom.id, userId:currentUser.id }); }
   clearTimeout(typingTimer);
 }
-
 function renderTyping() {
-  const container = document.getElementById('chatMessages');
-  let el = document.getElementById('typing-indicator');
+  const c = document.getElementById('chatMsgs');
+  let el = document.getElementById('tind');
   const users = Object.values(typingUsers);
   if (!users.length) { el?.remove(); return; }
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'typing-indicator';
-    el.className = 'typing-row';
-    container.appendChild(el);
-  }
-  const names = users.map(u => `<span style="color:${u.color};font-weight:700">${escHtml(u.name)}</span>`).join(', ');
-  el.innerHTML = `
-    <div class="msg-avatar" style="background:#1a0a35;border:2px solid var(--border)">🎭</div>
-    <div class="typing-bubble">
-      <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
-    </div>
-    <span class="typing-names">&nbsp;${names} sta scrivendo...</span>`;
-  scrollToBottom();
+  if (!el) { el=document.createElement('div'); el.id='tind'; el.className='trow'; c.appendChild(el); }
+  const names = users.map(u=>`<span style="color:${u.color};font-weight:700">${esc(u.name)}</span>`).join(', ');
+  el.innerHTML=`<div class="mavatar" style="background:#1a0a35;border:2px solid var(--border)">🎭</div><div class="tbubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><span class="tnames">&nbsp;${names} sta scrivendo...</span>`;
+  scrollBot();
 }
 
-// ── BADGES ──
-function checkBadges() {
-  const earned = new Set(currentUser.badges || []);
-  const add = (id, label) => {
-    if (!earned.has(id)) { earned.add(id); showToast('🏆 Badge: ' + label); }
-  };
-  const mc = currentUser.msgCount || 0;
-  if (mc >= 1)   add('first_msg','Prima Parola');
-  if (mc >= 100)  add('chatter','Chiacchierone');
-  if (mc >= 500)  add('legend','Leggenda');
-  if ((currentUser.roomsVisited||[]).length >= 3) add('explorer','Esploratore');
-  const h = new Date().getHours();
-  if (h >= 23 || h < 5) add('nocturnal','Nottambulo');
-  currentUser.badges = [...earned];
-  document.getElementById('statBadges').textContent = earned.size;
+// ══════════════════════════════════════
+// PAYWALL
+// ══════════════════════════════════════
+function showPaywall() { document.getElementById('paywallOverlay').classList.add('open'); }
+function closePaywall() { document.getElementById('paywallOverlay').classList.remove('open'); }
+
+async function startPayment() {
+  const tg = window.Telegram?.WebApp;
+  try {
+    // Richiedi invoice link dal server
+    const res = await fetch('/api/create-invoice', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, plan:'monthly' })
+    });
+    const data = await res.json();
+    if (data.invoiceLink && tg) {
+      tg.openInvoice(data.invoiceLink, (status) => {
+        if (status === 'paid') {
+          activatePremium();
+          closePaywall();
+          showToast('🎉 Benvenuto in Premium! Messaggi illimitati!');
+        }
+      });
+    } else if (data.invoiceLink) {
+      // Fallback browser
+      window.open(data.invoiceLink, '_blank');
+    } else {
+      showToast('❌ Errore pagamento. Riprova.');
+    }
+  } catch(e) {
+    // Fallback: mostra info Bitcoin
+    closePaywall();
+    showToast('💳 Contatta @Kouverte_bot per abbonarti');
+  }
+}
+
+function activatePremium() {
+  currentUser.isPremium = true;
+  currentUser.premiumExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 giorni
+  if (!currentUser.badges.includes('premium')) addBadge('premium','Premium');
+  // Sblocca cornici gold e diamond
+  if (!currentUser.ownedFrames.includes('gold')) currentUser.ownedFrames.push('gold');
+  if (!currentUser.ownedFrames.includes('diamond')) currentUser.ownedFrames.push('diamond');
+  if (!currentUser.ownedFrames.includes('flame')) currentUser.ownedFrames.push('flame');
   saveUser();
-  renderBadges();
+  updateProfileUI();
+  updateFreeBar();
+  renderFrames();
+}
+
+// ══════════════════════════════════════
+// FRAMES
+// ══════════════════════════════════════
+function renderFrames() {
+  const owned = new Set(currentUser.ownedFrames || ['none']);
+  const active = currentUser.activeFrame || 'none';
+  document.getElementById('framesGrid').innerHTML = FRAMES_CONFIG.map(f => {
+    const isOwned = owned.has(f.id);
+    const isActive = f.id === active;
+    const priceStr = f.price === 0 ? (f.premium ? 'Premium' : 'Gratis') : (f.price/100).toFixed(2)+'€';
+    return `
+    <div class="frame-card ${isOwned?'owned':''} ${isActive?'active-frame':''}" onclick="selectFrame('${f.id}')">
+      ${isActive ? '<span class="frame-active-lbl">Attiva</span>' : isOwned ? '<span class="frame-owned-lbl">Tua</span>' : ''}
+      <div class="frame-preview" style="${isOwned?f.css:''}">${f.emoji}</div>
+      <div class="frame-name">${f.name}</div>
+      <div class="frame-price ${f.price===0&&!f.premium?'free':''}">${priceStr}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectFrame(id) {
+  const f = FRAMES_CONFIG.find(x => x.id === id);
+  if (!f) return;
+  const owned = new Set(currentUser.ownedFrames || []);
+  if (owned.has(id)) {
+    // Attiva subito
+    currentUser.activeFrame = id; saveUser(); renderFrames(); updateProfileUI();
+    showToast('✅ Cornice ' + f.name + ' attivata!');
+    return;
+  }
+  // Mostra modal acquisto
+  selectedFrameId = id;
+  document.getElementById('frameMTitle').textContent = f.emoji + ' ' + f.name;
+  if (f.premium && !isPremium()) {
+    document.getElementById('frameMDesc').textContent = 'Questa cornice richiede Premium. Abbonati per 1€/mese e ottieni tutte le cornici premium!';
+    document.getElementById('frameMBtn').textContent = '⭐ Abbonati — 1€/mese';
+  } else {
+    document.getElementById('frameMDesc').textContent = `Acquista la cornice ${f.name} per ${(f.price/100).toFixed(2)}€.`;
+    document.getElementById('frameMBtn').textContent = `💳 Acquista — ${(f.price/100).toFixed(2)}€`;
+  }
+  document.getElementById('frameOverlay').classList.add('open');
+}
+
+function closeFrameModal() { document.getElementById('frameOverlay').classList.remove('open'); selectedFrameId = null; }
+
+async function buyFrame() {
+  const f = FRAMES_CONFIG.find(x => x.id === selectedFrameId);
+  if (!f) return;
+  if (f.premium && !isPremium()) { closeFrameModal(); showPaywall(); return; }
+  // Pagamento cornice via Telegram Stars o semplice acquisto
+  try {
+    const res = await fetch('/api/buy-frame', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ userId: currentUser.id, frameId: f.id })
+    });
+    const data = await res.json();
+    if (data.invoiceLink && window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openInvoice(data.invoiceLink, (status) => {
+        if (status === 'paid') {
+          if (!currentUser.ownedFrames.includes(f.id)) currentUser.ownedFrames.push(f.id);
+          currentUser.activeFrame = f.id; saveUser(); renderFrames(); updateProfileUI();
+          closeFrameModal(); showToast('🎉 Cornice ' + f.name + ' sbloccata!');
+        }
+      });
+    } else {
+      closeFrameModal(); showToast('❌ Errore. Riprova.');
+    }
+  } catch { closeFrameModal(); showToast('⚠️ Contatta @Kouverte_bot per acquistare'); }
+}
+
+// ══════════════════════════════════════
+// BADGES
+// ══════════════════════════════════════
+function checkBadges() {
+  const mc = currentUser.msgCount || 0;
+  if (mc >= 1   && !currentUser.badges.includes('first_msg'))  addBadge('first_msg','Prima Parola');
+  if (mc >= 100  && !currentUser.badges.includes('chatter'))    addBadge('chatter','Chiacchierone');
+  if (mc >= 500  && !currentUser.badges.includes('legend'))     addBadge('legend','Leggenda');
+  if (isPremium() && !currentUser.badges.includes('premium'))   addBadge('premium','Premium');
+  const h = new Date().getHours();
+  if ((h>=23||h<5) && !currentUser.badges.includes('nocturnal')) addBadge('nocturnal','Nottambulo');
+}
+
+function addBadge(id, label) {
+  if (currentUser.badges.includes(id)) return;
+  currentUser.badges.push(id);
+  document.getElementById('stBadges').textContent = currentUser.badges.length;
+  renderBadges(); saveUser();
+  showToast('🏆 Badge sbloccato: ' + label + '!');
 }
 
 function renderBadges() {
   const earned = new Set(currentUser?.badges || []);
   document.getElementById('badgesGrid').innerHTML = BADGES_DEF.map(b => `
-    <div class="badge-card ${earned.has(b.id) ? 'earned' : 'locked'}">
-      <div class="badge-emoji">${b.emoji}</div>
-      <div class="badge-name">${b.name}</div>
+    <div class="badge-c ${earned.has(b.id)?'earned':'locked'}">
+      <div class="badge-e">${b.emoji}</div>
+      <div class="badge-n">${b.name}</div>
     </div>`).join('');
 }
 
-// ── NAVIGATION ──
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
 function showScreen(name, btn) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(name)?.classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
-  else { const nb = document.querySelector(`[data-screen="${name}"]`); if (nb) nb.classList.add('active'); }
-  document.getElementById('onlinePill').style.display = name === 'home' ? 'flex' : 'none';
+  else { const nb=document.querySelector(`[data-sc="${name}"]`); if(nb) nb.classList.add('active'); }
+  document.getElementById('onlinePill').style.display = name==='home' ? 'flex' : 'none';
 }
 
-// ── UTILS ──
-function scrollToBottom() {
-  const c = document.getElementById('chatMessages');
-  requestAnimationFrame(() => { c.scrollTop = c.scrollHeight; });
-}
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3200);
-}
-function getLS(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
-function setLS(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-function saveUser() { setLS('kv_user_v2', currentUser); }
+// ══════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════
+function scrollBot() { requestAnimationFrame(() => { const c=document.getElementById('chatMsgs'); c.scrollTop=c.scrollHeight; }); }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
+function getLS(k) { try{return JSON.parse(localStorage.getItem(k))}catch{return null} }
+function setLS(k,v) { try{localStorage.setItem(k,JSON.stringify(v))}catch{} }
+function saveUser() { setLS('kv3_user',currentUser); }
 </script>
 </body>
 </html>
