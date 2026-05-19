@@ -718,10 +718,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <button class="nbtn active" data-sc="home" onclick="showScreen('home',this)">
     <div class="nicon">🏠</div><div class="nlbl">Stanze</div>
   </button>
-  <button class="nbtn" data-sc="chat" id="navChat" onclick="goChat(this)" style="display:none">
-    <div class="nicon">💬</div><div class="nlbl">Chat</div>
-    <div class="nnotif" id="chatNotif" style="display:none"></div>
-  </button>
   <button class="nbtn" data-sc="profile" onclick="showScreen('profile',this)">
     <div class="nicon">🎭</div><div class="nlbl">Profilo</div>
   </button>
@@ -977,8 +973,6 @@ function connectSocket(){
 
     if(room?.id===roomId){
       if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
-    } else {
-      document.getElementById('chatNotif').style.display='block';
     }
   });
   socket.on('chat-typing',({roomId,user:u})=>{
@@ -1115,14 +1109,10 @@ function enterRoom(roomId){
     saveUser();
   }
 
-  document.getElementById('navChat').style.display='flex';
-  document.getElementById('chatNotif').style.display='none';
   updateFreeBar();
-  showScreen('chat',document.getElementById('navChat'));
+  showScreen('chat');
   setTimeout(scrollBot,150);
 }
-
-function goChat(btn){ if(room) showScreen('chat',btn); }
 function leaveRoom(){
   if(room){socket.emit('leave-chat-room',{roomId:room.id});room=null;}
   showScreen('home',document.querySelector('[data-sc="home"]'));
@@ -1216,7 +1206,6 @@ function sendMsg(){
   if(!isPrem()) user.freeUsed=(user.freeUsed||0)+1;
   document.getElementById('stMsgs').textContent=user.msgCount;
   updateFreeBar(); checkBadges(); saveUser();
-  document.getElementById('chatNotif').style.display='none';
   if(!isPrem()&&user.freeUsed===80) showToast('⚠️ 20 messaggi gratuiti rimasti!');
   if(!isPrem()&&user.freeUsed>=FREE_LIMIT) setTimeout(showPaywall,400);
 }
