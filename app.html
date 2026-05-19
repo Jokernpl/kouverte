@@ -20,6 +20,18 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #splash{background:radial-gradient(ellipse at 50% 30%,#1e0d40 0%,#0a0418 70%);
   align-items:center;justify-content:center;overflow:hidden}
 
+/* ── ANIMAZIONI GLOBALI ── */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes glow-pulse{0%,100%{filter:drop-shadow(0 0 12px #7c3aed) drop-shadow(0 0 24px #a855f7)}50%{filter:drop-shadow(0 0 24px #a855f7) drop-shadow(0 0 48px #ec4899)}}
+@keyframes logo-glow{0%,100%{text-shadow:0 0 20px #a855f7,0 0 40px #7c3aed,3px 3px 0 #4c1d95,6px 6px 0 #3b0764}50%{text-shadow:0 0 30px #ec4899,0 0 60px #a855f7,3px 3px 0 #6d28d9,6px 6px 0 #4c1d95}}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(200%)}}
+@keyframes card-glow{0%,100%{box-shadow:0 0 0 rgba(168,85,247,0)}50%{box-shadow:0 0 20px rgba(168,85,247,.2),0 0 40px rgba(168,85,247,.1)}}
+@keyframes badge-pop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes bg-shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes orbit{0%{transform:rotate(0deg) translateX(38px) rotate(0deg)}100%{transform:rotate(360deg) translateX(38px) rotate(-360deg)}}
+@keyframes neon-flicker{0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}20%,24%,55%{opacity:.6}}
+@keyframes rank-fill{from{width:0}to{width:var(--rw)}}
+
 /* Sparkles */
 .sparkles{position:absolute;inset:0;pointer-events:none}
 .sp{position:absolute;border-radius:50%;animation:spkl 3s ease-in-out infinite}
@@ -28,43 +40,47 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* Logo KOUVERTE stile immagine */
 .kv-logo-wrap{text-align:center;position:relative;z-index:2}
 
-/* Omino con cappuccio (SVG mascot) */
-.mascot{width:90px;height:90px;margin:0 auto 8px;position:relative}
-.mascot svg{width:100%;height:100%;filter:drop-shadow(0 0 18px #7c3aed)}
+/* Sfondo splash animato */
+#splash{background:linear-gradient(-45deg,#0a0418,#1a0535,#0d001f,#1e0d40,#0a0418);
+  background-size:400% 400%;animation:bg-shift 8s ease infinite;}
 
-/* Testo logo 3D */
+/* Omino con cappuccio — fluttua e pulsa */
+.mascot{width:96px;height:96px;margin:0 auto 10px;position:relative;animation:float 3s ease-in-out infinite}
+.mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
+/* Anello orbitante intorno al mascot */
+.mascot::after{content:'⭐';position:absolute;top:50%;left:50%;font-size:12px;
+  animation:orbit 4s linear infinite;transform-origin:0 0}
+
+/* Testo logo 3D con flickering neon */
 .kv-title{
-  font-size:52px;font-weight:900;letter-spacing:-2px;
-  color:#fff;
-  text-shadow:
-    0 0 20px #a855f7,
-    0 0 40px #7c3aed,
-    3px 3px 0 #4c1d95,
-    6px 6px 0 #3b0764,
-    0 8px 30px rgba(168,85,247,.5);
+  font-size:52px;font-weight:900;letter-spacing:-2px;color:#fff;
+  animation:logo-glow 2s ease-in-out infinite, neon-flicker 8s linear infinite;
   line-height:1;margin-bottom:6px;
   -webkit-text-stroke:1px rgba(255,255,255,.3)
 }
 
-/* Tagline banner verde */
+/* Tagline banner verde animata */
 .kv-tagline{
-  background:linear-gradient(90deg,#059669,#10b981,#059669);
+  background:linear-gradient(90deg,#059669,#10b981,#34d399,#10b981,#059669);
+  background-size:200% auto;animation:bg-shift 3s linear infinite;
   border-radius:20px;padding:6px 18px;font-size:11px;font-weight:800;
   letter-spacing:1.5px;color:#fff;text-transform:uppercase;
-  box-shadow:0 0 20px rgba(16,185,129,.5);display:inline-block;margin-top:4px
+  box-shadow:0 0 20px rgba(16,185,129,.6),0 0 40px rgba(16,185,129,.3);
+  display:inline-block;margin-top:6px
 }
 
-/* Badge 100% Anonimo */
+/* Badge 100% Anonimo pulsante */
 .anon-badge-big{
   position:absolute;top:10px;right:-10px;
   background:linear-gradient(135deg,#059669,#10b981);
   border-radius:16px;padding:6px 12px;font-size:11px;font-weight:900;
-  color:#fff;box-shadow:0 0 16px rgba(16,185,129,.6);
-  border:2px solid rgba(255,255,255,.3);line-height:1.2;text-align:center;
-  transform:rotate(3deg)
+  color:#fff;border:2px solid rgba(255,255,255,.3);line-height:1.2;text-align:center;
+  transform:rotate(3deg);
+  animation:card-glow 2s ease-in-out infinite;
+  box-shadow:0 0 16px rgba(16,185,129,.8),0 0 32px rgba(16,185,129,.4)
 }
-.sp-spinner{width:28px;height:28px;border:3px solid rgba(168,85,247,.3);border-top-color:#a855f7;
-  border-radius:50%;animation:spin .8s linear infinite;margin:24px auto 0}
+.sp-spinner{width:28px;height:28px;border:3px solid rgba(168,85,247,.2);border-top-color:#a855f7;
+  border-right-color:#ec4899;border-radius:50%;animation:spin .7s linear infinite;margin:24px auto 0}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════
@@ -79,8 +95,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)
 }
 .home-logo-row{display:flex;align-items:center;gap:10px}
-.home-mascot{width:38px;height:38px;flex-shrink:0}
-.home-mascot svg{width:100%;height:100%;filter:drop-shadow(0 0 8px #7c3aed)}
+.home-mascot{width:38px;height:38px;flex-shrink:0;animation:float 3s ease-in-out infinite}
+.home-mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
 .home-title{
   font-size:24px;font-weight:900;letter-spacing:-1px;
   color:#fff;
@@ -111,12 +127,20 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   background:linear-gradient(145deg,#1e1040,#2a1458);
   border:1px solid rgba(139,92,246,.25);
   border-radius:18px;padding:14px;margin-bottom:10px;
-  cursor:pointer;transition:all .2s;position:relative;overflow:hidden
+  cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;
+  animation:card-glow 4s ease-in-out infinite
 }
+.room-card:hover,.room-card:focus{box-shadow:0 0 20px rgba(168,85,247,.25),0 0 40px rgba(168,85,247,.1)}
 .room-card:active{transform:scale(.97);opacity:.9}
 .room-card::before{
   content:'';position:absolute;inset:0;border-radius:18px;
   background:linear-gradient(135deg,rgba(168,85,247,.06),transparent);pointer-events:none
+}
+/* Shimmer stripe che attraversa la card */
+.room-card::after{
+  content:'';position:absolute;top:0;left:0;width:40%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
+  animation:shimmer 4s ease-in-out infinite;pointer-events:none
 }
 
 /* Room header row */
@@ -250,25 +274,52 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
    PROFILE
 ═══════════════════════════════ */
 #profile{background:#12082a;overflow-y:auto;padding-bottom:80px}
-.prof-hero{padding:28px 20px 16px;text-align:center;
+.prof-hero{padding:28px 20px 16px;text-align:center;position:relative;
   background:radial-gradient(ellipse at 50% 0%,#1e0d40,transparent 70%)}
-.prof-mascot{width:72px;height:72px;margin:0 auto 10px;
-  filter:drop-shadow(0 0 16px #7c3aed)}
-.prof-mascot svg{width:100%;height:100%}
-.prof-name{font-size:20px;font-weight:900;text-shadow:0 0 10px #a855f7}
+.prof-mascot{width:80px;height:80px;margin:0 auto 10px;position:relative;
+  animation:float 3s ease-in-out infinite}
+.prof-mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
+.prof-name{font-size:22px;font-weight:900;animation:logo-glow 3s ease-in-out infinite}
 .prof-anon{font-size:11px;color:#6b7280;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px}
 .prem-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
   background:linear-gradient(135deg,#78350f,#f97316);border-radius:20px;
-  padding:4px 12px;font-size:11px;font-weight:700}
+  padding:4px 12px;font-size:11px;font-weight:700;animation:badge-pop 2s ease-in-out infinite}
 
-.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px;margin-top:16px}
+/* Rank / Level */
+.rank-wrap{margin:14px 16px 0;background:linear-gradient(145deg,#1e1040,#2a1458);
+  border:1px solid rgba(139,92,246,.25);border-radius:16px;padding:14px}
+.rank-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rank-icon{font-size:26px;line-height:1}
+.rank-info{flex:1}
+.rank-title{font-size:14px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.rank-sub{font-size:10px;color:#6b7280;margin-top:1px}
+.rank-xp{font-size:11px;color:#a78bfa;font-weight:700}
+.rank-bar-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.rank-bar-fill{height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#7c3aed,#a855f7,#ec4899);
+  animation:rank-fill .8s ease-out forwards;width:0}
+
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px;margin-top:12px}
 .stat-b{background:linear-gradient(145deg,#1e1040,#2a1458);border:1px solid rgba(139,92,246,.2);
-  border-radius:12px;padding:12px;text-align:center}
-.stat-n{font-size:20px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);
+  border-radius:12px;padding:12px;text-align:center;transition:box-shadow .2s}
+.stat-b:active{box-shadow:0 0 16px rgba(168,85,247,.3)}
+.stat-n{font-size:22px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .stat-l{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
-.frames-sec{padding:16px}
+/* Referral */
+.ref-sec{margin:12px 16px 0;background:linear-gradient(145deg,#0d2818,#1a3a24);
+  border:1px solid rgba(16,185,129,.25);border-radius:16px;padding:14px}
+.ref-title{font-size:12px;font-weight:800;color:#10b981;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.ref-box{background:rgba(0,0,0,.3);border-radius:10px;padding:8px 12px;
+  font-size:11px;color:#6ee7b7;font-family:monospace;word-break:break-all;margin-bottom:8px}
+.ref-copy{width:100%;padding:9px;border-radius:10px;border:1px solid rgba(16,185,129,.4);
+  background:rgba(16,185,129,.1);color:#10b981;font-size:12px;font-weight:700;cursor:pointer}
+.ref-copy:active{background:rgba(16,185,129,.2)}
+.ref-hint{font-size:10px;color:#6b7280;margin-top:6px;text-align:center}
+
+.frames-sec{padding:12px 16px 0}
 .frames-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
 .frame-c{background:linear-gradient(145deg,#1e1040,#2a1458);border:1px solid rgba(139,92,246,.2);
   border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
@@ -525,15 +576,39 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <circle cx="50" cy="44" r="22" fill="none" stroke="#7c3aed" stroke-width="1.5" opacity=".5"/>
       </svg>
     </div>
-    <div class="prof-name" id="profName">Anonimo</div>
+    <div class="prof-name" id="profName" style="color:#fff">Anonimo</div>
     <div class="prof-anon">🔒 Nessun dato personale salvato</div>
     <div id="premBadge" style="display:none" class="prem-badge">⭐ Premium</div>
+    <div id="joinDate" style="font-size:10px;color:#4b5563;margin-top:6px"></div>
+  </div>
+
+  <!-- Rank / Level bar -->
+  <div class="rank-wrap">
+    <div class="rank-row">
+      <div class="rank-icon" id="rankIcon">🥚</div>
+      <div class="rank-info">
+        <div class="rank-title" id="rankTitle">Novizio</div>
+        <div class="rank-sub" id="rankSub">Inizia a chattare per salire di livello</div>
+      </div>
+      <div class="rank-xp" id="rankXp">0 XP</div>
+    </div>
+    <div class="rank-bar-track">
+      <div class="rank-bar-fill" id="rankBar" style="--rw:0%;width:0%"></div>
+    </div>
   </div>
 
   <div class="prof-stats">
     <div class="stat-b"><div class="stat-n" id="stMsgs">0</div><div class="stat-l">Messaggi</div></div>
     <div class="stat-b"><div class="stat-n" id="stRooms">0</div><div class="stat-l">Stanze</div></div>
     <div class="stat-b"><div class="stat-n" id="stBadges">0</div><div class="stat-l">Badge</div></div>
+  </div>
+
+  <!-- Referral -->
+  <div class="ref-sec">
+    <div class="ref-title">🎁 Invita amici — guadagna badge</div>
+    <div class="ref-box" id="refLink">t.me/Kouverte_bot?start=ref_...</div>
+    <button class="ref-copy" onclick="copyRef()">📋 Copia link referral</button>
+    <div class="ref-hint">Ogni amico invitato ti porta badge esclusivi!</div>
   </div>
 
   <div class="frames-sec">
@@ -695,13 +770,54 @@ function initUser(){
   updateProfileUI();
 }
 
+const RANKS=[
+  {min:0,   max:10,  icon:'🥚', title:'Novizio',      sub:'Inizia a chattare!'},
+  {min:11,  max:50,  icon:'🌱', title:'Esploratore',  sub:'Stai crescendo...'},
+  {min:51,  max:200, icon:'🔥', title:'Chiacchierone', sub:'Sei in forma!'},
+  {min:201, max:999, icon:'💎', title:'Veterano',      sub:'Quasi leggenda...'},
+  {min:1000,max:Infinity,icon:'👑',title:'Leggenda',  sub:'La voce di KOUVERTE'},
+];
+
+function getRank(mc){
+  return RANKS.find(r=>mc>=r.min&&mc<=r.max)||RANKS[0];
+}
+
 function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
   document.getElementById('stMsgs').textContent=user.msgCount||0;
-  document.getElementById('stRooms').textContent=(user.roomsVisited||[]).length;
+  document.getElementById('stRooms').textContent=sessionRooms.size||(user.roomsVisited||[]).length||0;
   document.getElementById('stBadges').textContent=(user.badges||[]).length;
   document.getElementById('premBadge').style.display=isPrem()?'inline-flex':'none';
+
+  // Join date
+  if(user.joinedAt){
+    const d=new Date(user.joinedAt);
+    document.getElementById('joinDate').textContent='Con noi dal '+d.toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'});
+  }
+
+  // Rank bar
+  const mc=user.msgCount||0;
+  const rank=getRank(mc);
+  const next=RANKS[RANKS.indexOf(rank)+1];
+  const pct=next?Math.min(((mc-rank.min)/(next.min-rank.min))*100,100):100;
+  document.getElementById('rankIcon').textContent=rank.icon;
+  document.getElementById('rankTitle').textContent=rank.title;
+  document.getElementById('rankSub').textContent=rank.sub+(next?` — ${next.min-mc} msg al prossimo rank`:'');
+  document.getElementById('rankXp').textContent=mc+' XP';
+  const bar=document.getElementById('rankBar');
+  bar.style.setProperty('--rw',pct+'%');
+  setTimeout(()=>{bar.style.width=pct+'%';},50);
+
+  // Referral link
+  const tgId=window.Telegram?.WebApp?.initDataUnsafe?.user?.id||user.id;
+  document.getElementById('refLink').textContent='t.me/Kouverte_bot?start=ref_'+tgId;
+
   updateFreeBar();
+}
+
+function copyRef(){
+  const txt=document.getElementById('refLink').textContent;
+  navigator.clipboard?.writeText(txt).then(()=>showToast('📋 Link copiato!')).catch(()=>showToast(txt));
 }
 
 function isPrem(){ return user.isPremium && Date.now()<(user.premExpiry||0); }
