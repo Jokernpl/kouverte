@@ -141,57 +141,65 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   margin:12px 0 8px;display:flex;align-items:center;gap:6px}
 .sec-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
-/* ─── ROOM CARD (stile screenshot) ─── */
+/* ─── GRID di TILE (rettangoli stile cavou) ─── */
+#roomsList{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
 .room-card{
+  aspect-ratio:1/1.1;
   background:linear-gradient(145deg,#1e1040,#2a1458);
-  border:1px solid rgba(139,92,246,.25);
-  border-radius:18px;padding:14px;margin-bottom:10px;
-  cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden;
+  border:1px solid rgba(139,92,246,.3);
+  border-radius:20px;padding:14px 12px;
+  cursor:pointer;transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;
   animation:card-glow 4s ease-in-out infinite
 }
-.room-card:hover,.room-card:focus{box-shadow:0 0 20px rgba(168,85,247,.25),0 0 40px rgba(168,85,247,.1)}
-.room-card:active{transform:scale(.97);opacity:.9}
+.room-card:active{transform:scale(.95);opacity:.9}
 .room-card::before{
-  content:'';position:absolute;inset:0;border-radius:18px;
-  background:linear-gradient(135deg,rgba(168,85,247,.06),transparent);pointer-events:none
+  content:'';position:absolute;inset:0;border-radius:20px;
+  background:radial-gradient(circle at 50% 0%,var(--rc-glow,rgba(168,85,247,.18)),transparent 70%);
+  pointer-events:none
 }
-/* Shimmer stripe che attraversa la card */
 .room-card::after{
-  content:'';position:absolute;top:0;left:0;width:40%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);
-  animation:shimmer 4s ease-in-out infinite;pointer-events:none
+  content:'';position:absolute;top:0;left:-40%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
+  animation:shimmer 5s ease-in-out infinite;pointer-events:none
 }
 
-/* Room header row */
-.rc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.rc-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
-  justify-content:center;font-size:18px;flex-shrink:0}
-.rc-name{font-size:14px;font-weight:800;color:#fff;flex:1}
-.rc-count{display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af;flex-shrink:0}
-.rc-count-icon{font-size:12px}
-.rc-dots{display:flex;gap:4px;margin-left:8px}
-.rc-dot{width:8px;height:8px;border-radius:50%;animation:rdot 2s ease-in-out infinite}
-.rc-dot:nth-child(2){animation-delay:.4s}.rc-dot:nth-child(3){animation-delay:.8s}
-@keyframes rdot{0%,100%{opacity:1}50%{opacity:.3}}
+/* Badge row in alto */
+.rc-badges{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;z-index:1;position:relative}
+.rc-online-pill{
+  display:flex;align-items:center;gap:4px;
+  background:rgba(0,0,0,.4);backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;padding:3px 8px;
+  font-size:11px;color:#fff;font-weight:700
+}
+.rc-online-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:rdot 1.5s ease-in-out infinite}
+@keyframes rdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+.rc-flag-pill{
+  display:flex;align-items:center;gap:4px;
+  background:var(--rc-color,#7c3aed);
+  border-radius:14px;padding:3px 8px;
+  font-size:10px;color:#fff;font-weight:800;letter-spacing:.5px;text-transform:uppercase
+}
 
-/* Preview messaggi nella card */
-.rc-msgs{display:flex;flex-direction:column;gap:4px}
-.rc-msg{display:flex;align-items:flex-start;gap:7px}
-.rc-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
-  justify-content:center;font-size:12px;flex-shrink:0}
-.rc-msg-text{font-size:12px;line-height:1.35}
-.rc-msg-name{font-weight:700}
-.rc-msg-body{color:#d1d5db;margin-left:0}
+/* Centro tile: emoji grande + nome */
+.rc-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;z-index:1;position:relative}
+.rc-emoji-big{font-size:46px;line-height:1;filter:drop-shadow(0 0 12px var(--rc-color,#a855f7))}
+.rc-tile-name{
+  font-size:16px;font-weight:900;color:#fff;text-align:center;letter-spacing:-.3px;
+  text-shadow:0 2px 8px rgba(0,0,0,.5);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
 
-/* Mascot nel card */
-.rc-mascot{position:absolute;right:8px;bottom:6px;opacity:.35;pointer-events:none}
-.rc-mascot svg{width:42px;height:42px}
-
-/* Tap-to-enter hint */
-.rc-enter{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:10px;
-  font-size:11px;color:#a855f7;font-weight:700;letter-spacing:.3px;
-  padding:6px 4px 2px;opacity:.85}
-.rc-enter-arrow{display:inline-block;animation:nudge 1.5s ease-in-out infinite}
+/* Footer tile: tap-to-enter */
+.rc-foot{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:10px;color:#fff;opacity:.7;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  z-index:1;position:relative
+}
+.rc-foot-arrow{display:inline-block;animation:nudge 1.5s ease-in-out infinite}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
 
 /* ═══════════════════════════════
@@ -1025,63 +1033,35 @@ function renderRooms(){
 
 function roomCard(r){
   const cnt=roomOnline[r.id]??0;
-  const previews=roomPreviews[r.id]||[];
-  const msgs=previews.slice(-3);
+  // Nome stanza pulito: rimuovo l'emoji/bandiera dal nome se già presente (es. "🇮🇹 Italia" → "Italia")
+  const cleanName=r.name.replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name;
 
   return `
-  <div class="room-card" onclick="enterRoom('${r.id}')">
-    <!-- Mascot decorativo -->
-    <div class="rc-mascot">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e" opacity=".8"/>
-        <circle cx="50" cy="44" r="20" fill="#2d1b6e" opacity=".8"/>
-        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50" opacity=".8"/>
-        <circle cx="43" cy="46" r="5" fill="#fff" opacity=".9"/>
-        <circle cx="57" cy="46" r="5" fill="#fff" opacity=".9"/>
-        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
-        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
-        <circle cx="45" cy="45" r="1" fill="#fff"/>
-        <circle cx="59" cy="45" r="1" fill="#fff"/>
-      </svg>
-    </div>
+  <div class="room-card" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
 
-    <!-- Header -->
-    <div class="rc-top">
-      <div class="rc-icon" style="background:${r.color}22;border:1px solid ${r.color}44">${r.emoji}</div>
-      <div class="rc-name">${r.name}${r.tier==='secret'?' <span style="font-size:11px;color:#fbbf24">🔒</span>':''}${cnt>=5?' <span class="hot-badge">🔥 HOT</span>':''}</div>
-      <div class="rc-count">
-        <span class="rc-count-icon">👥</span>
+    <!-- Badge row in alto -->
+    <div class="rc-badges">
+      <div class="rc-online-pill">
+        <div class="rc-online-dot"></div>
         <span id="ron_${r.id}" class="rc-num">${cnt}</span>
       </div>
-      <div class="rc-dots">
-        <div class="rc-dot" style="background:${r.dot1}"></div>
-        <div class="rc-dot" style="background:${r.dot2}"></div>
-        <div class="rc-dot" style="background:${r.dot3}"></div>
-      </div>
+      ${cnt>=5
+        ? `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ef4444,#f97316)"><span>🔥</span><span>HOT</span></div>`
+        : cnt===0
+          ? `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>NUOVA</span></div>`
+          : `<div class="rc-flag-pill"><span>LIVE</span></div>`}
     </div>
 
-    <!-- Preview messaggi -->
-    <div class="rc-msgs">
-      ${msgs.length===0
-        ? `<div style="font-size:12px;color:#6b7280;font-style:italic;padding:4px 0">Nessun messaggio ancora — entra e scrivi tu! 🎭</div>`
-        : msgs.map(m=>`
-        <div class="rc-msg">
-          <div class="rc-avatar" style="background:${m.color||getColor(m.userId||'')}22;border:1.5px solid ${m.color||getColor(m.userId||'')}55">
-            ${m.face||getFace(m.userId||m.name||'')}
-          </div>
-          <div class="rc-msg-text">
-            <span class="rc-msg-name" style="color:${m.color||getColor(m.userId||'')}">
-              ${esc(m.name||'Anonimo')}:
-            </span>
-            <span class="rc-msg-body"> ${esc((m.text||'').slice(0,40))}${(m.text||'').length>40?'...':''}</span>
-          </div>
-        </div>`).join('')}
+    <!-- Centro: emoji grande + nome -->
+    <div class="rc-center">
+      <div class="rc-emoji-big">${r.emoji}</div>
+      <div class="rc-tile-name">${esc(cleanName)}</div>
     </div>
 
-    <!-- Tap-to-enter hint -->
-    <div class="rc-enter">
-      <span>Tap per entrare</span>
-      <span class="rc-enter-arrow">→</span>
+    <!-- Footer: tap-to-enter -->
+    <div class="rc-foot">
+      <span>ENTRA</span>
+      <span class="rc-foot-arrow">→</span>
     </div>
   </div>`;
 }
