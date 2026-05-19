@@ -84,22 +84,13 @@ const DB_BACKUP = path.join(__dirname, 'vox-data.bak.json');
 function loadDB() {
     if (!fs.existsSync(DB_FILE)) {
         return {
-            users: [
-                { id: 'u_test1', username: 'Voci Notturne', firstName: 'Night', verified: true, created_at: 1777900000000, credits: 50 },
-                { id: 'u_test2', username: 'Single Italiani', firstName: 'Solo', verified: true, created_at: 1777900000000, credits: 50 },
-                { id: 'u_test3', username: 'Deep Talks', firstName: 'Deep', verified: true, created_at: 1777900000000, credits: 50 },
-                { id: 'u_test_login', email: 'test1@kouverte.local', username: 'TestUser', firstName: 'Test', verified: false, created_at: 1777900000000, credits: 50 }
-            ],
+            users: [],
             stories: [],
             reactions: [],
             messages: [],
             battles: [],
             user_balance: {},
-            voice_rooms: [
-                { id: 'room_1', name: 'Voci Notturne', desc: 'Chat vocale di notte', icon: '🌙', users_count: 6, created_at: 1777900000000 },
-                { id: 'room_2', name: 'Single Italiani', desc: 'Persone sole che cercano connessione', icon: '❤️', users_count: 6, created_at: 1777900000000 },
-                { id: 'room_3', name: 'Deep Talks', desc: 'Conversazioni profonde', icon: '🧠', users_count: 4, created_at: 1777900000000 }
-            ],
+            voice_rooms: [],
             shop_products: [
                 // ===== COSMETICS (5) =====
                 { id: 'item_frame_neon', name: 'Neon Blue Frame', desc: 'Avatar frame luminescente blu', price_credits: 150, category: 'cosmetic', item_type: 'avatar_frame', icon: '⭐', item_data: '{"color":"#00ffff","glow":8}', active: true },

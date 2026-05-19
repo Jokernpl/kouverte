@@ -940,13 +940,7 @@ function renderRooms(cat){
 function roomCard(r){
   const cnt=roomOnline[r.id]??0;
   const previews=roomPreviews[r.id]||[];
-  // Genera 3 preview finti se non ci sono messaggi reali
-  const defaultPreviews=[
-    {name:'MidnightMuse',color:'#e879f9',face:'😈',text:'Ciao a tutti! 👋'},
-    {name:'StarGazer',   color:'#38bdf8',face:'👻',text:'Qualcuno sveglio? 🌙'},
-    {name:'DreamWalker', color:'#4ade80',face:'🤖',text:'Qui si sta bene 😊'},
-  ];
-  const msgs=previews.length>=2?previews.slice(-3):defaultPreviews;
+  const msgs=previews.slice(-3);
 
   return `
   <div class="room-card" onclick="enterRoom('${r.id}')">
@@ -982,7 +976,9 @@ function roomCard(r){
 
     <!-- Preview messaggi -->
     <div class="rc-msgs">
-      ${msgs.map(m=>`
+      ${msgs.length===0
+        ? `<div style="font-size:12px;color:#6b7280;font-style:italic;padding:4px 0">Nessun messaggio ancora — entra e scrivi tu! 🎭</div>`
+        : msgs.map(m=>`
         <div class="rc-msg">
           <div class="rc-avatar" style="background:${m.color||getColor(m.userId||'')}22;border:1.5px solid ${m.color||getColor(m.userId||'')}55">
             ${m.face||getFace(m.userId||m.name||'')}
