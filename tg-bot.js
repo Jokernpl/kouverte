@@ -41,19 +41,16 @@ bot.deleteWebHook({ drop_pending_updates: false })
    .catch(() => {});
 
 // ============================================================
-// CATALOGO CORNICI (sincronizzato con app.html — prezzi in EURO)
+// CATALOGO CORNICI (sincronizzato con app.html — prezzi in Stars Telegram)
+// Stars price: none=0, silver=0, purple=0, gold=30★, flame=40★, diamond=50★
 // ============================================================
 const FRAMES = [
-  { id: 'ivory',    name: 'Avorio',    price_eur: 0,   emoji: '🤍', tier: 1 },
-  { id: 'gold',     name: 'Oro',       price_eur: 3,   emoji: '🟡', tier: 2 },
-  { id: 'emerald',  name: 'Smeraldo',  price_eur: 5,   emoji: '💚', tier: 3 },
-  { id: 'ruby',     name: 'Rubino',    price_eur: 5,   emoji: '❤️',  tier: 3 },
-  { id: 'sapphire', name: 'Zaffiro',   price_eur: 8,   emoji: '💙', tier: 4 },
-  { id: 'amethyst', name: 'Ametista',  price_eur: 8,   emoji: '💜', tier: 4 },
-  { id: 'topaz',    name: 'Topazio',   price_eur: 12,  emoji: '🧡', tier: 5 },
-  { id: 'onyx',     name: 'Onice',     price_eur: 15,  emoji: '🖤', tier: 5 },
-  { id: 'platinum', name: 'Platino',   price_eur: 20,  emoji: '⚪', tier: 6 },
-  { id: 'diamond',  name: 'Diamante',  price_eur: 50,  emoji: '💎', tier: 7 }
+  { id: 'none',    name: 'Nessuna',  price_stars: 0,  emoji: '🎭', free: true  },
+  { id: 'silver',  name: 'Silver',   price_stars: 0,  emoji: '🥈', free: true  },
+  { id: 'purple',  name: 'Viola',    price_stars: 0,  emoji: '💜', free: true  },
+  { id: 'gold',    name: 'Gold',     price_stars: 30, emoji: '🥇', free: false },
+  { id: 'flame',   name: 'Fiamma',   price_stars: 40, emoji: '🔥', free: false },
+  { id: 'diamond', name: 'Diamond',  price_stars: 50, emoji: '💎', free: false },
 ];
 
 // Cambio EUR/BTC (refreshato ogni 10 min via CoinGecko)
@@ -239,49 +236,48 @@ bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
   const photoUrl = await getTgPhotoUrl(chatId);
 
   const caption =
-`⚡ *KOUVERTE* ₿
-_Voice Dating on Bitcoin_
+`🎭 *KOUVERTE* — Chat Mondiale Anonima
 
-Benvenuto, *${firstName}*.
+Benvenuto, *${firstName}*!
 
-Qui sotto il tuo profilo. Apri l'app per personalizzarlo:
+*Chatta. Conosci. Condividi. Senza essere chi sei.*
 
-🏠 *Home* · Storie, trending, nuovi profili
-🔍 *Esplora* · Scopri profili premium
-💬 *Chat* · Conversazioni private
-👑 *Premium* · Piani Pro / Elite / Infinity
-👤 *Profilo* · Avatar, cornici, post
+🇮🇹 Stanze Italia · Nord, Centro, Sud, Sicilia
+🌍 Chat Mondiale · Europa, Americhe, Asia...
+💬 Mood · Gaming, Musica, Notte Fonda, Fun
 
-✨ Usa /menu per i comandi rapidi.
-💬 Per info dirette: @losangelesbroker`;
+🔒 100% Anonimo — nessun nome, nessuna foto
+🎁 100 messaggi gratuiti poi 1€/mese
+🏆 Badge & cornici da sbloccare
+
+Apri l'app e scegli la tua stanza! 👇`;
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: '🚀 Apri Kouverte', web_app: { url: freshUrl() } }],
+      [{ text: '🚀 Entra in KOUVERTE', web_app: { url: freshUrl() } }],
       [
-        { text: '👤 Profilo',  web_app: { url: freshUrl('#profile') } },
-        { text: '🎙️ Stanze',   callback_data: 'rooms_list' }
+        { text: '🎭 Profilo & Badge', web_app: { url: freshUrl('#profile') } },
+        { text: '🖼️ Cornici',         callback_data: 'frames_list' }
       ],
-      [{ text: '💎 Cornici', callback_data: 'frames_list' }],
       [
         { text: '🔗 Invita & guadagna', callback_data: 'invite_card' },
-        { text: '👑 Premium', web_app: { url: freshUrl('#premium') } }
-      ],
-      [{ text: '₿ Pagamenti Bitcoin', callback_data: 'btc_info' }]
+        { text: '⭐ Premium 1€/mese',   web_app: { url: freshUrl('#profile') } }
+      ]
     ]
   };
 
+  // salva subito per evitare duplicati poi rimetti il keyboard originale
   try {
     if (photoUrl) {
       await bot.sendPhoto(chatId, photoUrl, {
         caption,
         parse_mode: 'Markdown',
-        reply_markup: keyboard
+        reply_markup: _keyboard_override
       });
     } else {
       await bot.sendMessage(chatId, caption, {
         parse_mode: 'Markdown',
-        reply_markup: keyboard
+        reply_markup: _keyboard_override
       });
     }
   } catch (e) {
@@ -295,21 +291,56 @@ Qui sotto il tuo profilo. Apri l'app per personalizzarlo:
 // MENU PERSISTENTE
 // ============================================================
 function showMenu(chatId) {
-  bot.sendMessage(chatId, '⌨️  Menu rapido attivo. Usa i pulsanti qui sotto.', {
+  bot.sendMessage(chatId, '⌨️  Menu rapido KOUVERTE', {
     reply_markup: {
       keyboard: [
-        [{ text: '🏠 Home' },     { text: '🔍 Esplora' }],
-        [{ text: '🎙️ Stanze' },   { text: '💬 Chat' }],
-        [{ text: '👑 Premium' },  { text: '👤 Profilo' }],
-        [{ text: '💎 Cornici' },  { text: '🔗 Invita' }],
-        [{ text: '🪙 Guadagni' }, { text: '₿ Bitcoin' }],
-        [{ text: '❓ Aiuto' }]
+        [{ text: '🚀 Entra nella Chat' }, { text: '🎭 Profilo & Badge' }],
+        [{ text: '🖼️ Cornici' },           { text: '🔗 Invita & guadagna' }],
+        [{ text: '⭐ Premium' },            { text: '❓ Aiuto' }]
       ],
       resize_keyboard: true,
       persistent: true
     }
   });
 }
+
+// ── Telegram Stars: gestione pagamento avvenuto ──
+bot.on('message', async (msg) => {
+  if (!msg.successful_payment) return;
+  const chatId = msg.chat.id;
+  const sp = msg.successful_payment;
+  let payload = {};
+  try { payload = JSON.parse(sp.invoice_payload); } catch { return; }
+
+  if (payload.type === 'premium') {
+    // Salva premium nel DB bot
+    const user = getUser(chatId);
+    user.premiumExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    user.isPremium = true;
+    if (!user.ownedFrames.includes('gold'))    user.ownedFrames.push('gold');
+    if (!user.ownedFrames.includes('diamond')) user.ownedFrames.push('diamond');
+    if (!user.ownedFrames.includes('flame'))   user.ownedFrames.push('flame');
+    saveDB();
+    bot.sendMessage(chatId,
+      `🎉 *Grazie! Sei ora KOUVERTE Premium!*\n\n✅ Messaggi illimitati\n✅ Cornici Gold, Diamond, Fiamma sbloccate\n✅ Nome in evidenza in chat\n\nBuona chat! 🎭`,
+      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '🚀 Vai alla Chat', web_app: { url: freshUrl() } }]] } }
+    );
+  } else if (payload.type === 'frame' && payload.frameId) {
+    const user = getUser(chatId);
+    if (!user.ownedFrames.includes(payload.frameId)) user.ownedFrames.push(payload.frameId);
+    saveDB();
+    const f = FRAMES.find(x => x.id === payload.frameId);
+    bot.sendMessage(chatId,
+      `${f?.emoji || '🖼️'} *Cornice ${f?.name || payload.frameId} sbloccata!*\n\nApri il tuo profilo per attivarla.`,
+      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '🎭 Profilo', web_app: { url: freshUrl('#profile') } }]] } }
+    );
+  }
+});
+
+// Pre-checkout: approva sempre
+bot.on('pre_checkout_query', (q) => {
+  bot.answerPreCheckoutQuery(q.id, true).catch(() => {});
+});
 bot.onText(/^\/menu$/, (msg) => showMenu(msg.chat.id));
 
 // ============================================================

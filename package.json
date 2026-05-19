@@ -2,9 +2,9 @@
   "name": "kouverte-voice",
   "version": "0.1.0",
   "description": "KOUVERTE - The Voice Dating · La voce non mente.",
-  "main": "server.js",
+  "main": "vox-server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node vox-server.js",
     "bot": "node tg-bot.js"
   },
   "dependencies": {

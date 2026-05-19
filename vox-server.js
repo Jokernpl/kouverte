@@ -2050,40 +2050,8 @@ app.post('/api/buy-frame', async (req, res) => {
     }
 });
 
-// Telegram webhook: gestisce pre_checkout_query e successful_payment
-app.post('/api/telegram/webhook', express.json(), async (req, res) => {
-    res.sendStatus(200); // Rispondi subito a Telegram
-    const update = req.body;
-    const BOT_TOKEN_ACTIVE = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
-
-    // Approva pre_checkout
-    if (update.pre_checkout_query) {
-        await fetch(`https://api.telegram.org/bot${BOT_TOKEN_ACTIVE}/answerPreCheckoutQuery`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pre_checkout_query_id: update.pre_checkout_query.id, ok: true })
-        });
-        return;
-    }
-
-    // Pagamento avvenuto
-    if (update.message?.successful_payment) {
-        const payload = JSON.parse(update.message.successful_payment.invoice_payload || '{}');
-        const { userId, type, frameId } = payload;
-        if (type === 'premium') {
-            // Salva stato premium nel DB
-            DB.premium = DB.premium || {};
-            DB.premium[userId] = { expiry: Date.now() + 30 * 24 * 60 * 60 * 1000, plan: 'monthly' };
-            markDirty();
-            console.log(`[PREMIUM] Attivato per ${userId}`);
-        } else if (type === 'frame' && frameId) {
-            DB.frames = DB.frames || {};
-            DB.frames[userId] = DB.frames[userId] || [];
-            if (!DB.frames[userId].includes(frameId)) DB.frames[userId].push(frameId);
-            markDirty();
-            console.log(`[FRAME] ${frameId} sbloccato per ${userId}`);
-        }
-    }
-});
+// NOTA: pre_checkout_query e successful_payment gestiti da tg-bot.js (polling mode)
+// Non serve un webhook endpoint — il bot è in polling e riceve tutto direttamente.
 
 app.get('/api/admin/battles', verifyAdmin, (req, res) => {
     const battles = (DB.battles || []).map(publicBattle).sort((a, b) => (b?.startedAt || 0) - (a?.startedAt || 0)).slice(0, 50);
