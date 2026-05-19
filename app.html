@@ -627,14 +627,51 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="mpill"></div>
     <div class="micon">🎭✨</div>
     <div class="mtitle">100 messaggi usati!</div>
-    <div class="mdesc">Continua con KOUVERTE Premium.<br><strong style="color:#c084fc">Solo 1€/mese</strong> — cancella quando vuoi.</div>
+    <div class="mdesc">Continua con KOUVERTE Premium.<br><strong style="color:#c084fc">Solo 5€/mese in Bitcoin</strong> — 30 giorni illimitati.</div>
     <div class="mperks">
-      <div class="prow"><div class="picon">💬</div><div><div class="ptxt">Messaggi illimitati</div><div class="psub">Chatta senza limiti</div></div></div>
-      <div class="prow"><div class="picon">🖼️</div><div><div class="ptxt">Cornici Gold, Diamond, Fiamma</div><div class="psub">Avatar in evidenza</div></div></div>
-      <div class="prow"><div class="picon">⭐</div><div><div class="ptxt">Nome brillante in chat</div><div class="psub">Tutti vedono che sei Premium</div></div></div>
+      <div class="prow"><div class="picon">💬</div><div><div class="ptxt">Messaggi illimitati</div><div class="psub">Chatta senza limiti per 30 giorni</div></div></div>
+      <div class="prow"><div class="picon">🖼️</div><div><div class="ptxt">Cornici Gold 🥇 · Fiamma 🔥 · Diamond 💎</div><div class="psub">Tutte sbloccate automaticamente</div></div></div>
+      <div class="prow"><div class="picon">⭐</div><div><div class="ptxt">Nome brillante in chat</div><div class="psub">Gli altri vedono che sei Premium</div></div></div>
+      <div class="prow"><div class="picon">₿</div><div><div class="ptxt">Pagamento Bitcoin diretto</div><div class="psub">Nessun intermediario, nessun rinnovo automatico</div></div></div>
     </div>
-    <button class="btn-p" onclick="startPayment()">⭐ Premium — 1€/mese</button>
+    <button class="btn-p" onclick="startBtcPayment()">₿ Paga in Bitcoin — 5€</button>
     <button class="btn-s" onclick="closePaywall()">Non adesso</button>
+  </div>
+</div>
+
+<!-- ░░ BTC INVOICE MODAL ░░ -->
+<div class="overlay" id="btcOv">
+  <div class="modal-sheet">
+    <div class="mpill"></div>
+    <div class="micon">₿</div>
+    <div class="mtitle">Paga in Bitcoin</div>
+    <div class="mdesc" id="btcDesc">Invia l'importo esatto al seguente indirizzo. Dopo <strong>4 conferme</strong> sblocchiamo Premium.</div>
+
+    <div class="mperks">
+      <div class="prow">
+        <div class="picon">🪙</div>
+        <div style="flex:1">
+          <div class="ptxt">Importo esatto</div>
+          <div class="psub" style="font-size:13px;color:#c084fc;font-weight:700"><span id="btcSats">—</span> sats · <span id="btcBtc">—</span> BTC (~€<span id="btcEur">5</span>)</div>
+        </div>
+        <button onclick="copyText(document.getElementById('btcSats').textContent)" style="background:rgba(168,85,247,.2);border:1px solid #a855f7;color:#a855f7;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer">📋</button>
+      </div>
+      <div class="prow">
+        <div class="picon">📬</div>
+        <div style="flex:1;min-width:0">
+          <div class="ptxt">Indirizzo</div>
+          <div class="psub" id="btcAddr" style="font-family:monospace;font-size:10px;word-break:break-all;color:#9ca3af">—</div>
+        </div>
+        <button onclick="copyText(document.getElementById('btcAddr').textContent)" style="background:rgba(168,85,247,.2);border:1px solid #a855f7;color:#a855f7;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer">📋</button>
+      </div>
+    </div>
+
+    <div id="btcQrBox" style="text-align:center;margin-bottom:14px"></div>
+
+    <div id="btcStatus" style="text-align:center;font-size:12px;color:#9ca3af;margin-bottom:12px;min-height:18px">⏳ In attesa del pagamento...</div>
+
+    <button class="btn-p" id="btcCheckBtn" onclick="checkBtcPayment()">🔍 Ho pagato — Verifica ora</button>
+    <button class="btn-s" onclick="closeBtcModal()">Chiudi</button>
   </div>
 </div>
 
@@ -735,6 +772,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
   initUser(); connectSocket(); renderRooms('all'); renderFrames(); renderBadges(); setupInput();
+  syncPremiumStatus();
   document.getElementById('catFilter').addEventListener('click',e=>{
     const b=e.target.closest('.cat-btn'); if(!b) return;
     document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
@@ -1148,17 +1186,77 @@ function renderTyping(){
 // ══ PAYWALL ══
 function showPaywall(){document.getElementById('paywallOv').classList.add('open');}
 function closePaywall(){document.getElementById('paywallOv').classList.remove('open');}
-async function startPayment(){
+function closeBtcModal(){
+  document.getElementById('btcOv').classList.remove('open');
+  if(window.__btcPoll){clearInterval(window.__btcPoll);window.__btcPoll=null;}
+}
+function copyText(t){
+  navigator.clipboard?.writeText(t).then(()=>showToast('📋 Copiato!')).catch(()=>{});
+}
+
+async function startBtcPayment(){
+  closePaywall();
+  document.getElementById('btcStatus').textContent='⏳ Creo invoice...';
+  document.getElementById('btcOv').classList.add('open');
   try{
-    const r=await fetch('/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:user.id,plan:'monthly'})});
+    const r=await fetch(BACKEND+'/api/btc/quote-premium',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:user.id})});
+    if(!r.ok) throw new Error('quote failed');
     const d=await r.json();
-    if(d.invoiceLink&&window.Telegram?.WebApp){
-      window.Telegram.WebApp.openInvoice(d.invoiceLink,(s)=>{
-        if(s==='paid'){activatePremium();closePaywall();showToast('🎉 Sei Premium! Messaggi illimitati!');}
-      });
-    } else { showToast('⚠️ Contatta @Kouverte_bot'); }
-  } catch{ showToast('⚠️ Contatta @Kouverte_bot per abbonarti'); }
+    window.__btcInvoiceId=d.id;
+    window.__btcSats=d.sats;
+    document.getElementById('btcSats').textContent=d.sats.toLocaleString('it-IT');
+    document.getElementById('btcBtc').textContent=d.btc;
+    document.getElementById('btcEur').textContent=d.eur;
+    document.getElementById('btcAddr').textContent=d.address;
+    // QR via servizio pubblico (no dipendenze)
+    const qrData=encodeURIComponent('bitcoin:'+d.address+'?amount='+d.btc);
+    document.getElementById('btcQrBox').innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrData}" alt="QR" style="border-radius:12px;background:#fff;padding:8px;max-width:180px"/>`;
+    document.getElementById('btcStatus').textContent='⏳ In attesa del pagamento... ('+d.requiredConfirmations+' conferme richieste)';
+    // Auto-poll ogni 60s
+    if(window.__btcPoll) clearInterval(window.__btcPoll);
+    window.__btcPoll=setInterval(checkBtcPayment,60000);
+  }catch(e){
+    document.getElementById('btcStatus').textContent='⚠️ Errore. Chiudi e riprova.';
+  }
+}
+
+async function checkBtcPayment(){
+  if(!window.__btcInvoiceId) return;
+  const status=document.getElementById('btcStatus');
+  status.textContent='🔍 Verifico sulla blockchain...';
+  try{
+    const r=await fetch(BACKEND+'/api/btc/check-status',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:window.__btcInvoiceId})});
+    const d=await r.json();
+    if(d.status==='paid'){
+      if(window.__btcPoll){clearInterval(window.__btcPoll);window.__btcPoll=null;}
+      activatePremium();
+      closeBtcModal();
+      showToast('🎉 Premium attivato! Messaggi illimitati per 30 giorni!');
+    } else if(d.status==='expired'){
+      status.textContent='⚠️ Invoice scaduta. Riapri il paywall.';
+      if(window.__btcPoll){clearInterval(window.__btcPoll);window.__btcPoll=null;}
+    } else {
+      const c=d.confirmations||0, req=d.required||4;
+      status.textContent=c>0?`⏳ Pagamento rilevato — ${c}/${req} conferme`:'⏳ Pagamento non ancora ricevuto';
+    }
+  }catch(e){
+    status.textContent='⚠️ Errore verifica. Riprova tra qualche secondo.';
+  }
+}
+
+// Verifica premium server-side all'avvio
+async function syncPremiumStatus(){
+  try{
+    const r=await fetch(BACKEND+'/api/me/premium-status?userId='+encodeURIComponent(user.id));
+    const d=await r.json();
+    if(d.premium && Date.now()<d.expiresAt){
+      user.isPremium=true;user.premExpiry=d.expiresAt;
+      ['gold','flame','diamond'].forEach(f=>{if(!user.ownedFrames.includes(f)) user.ownedFrames.push(f);});
+      saveUser();updateProfileUI();renderFrames();
+    }
+  }catch(e){}
 }
 function activatePremium(){
   user.isPremium=true; user.premExpiry=Date.now()+30*24*60*60*1000;
@@ -1172,7 +1270,7 @@ function renderFrames(){
   const active=user.activeFrame||'none';
   document.getElementById('framesGrid').innerHTML=FRAMES_CFG.map(f=>{
     const isO=owned.has(f.id), isA=f.id===active;
-    const priceStr=f.price===0?(f.prem?'Premium':'Gratis'):(f.price+'★');
+    const priceStr=isO?'':(f.prem?'Premium 5€':'Gratis');
     return `<div class="frame-c ${isO?'owned':''} ${isA?'active-frame':''}" onclick="selFrame('${f.id}')">
       ${isA?'<span class="f-tag active">Attiva</span>':isO?'<span class="f-tag owned">Tua</span>':''}
       <div class="frame-preview" style="${isO?f.css:''}">${f.emoji}</div>
@@ -1188,34 +1286,15 @@ function selFrame(id){
     user.activeFrame=id; saveUser(); renderFrames(); updateProfileUI();
     showToast('✅ Cornice '+f.name+' attivata!'); return;
   }
-  selFrameId=id;
-  document.getElementById('fmTitle').textContent=f.emoji+' '+f.name;
-  document.getElementById('fmDesc').textContent=f.prem&&!isPrem()?
-    'Richiede Premium (1€/mese). Include tutte le cornici premium!':
-    `Acquista la cornice ${f.name} per ${f.price}★`;
-  document.getElementById('fmBtn').textContent=f.prem&&!isPrem()?'⭐ Abbonati — 1€/mese':`💳 Acquista — ${f.price}★`;
-  document.getElementById('frameOv').classList.add('open');
+  // Cornici premium: solo via Premium o referral
+  if(f.prem && !isPrem()){
+    closeFrameM(); showPaywall(); return;
+  }
+  // Le free le possiedi già; non dovremmo arrivare qui
+  showToast('⚠️ Cornice non disponibile');
 }
 function closeFrameM(){document.getElementById('frameOv').classList.remove('open');selFrameId=null;}
-async function buyFrame(){
-  const f=FRAMES_CFG.find(x=>x.id===selFrameId);
-  if(!f) return;
-  if(f.prem&&!isPrem()){closeFrameM();showPaywall();return;}
-  try{
-    const r=await fetch('/api/buy-frame',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:user.id,frameId:f.id})});
-    const d=await r.json();
-    if(d.invoiceLink&&window.Telegram?.WebApp){
-      window.Telegram.WebApp.openInvoice(d.invoiceLink,(s)=>{
-        if(s==='paid'){
-          if(!user.ownedFrames.includes(f.id)) user.ownedFrames.push(f.id);
-          user.activeFrame=f.id; saveUser(); renderFrames(); updateProfileUI();
-          closeFrameM(); showToast('🎉 '+f.name+' sbloccata!');
-        }
-      });
-    } else { closeFrameM(); showToast('⚠️ Contatta @Kouverte_bot'); }
-  } catch{ closeFrameM(); showToast('⚠️ Contatta @Kouverte_bot'); }
-}
+// buyFrame singolo rimosso: cornici premium si sbloccano solo con Premium o referral
 
 // ══ BADGES ══
 function checkBadges(){

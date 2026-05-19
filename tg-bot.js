@@ -128,7 +128,7 @@ Benvenuto, *${firstName}*!
 💬 Mood · Gaming, Musica, Notte Fonda...
 
 🔒 *100% Anonimo* — solo una maschera emoji
-🎁 *100 messaggi gratuiti* poi 1€/mese
+🎁 *100 messaggi gratuiti* poi 5€/mese in BTC
 🏆 Badge & cornici da sbloccare
 
 *Chatta. Conosci. Condividi. Senza essere chi sei.*
@@ -144,7 +144,7 @@ Tocca il bottone qui sotto 👇`;
       ],
       [
         { text:'🔗 Invita & guadagna', callback_data:'invite' },
-        { text:'⭐ Premium 1€/mese',   callback_data:'premium' }
+        { text:'⭐ Premium 5€/mese',   callback_data:'premium' }
       ]
     ]
   };
@@ -215,7 +215,7 @@ function sendFrames(chatId){
 
   const lines = FRAMES.map(f => {
     const has = owned.has(f.id);
-    const price = f.stars === 0 ? (f.prem ? '_Premium_' : 'Gratis') : `${f.stars}★`;
+    const price = f.prem ? '_solo Premium o referral_' : 'Gratis';
     return `${f.emoji}  *${f.name}*  — ${has ? '✅ Tua' : price}`;
   }).join('\n');
 
@@ -229,11 +229,11 @@ function sendFrames(chatId){
 
 ${lines}${reward}
 
-_Acquista con Telegram Stars dall'app, oppure invita amici per riceverle in regalo._`, {
+_Le cornici premium si sbloccano abbonandosi a Premium (5€/mese in BTC) o invitando amici._`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text:'🛒 Apri cornici in app', web_app:{ url: fresh('#profile') } }],
+        [{ text:'⭐ Sblocca tutte con Premium', callback_data:'premium' }],
         [{ text:'🔗 Invita per guadagnarle', callback_data:'invite' }]
       ]
     }
@@ -292,7 +292,7 @@ function sendRooms(chatId){
 
 ${lines}
 
-Tutte anonime. 100 messaggi gratuiti, poi Premium.`, {
+Tutte anonime. 100 messaggi gratuiti, poi Premium 5€/mese in BTC.`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
@@ -306,6 +306,8 @@ bot.onText(/^\/stanze$/i, m => sendRooms(m.chat.id));
 // ============================================================
 // /premium — 1€/mese = 100★ Telegram Stars
 // ============================================================
+const BTC_ADDRESS = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
+
 function sendPremium(chatId){
   const u = getUser(chatId);
   if(isPremium(u)){
@@ -320,92 +322,48 @@ Premium attivo fino al ${new Date(u.premiumExpiry).toLocaleDateString('it-IT')}.
   bot.sendMessage(chatId,
 `⭐ *KOUVERTE Premium*
 
-*Solo 1€/mese = 100★ Telegram Stars*
+*5€/mese pagati in Bitcoin* ₿
 
-✅ *Messaggi illimitati* (no limite 100)
-✅ *Cornici premium* sbloccate: Gold 🥇 · Fiamma 🔥 · Diamond 💎
-✅ *Nome brillante* in chat — gli altri vedono che sei Premium
-✅ Cancellabile in qualsiasi momento
+✅ *Messaggi illimitati* per 30 giorni
+✅ *Cornici premium*: Gold 🥇 · Fiamma 🔥 · Diamond 💎
+✅ *Nome brillante* in chat
+✅ Pagamento diretto, nessun intermediario
+✅ Nessun rinnovo automatico
 
-_Paghi con Telegram Stars, nessun rinnovo automatico._`, {
+*Come funziona:*
+1. Apri l'app → tap "Premium"
+2. Ricevi indirizzo + importo esatto in BTC
+3. Paga dal tuo wallet (Phoenix, Muun, BlueWallet...)
+4. Dopo 4 conferme on-chain → Premium attivo
+
+_Niente Telegram Stars: ogni euro va direttamente sul wallet KOUVERTE._`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text:'⭐ Abbonati — 100★ (1€)', callback_data:'buy_premium' }],
-        [{ text:'🎭 Apri app', web_app:{ url: fresh('#profile') } }]
+        [{ text:'₿ Apri pagamento BTC', web_app:{ url: fresh('#paywall') } }],
+        [{ text:'📬 Vedi indirizzo BTC', callback_data:'btc_info' }]
       ]
     }
   }).catch(()=>{});
 }
 bot.onText(/^\/premium$/i, m => sendPremium(m.chat.id));
 
-// ============================================================
-// Invoice Telegram Stars · Premium
-// ============================================================
-async function sendPremiumInvoice(chatId){
-  try {
-    await bot.sendInvoice(
-      chatId,
-      'KOUVERTE Premium',                                // title
-      '1 mese di messaggi illimitati + cornici premium', // description
-      JSON.stringify({ type:'premium', chatId }),        // payload
-      '',                                                 // provider_token (vuoto per Stars)
-      'XTR',                                              // currency = Telegram Stars
-      [{ label: 'Premium 1 mese', amount: 100 }]          // 100 stars
-    );
-  } catch(e){
-    console.error('Premium invoice err:', e.message);
-    bot.sendMessage(chatId, '⚠️ Errore creazione pagamento. Riprova.');
-  }
+function sendBtcInfo(chatId){
+  bot.sendMessage(chatId,
+`₿ *Indirizzo Bitcoin KOUVERTE*
+
+\`${BTC_ADDRESS}\`
+
+⚠️ *Non mandare BTC qui!*
+
+L'importo Premium ha un suffisso univoco di pochi sat per identificare il tuo pagamento. Apri l'app e segui le istruzioni per ricevere quote + QR code.`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [[{ text:'₿ Apri pagamento', web_app:{ url: fresh('#paywall') } }]]
+    }
+  }).catch(()=>{});
 }
-
-// ============================================================
-// Pre-checkout → approva
-// ============================================================
-bot.on('pre_checkout_query', q => {
-  bot.answerPreCheckoutQuery(q.id, true).catch(e=>console.error('pre_checkout:',e.message));
-});
-
-// ============================================================
-// Pagamento riuscito (Premium + Cornici)
-// ============================================================
-bot.on('message', async (msg) => {
-  if(!msg.successful_payment) return;
-  const chatId = msg.chat.id;
-  const sp = msg.successful_payment;
-  let payload = {};
-  try { payload = JSON.parse(sp.invoice_payload); } catch { return; }
-
-  const user = getUser(chatId);
-
-  if(payload.type === 'premium'){
-    user.isPremium = true;
-    user.premiumExpiry = Date.now() + 30*24*60*60*1000;
-    ['gold','flame','diamond'].forEach(f => { if(!user.ownedFrames.includes(f)) user.ownedFrames.push(f); });
-    saveDB();
-    bot.sendMessage(chatId,
-`🎉 *Sei ora KOUVERTE Premium!*
-
-✅ Messaggi illimitati per 30 giorni
-✅ Cornici Gold 🥇 · Fiamma 🔥 · Diamond 💎 sbloccate
-✅ Nome brillante in chat`, {
-      parse_mode:'Markdown',
-      reply_markup: { inline_keyboard: [[{ text:'🚀 Vai alla chat', web_app:{ url: fresh() } }]] }
-    }).catch(()=>{});
-  }
-  else if(payload.type === 'frame' && payload.frameId){
-    const f = frameById(payload.frameId);
-    if(f && !user.ownedFrames.includes(f.id)) user.ownedFrames.push(f.id);
-    saveDB();
-    bot.sendMessage(chatId,
-`${f?.emoji||'🖼️'} *Cornice ${f?.name||payload.frameId} sbloccata!*
-
-Apri il profilo per attivarla.`, {
-      parse_mode:'Markdown',
-      reply_markup: { inline_keyboard: [[{ text:'🎭 Profilo', web_app:{ url: fresh('#profile') } }]] }
-    }).catch(()=>{});
-  }
-});
+bot.onText(/^\/bitcoin$/i, m => sendBtcInfo(m.chat.id));
 
 // ============================================================
 // /aiuto
@@ -420,7 +378,8 @@ function sendHelp(chatId){
 💬 /stanze — Lista delle stanze
 🖼️ /cornici — Catalogo cornici
 🔗 /invita — Link referral
-⭐ /premium — Abbonamento 1€/mese
+⭐ /premium — Abbonamento 5€/mese (BTC)
+₿ /bitcoin — Info pagamento BTC
 ❓ /aiuto — Questa lista
 
 _KOUVERTE è 100% anonima. Nessun nome reale, nessuna foto._`, {
@@ -437,13 +396,13 @@ bot.on('callback_query', cq => {
   const chatId = cq.message.chat.id;
   bot.answerCallbackQuery(cq.id).catch(()=>{});
   switch(cq.data){
-    case 'profile':     return sendProfile(chatId);
-    case 'frames':      return sendFrames(chatId);
-    case 'invite':      return sendInvite(chatId);
-    case 'rooms':       return sendRooms(chatId);
-    case 'premium':     return sendPremium(chatId);
-    case 'help':        return sendHelp(chatId);
-    case 'buy_premium': return sendPremiumInvoice(chatId);
+    case 'profile':  return sendProfile(chatId);
+    case 'frames':   return sendFrames(chatId);
+    case 'invite':   return sendInvite(chatId);
+    case 'rooms':    return sendRooms(chatId);
+    case 'premium':  return sendPremium(chatId);
+    case 'btc_info': return sendBtcInfo(chatId);
+    case 'help':     return sendHelp(chatId);
   }
 });
 

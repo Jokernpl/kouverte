@@ -877,7 +877,96 @@ app.post('/api/bitcoin/verify', verifyToken, async (req, res) => {
     }
 });
 
-// Server-side ownership source of truth
+// ============================================================
+// KOUVERTE BTC PAYMENTS (anonymous app — no JWT)
+// Premium €5/mese = 30gg unlimited + tutte cornici premium
+// ============================================================
+const KV_PREMIUM_PRICE_EUR = 5;
+
+app.post('/api/btc/quote-premium', async (req, res) => {
+    const { userId } = req.body || {};
+    if (!userId || typeof userId !== 'string') return res.status(400).json({ error: 'userId required' });
+
+    const rate = await getBtcRateEur();
+    const baseSats = Math.ceil((KV_PREMIUM_PRICE_EUR / rate) * 1e8);
+    const uniqueSats = baseSats + Math.floor(Math.random() * 500); // 0-499 sats per uniqueness
+    const id = 'kv_btc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    const expiresAt = Date.now() + 60 * 60 * 1000; // 1h
+
+    DB.kv_btc_invoices = DB.kv_btc_invoices || [];
+    // Pulisci invoice scaduti (>24h)
+    DB.kv_btc_invoices = DB.kv_btc_invoices.filter(i => Date.now() - i.createdAt < 24 * 60 * 60 * 1000);
+    DB.kv_btc_invoices.push({
+        id, userId, kind: 'premium', sats: uniqueSats, eur: KV_PREMIUM_PRICE_EUR,
+        status: 'pending', createdAt: Date.now(), expiresAt
+    });
+    markDirty();
+
+    res.json({
+        id,
+        address: BITCOIN_ADDRESS,
+        sats: uniqueSats,
+        btc: (uniqueSats / 1e8).toFixed(8),
+        eur: KV_PREMIUM_PRICE_EUR,
+        expiresAt,
+        requiredConfirmations: BITCOIN_MIN_CONFIRMATIONS
+    });
+});
+
+app.post('/api/btc/check-status', async (req, res) => {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'id required' });
+    DB.kv_btc_invoices = DB.kv_btc_invoices || [];
+    const inv = DB.kv_btc_invoices.find(i => i.id === id);
+    if (!inv) return res.status(404).json({ status: 'not_found' });
+    if (inv.status === 'paid') return res.json({ status: 'paid', activated: true });
+    if (Date.now() > inv.expiresAt) {
+        inv.status = 'expired';
+        markDirty();
+        return res.json({ status: 'expired' });
+    }
+
+    const btcAmount = (inv.sats / 1e8).toFixed(8);
+    try {
+        const check = await checkBlockchainConfirmations(btcAmount, BITCOIN_ADDRESS, BITCOIN_MIN_CONFIRMATIONS);
+        if (check.found && check.verified) {
+            inv.status = 'paid';
+            inv.paidAt = Date.now();
+            inv.txHash = check.txHash;
+            if (inv.kind === 'premium') {
+                DB.kv_premium = DB.kv_premium || {};
+                DB.kv_premium[inv.userId] = {
+                    activatedAt: Date.now(),
+                    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
+                    invoiceId: id,
+                    txHash: check.txHash
+                };
+            }
+            markDirty();
+            return res.json({ status: 'paid', activated: true, txHash: check.txHash });
+        }
+        res.json({
+            status: 'pending',
+            confirmations: check.confirmations || 0,
+            required: BITCOIN_MIN_CONFIRMATIONS
+        });
+    } catch (e) {
+        res.json({ status: 'pending', error: e.message, confirmations: 0 });
+    }
+});
+
+app.get('/api/me/premium-status', (req, res) => {
+    const userId = req.query.userId;
+    if (!userId) return res.status(400).json({ error: 'userId required' });
+    DB.kv_premium = DB.kv_premium || {};
+    const p = DB.kv_premium[userId];
+    if (p && Date.now() < p.expiresAt) {
+        return res.json({ premium: true, expiresAt: p.expiresAt, activatedAt: p.activatedAt });
+    }
+    res.json({ premium: false });
+});
+
+// Legacy ownership endpoint (JWT) — left for compat
 app.get('/api/me/items', verifyToken, (req, res) => {
     const userId = req.user.userId;
     DB.user_frames = DB.user_frames || {};
