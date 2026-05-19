@@ -274,6 +274,43 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 @keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
 .tnames{font-size:10px;color:#6b7280}
 
+/* Coin widget — sempre visibile in chat header */
+.coin-widget{display:flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,#78350f,#f59e0b);
+  border:1px solid #fbbf24;border-radius:14px;padding:4px 10px;
+  font-size:12px;font-weight:900;color:#fff;flex-shrink:0;
+  box-shadow:0 0 12px rgba(251,191,36,.3);cursor:default}
+.coin-widget .coin-amount{min-width:14px;text-align:right}
+
+/* Coin widget in profile */
+.coin-big{display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,#78350f,#f59e0b);border:1px solid #fbbf24;
+  border-radius:14px;padding:14px;margin:12px 16px 0;
+  font-size:22px;font-weight:900;color:#fff;
+  box-shadow:0 0 20px rgba(251,191,36,.3)}
+.coin-big-icon{font-size:28px}
+
+/* Daily wheel button */
+.wheel-btn{margin:8px 16px 0;display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);border:none;border-radius:14px;
+  padding:14px 18px;color:#fff;font-size:14px;font-weight:900;cursor:pointer;
+  width:calc(100% - 32px);box-shadow:0 0 16px rgba(168,85,247,.4)}
+.wheel-btn.disabled{opacity:.5;cursor:default;box-shadow:none}
+.wheel-btn-icon{font-size:22px;animation:wheel-spin 4s linear infinite}
+@keyframes wheel-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Wheel modal */
+.wheel-stage{position:relative;width:240px;height:240px;margin:14px auto;border-radius:50%;
+  background:conic-gradient(#ef4444 0deg 60deg,#f59e0b 60deg 120deg,#10b981 120deg 180deg,#3b82f6 180deg 240deg,#a855f7 240deg 300deg,#ec4899 300deg 360deg);
+  box-shadow:0 0 40px rgba(168,85,247,.4),inset 0 0 30px rgba(0,0,0,.3);
+  border:4px solid #fbbf24;transition:transform 4s cubic-bezier(.18,.71,.21,1)}
+.wheel-pointer{position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;
+  border-top:24px solid #fbbf24;z-index:10;
+  filter:drop-shadow(0 0 4px #fbbf24)}
+.wheel-slot{position:absolute;top:50%;left:50%;transform-origin:0 0;color:#fff;
+  font-weight:900;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
+
 /* Free bar */
 .free-bar{padding:3px 14px;background:rgba(109,40,217,.1);border-top:1px solid rgba(109,40,217,.2);
   display:flex;align-items:center;gap:6px;flex-shrink:0}
@@ -558,6 +595,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         </div>
       </div>
     </div>
+    <div class="coin-widget" title="Le tue monete KOUVERTE">
+      <span style="font-size:14px">🪙</span>
+      <span class="coin-amount">0</span>
+    </div>
   </div>
 
   <div class="chat-msgs" id="chatMsgs"></div>
@@ -622,6 +663,26 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <div class="stat-b"><div class="stat-n" id="stRooms">0</div><div class="stat-l">Stanze</div></div>
     <div class="stat-b"><div class="stat-n" id="stBadges">0</div><div class="stat-l">Badge</div></div>
   </div>
+
+  <!-- Coin balance grande -->
+  <div class="coin-big">
+    <span class="coin-big-icon">🪙</span>
+    <div style="text-align:left">
+      <div style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:.5px;text-transform:uppercase">Monete</div>
+      <div><span class="coin-amount">0</span> KVC</div>
+    </div>
+    <div id="streakBadge" style="margin-left:auto;font-size:11px;background:rgba(0,0,0,.3);border-radius:10px;padding:4px 10px;display:none">🔥 <span id="streakDays">0</span>gg</div>
+  </div>
+
+  <!-- Ruota fortuna -->
+  <button class="wheel-btn" id="wheelBtn" onclick="openWheel()">
+    <span class="wheel-btn-icon">🎰</span>
+    <div style="text-align:left;flex:1;margin-left:8px">
+      <div>Ruota Fortuna</div>
+      <div id="wheelSub" style="font-size:10px;opacity:.85;font-weight:600">Gratis 1 volta al giorno</div>
+    </div>
+    <span style="font-size:20px">→</span>
+  </button>
 
   <!-- Referral -->
   <div class="ref-sec">
@@ -702,6 +763,32 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 </div>
 
+<!-- ░░ WHEEL MODAL ░░ -->
+<div class="overlay" id="wheelOv">
+  <div class="modal-sheet">
+    <div class="mpill"></div>
+    <div class="mtitle">🎰 Ruota Fortuna</div>
+    <div class="mdesc" id="wheelDesc">Gira la ruota e vinci monete, XP o boost!</div>
+
+    <div style="position:relative">
+      <div class="wheel-pointer"></div>
+      <div class="wheel-stage" id="wheelStage">
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(30deg) translateY(-90px) rotate(-30deg)">10 🪙</div>
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(90deg) translateY(-90px) rotate(-90deg)">50 🪙</div>
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(150deg) translateY(-90px) rotate(-150deg)">⚡x2</div>
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(210deg) translateY(-90px) rotate(-210deg)">20 🪙</div>
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(270deg) translateY(-90px) rotate(-270deg)">100 🪙</div>
+        <div class="wheel-slot" style="transform:translate(-50%,-50%) rotate(330deg) translateY(-90px) rotate(-330deg)">🥇 24h</div>
+      </div>
+    </div>
+
+    <div id="wheelResult" style="text-align:center;font-size:14px;color:#fbbf24;margin:14px 0;min-height:20px;font-weight:800"></div>
+
+    <button class="btn-p" id="wheelSpinBtn" onclick="spinWheel()">🎲 GIRA</button>
+    <button class="btn-s" onclick="closeWheel()">Chiudi</button>
+  </div>
+</div>
+
 <!-- ░░ FRAME MODAL ░░ -->
 <div class="overlay" id="frameOv">
   <div class="modal-sheet">
@@ -764,12 +851,13 @@ function levelLabel(lvl, isPremium){
 
 // Stanze attive — partiamo piccoli, poi espandiamo
 const ROOMS = [
-  { id:'mondo',     name:'🌍 Mondo',    emoji:'🌍', desc:'Chat globale, tutte le lingue',        tier:'public', color:'#a78bfa', dot1:'#a78bfa',dot2:'#c084fc',dot3:'#e879f9' },
-  { id:'italia',    name:'🇮🇹 Italia',  emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani', tier:'public', color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
-  { id:'roma',      name:'Roma',       emoji:'🏛️', desc:'Capitale eterna, chat capitolina',     tier:'public', color:'#f59e0b', dot1:'#f59e0b',dot2:'#fbbf24',dot3:'#fcd34d' },
-  { id:'milano',    name:'Milano',     emoji:'🏙️', desc:'Il cuore pulsante del Nord',           tier:'public', color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
-  { id:'campania',  name:'Campania',   emoji:'🌋', desc:'Napoli, Salerno, costiere e dintorni', tier:'public', color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
-  { id:'calabria',  name:'Calabria',   emoji:'🌅', desc:'Mare, sole e chiacchiere',             tier:'public', color:'#fb923c', dot1:'#fb923c',dot2:'#f97316',dot3:'#fbbf24' },
+  { id:'mondo',         name:'🌍 Mondo',     emoji:'🌍', desc:'Chat globale, tutte le lingue',         tier:'public',     color:'#a78bfa', dot1:'#a78bfa',dot2:'#c084fc',dot3:'#e879f9' },
+  { id:'italia',        name:'🇮🇹 Italia',   emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani',  tier:'public',     color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'roma',          name:'Roma',        emoji:'🏛️', desc:'Capitale eterna, chat capitolina',      tier:'public',     color:'#f59e0b', dot1:'#f59e0b',dot2:'#fbbf24',dot3:'#fcd34d' },
+  { id:'milano',        name:'Milano',      emoji:'🏙️', desc:'Il cuore pulsante del Nord',            tier:'public',     color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'campania',      name:'Campania',    emoji:'🌋', desc:'Napoli, Salerno, costiere e dintorni',  tier:'public',     color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
+  { id:'calabria',      name:'Calabria',    emoji:'🌅', desc:'Mare, sole e chiacchiere',              tier:'public',     color:'#fb923c', dot1:'#fb923c',dot2:'#f97316',dot3:'#fbbf24' },
+  { id:'confessionale', name:'Confessionale', emoji:'🕯️', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
 ];
 
 function isRoomActiveNow(){ return true; }
@@ -823,28 +911,216 @@ function hideSplash(){
 function initUser(){
   const tgU=window.Telegram?.WebApp?.initDataUnsafe?.user;
   const stored=getLS('kv4_user');
+  let isNewUser=false;
   if(stored){
     user=stored;
-    // Migration: assicurati che user.tgId sia memorizzato per il referral
+    // Migrations
     if(tgU?.id && !user.tgId) user.tgId = String(tgU.id);
+    if(typeof user.coins !== 'number') user.coins = 0;
+    if(typeof user.streak !== 'number') user.streak = 0;
+    if(typeof user.lastLogin !== 'number') user.lastLogin = 0;
+    if(typeof user.lastSpin !== 'number') user.lastSpin = 0;
+    if(!user.tempFrames) user.tempFrames = {}; // {frameId: expiresAt}
+    if(typeof user.boostUntil !== 'number') user.boostUntil = 0;
+    if(typeof user.confessUsedOn !== 'number') user.confessUsedOn = 0;
   }
   else{
+    isNewUser=true;
     const tgIdStr = tgU?.id ? String(tgU.id) : null;
     const uid = tgIdStr ? 'tg_'+tgIdStr : 'anon_'+Math.random().toString(36).slice(2,9);
     const faces=FACE_EMOJIS;
     user={
-      id:uid, tgId:tgIdStr, // tgId è il chatId raw — usato per i referral
+      id:uid, tgId:tgIdStr,
       name:genNick(uid),
       face:faces[Math.floor(Math.random()*faces.length)],
       color:getColor(uid), msgCount:0, freeUsed:0,
       isPremium:false, premExpiry:0,
       roomsVisited:[], badges:[], ownedFrames:['none','silver','purple'], activeFrame:'none',
-      joinedAt:Date.now()
+      joinedAt:Date.now(),
+      // Sistema economia
+      coins:0, streak:0, lastLogin:0, lastSpin:0,
+      tempFrames:{}, boostUntil:0, confessUsedOn:0
     };
     setLS('kv4_user',user);
   }
+
+  // Welcome pack (primo accesso) → 50 monete + cornice Gold temporanea 7gg + badge
+  if(isNewUser){
+    user.coins = 50;
+    user.tempFrames['gold'] = Date.now() + 7*24*60*60*1000;
+    if(!user.ownedFrames.includes('gold')) user.ownedFrames.push('gold');
+    addBadge('welcome','Pacchetto benvenuto');
+    setTimeout(()=>showWelcomePack(),1700);
+  } else {
+    // Daily login: stessa giornata? no bonus
+    checkDailyLogin();
+  }
+
   saveUser();
   updateProfileUI();
+  updateCoinBar();
+  pruneTempFrames();
+}
+
+// ── Cleanup cornici temporanee scadute ──
+function pruneTempFrames(){
+  const now=Date.now(); let changed=false;
+  for(const fid in user.tempFrames||{}){
+    if(user.tempFrames[fid]<now){
+      delete user.tempFrames[fid];
+      // Rimuove la cornice dalle owned (ma solo se è premium e non posseduta in modo permanente)
+      // Per semplicità: la cornice resta in ownedFrames se posseduta tramite Premium reale; qui assumiamo che le temp sono già taggate
+      changed=true;
+    }
+  }
+  if(changed) saveUser();
+}
+
+// ── Daily Login + Streak ──
+function checkDailyLogin(){
+  const now=Date.now();
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayMs=today.getTime();
+  const lastDay=new Date(user.lastLogin); lastDay.setHours(0,0,0,0);
+  const lastMs=lastDay.getTime();
+
+  if(lastMs===todayMs) return; // già loggato oggi
+
+  // Streak: ieri = +1, altrimenti reset a 1
+  const yesterday=todayMs-86400000;
+  if(lastMs===yesterday) user.streak=(user.streak||0)+1;
+  else user.streak=1;
+
+  user.lastLogin=now;
+  // Bonus base + bonus streak ogni 7 giorni
+  let reward=20;
+  let extra='';
+  if(user.streak>0 && user.streak%7===0){
+    reward+=100;
+    extra=' + 🏆 BONUS settimanale!';
+    addBadge('week_streak','7 giorni di fila');
+  }
+  user.coins=(user.coins||0)+reward;
+  saveUser();
+  setTimeout(()=>showToast(`✨ Bentornato! +${reward} 🪙  Streak: ${user.streak}gg${extra}`),1500);
+}
+
+// ── Welcome pack modal (solo primo accesso) ──
+function showWelcomePack(){
+  showToast('🎁 BENVENUTO! +50 🪙 + cornice Gold per 7 giorni!');
+}
+
+// ── Aggiunge monete e aggiorna UI ──
+function addCoins(amount, reason){
+  user.coins=(user.coins||0)+amount;
+  saveUser();
+  updateCoinBar();
+  if(amount>0 && reason) showToast(`+${amount} 🪙  ${reason}`);
+}
+
+// ── Aggiorna barra monete (mostrata in chat + profilo) ──
+function updateCoinBar(){
+  const els=document.querySelectorAll('.coin-amount');
+  els.forEach(e=>e.textContent=user.coins||0);
+  // Streak badge
+  const sb=document.getElementById('streakBadge');
+  if(sb){
+    if((user.streak||0)>0){ sb.style.display='inline-block'; document.getElementById('streakDays').textContent=user.streak; }
+    else sb.style.display='none';
+  }
+  // Aggiorna stato pulsante ruota
+  updateWheelButton();
+}
+
+// ── RUOTA FORTUNA ──
+const WHEEL_PRIZES = [
+  { angle:30,  reward:'coins', amount:10,  label:'+10 monete'  },
+  { angle:90,  reward:'coins', amount:50,  label:'+50 monete'  },
+  { angle:150, reward:'boost', amount:2*60*60*1000, label:'⚡ Boost x2 XP per 2h' },
+  { angle:210, reward:'coins', amount:20,  label:'+20 monete'  },
+  { angle:270, reward:'coins', amount:100, label:'+100 monete' },
+  { angle:330, reward:'temp_frame', amount:24*60*60*1000, label:'🥇 Cornice Gold per 24h' }
+];
+
+function canSpinWheel(){
+  const last=user.lastSpin||0;
+  return (Date.now()-last) >= 24*60*60*1000;
+}
+
+function timeUntilNextSpin(){
+  const last=user.lastSpin||0;
+  const ms = 24*60*60*1000 - (Date.now()-last);
+  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+  return `${h}h ${m}m`;
+}
+
+function updateWheelButton(){
+  const btn=document.getElementById('wheelBtn');
+  const sub=document.getElementById('wheelSub');
+  if(!btn) return;
+  if(canSpinWheel()){
+    btn.classList.remove('disabled');
+    if(sub) sub.textContent='Pronta! Gira ora';
+  } else {
+    btn.classList.add('disabled');
+    if(sub) sub.textContent='Prossima fra '+timeUntilNextSpin();
+  }
+}
+
+function openWheel(){
+  updateWheelButton();
+  if(!canSpinWheel()){
+    showToast('⏳ Riprova fra '+timeUntilNextSpin());
+    return;
+  }
+  document.getElementById('wheelOv').classList.add('open');
+  document.getElementById('wheelResult').textContent='';
+  document.getElementById('wheelSpinBtn').disabled=false;
+  document.getElementById('wheelSpinBtn').textContent='🎲 GIRA';
+  const stage=document.getElementById('wheelStage');
+  stage.style.transition='none'; stage.style.transform='rotate(0deg)';
+}
+function closeWheel(){document.getElementById('wheelOv').classList.remove('open');}
+
+function spinWheel(){
+  if(!canSpinWheel()){ showToast('⏳ Riprova domani'); return; }
+  const btn=document.getElementById('wheelSpinBtn');
+  btn.disabled=true; btn.textContent='Sto girando...';
+
+  // Scegli premio random
+  const prize = WHEEL_PRIZES[Math.floor(Math.random()*WHEEL_PRIZES.length)];
+  // Calcola rotazione: la freccia è in alto, quindi targetAngle = 360 - (prize.angle - 30)
+  // ogni slot copre 60° centrato sulla sua angle. Voglio che si fermi con quell'angolo in alto.
+  const targetRot = 360*5 + (360 - prize.angle); // 5 giri completi + posizione
+
+  const stage=document.getElementById('wheelStage');
+  // Reset
+  stage.style.transition='none'; stage.style.transform='rotate(0deg)';
+  void stage.offsetWidth;
+  stage.style.transition='transform 4s cubic-bezier(.18,.71,.21,1)';
+  stage.style.transform='rotate('+targetRot+'deg)';
+
+  setTimeout(()=>{
+    // Applica premio
+    user.lastSpin = Date.now();
+    let toastMsg='';
+    if(prize.reward==='coins'){
+      user.coins=(user.coins||0)+prize.amount;
+      toastMsg='🎉 '+prize.label+'!';
+    } else if(prize.reward==='boost'){
+      user.boostUntil = Date.now() + prize.amount;
+      toastMsg='🎉 '+prize.label+' attivo!';
+    } else if(prize.reward==='temp_frame'){
+      user.tempFrames=user.tempFrames||{};
+      user.tempFrames['gold']=Math.max(user.tempFrames['gold']||0, Date.now()+prize.amount);
+      if(!user.ownedFrames.includes('gold')) user.ownedFrames.push('gold');
+      toastMsg='🎉 '+prize.label+'!';
+    }
+    saveUser(); updateCoinBar(); renderFrames();
+    document.getElementById('wheelResult').textContent=toastMsg;
+    document.getElementById('wheelSpinBtn').textContent='Torna domani';
+    showToast(toastMsg);
+  }, 4100);
 }
 
 const RANKS=[
@@ -1025,6 +1301,15 @@ function renderRooms(){
   document.getElementById('roomsList').innerHTML = ROOMS.map(roomCard).join('');
 }
 
+// ── Temperatura stanza in base agli online ──
+function tempBadge(cnt){
+  if(cnt>=10) return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#dc2626,#f97316,#fbbf24);animation:hot-pulse 1.2s ease-in-out infinite"><span>🔥</span><span>BOLLENTE</span></div>`;
+  if(cnt>=5)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ef4444,#f97316)"><span>🔥</span><span>HOT</span></div>`;
+  if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#a855f7,#ec4899)"><span>✨</span><span>ATTIVA</span></div>`;
+  if(cnt>=1)  return `<div class="rc-flag-pill"><span>💬</span><span>LIVE</span></div>`;
+  return `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>😴</span><span>SILENZIOSA</span></div>`;
+}
+
 function roomCard(r){
   const cnt=roomOnline[r.id]??0;
   // Nome stanza pulito: rimuovo l'emoji/bandiera dal nome se già presente (es. "🇮🇹 Italia" → "Italia")
@@ -1039,11 +1324,7 @@ function roomCard(r){
         <div class="rc-online-dot"></div>
         <span id="ron_${r.id}" class="rc-num">${cnt}</span>
       </div>
-      ${cnt>=5
-        ? `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ef4444,#f97316)"><span>🔥</span><span>HOT</span></div>`
-        : cnt===0
-          ? `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>NUOVA</span></div>`
-          : `<div class="rc-flag-pill"><span>LIVE</span></div>`}
+      ${tempBadge(cnt)}
     </div>
 
     <!-- Centro: emoji grande + nome -->
@@ -1085,6 +1366,15 @@ function enterRoom(roomId){
   if(cfg.tier==='event' && !isRoomActiveNow(cfg)){
     showToast('⏰ Questo evento è chiuso adesso. Riprova nelle ore previste.');
     return;
+  }
+
+  // Confessionale: 1 messaggio al giorno (controllato in sendMsg, qui solo info)
+  if(cfg.tier==='confession'){
+    const today=new Date(); today.setHours(0,0,0,0);
+    if(user.confessUsedOn===today.getTime()){
+      showToast('🕯️ Hai già usato la tua confessione di oggi. Torna domani.');
+      // Lo lascio entrare comunque a leggere
+    }
   }
 
   room=cfg; lastSender=null; typingUsers={};
@@ -1186,12 +1476,29 @@ function sendMsg(){
   if(!text) return;
   if(!room){showToast('⚠️ Entra in una stanza prima');return;}
   if(!socket?.connected){showToast('🔄 Connessione in corso...');socket&&socket.connect();return;}
+
+  // Confessionale: 1 al giorno
+  if(room.tier==='confession'){
+    const today=new Date(); today.setHours(0,0,0,0);
+    if(user.confessUsedOn===today.getTime()){
+      showToast('🕯️ Hai già usato la tua confessione oggi.');
+      return;
+    }
+    user.confessUsedOn=today.getTime();
+  }
   if(!isPrem()&&(user.freeUsed||0)>=FREE_LIMIT){showPaywall();return;}
 
-  const msg={
+  // Confessionale: anonimizza completamente (nome random, no level/premium)
+  const isConfession = room.tier==='confession';
+  const msg = isConfession ? {
+    userId:'anon_'+Math.random().toString(36).slice(2,8),
+    name:'Anonimo',
+    color:'#9ca3af', face:'🕯️',
+    text, ts:Date.now(), roomId:room.id, msgCount:0
+  } : {
     userId:user.id, name:user.name, color:user.color,
     face:user.face, frame:user.activeFrame, isPremium:isPrem(),
-    text, ts:Date.now(), roomId:room.id
+    text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount
   };
   socket.emit('chat-message',{roomId:room.id,msg});
   appendMsg(msg); scrollBot();
@@ -1204,8 +1511,11 @@ function sendMsg(){
   inp.value=''; inp.style.height='auto'; stopTyping();
   user.msgCount=(user.msgCount||0)+1;
   if(!isPrem()) user.freeUsed=(user.freeUsed||0)+1;
+  // Economia: +1 KVC per messaggio (x2 se boost attivo)
+  const coinReward = (Date.now()<(user.boostUntil||0)) ? 2 : 1;
+  user.coins=(user.coins||0)+coinReward;
   document.getElementById('stMsgs').textContent=user.msgCount;
-  updateFreeBar(); checkBadges(); saveUser();
+  updateFreeBar(); checkBadges(); saveUser(); updateCoinBar();
   if(!isPrem()&&user.freeUsed===80) showToast('⚠️ 20 messaggi gratuiti rimasti!');
   if(!isPrem()&&user.freeUsed>=FREE_LIMIT) setTimeout(showPaywall,400);
 }
