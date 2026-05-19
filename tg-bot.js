@@ -7,8 +7,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const fs   = require('fs');
 const path = require('path');
 
-// ⚠️ TEMP: token hardcoded. Da rimuovere quando BOT_TOKEN sarà su Render env.
-const BOT_TOKEN    = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+const BOT_TOKEN    = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
 const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://kouverte-voice.onrender.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
 

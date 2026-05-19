@@ -2836,8 +2836,8 @@ if (process.env.BOT_DISABLED === '1') {
 
 // Endpoint diagnostico (sicuro: non rivela il token, solo se è settato)
 app.get('/api/bot/status', async (req, res) => {
-    // Usa lo stesso token che usa tg-bot.js (per ora hardcoded)
-    const token = '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+    // Usa il token effettivo dell'env (stesso che usa tg-bot.js)
+    const token = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
     const out = {
         running: _botStatus.running,
         reason: _botStatus.reason,
