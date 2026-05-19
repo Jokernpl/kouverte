@@ -3,1080 +3,1128 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>KOUVERTE — Chat Mondiale Anonima</title>
+<title>KOUVERTE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <style>
-:root{
-  --bg:#06020f;--bg2:#0d0521;--card:#130a2a;--border:#2a1550;
-  --purple:#a855f7;--pink:#ec4899;--cyan:#06b6d4;--green:#10b981;
-  --orange:#f97316;--yellow:#eab308;--white:#f0e6ff;--muted:#7c5fa0;
-  --r:16px;--rs:10px;
-}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#12082a;color:#fff}
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
 .screen.active{opacity:1;pointer-events:all}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:4px}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#5b21b6;border-radius:4px}
 
-/* ──────────── SPLASH ──────────── */
-#splash{align-items:center;justify-content:center;
-  background:radial-gradient(ellipse at 50% 30%,#1a0535,var(--bg) 70%)}
-.sp-logo{font-size:56px;font-weight:900;letter-spacing:-3px;
-  background:linear-gradient(135deg,#c084fc,#ec4899,#38bdf8);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  animation:logo-pulse 2s ease-in-out infinite}
-.sp-sub{color:var(--muted);font-size:12px;letter-spacing:3px;margin-top:8px;text-transform:uppercase}
-.sp-spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--purple);
-  border-radius:50%;animation:spin .8s linear infinite;margin-top:48px}
+/* ═══════════════════════════════
+   SPLASH
+═══════════════════════════════ */
+#splash{background:radial-gradient(ellipse at 50% 30%,#1e0d40 0%,#0a0418 70%);
+  align-items:center;justify-content:center;overflow:hidden}
+
+/* Sparkles */
+.sparkles{position:absolute;inset:0;pointer-events:none}
+.sp{position:absolute;border-radius:50%;animation:spkl 3s ease-in-out infinite}
+@keyframes spkl{0%,100%{transform:scale(1) rotate(0deg);opacity:.8}50%{transform:scale(1.4) rotate(180deg);opacity:1}}
+
+/* Logo KOUVERTE stile immagine */
+.kv-logo-wrap{text-align:center;position:relative;z-index:2}
+
+/* Omino con cappuccio (SVG mascot) */
+.mascot{width:90px;height:90px;margin:0 auto 8px;position:relative}
+.mascot svg{width:100%;height:100%;filter:drop-shadow(0 0 18px #7c3aed)}
+
+/* Testo logo 3D */
+.kv-title{
+  font-size:52px;font-weight:900;letter-spacing:-2px;
+  color:#fff;
+  text-shadow:
+    0 0 20px #a855f7,
+    0 0 40px #7c3aed,
+    3px 3px 0 #4c1d95,
+    6px 6px 0 #3b0764,
+    0 8px 30px rgba(168,85,247,.5);
+  line-height:1;margin-bottom:6px;
+  -webkit-text-stroke:1px rgba(255,255,255,.3)
+}
+
+/* Tagline banner verde */
+.kv-tagline{
+  background:linear-gradient(90deg,#059669,#10b981,#059669);
+  border-radius:20px;padding:6px 18px;font-size:11px;font-weight:800;
+  letter-spacing:1.5px;color:#fff;text-transform:uppercase;
+  box-shadow:0 0 20px rgba(16,185,129,.5);display:inline-block;margin-top:4px
+}
+
+/* Badge 100% Anonimo */
+.anon-badge-big{
+  position:absolute;top:10px;right:-10px;
+  background:linear-gradient(135deg,#059669,#10b981);
+  border-radius:16px;padding:6px 12px;font-size:11px;font-weight:900;
+  color:#fff;box-shadow:0 0 16px rgba(16,185,129,.6);
+  border:2px solid rgba(255,255,255,.3);line-height:1.2;text-align:center;
+  transform:rotate(3deg)
+}
+.sp-spinner{width:28px;height:28px;border:3px solid rgba(168,85,247,.3);border-top-color:#a855f7;
+  border-radius:50%;animation:spin .8s linear infinite;margin:24px auto 0}
 @keyframes spin{to{transform:rotate(360deg)}}
-@keyframes logo-pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-/* ──────────── HOME ──────────── */
-#home{background:var(--bg);overflow-y:auto}
+/* ═══════════════════════════════
+   HOME
+═══════════════════════════════ */
+#home{background:#12082a;overflow-y:auto}
 
-/* Hero header */
-.home-hero{
-  padding:16px 16px 0;
-  background:linear-gradient(180deg,#0d0521 60%,transparent);
+/* Home header con logo */
+.home-hdr{
+  padding:14px 16px 0;
+  background:linear-gradient(180deg,#1a0d38 0%,transparent 100%);
   position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)
 }
-.hero-top{display:flex;justify-content:space-between;align-items:flex-start}
-.hero-logo{font-size:30px;font-weight:900;letter-spacing:-1px;
-  background:linear-gradient(135deg,#c084fc,#ec4899);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero-tagline{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
-.anon-badge{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);
-  border-radius:20px;padding:4px 10px;font-size:10px;color:#10b981;font-weight:700}
-.chat-mondiale{display:flex;align-items:center;gap:6px;margin-top:10px;
-  background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(236,72,153,.1));
-  border:1px solid rgba(168,85,247,.3);border-radius:12px;padding:8px 12px}
-.chat-mondiale-icon{font-size:20px}
-.chat-mondiale-text{font-size:11px;color:var(--purple);font-weight:700;line-height:1.3}
+.home-logo-row{display:flex;align-items:center;gap:10px}
+.home-mascot{width:38px;height:38px;flex-shrink:0}
+.home-mascot svg{width:100%;height:100%;filter:drop-shadow(0 0 8px #7c3aed)}
+.home-title{
+  font-size:24px;font-weight:900;letter-spacing:-1px;
+  color:#fff;
+  text-shadow:0 0 12px #a855f7,2px 2px 0 #4c1d95;
+  -webkit-text-stroke:.5px rgba(255,255,255,.2)
+}
+.home-sub{font-size:10px;color:#10b981;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-top:0}
+.home-anon{background:linear-gradient(135deg,#065f46,#059669);border-radius:12px;
+  padding:3px 8px;font-size:9px;font-weight:800;color:#fff;margin-left:auto;flex-shrink:0;
+  box-shadow:0 0 8px rgba(16,185,129,.4)}
 
-/* Category tabs */
-.cat-scroll{display:flex;gap:6px;padding:10px 0 8px;overflow-x:auto;scrollbar-width:none}
-.cat-scroll::-webkit-scrollbar{display:none}
-.cat-pill{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;
-  border:1px solid var(--border);color:var(--muted);background:var(--card);
+/* Category filter */
+.cat-row{display:flex;gap:6px;padding:10px 0 8px;overflow-x:auto;scrollbar-width:none}
+.cat-row::-webkit-scrollbar{display:none}
+.cat-btn{flex-shrink:0;padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;
+  border:1.5px solid rgba(168,85,247,.3);color:#9ca3af;background:rgba(255,255,255,.04);
   cursor:pointer;transition:all .2s;white-space:nowrap}
-.cat-pill.active{border-color:var(--purple);color:var(--white);background:#1a0a35}
+.cat-btn.active{border-color:#a855f7;color:#fff;background:rgba(168,85,247,.2);
+  box-shadow:0 0 12px rgba(168,85,247,.3)}
 
-/* Promo strip */
-.promo-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
-  padding:0 16px;margin-top:4px}
-.promo-box{background:var(--card);border:1px solid var(--border);border-radius:10px;
-  padding:8px;text-align:center}
-.promo-box-icon{font-size:18px;margin-bottom:3px}
-.promo-box-label{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.home-body{padding:6px 16px 90px}
+.sec-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;
+  margin:12px 0 8px;display:flex;align-items:center;gap:6px}
+.sec-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
-.home-body{padding:8px 16px 90px}
-.section-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;
-  margin:14px 0 8px;display:flex;align-items:center;gap:6px}
-.section-lbl::after{content:'';flex:1;height:1px;background:var(--border)}
-
-/* Room card */
-.room-card{display:flex;align-items:center;gap:12px;background:var(--card);
-  border:1px solid var(--border);border-radius:var(--r);padding:13px;margin-bottom:8px;
-  cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+/* ─── ROOM CARD (stile screenshot) ─── */
+.room-card{
+  background:linear-gradient(145deg,#1e1040,#2a1458);
+  border:1px solid rgba(139,92,246,.25);
+  border-radius:18px;padding:14px;margin-bottom:10px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden
+}
 .room-card:active{transform:scale(.97);opacity:.9}
-.room-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;border-radius:var(--r);pointer-events:none}
-.room-card:hover .room-glow{opacity:1}
-.room-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
-.room-info{flex:1;min-width:0}
-.room-name{font-size:14px;font-weight:800;color:var(--white)}
-.room-desc{font-size:11px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.room-meta{display:flex;align-items:center;gap:6px;margin-top:5px}
-.room-count{font-size:11px;display:flex;align-items:center;gap:3px}
-.r-dot{width:6px;height:6px;border-radius:50%;animation:rdot 1.5s ease-in-out infinite}
-@keyframes rdot{0%,100%{opacity:1}50%{opacity:.2}}
-.room-tag{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;
-  background:rgba(255,255,255,.06);color:var(--muted);text-transform:uppercase}
-.room-caret{font-size:16px;flex-shrink:0;opacity:.3}
+.room-card::before{
+  content:'';position:absolute;inset:0;border-radius:18px;
+  background:linear-gradient(135deg,rgba(168,85,247,.06),transparent);pointer-events:none
+}
 
-/* ──────────── CHAT ──────────── */
-#chat{background:var(--bg);flex-direction:column}
+/* Room header row */
+.rc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.rc-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:18px;flex-shrink:0}
+.rc-name{font-size:14px;font-weight:800;color:#fff;flex:1}
+.rc-count{display:flex;align-items:center;gap:4px;font-size:11px;color:#9ca3af;flex-shrink:0}
+.rc-count-icon{font-size:12px}
+.rc-dots{display:flex;gap:4px;margin-left:8px}
+.rc-dot{width:8px;height:8px;border-radius:50%;animation:rdot 2s ease-in-out infinite}
+.rc-dot:nth-child(2){animation-delay:.4s}.rc-dot:nth-child(3){animation-delay:.8s}
+@keyframes rdot{0%,100%{opacity:1}50%{opacity:.3}}
 
-.chat-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;
-  background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
-.chat-back{width:34px;height:34px;border:none;background:var(--card);
-  border-radius:9px;color:var(--white);font-size:18px;cursor:pointer;
+/* Preview messaggi nella card */
+.rc-msgs{display:flex;flex-direction:column;gap:4px}
+.rc-msg{display:flex;align-items:flex-start;gap:7px}
+.rc-avatar{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;flex-shrink:0}
+.rc-msg-text{font-size:12px;line-height:1.35}
+.rc-msg-name{font-weight:700}
+.rc-msg-body{color:#d1d5db;margin-left:0}
+
+/* Mascot nel card */
+.rc-mascot{position:absolute;right:8px;bottom:6px;opacity:.35;pointer-events:none}
+.rc-mascot svg{width:42px;height:42px}
+
+/* Input preview */
+.rc-input-row{display:flex;align-items:center;gap:8px;margin-top:10px;
+  background:rgba(0,0,0,.3);border-radius:20px;padding:7px 7px 7px 14px}
+.rc-input-ph{flex:1;font-size:11px;color:#6b7280}
+.rc-send{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);
+  display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+
+/* ═══════════════════════════════
+   CHAT SCREEN
+═══════════════════════════════ */
+#chat{background:#12082a;flex-direction:column}
+
+/* Chat header */
+.chat-hdr{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:linear-gradient(180deg,#1e1040,#1a0d35);
+  border-bottom:1px solid rgba(139,92,246,.2);flex-shrink:0
+}
+.chat-back{width:34px;height:34px;border:none;background:rgba(255,255,255,.08);
+  border-radius:10px;color:#fff;font-size:17px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.chat-hdr-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.chat-hdr-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;font-size:17px;flex-shrink:0}
 .chat-hdr-info{flex:1;min-width:0}
-.chat-hdr-name{font-size:14px;font-weight:800}
-.chat-hdr-online{font-size:10px;color:var(--muted)}
-.chat-hdr-anon{font-size:9px;border:1px solid;border-radius:12px;padding:2px 8px;font-weight:700}
+.chat-hdr-name{font-size:14px;font-weight:800;color:#fff}
+.chat-hdr-online{font-size:10px;color:#9ca3af;display:flex;align-items:center;gap:4px;margin-top:1px}
+.chat-hdr-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:rdot 1.5s ease-in-out infinite}
+.chat-hdr-dots{display:flex;gap:3px}
+.chat-hdr-dot2{width:7px;height:7px;border-radius:50%;animation:rdot 2s ease-in-out infinite}
 
-.chat-msgs{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:1px}
+/* Messages */
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
 
-/* Bubble */
-.mrow{display:flex;align-items:flex-end;gap:7px;padding:1px 0;animation:min .2s ease-out}
+/* Message row — stile screenshot */
+.mrow{display:flex;align-items:flex-start;gap:8px;padding:2px 0;animation:min .2s ease-out}
 @keyframes min{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .mrow.self{flex-direction:row-reverse}
-.mavatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;margin-bottom:2px;position:relative;flex-direction:column}
-.mavatar.hidden{visibility:hidden}
-/* Cornice frame sul avatar */
-.frame-silver .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid silver;animation:frame-spin 4s linear infinite}
-.frame-gold .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid gold;box-shadow:0 0 8px gold;animation:frame-pulse 1.5s ease-in-out infinite}
-.frame-diamond .mavatar::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid transparent;background:linear-gradient(135deg,#38bdf8,#c084fc,#ec4899,#38bdf8) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;animation:frame-spin 2s linear infinite}
-@keyframes frame-spin{to{transform:rotate(360deg)}}
-@keyframes frame-pulse{0%,100%{box-shadow:0 0 6px gold}50%{box-shadow:0 0 16px gold}}
 
-.mbubble{max-width:76%;border-radius:18px;padding:8px 13px;line-height:1.45}
-.mrow:not(.self) .mbubble{border-bottom-left-radius:4px;background:var(--card);border:1px solid var(--border)}
-.mrow.self .mbubble{border-bottom-right-radius:4px;background:linear-gradient(135deg,#4c1d95,#2e1065);border:1px solid rgba(168,85,247,.4)}
-.mname{font-size:10px;font-weight:800;margin-bottom:3px;letter-spacing:.3px}
-.mtext{font-size:14px;color:var(--white);word-break:break-word;white-space:pre-wrap}
-.mtime{font-size:9px;color:rgba(255,255,255,.25);margin-top:4px;text-align:right}
-.mrow:not(.self) .mtime{text-align:left}
+.mavatar{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;margin-top:1px
+}
+.mavatar.hidden{visibility:hidden}
+
+/* Bubble stile screenshot: NO bolla, solo nome+testo inline */
+.mbody{display:flex;flex-direction:column;gap:0;max-width:80%}
+.mrow:not(.self) .mline{
+  font-size:13px;line-height:1.45;color:#e5e7eb
+}
+.mrow.self .mline{text-align:right}
+.mname{font-weight:800;font-size:13px;margin-right:5px}
+.mtext{font-size:13px;color:#e5e7eb;word-break:break-word}
+.mtime{font-size:9px;color:#6b7280;margin-top:2px}
+.mrow.self .mtime{text-align:right}
+
+/* Self message bubble */
+.mrow.self .mbubble-self{
+  background:linear-gradient(135deg,#4c1d95,#6d28d9);
+  border-radius:16px 16px 4px 16px;
+  padding:8px 14px;max-width:80%;
+  font-size:13px;color:#fff;line-height:1.45;word-break:break-word
+}
+
+/* System */
+.msys{text-align:center;font-size:10px;color:#6b7280;padding:5px 0;font-style:italic}
 
 /* Typing */
-.trow{display:flex;align-items:center;gap:8px;padding:4px 0}
-.tbubble{background:var(--card);border:1px solid var(--border);border-radius:18px;
-  border-bottom-left-radius:4px;padding:10px 14px;display:flex;gap:4px;align-items:center}
-.tdot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:td .8s ease-in-out infinite}
+.trow{display:flex;align-items:center;gap:8px;padding:3px 0}
+.tbbl{background:rgba(255,255,255,.06);border-radius:20px;padding:8px 14px;
+  display:flex;gap:4px;align-items:center}
+.tdot{width:5px;height:5px;border-radius:50%;background:#6b7280;animation:td .8s ease-in-out infinite}
 .tdot:nth-child(2){animation-delay:.15s}.tdot:nth-child(3){animation-delay:.3s}
-@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-.tnames{font-size:10px;color:var(--muted)}
-.msys{text-align:center;font-size:10px;color:var(--muted);padding:5px 0;font-style:italic}
+@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.tnames{font-size:10px;color:#6b7280}
 
-/* Input area */
-.chat-bar{padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));
-  background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0}
-.chat-bar-row{display:flex;gap:8px;align-items:flex-end}
-.cinput{flex:1;background:var(--card);border:1px solid var(--border);border-radius:22px;
-  padding:9px 16px;color:var(--white);font-size:14px;resize:none;max-height:110px;
-  overflow-y:auto;line-height:1.4;outline:none;transition:border-color .2s;font-family:inherit}
-.cinput:focus{border-color:var(--purple)}.cinput::placeholder{color:var(--muted)}
-.csend{width:40px;height:40px;border-radius:50%;border:none;flex-shrink:0;
-  background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;font-size:15px;
+/* Free bar */
+.free-bar{padding:3px 14px;background:rgba(109,40,217,.1);border-top:1px solid rgba(109,40,217,.2);
+  display:flex;align-items:center;gap:6px;flex-shrink:0}
+.fb-track{flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px}
+.fb-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width .3s}
+.fb-lbl{font-size:9px;color:#6b7280;white-space:nowrap}
+.fb-lbl.warn{color:#f97316}
+
+/* Chat input */
+.chat-bar{
+  padding:8px 14px;padding-bottom:max(8px,env(safe-area-inset-bottom));
+  background:#1a0d35;border-top:1px solid rgba(139,92,246,.15);flex-shrink:0
+}
+.chat-bar-row{display:flex;align-items:flex-end;gap:8px;
+  background:rgba(0,0,0,.4);border-radius:24px;padding:6px 6px 6px 16px;
+  border:1px solid rgba(139,92,246,.25)}
+.cinput{flex:1;background:none;border:none;color:#fff;font-size:13px;resize:none;
+  max-height:100px;overflow-y:auto;line-height:1.45;outline:none;font-family:inherit;
+  padding:2px 0}
+.cinput::placeholder{color:#4b5563}
+.csend{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+  background:linear-gradient(135deg,#6d28d9,#a855f7);color:#fff;font-size:16px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform .15s;align-self:flex-end}
 .csend:active{transform:scale(.88)}
 
-/* Free messages counter bar */
-.free-bar{padding:4px 14px;background:rgba(168,85,247,.08);border-top:1px solid rgba(168,85,247,.15);
-  display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.free-bar-track{flex:1;height:3px;background:var(--border);border-radius:2px;margin:0 8px}
-.free-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--purple),var(--pink));transition:width .3s}
-.free-bar-label{font-size:9px;color:var(--muted);white-space:nowrap}
-.free-bar-label.warn{color:var(--orange)}
-
-/* ──────────── PROFILO ──────────── */
-#profile{background:var(--bg);overflow-y:auto;padding-bottom:80px}
+/* ═══════════════════════════════
+   PROFILE
+═══════════════════════════════ */
+#profile{background:#12082a;overflow-y:auto;padding-bottom:80px}
 .prof-hero{padding:28px 20px 16px;text-align:center;
-  background:radial-gradient(ellipse at 50% 0%,#1a0535,transparent 70%)}
-.prof-avatar{width:80px;height:80px;border-radius:50%;margin:0 auto 10px;
-  display:flex;align-items:center;justify-content:center;font-size:36px;position:relative}
-.prof-name{font-size:20px;font-weight:900;margin-bottom:4px}
-.prof-anon{font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:5px}
-.premium-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
+  background:radial-gradient(ellipse at 50% 0%,#1e0d40,transparent 70%)}
+.prof-mascot{width:72px;height:72px;margin:0 auto 10px;
+  filter:drop-shadow(0 0 16px #7c3aed)}
+.prof-mascot svg{width:100%;height:100%}
+.prof-name{font-size:20px;font-weight:900;text-shadow:0 0 10px #a855f7}
+.prof-anon{font-size:11px;color:#6b7280;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px}
+.prem-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
   background:linear-gradient(135deg,#78350f,#f97316);border-radius:20px;
-  padding:4px 12px;font-size:11px;font-weight:700;color:#fff}
+  padding:4px 12px;font-size:11px;font-weight:700}
 
 .prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px;margin-top:16px}
-.stat-b{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:12px;text-align:center}
+.stat-b{background:linear-gradient(145deg,#1e1040,#2a1458);border:1px solid rgba(139,92,246,.2);
+  border-radius:12px;padding:12px;text-align:center}
 .stat-n{font-size:20px;font-weight:900;background:linear-gradient(135deg,#c084fc,#ec4899);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.stat-l{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
-/* Frames shop */
-.frames-section{padding:16px}
+.frames-sec{padding:16px}
 .frames-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
-.frame-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);
-  padding:14px;text-align:center;position:relative;cursor:pointer;transition:all .2s}
-.frame-card.owned{border-color:var(--purple);background:#1a0a35}
-.frame-card.active-frame{border-color:var(--green);background:#052318}
-.frame-card:active{transform:scale(.97)}
-.frame-preview{width:48px;height:48px;border-radius:50%;background:var(--border);
-  display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 8px;position:relative}
-.frame-name{font-size:11px;font-weight:700;margin-bottom:2px}
-.frame-price{font-size:10px;color:var(--muted)}
-.frame-price.free{color:var(--green)}
-.frame-owned-lbl{position:absolute;top:6px;right:6px;font-size:8px;background:var(--purple);
-  border-radius:10px;padding:1px 6px;font-weight:700}
-.frame-active-lbl{position:absolute;top:6px;right:6px;font-size:8px;background:var(--green);
-  border-radius:10px;padding:1px 6px;font-weight:700;color:#fff}
+.frame-c{background:linear-gradient(145deg,#1e1040,#2a1458);border:1px solid rgba(139,92,246,.2);
+  border-radius:12px;padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.frame-c.owned{border-color:#7c3aed;background:rgba(124,58,237,.15)}
+.frame-c.active-frame{border-color:#10b981;background:rgba(16,185,129,.1)}
+.frame-c:active{transform:scale(.97)}
+.frame-preview{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);
+  display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 7px;position:relative}
+.frame-name{font-size:11px;font-weight:700}
+.frame-price{font-size:10px;color:#6b7280;margin-top:2px}
+.frame-price.free{color:#10b981}
+.f-tag{position:absolute;top:5px;right:5px;font-size:8px;border-radius:8px;
+  padding:1px 5px;font-weight:700}
+.f-tag.owned{background:#7c3aed;color:#fff}
+.f-tag.active{background:#10b981;color:#fff}
 
-/* Badges */
-.badges-section{padding:0 16px 16px}
-.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.badge-c{background:var(--card);border:1px solid var(--border);border-radius:var(--rs);padding:14px;text-align:center}
-.badge-c.earned{border-color:var(--purple);background:#1a0a35}
+.badges-sec{padding:0 16px 16px}
+.badges-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.badge-c{background:linear-gradient(145deg,#1e1040,#2a1458);border:1px solid rgba(139,92,246,.15);
+  border-radius:12px;padding:12px;text-align:center}
+.badge-c.earned{border-color:#7c3aed;background:rgba(124,58,237,.15)}
 .badge-c.locked{opacity:.4}
-.badge-e{font-size:26px;margin-bottom:5px}
-.badge-n{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.badge-c.earned .badge-n{color:var(--purple)}
+.badge-e{font-size:24px;margin-bottom:4px}
+.badge-n{font-size:9px;font-weight:700;color:#6b7280;text-transform:uppercase}
+.badge-c.earned .badge-n{color:#a78bfa}
 
-/* ──────────── PAYWALL MODAL ──────────── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;
+/* ═══════════════════════════════
+   MODALS
+═══════════════════════════════ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;
   display:flex;align-items:flex-end;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px)}
-.modal-overlay.open{opacity:1;pointer-events:all}
-.modal-sheet{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;
-  padding:24px 20px 36px;width:100%;max-width:480px;
-  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
-.modal-overlay.open .modal-sheet{transform:translateY(0)}
-.modal-pill{width:40px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
-.modal-icon{font-size:48px;text-align:center;margin-bottom:12px}
-.modal-title{font-size:22px;font-weight:900;text-align:center;margin-bottom:6px;
-  background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.modal-desc{font-size:13px;color:var(--muted);text-align:center;line-height:1.5;margin-bottom:20px}
-.modal-perks{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px}
-.perk-row{display:flex;align-items:center;gap:10px;padding:6px 0}
-.perk-row+.perk-row{border-top:1px solid var(--border)}
-.perk-icon{font-size:18px;width:28px;text-align:center;flex-shrink:0}
-.perk-text{font-size:12px;color:var(--white)}
-.perk-sub{font-size:10px;color:var(--muted);margin-top:1px}
-.btn-primary{width:100%;padding:15px;border-radius:var(--r);border:none;
-  background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;font-size:15px;font-weight:800;
-  cursor:pointer;margin-bottom:8px;letter-spacing:.3px;transition:opacity .2s}
-.btn-primary:active{opacity:.8}
-.btn-secondary{width:100%;padding:11px;border-radius:var(--r);border:1px solid var(--border);
-  background:none;color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s}
-.btn-secondary:active{background:var(--card)}
-
-/* ──────────── FRAME SHOP MODAL ──────────── */
-.frame-modal{background:var(--bg2);border:1px solid var(--border);border-radius:24px 24px 0 0;
+.overlay.open{opacity:1;pointer-events:all}
+.modal-sheet{
+  background:linear-gradient(180deg,#1e1040,#150c30);
+  border:1px solid rgba(139,92,246,.3);border-radius:24px 24px 0 0;
   padding:20px 20px 36px;width:100%;max-width:480px;
-  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94)}
-.modal-overlay.open .frame-modal{transform:translateY(0)}
+  transform:translateY(100%);transition:transform .35s cubic-bezier(.25,.46,.45,.94)
+}
+.overlay.open .modal-sheet{transform:translateY(0)}
+.mpill{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 18px}
+.micon{font-size:44px;text-align:center;margin-bottom:10px}
+.mtitle{font-size:20px;font-weight:900;text-align:center;margin-bottom:6px;
+  background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.mdesc{font-size:12px;color:#9ca3af;text-align:center;line-height:1.5;margin-bottom:18px}
+.mperks{background:rgba(255,255,255,.05);border:1px solid rgba(139,92,246,.2);
+  border-radius:14px;padding:14px;margin-bottom:18px}
+.prow{display:flex;align-items:center;gap:10px;padding:5px 0}
+.prow+.prow{border-top:1px solid rgba(255,255,255,.06)}
+.picon{font-size:17px;width:26px;text-align:center;flex-shrink:0}
+.ptxt{font-size:12px;color:#e5e7eb}
+.psub{font-size:10px;color:#6b7280;margin-top:1px}
+.btn-p{width:100%;padding:14px;border-radius:14px;border:none;
+  background:linear-gradient(135deg,#6d28d9,#db2777);color:#fff;font-size:14px;font-weight:800;
+  cursor:pointer;margin-bottom:8px;transition:opacity .2s;letter-spacing:.3px}
+.btn-p:active{opacity:.8}
+.btn-s{width:100%;padding:10px;border-radius:14px;border:1px solid rgba(255,255,255,.1);
+  background:none;color:#6b7280;font-size:12px;cursor:pointer}
 
-/* ──────────── BOTTOM NAV ──────────── */
-.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,5,33,.96);
-  border-top:1px solid var(--border);display:flex;z-index:100;
-  padding-bottom:env(safe-area-inset-bottom);backdrop-filter:blur(20px)}
+/* ═══════════════════════════════
+   BOTTOM NAV
+═══════════════════════════════ */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:rgba(18,8,42,.97);border-top:1px solid rgba(139,92,246,.2);
+  display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);
+  backdrop-filter:blur(20px)
+}
 .nbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0;
-  cursor:pointer;border:none;background:none;color:var(--muted);transition:color .2s;position:relative}
-.nbtn.active{color:var(--purple)}
-.nicon{font-size:21px;line-height:1}
-.nlabel{font-size:9px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
-.nnotif{position:absolute;top:5px;right:50%;transform:translateX(12px);
-  width:7px;height:7px;background:var(--pink);border-radius:50%;border:2px solid var(--bg2)}
+  cursor:pointer;border:none;background:none;color:#6b7280;transition:color .2s;position:relative}
+.nbtn.active{color:#a855f7}
+.nicon{font-size:20px;line-height:1}
+.nlbl{font-size:9px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.nnotif{position:absolute;top:5px;right:50%;transform:translateX(11px);
+  width:7px;height:7px;background:#ec4899;border-radius:50%;border:2px solid #12082a}
 
-/* ──────────── MISC ──────────── */
-.online-pill{position:fixed;top:10px;right:14px;z-index:300;background:rgba(10,5,20,.9);
-  border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:10px;color:var(--muted);
-  display:none;align-items:center;gap:4px;backdrop-filter:blur(10px)}
+/* Online pill */
+.opill{position:fixed;top:10px;right:12px;z-index:300;background:rgba(18,8,42,.9);
+  border:1px solid rgba(139,92,246,.3);border-radius:20px;padding:3px 9px;
+  font-size:10px;color:#6b7280;display:none;align-items:center;gap:4px;backdrop-filter:blur(10px)}
 .opd{width:5px;height:5px;border-radius:50%;background:#10b981;animation:rdot 1.5s ease-in-out infinite}
-.toast{position:fixed;top:56px;left:50%;transform:translateX(-50%) translateY(-16px);
-  background:var(--card);border:1px solid var(--purple);border-radius:20px;padding:7px 18px;
-  font-size:12px;color:var(--white);z-index:999;opacity:0;transition:all .3s;
-  pointer-events:none;white-space:nowrap;max-width:88vw}
+
+/* Toast */
+.toast{position:fixed;top:52px;left:50%;transform:translateX(-50%) translateY(-14px);
+  background:#1e1040;border:1px solid #7c3aed;border-radius:20px;padding:7px 18px;
+  font-size:12px;color:#fff;z-index:999;opacity:0;transition:all .3s;
+  pointer-events:none;white-space:nowrap;max-width:88vw;
+  box-shadow:0 0 20px rgba(124,58,237,.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Sezione label */
+.sec-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;
+  margin:12px 0 8px;display:flex;align-items:center;gap:6px}
+.sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 </style>
 </head>
 <body>
 
 <!-- ░░ SPLASH ░░ -->
 <div id="splash" class="screen active">
-  <div class="sp-logo">KOUVERTE</div>
-  <div class="sp-sub">Chatta · Conosci · Condividi</div>
-  <div class="sp-spin"></div>
+  <!-- Sparkles decorativi -->
+  <div class="sparkles">
+    <div class="sp" style="width:8px;height:8px;background:#ec4899;top:15%;left:10%;animation-delay:0s"></div>
+    <div class="sp" style="width:6px;height:6px;background:#38bdf8;top:20%;left:80%;animation-delay:.5s"></div>
+    <div class="sp" style="width:10px;height:10px;background:#facc15;top:10%;left:50%;animation-delay:1s"></div>
+    <div class="sp" style="width:5px;height:5px;background:#4ade80;top:70%;left:15%;animation-delay:.3s"></div>
+    <div class="sp" style="width:7px;height:7px;background:#a78bfa;top:75%;left:75%;animation-delay:.7s"></div>
+    <div class="sp" style="width:6px;height:6px;background:#fb923c;top:35%;left:5%;animation-delay:1.2s"></div>
+    <div class="sp" style="width:8px;height:8px;background:#38bdf8;top:40%;left:90%;animation-delay:.9s"></div>
+    <div class="sp" style="width:4px;height:4px;background:#ec4899;top:85%;left:40%;animation-delay:.2s"></div>
+    <!-- Stelle a 4 punte -->
+    <div style="position:absolute;top:18%;left:18%;font-size:16px;color:#ec4899;animation:spkl 2.5s ease-in-out infinite">✦</div>
+    <div style="position:absolute;top:22%;right:22%;font-size:12px;color:#38bdf8;animation:spkl 2s ease-in-out infinite .4s">✦</div>
+    <div style="position:absolute;top:8%;left:60%;font-size:14px;color:#facc15;animation:spkl 3s ease-in-out infinite .8s">✦</div>
+    <div style="position:absolute;bottom:25%;left:12%;font-size:10px;color:#4ade80;animation:spkl 2.5s ease-in-out infinite .2s">✦</div>
+    <div style="position:absolute;bottom:20%;right:14%;font-size:18px;color:#a78bfa;animation:spkl 2s ease-in-out infinite .6s">✦</div>
+  </div>
+
+  <div class="kv-logo-wrap">
+    <!-- Badge 100% Anonimo -->
+    <div class="anon-badge-big">🔒 100%<br>ANONIMO</div>
+
+    <!-- Mascot SVG: omino con cappuccio -->
+    <div class="mascot">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Corpo/mantello -->
+        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
+        <path d="M22 72 Q20 95 50 96 Q80 95 78 72" fill="#1e1050"/>
+        <!-- Testa -->
+        <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
+        <!-- Cappuccio -->
+        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
+        <path d="M28 42 Q26 22 50 18 Q74 22 72 42" fill="none" stroke="#3b1fa8" stroke-width="1"/>
+        <!-- Ombra cappuccio -->
+        <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
+        <!-- Occhi (svegli, carini) -->
+        <circle cx="43" cy="46" r="5" fill="#fff"/>
+        <circle cx="57" cy="46" r="5" fill="#fff"/>
+        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
+        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
+        <!-- Riflesso occhi -->
+        <circle cx="45" cy="45" r="1" fill="#fff"/>
+        <circle cx="59" cy="45" r="1" fill="#fff"/>
+        <!-- Picco cappuccio -->
+        <path d="M46 18 Q50 8 54 18" fill="#1e0d50" stroke="#3b1fa8" stroke-width="1"/>
+        <!-- Glow intorno -->
+        <circle cx="50" cy="44" r="22" fill="none" stroke="#7c3aed" stroke-width="1" opacity=".4"/>
+      </svg>
+    </div>
+
+    <!-- Logo text -->
+    <div class="kv-title">KOUVERTE</div>
+    <div class="kv-tagline">CHATTA · CONOSCI · CONDIVIDI · SENZA ESSERE CHI SEI</div>
+    <div class="sp-spinner"></div>
+  </div>
 </div>
 
 <!-- ░░ HOME ░░ -->
 <div id="home" class="screen">
-  <div class="home-hero">
-    <div class="hero-top">
-      <div>
-        <div class="hero-logo">KOUVERTE</div>
-        <div class="hero-tagline">Chatta. Conosci. Condividi. Senza essere chi sei.</div>
+  <div class="home-hdr">
+    <div class="home-logo-row">
+      <!-- Mini mascot -->
+      <div class="home-mascot">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
+          <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
+          <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
+          <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
+          <circle cx="43" cy="46" r="5" fill="#fff"/>
+          <circle cx="57" cy="46" r="5" fill="#fff"/>
+          <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
+          <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
+          <circle cx="45" cy="45" r="1" fill="#fff"/>
+          <circle cx="59" cy="45" r="1" fill="#fff"/>
+        </svg>
       </div>
-      <div class="anon-badge">🔒 100% Anonimo</div>
-    </div>
-    <div class="chat-mondiale" style="margin-top:8px">
-      <div class="chat-mondiale-icon">🌍</div>
       <div>
-        <div class="chat-mondiale-text">CHAT MONDIALE</div>
-        <div style="font-size:9px;color:var(--muted)">Parla con persone da tutto il mondo!</div>
+        <div class="home-title">KOUVERTE</div>
+        <div class="home-sub">Chat Mondiale Anonima</div>
       </div>
+      <div class="home-anon">🔒 100% Anonimo</div>
     </div>
 
-    <!-- 4 pillars strip -->
-    <div class="promo-strip" style="margin-top:8px;margin-left:-16px;margin-right:-16px;padding:0 16px">
-      <div class="promo-box"><div class="promo-box-icon">💬</div><div class="promo-box-label">Stanze</div></div>
-      <div class="promo-box"><div class="promo-box-icon">🎭</div><div class="promo-box-label">Anonimo</div></div>
-      <div class="promo-box"><div class="promo-box-icon">🏆</div><div class="promo-box-label">Badge</div></div>
-      <div class="promo-box"><div class="promo-box-icon">⚡</div><div class="promo-box-label">In tempo reale</div></div>
-    </div>
-
-    <!-- Category filter -->
-    <div class="cat-scroll" id="catFilter">
-      <div class="cat-pill active" data-cat="all">✨ Tutte</div>
-      <div class="cat-pill" data-cat="it">🇮🇹 Italia</div>
-      <div class="cat-pill" data-cat="eu">🇪🇺 Europa</div>
-      <div class="cat-pill" data-cat="world">🌍 Mondo</div>
-      <div class="cat-pill" data-cat="gaming">🎮 Gaming</div>
-      <div class="cat-pill" data-cat="music">🎵 Musica</div>
-      <div class="cat-pill" data-cat="fun">😂 Fun</div>
+    <!-- Category tabs -->
+    <div class="cat-row" id="catFilter">
+      <div class="cat-btn active" data-cat="all">✨ Tutte</div>
+      <div class="cat-btn" data-cat="it">🇮🇹 Italia</div>
+      <div class="cat-btn" data-cat="eu">🇪🇺 Europa</div>
+      <div class="cat-btn" data-cat="world">🌍 Mondo</div>
+      <div class="cat-btn" data-cat="gaming">🎮 Gaming</div>
+      <div class="cat-btn" data-cat="music">🎵 Musica</div>
+      <div class="cat-btn" data-cat="fun">😂 Fun</div>
     </div>
   </div>
 
   <div class="home-body">
+    <div class="sec-label">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
-
-    <!-- Come funziona -->
-    <div class="section-lbl">Come funziona</div>
-    <div style="display:flex;gap:0;overflow-x:auto;scrollbar-width:none;padding-bottom:4px">
-      <div style="min-width:130px;text-align:center;padding:10px 6px">
-        <div style="width:36px;height:36px;border-radius:50%;background:#1a0535;border:2px solid var(--purple);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">1️⃣</div>
-        <div style="font-size:10px;font-weight:700;color:var(--purple);margin-bottom:2px">ENTRA</div>
-        <div style="font-size:9px;color:var(--muted)">Nessuna registrazione. 100% anonimo.</div>
-      </div>
-      <div style="min-width:16px;display:flex;align-items:center;color:var(--purple);font-size:14px">›</div>
-      <div style="min-width:130px;text-align:center;padding:10px 6px">
-        <div style="width:36px;height:36px;border-radius:50%;background:#0a1f2e;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">2️⃣</div>
-        <div style="font-size:10px;font-weight:700;color:var(--cyan);margin-bottom:2px">SCEGLI</div>
-        <div style="font-size:9px;color:var(--muted)">Trova la stanza che fa per te.</div>
-      </div>
-      <div style="min-width:16px;display:flex;align-items:center;color:var(--cyan);font-size:14px">›</div>
-      <div style="min-width:130px;text-align:center;padding:10px 6px">
-        <div style="width:36px;height:36px;border-radius:50%;background:#052318;border:2px solid var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">3️⃣</div>
-        <div style="font-size:10px;font-weight:700;color:var(--green);margin-bottom:2px">CHATTA</div>
-        <div style="font-size:9px;color:var(--muted)">Messaggi senza limiti (100 gratis).</div>
-      </div>
-      <div style="min-width:16px;display:flex;align-items:center;color:var(--green);font-size:14px">›</div>
-      <div style="min-width:130px;text-align:center;padding:10px 6px">
-        <div style="width:36px;height:36px;border-radius:50%;background:#1a1000;border:2px solid var(--yellow);display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:14px">4️⃣</div>
-        <div style="font-size:10px;font-weight:700;color:var(--yellow);margin-bottom:2px">GUADAGNA</div>
-        <div style="font-size:9px;color:var(--muted)">Badge, cornici, achievement!</div>
-      </div>
-    </div>
-
-    <!-- Bottom pillars -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:12px">
-      <div style="background:var(--card);border:1px solid rgba(16,185,129,.3);border-radius:var(--rs);padding:10px">
-        <div style="font-size:16px;margin-bottom:3px">🛡️</div>
-        <div style="font-size:11px;font-weight:700;color:#10b981">Sicuro e Rispettoso</div>
-        <div style="font-size:9px;color:var(--muted);margin-top:2px">La tua sicurezza è la nostra priorità</div>
-      </div>
-      <div style="background:var(--card);border:1px solid rgba(236,72,153,.3);border-radius:var(--rs);padding:10px">
-        <div style="font-size:16px;margin-bottom:3px">❤️</div>
-        <div style="font-size:11px;font-weight:700;color:var(--pink)">Comunità Positiva</div>
-        <div style="font-size:9px;color:var(--muted);margin-top:2px">Rispetto, empatia, nessun giudizio</div>
-      </div>
-    </div>
   </div>
 </div>
 
 <!-- ░░ CHAT ░░ -->
 <div id="chat" class="screen">
-  <div class="chat-hdr" id="chatHdr">
+  <div class="chat-hdr">
     <button class="chat-back" onclick="leaveRoom()">←</button>
     <div class="chat-hdr-icon" id="chatIcon"></div>
     <div class="chat-hdr-info">
       <div class="chat-hdr-name" id="chatName">Stanza</div>
-      <div class="chat-hdr-online" id="chatOnline">...</div>
+      <div class="chat-hdr-online">
+        <div class="chat-hdr-dot"></div>
+        <span id="chatOnline">...</span>
+        <div class="chat-hdr-dots" id="chatDots">
+          <div class="chat-hdr-dot2" style="background:#ec4899"></div>
+          <div class="chat-hdr-dot2" style="background:#38bdf8;animation-delay:.3s"></div>
+          <div class="chat-hdr-dot2" style="background:#4ade80;animation-delay:.6s"></div>
+        </div>
+      </div>
     </div>
-    <div class="chat-hdr-anon" id="chatAnonBadge">🎭 Anon</div>
   </div>
+
   <div class="chat-msgs" id="chatMsgs"></div>
+
   <div class="free-bar" id="freeBar">
-    <span class="free-bar-label" id="freeLabel">100 messaggi gratuiti</span>
-    <div class="free-bar-track"><div class="free-bar-fill" id="freeFill" style="width:0%"></div></div>
-    <span class="free-bar-label" id="freeCount">0/100</span>
+    <span class="fb-lbl" id="fbLabel">100 msg gratuiti</span>
+    <div class="fb-track"><div class="fb-fill" id="fbFill" style="width:0%"></div></div>
+    <span class="fb-lbl" id="fbCount">0/100</span>
   </div>
+
   <div class="chat-bar">
     <div class="chat-bar-row">
-      <textarea class="cinput" id="msgInput" placeholder="Scrivi un messaggio..." rows="1"></textarea>
-      <button class="csend" onclick="sendMessage()">➤</button>
+      <textarea class="cinput" id="msgInput" placeholder="Type anonymously..." rows="1"></textarea>
+      <button class="csend" onclick="sendMsg()">➤</button>
     </div>
   </div>
 </div>
 
-<!-- ░░ PROFILO ░░ -->
+<!-- ░░ PROFILE ░░ -->
 <div id="profile" class="screen">
   <div class="prof-hero">
-    <div class="prof-avatar" id="profAvatar" style="background:linear-gradient(135deg,#581c87,#a855f7);box-shadow:0 0 30px rgba(168,85,247,.4)">🎭</div>
+    <div class="prof-mascot">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
+        <path d="M22 72 Q20 95 50 96 Q80 95 78 72" fill="#1e1050"/>
+        <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
+        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
+        <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
+        <circle cx="43" cy="46" r="5" fill="#fff"/>
+        <circle cx="57" cy="46" r="5" fill="#fff"/>
+        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
+        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
+        <circle cx="45" cy="45" r="1" fill="#fff"/>
+        <circle cx="59" cy="45" r="1" fill="#fff"/>
+        <path d="M46 18 Q50 8 54 18" fill="#1e0d50" stroke="#3b1fa8" stroke-width="1"/>
+        <circle cx="50" cy="44" r="22" fill="none" stroke="#7c3aed" stroke-width="1.5" opacity=".5"/>
+      </svg>
+    </div>
     <div class="prof-name" id="profName">Anonimo</div>
     <div class="prof-anon">🔒 Nessun dato personale salvato</div>
-    <div id="premiumBadge" style="display:none" class="premium-badge">⭐ Premium — Abbonato</div>
+    <div id="premBadge" style="display:none" class="prem-badge">⭐ Premium</div>
   </div>
+
   <div class="prof-stats">
     <div class="stat-b"><div class="stat-n" id="stMsgs">0</div><div class="stat-l">Messaggi</div></div>
     <div class="stat-b"><div class="stat-n" id="stRooms">0</div><div class="stat-l">Stanze</div></div>
     <div class="stat-b"><div class="stat-n" id="stBadges">0</div><div class="stat-l">Badge</div></div>
   </div>
 
-  <!-- Frames / Cornici -->
-  <div class="frames-section">
-    <div class="section-lbl">🖼️ Cornici profilo</div>
+  <div class="frames-sec">
+    <div class="sec-lbl">🖼️ Cornici profilo</div>
     <div class="frames-grid" id="framesGrid"></div>
   </div>
-
-  <!-- Badges -->
-  <div class="badges-section">
-    <div class="section-lbl">🏆 Badge e Achievement</div>
+  <div class="badges-sec">
+    <div class="sec-lbl">🏆 Badge</div>
     <div class="badges-grid" id="badgesGrid"></div>
   </div>
 </div>
 
 <!-- ░░ PAYWALL MODAL ░░ -->
-<div class="modal-overlay" id="paywallOverlay">
+<div class="overlay" id="paywallOv">
   <div class="modal-sheet">
-    <div class="modal-pill"></div>
-    <div class="modal-icon">🎭✨</div>
-    <div class="modal-title">Hai usato i 100 messaggi gratuiti!</div>
-    <div class="modal-desc">Continua a chattare senza limiti con KOUVERTE Premium.<br>Solo <strong style="color:var(--purple)">1€ al mese</strong> — cancella quando vuoi.</div>
-    <div class="modal-perks">
-      <div class="perk-row">
-        <div class="perk-icon">💬</div>
-        <div><div class="perk-text">Messaggi illimitati</div><div class="perk-sub">Chatta senza limiti in tutte le stanze</div></div>
-      </div>
-      <div class="perk-row">
-        <div class="perk-icon">🖼️</div>
-        <div><div class="perk-text">Cornici premium esclusive</div><div class="perk-sub">Gold, Diamond e cornici animate</div></div>
-      </div>
-      <div class="perk-row">
-        <div class="perk-icon">🏆</div>
-        <div><div class="perk-text">Badge Premium</div><div class="perk-sub">Mostra il tuo status nella chat</div></div>
-      </div>
-      <div class="perk-row">
-        <div class="perk-icon">⭐</div>
-        <div><div class="perk-text">Nome in evidenza</div><div class="perk-sub">Il tuo nome brilla tra tutti gli utenti</div></div>
-      </div>
+    <div class="mpill"></div>
+    <div class="micon">🎭✨</div>
+    <div class="mtitle">100 messaggi usati!</div>
+    <div class="mdesc">Continua con KOUVERTE Premium.<br><strong style="color:#c084fc">Solo 1€/mese</strong> — cancella quando vuoi.</div>
+    <div class="mperks">
+      <div class="prow"><div class="picon">💬</div><div><div class="ptxt">Messaggi illimitati</div><div class="psub">Chatta senza limiti</div></div></div>
+      <div class="prow"><div class="picon">🖼️</div><div><div class="ptxt">Cornici Gold, Diamond, Fiamma</div><div class="psub">Avatar in evidenza</div></div></div>
+      <div class="prow"><div class="picon">⭐</div><div><div class="ptxt">Nome brillante in chat</div><div class="psub">Tutti vedono che sei Premium</div></div></div>
     </div>
-    <button class="btn-primary" onclick="startPayment()">⭐ Abbonati per 1€/mese</button>
-    <button class="btn-secondary" onclick="closePaywall()">Non adesso</button>
+    <button class="btn-p" onclick="startPayment()">⭐ Premium — 1€/mese</button>
+    <button class="btn-s" onclick="closePaywall()">Non adesso</button>
   </div>
 </div>
 
-<!-- ░░ FRAME SHOP MODAL ░░ -->
-<div class="modal-overlay" id="frameOverlay">
-  <div class="frame-modal">
-    <div class="modal-pill"></div>
-    <div class="modal-title" id="frameMTitle" style="font-size:18px;margin-bottom:8px"></div>
-    <div class="modal-desc" id="frameMDesc"></div>
-    <button class="btn-primary" id="frameMBtn" style="margin-top:12px" onclick="buyFrame()"></button>
-    <button class="btn-secondary" onclick="closeFrameModal()" style="margin-top:4px">Annulla</button>
+<!-- ░░ FRAME MODAL ░░ -->
+<div class="overlay" id="frameOv">
+  <div class="modal-sheet">
+    <div class="mpill"></div>
+    <div class="mtitle" id="fmTitle" style="font-size:17px;margin-bottom:8px"></div>
+    <div class="mdesc" id="fmDesc"></div>
+    <button class="btn-p" id="fmBtn" style="margin-top:12px" onclick="buyFrame()"></button>
+    <button class="btn-s" onclick="closeFrameM()" style="margin-top:4px">Annulla</button>
   </div>
 </div>
 
 <!-- ░░ NAV ░░ -->
 <nav class="bnav">
   <button class="nbtn active" data-sc="home" onclick="showScreen('home',this)">
-    <div class="nicon">🏠</div><div class="nlabel">Stanze</div>
+    <div class="nicon">🏠</div><div class="nlbl">Stanze</div>
   </button>
-  <button class="nbtn" data-sc="chat" id="navChat" onclick="goToChat(this)" style="display:none">
-    <div class="nicon">💬</div><div class="nlabel">Chat</div>
+  <button class="nbtn" data-sc="chat" id="navChat" onclick="goChat(this)" style="display:none">
+    <div class="nicon">💬</div><div class="nlbl">Chat</div>
     <div class="nnotif" id="chatNotif" style="display:none"></div>
   </button>
   <button class="nbtn" data-sc="profile" onclick="showScreen('profile',this)">
-    <div class="nicon">🎭</div><div class="nlabel">Profilo</div>
+    <div class="nicon">🎭</div><div class="nlbl">Profilo</div>
   </button>
 </nav>
 
-<!-- Online pill -->
-<div class="online-pill" id="onlinePill" style="display:none">
-  <div class="opd"></div><span id="onlineCount">0</span> online
-</div>
-
-<!-- Toast -->
+<div class="opill" id="opill"><div class="opd"></div><span id="oCount">0</span> online</div>
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════
-// CONFIG
-// ══════════════════════════════════════
-const FREE_MSG_LIMIT = 100;
+// ══ CONFIG ══
+const FREE_LIMIT = 100;
 
-const NEON_COLORS = [
+const NEON = [
   '#e879f9','#38bdf8','#4ade80','#fb923c',
   '#facc15','#f472b6','#a78bfa','#34d399',
   '#60a5fa','#f87171','#2dd4bf','#c084fc'
 ];
 
-// Stanze: Italia per regioni + mondo + mood globali
+// Avatar faccine stile screenshot
+const FACE_EMOJIS = ['😈','👻','🤖','👾','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂','🎭'];
+
 const ROOMS = [
-  // ── ITALIA ──
-  { id:'it-generale',  name:'🇮🇹 Italia',        emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani!',  cat:'it',     color:'#10b981', tag:'Italia' },
-  { id:'it-nord',      name:'Nord Italia',       emoji:'🏔️', desc:'Piemonte, Lombardia, Veneto, Friuli...', cat:'it',     color:'#10b981', tag:'Nord' },
-  { id:'it-centro',    name:'Centro Italia',     emoji:'🌺', desc:'Toscana, Lazio, Umbria, Marche...',      cat:'it',     color:'#10b981', tag:'Centro' },
-  { id:'it-sud',       name:'Sud Italia',        emoji:'☀️', desc:'Campania, Puglia, Calabria, Basilicata', cat:'it',     color:'#10b981', tag:'Sud' },
-  { id:'it-sicilia',   name:'Sicilia & Sardegna',emoji:'🌋', desc:"L'isola che non dorme mai!",             cat:'it',     color:'#10b981', tag:'Isole' },
-  // ── EUROPA ──
-  { id:'eu-generale',  name:'🇪🇺 Europa',         emoji:'🇪🇺', desc:'Chat per tutti gli europei!',           cat:'eu',     color:'#3b82f6', tag:'Europa' },
-  { id:'eu-est',       name:'Est Europa',        emoji:'🌅', desc:'Polonia, Romania, Ucraina, Bulgaria...', cat:'eu',     color:'#3b82f6', tag:'Est EU' },
-  { id:'eu-ovest',     name:'Ovest Europa',      emoji:'🗼', desc:'Francia, Spagna, Germania, UK...',       cat:'eu',     color:'#3b82f6', tag:'Ovest EU' },
-  // ── MONDO ──
-  { id:'w-generale',   name:'🌍 Chat Mondiale',  emoji:'🌍', desc:'Parla con persone da ogni angolo del mondo!', cat:'world', color:'#a855f7', tag:'Global' },
-  { id:'w-americhe',   name:'Americhe',          emoji:'🌎', desc:'Nord e Sud America, Canada, Brasile...',  cat:'world',  color:'#a855f7', tag:'Americhe' },
-  { id:'w-asia',       name:'Asia & Oceania',    emoji:'🌏', desc:'Giappone, India, Australia, Cina...',    cat:'world',  color:'#a855f7', tag:'Asia' },
-  { id:'w-africa',     name:'Africa & M. Oriente',emoji:'🌍', desc:'Tutto il continente africano e medio oriente', cat:'world', color:'#a855f7', tag:'Africa' },
-  // ── MOOD (globali) ──
-  { id:'chiacchiere',  name:'Chiacchiere',       emoji:'💬', desc:'Parla di tutto con tutti!',               cat:'fun',    color:'#ec4899', tag:'Generale' },
-  { id:'gaming',       name:'Gaming',            emoji:'🎮', desc:'Gamer unite! Console, PC, mobile.',       cat:'gaming', color:'#60a5fa', tag:'Gaming' },
-  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Artisti, fan, amanti della musica.',      cat:'music',  color:'#4ade80', tag:'Musica' },
-  { id:'notte-fonda',  name:'Notte Fonda',       emoji:'🌙', desc:'La notte porta pensieri profondi...',     cat:'fun',    color:'#78716c', tag:'Notturno' },
-  { id:'divertimento', name:'Divertimento',      emoji:'😂', desc:'Meme, humor, risate assicurate!',         cat:'fun',    color:'#fb923c', tag:'Fun' },
-  { id:'amicizia',     name:'Amicizia',          emoji:'❤️', desc:'Nuove amicizie, nuove storie.',          cat:'fun',    color:'#f472b6', tag:'Social' },
+  { id:'it-generale',  name:'🇮🇹 Italia',        emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani',   cat:'it',    color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'it-nord',      name:'Nord Italia',       emoji:'🏔️', desc:'Piemonte, Lombardia, Veneto...',         cat:'it',    color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#a7f3d0' },
+  { id:'it-centro',    name:'Centro Italia',     emoji:'🌺', desc:'Toscana, Lazio, Umbria...',              cat:'it',    color:'#10b981', dot1:'#34d399',dot2:'#6ee7b7',dot3:'#10b981' },
+  { id:'it-sud',       name:'Sud Italia',        emoji:'☀️', desc:'Campania, Puglia, Calabria...',          cat:'it',    color:'#10b981', dot1:'#fb923c',dot2:'#10b981',dot3:'#34d399' },
+  { id:'it-sicilia',   name:'Sicilia & Sardegna',emoji:'🌋', desc:"L'isola che non dorme mai",              cat:'it',    color:'#10b981', dot1:'#f472b6',dot2:'#10b981',dot3:'#34d399' },
+  { id:'eu-generale',  name:'🇪🇺 Europa',         emoji:'🇪🇺', desc:'Chat per tutti gli europei',            cat:'eu',    color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'eu-est',       name:'Est Europa',        emoji:'🌅', desc:'Polonia, Romania, Ucraina...',           cat:'eu',    color:'#60a5fa', dot1:'#38bdf8',dot2:'#60a5fa',dot3:'#93c5fd' },
+  { id:'eu-ovest',     name:'Ovest Europa',      emoji:'🗼', desc:'Francia, Spagna, Germania, UK...',       cat:'eu',    color:'#60a5fa', dot1:'#7dd3fc',dot2:'#60a5fa',dot3:'#38bdf8' },
+  { id:'w-generale',   name:'🌍 Chat Mondiale',  emoji:'🌍', desc:'Parla con persone da tutto il mondo!',   cat:'world', color:'#a78bfa', dot1:'#a78bfa',dot2:'#c084fc',dot3:'#e879f9' },
+  { id:'w-americhe',   name:'Americhe',          emoji:'🌎', desc:'Nord e Sud America, Canada...',          cat:'world', color:'#a78bfa', dot1:'#c084fc',dot2:'#a78bfa',dot3:'#e879f9' },
+  { id:'w-asia',       name:'Asia & Oceania',    emoji:'🌏', desc:'Giappone, India, Australia...',          cat:'world', color:'#a78bfa', dot1:'#e879f9',dot2:'#c084fc',dot3:'#a78bfa' },
+  { id:'w-africa',     name:'Africa & M. Oriente',emoji:'🌍', desc:'Tutto il continente africano...',       cat:'world', color:'#a78bfa', dot1:'#fb923c',dot2:'#a78bfa',dot3:'#c084fc' },
+  { id:'late-night',   name:'Late Night Talks',  emoji:'🌙', desc:'La notte porta pensieri profondi...',    cat:'fun',   color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
+  { id:'random',       name:'Random Room',       emoji:'💬', desc:'Anything can happen here 😄',            cat:'fun',   color:'#ec4899', dot1:'#ec4899',dot2:'#f472b6',dot3:'#fb7185' },
+  { id:'gaming',       name:'Gaming Room',       emoji:'🎮', desc:'Gamer unite! Console, PC, mobile.',      cat:'gaming',color:'#3b82f6', dot1:'#3b82f6',dot2:'#60a5fa',dot3:'#93c5fd' },
+  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Artisti, fan, amanti della musica.',     cat:'music', color:'#4ade80', dot1:'#4ade80',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'divertimento', name:'Divertimento',      emoji:'😂', desc:'Meme, humor, risate assicurate!',        cat:'fun',   color:'#fb923c', dot1:'#fb923c',dot2:'#fbbf24',dot3:'#fcd34d' },
+  { id:'amicizia',     name:'Amicizia',          emoji:'❤️', desc:'Nuove amicizie, nuove storie.',         cat:'fun',   color:'#f472b6', dot1:'#f472b6',dot2:'#ec4899',dot3:'#fb7185' },
 ];
 
-const FRAMES_CONFIG = [
-  { id:'none',     name:'Nessuna',   emoji:'🎭', price:0,    premium:false, css:'' },
-  { id:'silver',   name:'Silver',    emoji:'🥈', price:0,    premium:false, css:'border:2px solid silver;box-shadow:0 0 6px silver' },
-  { id:'gold',     name:'Gold',      emoji:'🥇', price:199,  premium:true,  css:'border:2px solid gold;box-shadow:0 0 10px gold' },
-  { id:'diamond',  name:'Diamond',   emoji:'💎', price:499,  premium:true,  css:'border:2px solid #38bdf8;box-shadow:0 0 14px #38bdf8,0 0 30px rgba(56,189,248,.4)' },
-  { id:'flame',    name:'Fiamma',    emoji:'🔥', price:299,  premium:true,  css:'border:2px solid #f97316;box-shadow:0 0 10px #f97316' },
-  { id:'purple',   name:'Viola',     emoji:'💜', price:0,    premium:false, css:'border:2px solid #a855f7;box-shadow:0 0 8px #a855f7' },
+const FRAMES_CFG = [
+  { id:'none',    name:'Nessuna',  emoji:'🎭', price:0,   prem:false, css:'' },
+  { id:'silver',  name:'Silver',   emoji:'🥈', price:0,   prem:false, css:'border:2px solid #94a3b8;box-shadow:0 0 8px #94a3b8' },
+  { id:'purple',  name:'Viola',    emoji:'💜', price:0,   prem:false, css:'border:2px solid #a855f7;box-shadow:0 0 10px #a855f7' },
+  { id:'gold',    name:'Gold',     emoji:'🥇', price:30,  prem:true,  css:'border:2px solid #fbbf24;box-shadow:0 0 12px #fbbf24' },
+  { id:'flame',   name:'Fiamma',   emoji:'🔥', price:40,  prem:true,  css:'border:2px solid #f97316;box-shadow:0 0 12px #f97316' },
+  { id:'diamond', name:'Diamond',  emoji:'💎', price:50,  prem:true,  css:'border:2px solid #38bdf8;box-shadow:0 0 14px #38bdf8' },
 ];
 
-const BADGES_DEF = [
-  { id:'first_msg',   emoji:'💬', name:'Prima Parola'   },
-  { id:'chatter',     emoji:'🔥', name:'Chiacchierone'  },
-  { id:'globe',       emoji:'🌍', name:'Cittadino Mondo' },
-  { id:'explorer',    emoji:'🗺️', name:'Esploratore'    },
-  { id:'nocturnal',   emoji:'🌙', name:'Nottambulo'     },
-  { id:'legend',      emoji:'👑', name:'Leggenda'       },
-  { id:'premium',     emoji:'⭐', name:'Premium'        },
-  { id:'italy',       emoji:'🇮🇹', name:'Made in Italy'  },
-  { id:'friendly',    emoji:'❤️', name:'Amichevole'    },
+const BADGES = [
+  { id:'first_msg',  emoji:'💬', name:'Prima Parola'   },
+  { id:'chatter',    emoji:'🔥', name:'Chiacchierone'  },
+  { id:'globe',      emoji:'🌍', name:'Cittadino Mondo' },
+  { id:'explorer',   emoji:'🗺️', name:'Esploratore'    },
+  { id:'nocturnal',  emoji:'🌙', name:'Nottambulo'     },
+  { id:'legend',     emoji:'👑', name:'Leggenda'       },
+  { id:'premium',    emoji:'⭐', name:'Premium'        },
+  { id:'italy',      emoji:'🇮🇹', name:'Made in Italy'  },
+  { id:'friendly',   emoji:'❤️', name:'Amichevole'    },
 ];
 
-// ══════════════════════════════════════
-// STATE
-// ══════════════════════════════════════
-let socket = null, currentUser = null, currentRoom = null;
-let typingTimer = null, isTyping = false, typingUsers = {};
-let roomOnlineMap = {}, lastSender = null, activeFilter = 'all';
-let selectedFrameId = null; // per il modal shop
+// ══ STATE ══
+let socket=null, user=null, room=null;
+let tTimer=null, isTyping=false, typingUsers={};
+let roomOnline={}, lastSender=null, activeCat='all';
+let selFrameId=null;
+// Preview messaggi per ogni stanza (ultimi 3-4 per la card)
+let roomPreviews={};
 
-// ══════════════════════════════════════
-// INIT
-// ══════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  const tg = window.Telegram?.WebApp;
-  if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#06020f'); tg.setBackgroundColor('#06020f'); }
-  initUser();
-  connectSocket();
-  renderRooms('all');
-  renderFrames();
-  renderBadges();
-  setupInput();
-  setupCatFilter();
-  setTimeout(hideSplash, 1100);
+// ══ INIT ══
+document.addEventListener('DOMContentLoaded',()=>{
+  const tg=window.Telegram?.WebApp;
+  if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
+  initUser(); connectSocket(); renderRooms('all'); renderFrames(); renderBadges(); setupInput();
+  document.getElementById('catFilter').addEventListener('click',e=>{
+    const b=e.target.closest('.cat-btn'); if(!b) return;
+    document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active'); activeCat=b.dataset.cat; renderRooms(activeCat);
+  });
+  setTimeout(hideSplash,1200);
 });
 
-function hideSplash() {
-  const s = document.getElementById('splash');
-  s.style.transition = 'opacity .4s'; s.style.opacity = '0';
-  setTimeout(() => { s.classList.remove('active'); showScreen('home'); }, 400);
+function hideSplash(){
+  const s=document.getElementById('splash');
+  s.style.transition='opacity .5s'; s.style.opacity='0';
+  setTimeout(()=>{s.classList.remove('active');showScreen('home');},500);
 }
 
-// ══════════════════════════════════════
-// USER
-// ══════════════════════════════════════
-function initUser() {
-  const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const stored = getLS('kv3_user');
-  if (stored) {
-    currentUser = stored;
-  } else {
-    const uid = tgU?.id ? 'tg_' + tgU.id : 'anon_' + Math.random().toString(36).slice(2,9);
-    const masks = ['🎭','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂','🐻','🦝'];
-    currentUser = {
-      id: uid,
-      name: tgU ? (tgU.first_name || 'Utente') : 'Anon_' + uid.slice(-4),
-      mask: masks[Math.floor(Math.random() * masks.length)],
-      color: getColor(uid),
-      msgCount: 0,
-      freeUsed: 0,
-      isPremium: false,
-      premiumExpiry: 0,
-      roomsVisited: [],
-      badges: [],
-      ownedFrames: ['none','silver','purple'],
-      activeFrame: 'none',
-      joinedAt: Date.now()
+// ══ USER ══
+function initUser(){
+  const tgU=window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const stored=getLS('kv4_user');
+  if(stored){ user=stored; }
+  else{
+    const uid=tgU?.id?'tg_'+tgU.id:'anon_'+Math.random().toString(36).slice(2,9);
+    const faces=FACE_EMOJIS;
+    user={
+      id:uid, name:tgU?(tgU.first_name||'Utente'):'Anon_'+uid.slice(-4),
+      face:faces[Math.floor(Math.random()*faces.length)],
+      color:getColor(uid), msgCount:0, freeUsed:0,
+      isPremium:false, premExpiry:0,
+      roomsVisited:[], badges:[], ownedFrames:['none','silver','purple'], activeFrame:'none',
+      joinedAt:Date.now()
     };
-    setLS('kv3_user', currentUser);
+    setLS('kv4_user',user);
   }
   updateProfileUI();
+}
+
+function updateProfileUI(){
+  document.getElementById('profName').textContent=user.name;
+  document.getElementById('stMsgs').textContent=user.msgCount||0;
+  document.getElementById('stRooms').textContent=(user.roomsVisited||[]).length;
+  document.getElementById('stBadges').textContent=(user.badges||[]).length;
+  document.getElementById('premBadge').style.display=isPrem()?'inline-flex':'none';
   updateFreeBar();
 }
 
-function updateProfileUI() {
-  const av = document.getElementById('profAvatar');
-  av.textContent = currentUser.mask;
-  av.style.background = `linear-gradient(135deg,${currentUser.color}33,${currentUser.color}99)`;
-  av.style.boxShadow = `0 0 28px ${currentUser.color}44`;
-  // Apply active frame to profile avatar
-  const fCfg = FRAMES_CONFIG.find(f => f.id === currentUser.activeFrame);
-  if (fCfg?.css) av.style.cssText += ';' + fCfg.css;
-  document.getElementById('profName').textContent = currentUser.name;
-  document.getElementById('stMsgs').textContent = currentUser.msgCount || 0;
-  document.getElementById('stRooms').textContent = (currentUser.roomsVisited || []).length;
-  document.getElementById('stBadges').textContent = (currentUser.badges || []).length;
-  document.getElementById('premiumBadge').style.display = isPremium() ? 'inline-flex' : 'none';
+function isPrem(){ return user.isPremium && Date.now()<(user.premExpiry||0); }
+
+function getColor(uid){
+  let h=0; for(const c of String(uid)) h=(h*31+c.charCodeAt(0))&0xffff;
+  return NEON[h%NEON.length];
 }
 
-function isPremium() {
-  return currentUser.isPremium && Date.now() < (currentUser.premiumExpiry || 0);
+function getFace(uid){
+  let h=0; for(const c of String(uid)) h=(h*37+c.charCodeAt(0)+7)&0xffff;
+  return FACE_EMOJIS[h%FACE_EMOJIS.length];
 }
 
-function getColor(uid) {
-  let h = 0;
-  for (const c of String(uid)) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return NEON_COLORS[h % NEON_COLORS.length];
+// ══ FREE BAR ══
+function updateFreeBar(){
+  const bar=document.getElementById('freeBar');
+  if(isPrem()){bar.style.display='none';return;}
+  bar.style.display='flex';
+  const used=user.freeUsed||0, pct=Math.min((used/FREE_LIMIT)*100,100);
+  document.getElementById('fbFill').style.width=pct+'%';
+  document.getElementById('fbCount').textContent=used+'/'+FREE_LIMIT;
+  const left=FREE_LIMIT-used;
+  const lbl=document.getElementById('fbLabel');
+  lbl.textContent=left>0?left+' msg gratuiti':'Limite raggiunto';
+  lbl.className='fb-lbl'+(left<=20?' warn':'');
 }
 
-// ══════════════════════════════════════
-// FREE BAR
-// ══════════════════════════════════════
-function updateFreeBar() {
-  if (isPremium()) {
-    document.getElementById('freeBar').style.display = 'none'; return;
-  }
-  const used = currentUser.freeUsed || 0;
-  const pct = Math.min((used / FREE_MSG_LIMIT) * 100, 100);
-  document.getElementById('freeFill').style.width = pct + '%';
-  document.getElementById('freeCount').textContent = used + '/' + FREE_MSG_LIMIT;
-  const lbl = document.getElementById('freeLabel');
-  const left = FREE_MSG_LIMIT - used;
-  lbl.textContent = left > 0 ? left + ' messaggi gratuiti rimasti' : '0 messaggi rimasti';
-  lbl.className = 'free-bar-label' + (left <= 20 ? ' warn' : '');
-}
+// ══ SOCKET ══
+function connectSocket(){
+  socket=io({transports:['websocket','polling']});
+  socket.on('connect',()=>{ if(room) socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); });
+  socket.on('chat-message',({roomId,msg})=>{
+    // Aggiorna preview nella card
+    roomPreviews[roomId]=roomPreviews[roomId]||[];
+    roomPreviews[roomId].push(msg);
+    if(roomPreviews[roomId].length>4) roomPreviews[roomId].shift();
 
-// ══════════════════════════════════════
-// SOCKET
-// ══════════════════════════════════════
-function connectSocket() {
-  socket = io({ transports: ['websocket','polling'] });
-  socket.on('connect', () => {
-    if (currentRoom) socket.emit('join-chat-room', { roomId: currentRoom.id, user: pubUser() });
-  });
-  socket.on('chat-message', ({ roomId, msg }) => {
-    if (currentRoom?.id === roomId) {
-      if (msg.userId !== currentUser.id) { appendMsg(msg); scrollBot(); }
+    if(room?.id===roomId){
+      if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
     } else {
-      document.getElementById('chatNotif').style.display = 'block';
+      document.getElementById('chatNotif').style.display='block';
     }
   });
-  socket.on('chat-typing', ({ roomId, user }) => {
-    if (roomId !== currentRoom?.id || user.id === currentUser.id) return;
-    typingUsers[user.id] = user; renderTyping();
+  socket.on('chat-typing',({roomId,u})=>{
+    if(roomId!==room?.id||u?.id===user.id) return;
+    typingUsers[u.id]=u; renderTyping();
   });
-  socket.on('chat-stop-typing', ({ roomId, userId }) => {
-    if (roomId !== currentRoom?.id) return;
+  socket.on('chat-stop-typing',({roomId,userId})=>{
+    if(roomId!==room?.id) return;
     delete typingUsers[userId]; renderTyping();
   });
-  socket.on('room-online', ({ roomId, count }) => {
-    roomOnlineMap[roomId] = count;
-    const el = document.getElementById('ron_' + roomId);
-    if (el) el.textContent = count + ' online';
-    if (currentRoom?.id === roomId) document.getElementById('chatOnline').textContent = count + ' online';
+  socket.on('room-online',({roomId,count})=>{
+    roomOnline[roomId]=count;
+    const el=document.getElementById('ron_'+roomId);
+    if(el) el.textContent=count;
+    if(room?.id===roomId) document.getElementById('chatOnline').textContent=count+' online';
   });
-  socket.on('global-online', ({ count }) => {
-    document.getElementById('onlineCount').textContent = count;
-    document.getElementById('onlinePill').style.display = 'flex';
+  socket.on('global-online',({count})=>{
+    document.getElementById('oCount').textContent=count;
+    document.getElementById('opill').style.display='flex';
   });
-  socket.on('chat-history', ({ roomId, messages }) => {
-    if (roomId !== currentRoom?.id) return;
-    document.getElementById('chatMsgs').innerHTML = '';
-    lastSender = null;
-    (messages || []).forEach(m => appendMsg(m));
-    addSys('Benvenuto in ' + currentRoom.name + ' 👋 Solo tu, nessun giudizio.');
+  socket.on('chat-history',({roomId,messages})=>{
+    if(roomId!==room?.id) return;
+    document.getElementById('chatMsgs').innerHTML='';
+    lastSender=null;
+    // Init preview dalla storia
+    roomPreviews[roomId]=(messages||[]).slice(-4);
+    (messages||[]).forEach(m=>appendMsg(m));
+    addSys('Benvenuto in '+room.name+' 👋  Sei anonimo.');
     scrollBot();
   });
 }
 
-function pubUser() {
-  return {
-    id: currentUser.id, name: currentUser.name,
-    color: currentUser.color, mask: currentUser.mask,
-    frame: currentUser.activeFrame, isPremium: isPremium()
-  };
+function pubUser(){
+  return {id:user.id,name:user.name,color:user.color,face:user.face,
+    frame:user.activeFrame,isPremium:isPrem()};
 }
 
-// ══════════════════════════════════════
-// ROOMS
-// ══════════════════════════════════════
-function setupCatFilter() {
-  document.getElementById('catFilter').addEventListener('click', e => {
-    const p = e.target.closest('.cat-pill');
-    if (!p) return;
-    document.querySelectorAll('.cat-pill').forEach(c => c.classList.remove('active'));
-    p.classList.add('active');
-    activeFilter = p.dataset.cat;
-    renderRooms(activeFilter);
-  });
-}
-
-function renderRooms(cat) {
-  const filtered = cat === 'all' ? ROOMS : ROOMS.filter(r => r.cat === cat);
-  // Group by category for 'all'
-  let html = '';
-  if (cat === 'all') {
-    const groups = [
-      { label:'🇮🇹 Italia', cats:['it'] },
-      { label:'🌍 Mondo & Europa', cats:['eu','world'] },
-      { label:'💬 Per mood', cats:['fun','gaming','music'] },
+// ══ ROOMS ══
+function renderRooms(cat){
+  const filtered=cat==='all'?ROOMS:ROOMS.filter(r=>r.cat===cat);
+  let html='';
+  if(cat==='all'){
+    const groups=[
+      {label:'🇮🇹 Italia',cats:['it']},
+      {label:'🌍 Mondo & Europa',cats:['eu','world']},
+      {label:'💬 Per mood',cats:['fun','gaming','music']},
     ];
-    for (const g of groups) {
-      const rooms = ROOMS.filter(r => g.cats.includes(r.cat));
-      html += `<div class="section-lbl">${g.label}</div>`;
-      html += rooms.map(roomCardHtml).join('');
+    for(const g of groups){
+      const rooms=ROOMS.filter(r=>g.cats.includes(r.cat));
+      html+=`<div class="sec-label">${g.label}</div>`;
+      html+=rooms.map(roomCard).join('');
     }
   } else {
-    html = filtered.map(roomCardHtml).join('');
+    html=filtered.map(roomCard).join('');
   }
-  document.getElementById('roomsList').innerHTML = html;
+  document.getElementById('roomsList').innerHTML=html;
 }
 
-function roomCardHtml(r) {
-  const cnt = roomOnlineMap[r.id] ?? 0;
+function roomCard(r){
+  const cnt=roomOnline[r.id]??0;
+  const previews=roomPreviews[r.id]||[];
+  // Genera 3 preview finti se non ci sono messaggi reali
+  const defaultPreviews=[
+    {name:'MidnightMuse',color:'#e879f9',face:'😈',text:'Ciao a tutti! 👋'},
+    {name:'StarGazer',   color:'#38bdf8',face:'👻',text:'Qualcuno sveglio? 🌙'},
+    {name:'DreamWalker', color:'#4ade80',face:'🤖',text:'Qui si sta bene 😊'},
+  ];
+  const msgs=previews.length>=2?previews.slice(-3):defaultPreviews;
+
   return `
-  <div class="room-card" onclick="enterRoom('${r.id}')" style="border-color:${r.color}33">
-    <div class="room-glow" style="background:radial-gradient(ellipse at 0% 50%,${r.color}18,transparent 60%)"></div>
-    <div class="room-icon" style="background:linear-gradient(135deg,${r.color}44,${r.color}88);box-shadow:0 4px 16px ${r.color}33">${r.emoji}</div>
-    <div class="room-info">
-      <div class="room-name">${r.name}</div>
-      <div class="room-desc">${r.desc}</div>
-      <div class="room-meta">
-        <div class="room-count">
-          <div class="r-dot" style="background:${r.color}"></div>
-          <span style="color:${r.color}" id="ron_${r.id}">${cnt} online</span>
-        </div>
-        <span class="room-tag">${r.tag}</span>
+  <div class="room-card" onclick="enterRoom('${r.id}')">
+    <!-- Mascot decorativo -->
+    <div class="rc-mascot">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e" opacity=".8"/>
+        <circle cx="50" cy="44" r="20" fill="#2d1b6e" opacity=".8"/>
+        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50" opacity=".8"/>
+        <circle cx="43" cy="46" r="5" fill="#fff" opacity=".9"/>
+        <circle cx="57" cy="46" r="5" fill="#fff" opacity=".9"/>
+        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
+        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
+        <circle cx="45" cy="45" r="1" fill="#fff"/>
+        <circle cx="59" cy="45" r="1" fill="#fff"/>
+      </svg>
+    </div>
+
+    <!-- Header -->
+    <div class="rc-top">
+      <div class="rc-icon" style="background:${r.color}22;border:1px solid ${r.color}44">${r.emoji}</div>
+      <div class="rc-name">${r.name}</div>
+      <div class="rc-count">
+        <span class="rc-count-icon">👥</span>
+        <span id="ron_${r.id}">${cnt}</span>
+      </div>
+      <div class="rc-dots">
+        <div class="rc-dot" style="background:${r.dot1}"></div>
+        <div class="rc-dot" style="background:${r.dot2}"></div>
+        <div class="rc-dot" style="background:${r.dot3}"></div>
       </div>
     </div>
-    <div class="room-caret" style="color:${r.color}88">›</div>
+
+    <!-- Preview messaggi -->
+    <div class="rc-msgs">
+      ${msgs.map(m=>`
+        <div class="rc-msg">
+          <div class="rc-avatar" style="background:${m.color||getColor(m.userId||'')}22;border:1.5px solid ${m.color||getColor(m.userId||'')}55">
+            ${m.face||getFace(m.userId||m.name||'')}
+          </div>
+          <div class="rc-msg-text">
+            <span class="rc-msg-name" style="color:${m.color||getColor(m.userId||'')}">
+              ${esc(m.name||'Anonimo')}:
+            </span>
+            <span class="rc-msg-body"> ${esc((m.text||'').slice(0,40))}${(m.text||'').length>40?'...':''}</span>
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Input preview -->
+    <div class="rc-input-row">
+      <div class="rc-input-ph">Type anonymously...</div>
+      <div class="rc-send">➤</div>
+    </div>
   </div>`;
 }
 
-// ══════════════════════════════════════
-// ENTER / LEAVE
-// ══════════════════════════════════════
-function enterRoom(roomId) {
-  const cfg = ROOMS.find(r => r.id === roomId);
-  if (!cfg) return;
-  currentRoom = cfg; lastSender = null; typingUsers = {};
+// ══ ENTER/LEAVE ══
+function enterRoom(roomId){
+  const cfg=ROOMS.find(r=>r.id===roomId);
+  if(!cfg) return;
+  room=cfg; lastSender=null; typingUsers={};
 
-  const icon = document.getElementById('chatIcon');
-  icon.textContent = cfg.emoji;
-  icon.style.cssText = `background:linear-gradient(135deg,${cfg.color}44,${cfg.color});border-radius:9px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0`;
-  document.getElementById('chatName').textContent = cfg.name;
-  document.getElementById('chatOnline').textContent = (roomOnlineMap[roomId] ?? 0) + ' online';
-  const ab = document.getElementById('chatAnonBadge');
-  ab.textContent = '🎭 Anonimo'; ab.style.cssText = `border-color:${cfg.color}44;color:${cfg.color};background:${cfg.color}11;font-size:9px;border:1px solid;border-radius:12px;padding:2px 8px;font-weight:700`;
+  const icon=document.getElementById('chatIcon');
+  icon.textContent=cfg.emoji;
+  icon.style.cssText=`background:${cfg.color}22;border:1px solid ${cfg.color}44;border-radius:10px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0`;
+  document.getElementById('chatName').textContent=cfg.name;
+  document.getElementById('chatOnline').textContent=(roomOnline[roomId]??0)+' online';
+  const dots=document.getElementById('chatDots');
+  dots.innerHTML=`<div class="chat-hdr-dot2" style="background:${cfg.dot1}"></div><div class="chat-hdr-dot2" style="background:${cfg.dot2};animation-delay:.3s"></div><div class="chat-hdr-dot2" style="background:${cfg.dot3};animation-delay:.6s"></div>`;
 
-  document.getElementById('chatMsgs').innerHTML = '';
-  socket.emit('join-chat-room', { roomId, user: pubUser() });
+  document.getElementById('chatMsgs').innerHTML='';
+  socket.emit('join-chat-room',{roomId,user:pubUser()});
 
-  const visited = new Set(currentUser.roomsVisited || []);
-  if (!visited.has(roomId)) {
-    visited.add(roomId); currentUser.roomsVisited = [...visited];
-    document.getElementById('stRooms').textContent = visited.size;
-    // Badge Italia
-    if (roomId.startsWith('it-') && !currentUser.badges.includes('italy')) addBadge('italy','Made in Italy');
-    // Badge globo
-    if (roomId.startsWith('w-') && !currentUser.badges.includes('globe')) addBadge('globe','Cittadino del Mondo');
-    if (visited.size >= 3 && !currentUser.badges.includes('explorer')) addBadge('explorer','Esploratore');
+  const vis=new Set(user.roomsVisited||[]);
+  if(!vis.has(roomId)){
+    vis.add(roomId); user.roomsVisited=[...vis];
+    document.getElementById('stRooms').textContent=vis.size;
+    if(roomId.startsWith('it-')) addBadge('italy','Made in Italy');
+    if(roomId.startsWith('w-')) addBadge('globe','Cittadino del Mondo');
+    if(vis.size>=3) addBadge('explorer','Esploratore');
     saveUser();
   }
 
-  document.getElementById('navChat').style.display = 'flex';
-  document.getElementById('chatNotif').style.display = 'none';
+  document.getElementById('navChat').style.display='flex';
+  document.getElementById('chatNotif').style.display='none';
   updateFreeBar();
-  showScreen('chat', document.getElementById('navChat'));
-  setTimeout(scrollBot, 150);
+  showScreen('chat',document.getElementById('navChat'));
+  setTimeout(scrollBot,150);
 }
 
-function goToChat(btn) { if (currentRoom) showScreen('chat', btn); }
-
-function leaveRoom() {
-  if (currentRoom) { socket.emit('leave-chat-room', { roomId: currentRoom.id }); currentRoom = null; }
-  showScreen('home', document.querySelector('[data-sc="home"]'));
+function goChat(btn){ if(room) showScreen('chat',btn); }
+function leaveRoom(){
+  if(room){socket.emit('leave-chat-room',{roomId:room.id});room=null;}
+  showScreen('home',document.querySelector('[data-sc="home"]'));
 }
 
-// ══════════════════════════════════════
-// MESSAGES
-// ══════════════════════════════════════
-function appendMsg(msg) {
-  if (!msg?.text) return;
-  const c = document.getElementById('chatMsgs');
-  if (msg.type === 'system') {
-    const d = document.createElement('div');
-    d.className = 'msys'; d.textContent = msg.text; c.appendChild(d);
-    lastSender = null; return;
+// ══ MESSAGES (stile screenshot) ══
+function appendMsg(msg){
+  if(!msg?.text) return;
+  const c=document.getElementById('chatMsgs');
+  if(msg.type==='system'){
+    const d=document.createElement('div'); d.className='msys'; d.textContent=msg.text;
+    c.appendChild(d); lastSender=null; return;
   }
-  const isSelf = msg.userId === currentUser.id;
-  const consec = lastSender === msg.userId;
-  lastSender = msg.userId;
-  const col  = isSelf ? currentUser.color : (msg.color || getColor(msg.userId || ''));
-  const mask = isSelf ? currentUser.mask  : (msg.mask  || '🎭');
-  const name = isSelf ? currentUser.name  : (msg.name  || 'Anonimo');
-  const time = new Date(msg.ts || Date.now()).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  const frame = isSelf ? currentUser.activeFrame : (msg.frame || 'none');
-  const fCfg  = FRAMES_CONFIG.find(f => f.id === frame);
-  const fStyle = fCfg?.css ? fCfg.css + ';' : '';
-  const premGlow = (msg.isPremium && !isSelf) ? `;text-shadow:0 0 6px ${col}` : '';
+  const isSelf=msg.userId===user.id;
+  const consec=lastSender===msg.userId;
+  lastSender=msg.userId;
+  const col=isSelf?user.color:(msg.color||getColor(msg.userId||''));
+  const face=isSelf?user.face:(msg.face||getFace(msg.userId||''));
+  const name=isSelf?user.name:(msg.name||'Anonimo');
+  const time=new Date(msg.ts||Date.now()).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  const prem=msg.isPremium&&!isSelf;
 
-  const row = document.createElement('div');
-  row.className = 'mrow' + (isSelf ? ' self' : '');
-  if (isSelf) {
-    row.innerHTML = `<div class="mavatar hidden"></div><div><div class="mbubble"><div class="mtext">${esc(msg.text)}</div><div class="mtime">${time}</div></div></div>`;
+  const row=document.createElement('div');
+
+  if(isSelf){
+    // Bubble viola a destra
+    row.className='mrow self';
+    row.innerHTML=`
+      <div class="mavatar hidden"></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end">
+        <div class="mbubble-self">${esc(msg.text)}</div>
+        <div class="mtime">${time}</div>
+      </div>`;
   } else {
-    const bStyle = `border-left:3px solid ${col}44;border-color:${col}33`;
-    row.innerHTML = `
-      <div class="mavatar ${consec?'hidden':''}" style="${fStyle}background:${col}22;border:2px solid ${col}55">
-        <span>${mask}</span>
+    // Stile screenshot: avatar + nome colorato + testo inline
+    row.className='mrow';
+    const nameGlow=prem?`;text-shadow:0 0 6px ${col}`:'';
+    row.innerHTML=`
+      <div class="mavatar ${consec?'hidden':''}" style="background:${col}22;border:2px solid ${col}55;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+        ${face}
       </div>
-      <div style="max-width:76%">
-        ${!consec?`<div class="mname" style="color:${col}${premGlow}">${esc(name)}${msg.isPremium?'<span style="font-size:9px;margin-left:4px;opacity:.7">⭐</span>':''}</div>`:''}
-        <div class="mbubble" style="${bStyle}"><div class="mtext">${esc(msg.text)}</div><div class="mtime">${time}</div></div>
+      <div class="mbody">
+        <div class="mline">
+          ${!consec?`<span class="mname" style="color:${col}${nameGlow}">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}:</span> `:''}
+          <span class="mtext">${esc(msg.text)}</span>
+        </div>
+        ${!consec?`<div class="mtime">${time}</div>`:''}
       </div>`;
   }
   c.appendChild(row);
 }
 
-function addSys(text) { appendMsg({ type:'system', text }); scrollBot(); }
+function addSys(text){ appendMsg({type:'system',text}); scrollBot(); }
 
-function sendMessage() {
-  const inp = document.getElementById('msgInput');
-  const text = inp.value.trim();
-  if (!text || !currentRoom || !socket?.connected) return;
+function sendMsg(){
+  const inp=document.getElementById('msgInput');
+  const text=inp.value.trim();
+  if(!text||!room||!socket?.connected) return;
+  if(!isPrem()&&(user.freeUsed||0)>=FREE_LIMIT){showPaywall();return;}
 
-  // Paywall check
-  if (!isPremium() && (currentUser.freeUsed || 0) >= FREE_MSG_LIMIT) {
-    showPaywall(); return;
-  }
-
-  const msg = {
-    userId: currentUser.id, name: currentUser.name,
-    color: currentUser.color, mask: currentUser.mask,
-    frame: currentUser.activeFrame, isPremium: isPremium(),
-    text, ts: Date.now(), roomId: currentRoom.id
+  const msg={
+    userId:user.id, name:user.name, color:user.color,
+    face:user.face, frame:user.activeFrame, isPremium:isPrem(),
+    text, ts:Date.now(), roomId:room.id
   };
-  socket.emit('chat-message', { roomId: currentRoom.id, msg });
+  socket.emit('chat-message',{roomId:room.id,msg});
   appendMsg(msg); scrollBot();
 
-  inp.value = ''; inp.style.height = 'auto';
-  stopTyping();
+  // Aggiorna preview
+  roomPreviews[room.id]=roomPreviews[room.id]||[];
+  roomPreviews[room.id].push(msg);
+  if(roomPreviews[room.id].length>4) roomPreviews[room.id].shift();
 
-  // Update counters
-  currentUser.msgCount = (currentUser.msgCount || 0) + 1;
-  if (!isPremium()) currentUser.freeUsed = (currentUser.freeUsed || 0) + 1;
-  document.getElementById('stMsgs').textContent = currentUser.msgCount;
-  updateFreeBar();
-  checkBadges();
-  saveUser();
-  document.getElementById('chatNotif').style.display = 'none';
-
-  // Paywall soft warning at 80
-  if (!isPremium() && currentUser.freeUsed === 80) {
-    showToast('⚠️ 20 messaggi gratuiti rimasti!');
-  }
-  // Hard paywall at limit
-  if (!isPremium() && currentUser.freeUsed >= FREE_MSG_LIMIT) {
-    setTimeout(showPaywall, 400);
-  }
+  inp.value=''; inp.style.height='auto'; stopTyping();
+  user.msgCount=(user.msgCount||0)+1;
+  if(!isPrem()) user.freeUsed=(user.freeUsed||0)+1;
+  document.getElementById('stMsgs').textContent=user.msgCount;
+  updateFreeBar(); checkBadges(); saveUser();
+  document.getElementById('chatNotif').style.display='none';
+  if(!isPrem()&&user.freeUsed===80) showToast('⚠️ 20 messaggi gratuiti rimasti!');
+  if(!isPrem()&&user.freeUsed>=FREE_LIMIT) setTimeout(showPaywall,400);
 }
 
-// ══════════════════════════════════════
-// TYPING
-// ══════════════════════════════════════
-function setupInput() {
-  const inp = document.getElementById('msgInput');
-  inp.addEventListener('input', () => {
-    inp.style.height = 'auto';
-    inp.style.height = Math.min(inp.scrollHeight, 110) + 'px';
-    if (!isTyping && currentRoom) { isTyping = true; socket.emit('chat-typing',{ roomId:currentRoom.id, user:pubUser() }); }
-    clearTimeout(typingTimer); typingTimer = setTimeout(stopTyping, 2000);
+// ══ TYPING ══
+function setupInput(){
+  const inp=document.getElementById('msgInput');
+  inp.addEventListener('input',()=>{
+    inp.style.height='auto';
+    inp.style.height=Math.min(inp.scrollHeight,100)+'px';
+    if(!isTyping&&room){isTyping=true;socket.emit('chat-typing',{roomId:room.id,u:pubUser()});}
+    clearTimeout(tTimer); tTimer=setTimeout(stopTyping,2000);
   });
-  inp.addEventListener('keydown', e => { if (e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); sendMessage(); } });
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});
 }
-function stopTyping() {
-  if (isTyping && currentRoom) { isTyping=false; socket.emit('chat-stop-typing',{ roomId:currentRoom.id, userId:currentUser.id }); }
-  clearTimeout(typingTimer);
+function stopTyping(){
+  if(isTyping&&room){isTyping=false;socket.emit('chat-stop-typing',{roomId:room.id,userId:user.id});}
+  clearTimeout(tTimer);
 }
-function renderTyping() {
-  const c = document.getElementById('chatMsgs');
-  let el = document.getElementById('tind');
-  const users = Object.values(typingUsers);
-  if (!users.length) { el?.remove(); return; }
-  if (!el) { el=document.createElement('div'); el.id='tind'; el.className='trow'; c.appendChild(el); }
-  const names = users.map(u=>`<span style="color:${u.color};font-weight:700">${esc(u.name)}</span>`).join(', ');
-  el.innerHTML=`<div class="mavatar" style="background:#1a0a35;border:2px solid var(--border)">🎭</div><div class="tbubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><span class="tnames">&nbsp;${names} sta scrivendo...</span>`;
+function renderTyping(){
+  const c=document.getElementById('chatMsgs');
+  let el=document.getElementById('tind');
+  const users=Object.values(typingUsers);
+  if(!users.length){el?.remove();return;}
+  if(!el){el=document.createElement('div');el.id='tind';el.className='trow';c.appendChild(el);}
+  const names=users.map(u=>`<span style="color:${u.color};font-weight:700">${esc(u.name)}</span>`).join(', ');
+  el.innerHTML=`<div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🎭</div><div class="tbbl"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div><span class="tnames">&nbsp;${names} sta scrivendo...</span>`;
   scrollBot();
 }
 
-// ══════════════════════════════════════
-// PAYWALL
-// ══════════════════════════════════════
-function showPaywall() { document.getElementById('paywallOverlay').classList.add('open'); }
-function closePaywall() { document.getElementById('paywallOverlay').classList.remove('open'); }
-
-async function startPayment() {
-  const tg = window.Telegram?.WebApp;
-  try {
-    // Richiedi invoice link dal server
-    const res = await fetch('/api/create-invoice', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, plan:'monthly' })
-    });
-    const data = await res.json();
-    if (data.invoiceLink && tg) {
-      tg.openInvoice(data.invoiceLink, (status) => {
-        if (status === 'paid') {
-          activatePremium();
-          closePaywall();
-          showToast('🎉 Benvenuto in Premium! Messaggi illimitati!');
-        }
+// ══ PAYWALL ══
+function showPaywall(){document.getElementById('paywallOv').classList.add('open');}
+function closePaywall(){document.getElementById('paywallOv').classList.remove('open');}
+async function startPayment(){
+  try{
+    const r=await fetch('/api/create-invoice',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:user.id,plan:'monthly'})});
+    const d=await r.json();
+    if(d.invoiceLink&&window.Telegram?.WebApp){
+      window.Telegram.WebApp.openInvoice(d.invoiceLink,(s)=>{
+        if(s==='paid'){activatePremium();closePaywall();showToast('🎉 Sei Premium! Messaggi illimitati!');}
       });
-    } else if (data.invoiceLink) {
-      // Fallback browser
-      window.open(data.invoiceLink, '_blank');
-    } else {
-      showToast('❌ Errore pagamento. Riprova.');
-    }
-  } catch(e) {
-    // Fallback: mostra info Bitcoin
-    closePaywall();
-    showToast('💳 Contatta @Kouverte_bot per abbonarti');
-  }
+    } else { showToast('⚠️ Contatta @Kouverte_bot'); }
+  } catch{ showToast('⚠️ Contatta @Kouverte_bot per abbonarti'); }
+}
+function activatePremium(){
+  user.isPremium=true; user.premExpiry=Date.now()+30*24*60*60*1000;
+  ['gold','diamond','flame'].forEach(f=>{ if(!user.ownedFrames.includes(f)) user.ownedFrames.push(f); });
+  addBadge('premium','Premium'); saveUser(); updateProfileUI(); renderFrames();
 }
 
-function activatePremium() {
-  currentUser.isPremium = true;
-  currentUser.premiumExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000; // 30 giorni
-  if (!currentUser.badges.includes('premium')) addBadge('premium','Premium');
-  // Sblocca cornici gold e diamond
-  if (!currentUser.ownedFrames.includes('gold')) currentUser.ownedFrames.push('gold');
-  if (!currentUser.ownedFrames.includes('diamond')) currentUser.ownedFrames.push('diamond');
-  if (!currentUser.ownedFrames.includes('flame')) currentUser.ownedFrames.push('flame');
-  saveUser();
-  updateProfileUI();
-  updateFreeBar();
-  renderFrames();
-}
-
-// ══════════════════════════════════════
-// FRAMES
-// ══════════════════════════════════════
-function renderFrames() {
-  const owned = new Set(currentUser.ownedFrames || ['none']);
-  const active = currentUser.activeFrame || 'none';
-  document.getElementById('framesGrid').innerHTML = FRAMES_CONFIG.map(f => {
-    const isOwned = owned.has(f.id);
-    const isActive = f.id === active;
-    const priceStr = f.price === 0 ? (f.premium ? 'Premium' : 'Gratis') : (f.price/100).toFixed(2)+'€';
-    return `
-    <div class="frame-card ${isOwned?'owned':''} ${isActive?'active-frame':''}" onclick="selectFrame('${f.id}')">
-      ${isActive ? '<span class="frame-active-lbl">Attiva</span>' : isOwned ? '<span class="frame-owned-lbl">Tua</span>' : ''}
-      <div class="frame-preview" style="${isOwned?f.css:''}">${f.emoji}</div>
+// ══ FRAMES ══
+function renderFrames(){
+  const owned=new Set(user.ownedFrames||['none']);
+  const active=user.activeFrame||'none';
+  document.getElementById('framesGrid').innerHTML=FRAMES_CFG.map(f=>{
+    const isO=owned.has(f.id), isA=f.id===active;
+    const priceStr=f.price===0?(f.prem?'Premium':'Gratis'):(f.price+'★');
+    return `<div class="frame-c ${isO?'owned':''} ${isA?'active-frame':''}" onclick="selFrame('${f.id}')">
+      ${isA?'<span class="f-tag active">Attiva</span>':isO?'<span class="f-tag owned">Tua</span>':''}
+      <div class="frame-preview" style="${isO?f.css:''}">${f.emoji}</div>
       <div class="frame-name">${f.name}</div>
-      <div class="frame-price ${f.price===0&&!f.premium?'free':''}">${priceStr}</div>
+      <div class="frame-price ${f.price===0&&!f.prem?'free':''}">${priceStr}</div>
     </div>`;
   }).join('');
 }
-
-function selectFrame(id) {
-  const f = FRAMES_CONFIG.find(x => x.id === id);
-  if (!f) return;
-  const owned = new Set(currentUser.ownedFrames || []);
-  if (owned.has(id)) {
-    // Attiva subito
-    currentUser.activeFrame = id; saveUser(); renderFrames(); updateProfileUI();
-    showToast('✅ Cornice ' + f.name + ' attivata!');
-    return;
+function selFrame(id){
+  const f=FRAMES_CFG.find(x=>x.id===id);
+  if(!f) return;
+  if(new Set(user.ownedFrames).has(id)){
+    user.activeFrame=id; saveUser(); renderFrames(); updateProfileUI();
+    showToast('✅ Cornice '+f.name+' attivata!'); return;
   }
-  // Mostra modal acquisto
-  selectedFrameId = id;
-  document.getElementById('frameMTitle').textContent = f.emoji + ' ' + f.name;
-  if (f.premium && !isPremium()) {
-    document.getElementById('frameMDesc').textContent = 'Questa cornice richiede Premium. Abbonati per 1€/mese e ottieni tutte le cornici premium!';
-    document.getElementById('frameMBtn').textContent = '⭐ Abbonati — 1€/mese';
-  } else {
-    document.getElementById('frameMDesc').textContent = `Acquista la cornice ${f.name} per ${(f.price/100).toFixed(2)}€.`;
-    document.getElementById('frameMBtn').textContent = `💳 Acquista — ${(f.price/100).toFixed(2)}€`;
-  }
-  document.getElementById('frameOverlay').classList.add('open');
+  selFrameId=id;
+  document.getElementById('fmTitle').textContent=f.emoji+' '+f.name;
+  document.getElementById('fmDesc').textContent=f.prem&&!isPrem()?
+    'Richiede Premium (1€/mese). Include tutte le cornici premium!':
+    `Acquista la cornice ${f.name} per ${f.price}★`;
+  document.getElementById('fmBtn').textContent=f.prem&&!isPrem()?'⭐ Abbonati — 1€/mese':`💳 Acquista — ${f.price}★`;
+  document.getElementById('frameOv').classList.add('open');
 }
-
-function closeFrameModal() { document.getElementById('frameOverlay').classList.remove('open'); selectedFrameId = null; }
-
-async function buyFrame() {
-  const f = FRAMES_CONFIG.find(x => x.id === selectedFrameId);
-  if (!f) return;
-  if (f.premium && !isPremium()) { closeFrameModal(); showPaywall(); return; }
-  // Pagamento cornice via Telegram Stars o semplice acquisto
-  try {
-    const res = await fetch('/api/buy-frame', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ userId: currentUser.id, frameId: f.id })
-    });
-    const data = await res.json();
-    if (data.invoiceLink && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.openInvoice(data.invoiceLink, (status) => {
-        if (status === 'paid') {
-          if (!currentUser.ownedFrames.includes(f.id)) currentUser.ownedFrames.push(f.id);
-          currentUser.activeFrame = f.id; saveUser(); renderFrames(); updateProfileUI();
-          closeFrameModal(); showToast('🎉 Cornice ' + f.name + ' sbloccata!');
+function closeFrameM(){document.getElementById('frameOv').classList.remove('open');selFrameId=null;}
+async function buyFrame(){
+  const f=FRAMES_CFG.find(x=>x.id===selFrameId);
+  if(!f) return;
+  if(f.prem&&!isPrem()){closeFrameM();showPaywall();return;}
+  try{
+    const r=await fetch('/api/buy-frame',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:user.id,frameId:f.id})});
+    const d=await r.json();
+    if(d.invoiceLink&&window.Telegram?.WebApp){
+      window.Telegram.WebApp.openInvoice(d.invoiceLink,(s)=>{
+        if(s==='paid'){
+          if(!user.ownedFrames.includes(f.id)) user.ownedFrames.push(f.id);
+          user.activeFrame=f.id; saveUser(); renderFrames(); updateProfileUI();
+          closeFrameM(); showToast('🎉 '+f.name+' sbloccata!');
         }
       });
-    } else {
-      closeFrameModal(); showToast('❌ Errore. Riprova.');
-    }
-  } catch { closeFrameModal(); showToast('⚠️ Contatta @Kouverte_bot per acquistare'); }
+    } else { closeFrameM(); showToast('⚠️ Contatta @Kouverte_bot'); }
+  } catch{ closeFrameM(); showToast('⚠️ Contatta @Kouverte_bot'); }
 }
 
-// ══════════════════════════════════════
-// BADGES
-// ══════════════════════════════════════
-function checkBadges() {
-  const mc = currentUser.msgCount || 0;
-  if (mc >= 1   && !currentUser.badges.includes('first_msg'))  addBadge('first_msg','Prima Parola');
-  if (mc >= 100  && !currentUser.badges.includes('chatter'))    addBadge('chatter','Chiacchierone');
-  if (mc >= 500  && !currentUser.badges.includes('legend'))     addBadge('legend','Leggenda');
-  if (isPremium() && !currentUser.badges.includes('premium'))   addBadge('premium','Premium');
-  const h = new Date().getHours();
-  if ((h>=23||h<5) && !currentUser.badges.includes('nocturnal')) addBadge('nocturnal','Nottambulo');
+// ══ BADGES ══
+function checkBadges(){
+  const mc=user.msgCount||0;
+  if(mc>=1)   addBadge('first_msg','Prima Parola');
+  if(mc>=100) addBadge('chatter','Chiacchierone');
+  if(mc>=500) addBadge('legend','Leggenda');
+  if(isPrem()) addBadge('premium','Premium');
+  if((new Date().getHours()>=23||new Date().getHours()<5)) addBadge('nocturnal','Nottambulo');
 }
-
-function addBadge(id, label) {
-  if (currentUser.badges.includes(id)) return;
-  currentUser.badges.push(id);
-  document.getElementById('stBadges').textContent = currentUser.badges.length;
-  renderBadges(); saveUser();
-  showToast('🏆 Badge sbloccato: ' + label + '!');
+function addBadge(id,label){
+  if((user.badges||[]).includes(id)) return;
+  user.badges=[...(user.badges||[]),id];
+  document.getElementById('stBadges').textContent=user.badges.length;
+  renderBadges(); saveUser(); showToast('🏆 Badge: '+label+'!');
 }
-
-function renderBadges() {
-  const earned = new Set(currentUser?.badges || []);
-  document.getElementById('badgesGrid').innerHTML = BADGES_DEF.map(b => `
+function renderBadges(){
+  const earned=new Set(user?.badges||[]);
+  document.getElementById('badgesGrid').innerHTML=BADGES.map(b=>`
     <div class="badge-c ${earned.has(b.id)?'earned':'locked'}">
       <div class="badge-e">${b.emoji}</div>
       <div class="badge-n">${b.name}</div>
     </div>`).join('');
 }
 
-// ══════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════
-function showScreen(name, btn) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+// ══ NAV ══
+function showScreen(name,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(name)?.classList.add('active');
-  document.querySelectorAll('.nbtn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  else { const nb=document.querySelector(`[data-sc="${name}"]`); if(nb) nb.classList.add('active'); }
-  document.getElementById('onlinePill').style.display = name==='home' ? 'flex' : 'none';
+  document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
+  document.getElementById('opill').style.display=name==='home'?'flex':'none';
 }
 
-// ══════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════
-function scrollBot() { requestAnimationFrame(() => { const c=document.getElementById('chatMsgs'); c.scrollTop=c.scrollHeight; }); }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function showToast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3200); }
-function getLS(k) { try{return JSON.parse(localStorage.getItem(k))}catch{return null} }
-function setLS(k,v) { try{localStorage.setItem(k,JSON.stringify(v))}catch{} }
-function saveUser() { setLS('kv3_user',currentUser); }
+// ══ UTILS ══
+function scrollBot(){requestAnimationFrame(()=>{const c=document.getElementById('chatMsgs');c.scrollTop=c.scrollHeight;});}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
+function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+function saveUser(){setLS('kv4_user',user);}
 </script>
 </body>
 </html>
