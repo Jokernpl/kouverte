@@ -2812,26 +2812,24 @@ server.listen(PORT, HOST, () => {
 
 // Avvia anche il bot Telegram nello stesso processo (richiesto su Render free tier)
 // Disabilitabile con env BOT_DISABLED=1
+// NB: tg-bot.js ha un fallback hardcoded del token, quindi avvia sempre se non disabled
 let _botStatus = { running: false, reason: '', error: null };
-const hasToken = !!(process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN);
+const hasEnvToken = !!(process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN);
 if (process.env.BOT_DISABLED === '1') {
-    _botStatus = { running: false, reason: 'BOT_DISABLED=1', tokenSet: hasToken };
+    _botStatus = { running: false, reason: 'BOT_DISABLED=1', tokenSet: hasEnvToken };
     console.log('[BOT] Skipped (BOT_DISABLED=1)');
-} else if (!hasToken) {
-    _botStatus = { running: false, reason: 'no_token', tokenSet: false };
-    console.log('[BOT] Skipped — TELEGRAM_BOT_TOKEN/BOT_TOKEN env var mancante');
 } else {
     try {
         const tg = require('./tg-bot.js');
         if (tg && tg.ok === false) {
-            _botStatus = { running: false, reason: 'tg-bot-stub', error: tg.error, tokenSet: true };
+            _botStatus = { running: false, reason: 'tg-bot-stub', error: tg.error, tokenSet: hasEnvToken };
             console.error('[BOT] tg-bot.js esportato stub: ' + tg.error);
         } else {
-            _botStatus = { running: true, reason: 'started', tokenSet: true };
-            console.log('[BOT] Telegram bot started in-process');
+            _botStatus = { running: true, reason: 'started', tokenSet: hasEnvToken };
+            console.log('[BOT] Telegram bot started in-process' + (hasEnvToken ? ' (env token)' : ' (hardcoded fallback token)'));
         }
     } catch (e) {
-        _botStatus = { running: false, reason: 'crash', error: e.message, tokenSet: true };
+        _botStatus = { running: false, reason: 'crash', error: e.message, tokenSet: hasEnvToken };
         console.error('[BOT] Failed to start tg-bot:', e.message);
     }
 }
