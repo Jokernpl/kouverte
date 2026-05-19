@@ -58,12 +58,67 @@ const REFERRAL_REWARDS = [
 
 // ============================================================
 // STORAGE PERSISTENTE
+// Upstash Redis (persistente fra deploy) se env presenti, altrimenti file locale (ephemeral su Render free)
 // ============================================================
 const DB_PATH = path.join(__dirname, 'kouverte-bot.json');
+const REDIS_KEY = 'kouverte:bot:db';
 let DB = { users:{} };
-function loadDB(){ try{ if(fs.existsSync(DB_PATH)){ DB = JSON.parse(fs.readFileSync(DB_PATH,'utf8')); DB.users = DB.users||{}; } }catch(e){ console.error('DB load:', e.message); } }
-function saveDB(){ try{ fs.writeFileSync(DB_PATH, JSON.stringify(DB,null,2)); }catch(e){ console.error('DB save:', e.message); } }
-loadDB();
+let redis = null;
+let saveTimer = null;
+
+if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  try {
+    const { Redis } = require('@upstash/redis');
+    redis = new Redis({
+      url:   process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    console.log('   Storage: Upstash Redis (persistente)');
+  } catch(e) {
+    console.error('   Storage: errore init Upstash, fallback su file:', e.message);
+    redis = null;
+  }
+} else {
+  console.log('   Storage: file locale (ephemeral su Render free)');
+}
+
+async function loadDB(){
+  if (redis) {
+    try {
+      const data = await redis.get(REDIS_KEY);
+      if (data) {
+        DB = typeof data === 'string' ? JSON.parse(data) : data;
+        DB.users = DB.users || {};
+        console.log('   DB caricato da Redis · ' + Object.keys(DB.users).length + ' utenti');
+        return;
+      }
+    } catch(e) { console.error('   Redis load:', e.message); }
+  }
+  // Fallback file
+  try {
+    if (fs.existsSync(DB_PATH)) {
+      DB = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+      DB.users = DB.users || {};
+    }
+  } catch(e) { console.error('DB load:', e.message); }
+}
+
+async function saveDB(){
+  // Debounce 500ms — evita di tempestare Redis su update consecutivi
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    saveTimer = null;
+    if (redis) {
+      try { await redis.set(REDIS_KEY, JSON.stringify(DB)); return; }
+      catch(e) { console.error('Redis save:', e.message); }
+    }
+    try { fs.writeFileSync(DB_PATH, JSON.stringify(DB, null, 2)); }
+    catch(e) { console.error('DB save:', e.message); }
+  }, 500);
+}
+
+// Carica DB all'avvio (async — non blocca l'init del bot, ma i primi event potrebbero avere DB vuoto per pochi ms)
+loadDB().catch(e => console.error('loadDB init:', e.message));
 
 function getUser(chatId){
   const id = String(chatId);

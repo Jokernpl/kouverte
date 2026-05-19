@@ -617,10 +617,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
   <!-- Referral -->
   <div class="ref-sec">
-    <div class="ref-title">🎁 Invita amici — guadagna badge</div>
+    <div class="ref-title">🎁 Invita amici — guadagna cornici</div>
+    <div id="refStats" style="display:none;align-items:center;gap:8px;margin-bottom:8px;padding:8px 12px;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.3);border-radius:10px">
+      <span style="font-size:18px">👥</span>
+      <div style="flex:1">
+        <div style="font-size:11px;color:#9ca3af">Amici già invitati</div>
+        <div style="font-size:18px;font-weight:900;color:#10b981"><span id="refCount">0</span></div>
+      </div>
+    </div>
     <div class="ref-box" id="refLink">t.me/Kouverte_bot?start=ref_...</div>
     <button class="ref-copy" onclick="copyRef()">📋 Copia link referral</button>
-    <div class="ref-hint">Ogni amico invitato ti porta badge esclusivi!</div>
+    <div class="ref-hint">Ogni amico che si iscrive ti regala una cornice esclusiva!</div>
   </div>
 
   <div class="frames-sec">
@@ -812,12 +819,18 @@ function hideSplash(){
 function initUser(){
   const tgU=window.Telegram?.WebApp?.initDataUnsafe?.user;
   const stored=getLS('kv4_user');
-  if(stored){ user=stored; }
+  if(stored){
+    user=stored;
+    // Migration: assicurati che user.tgId sia memorizzato per il referral
+    if(tgU?.id && !user.tgId) user.tgId = String(tgU.id);
+  }
   else{
-    const uid=tgU?.id?'tg_'+tgU.id:'anon_'+Math.random().toString(36).slice(2,9);
+    const tgIdStr = tgU?.id ? String(tgU.id) : null;
+    const uid = tgIdStr ? 'tg_'+tgIdStr : 'anon_'+Math.random().toString(36).slice(2,9);
     const faces=FACE_EMOJIS;
     user={
-      id:uid, name:genNick(uid), // nickname procedurale stile gaming
+      id:uid, tgId:tgIdStr, // tgId è il chatId raw — usato per i referral
+      name:genNick(uid),
       face:faces[Math.floor(Math.random()*faces.length)],
       color:getColor(uid), msgCount:0, freeUsed:0,
       isPremium:false, premExpiry:0,
@@ -826,6 +839,7 @@ function initUser(){
     };
     setLS('kv4_user',user);
   }
+  saveUser();
   updateProfileUI();
 }
 
@@ -869,9 +883,26 @@ function updateProfileUI(){
   bar.style.setProperty('--rw',pct+'%');
   setTimeout(()=>{bar.style.width=pct+'%';},50);
 
-  // Referral link
-  const tgId=window.Telegram?.WebApp?.initDataUnsafe?.user?.id||user.id;
-  document.getElementById('refLink').textContent='t.me/Kouverte_bot?start=ref_'+tgId;
+  // Referral link — usa SEMPRE il chatId Telegram numerico, mai 'tg_X'
+  const tgId = user.tgId || window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+  const refSec = document.querySelector('.ref-sec');
+  if(tgId){
+    refSec.style.display='block';
+    document.getElementById('refLink').textContent='t.me/Kouverte_bot?start=ref_'+tgId;
+    // Carica count amici invitati dal bot DB
+    fetch(BACKEND+'/api/bot/user-stats?chatId='+encodeURIComponent(tgId))
+      .then(r=>r.json())
+      .then(d=>{
+        if(typeof d.invited === 'number'){
+          document.getElementById('refCount').textContent=d.invited;
+          document.getElementById('refStats').style.display='flex';
+        }
+      })
+      .catch(()=>{});
+  } else {
+    // Utente non Telegram: nasconde referral
+    refSec.style.display='none';
+  }
 
   updateFreeBar();
 }

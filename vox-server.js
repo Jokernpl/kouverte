@@ -955,6 +955,63 @@ app.post('/api/btc/check-status', async (req, res) => {
     }
 });
 
+// ============================================================
+// BOT USER STATS — espone referral count e premium status dal bot
+// Letto direttamente da Upstash Redis se configurato, altrimenti dal file
+// ============================================================
+let _redisClient = null;
+function getRedisClient(){
+    if (_redisClient !== null) return _redisClient;
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+        _redisClient = false; // marca come "non disponibile"
+        return null;
+    }
+    try {
+        const { Redis } = require('@upstash/redis');
+        _redisClient = new Redis({
+            url:   process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        });
+        return _redisClient;
+    } catch(e) { _redisClient = false; return null; }
+}
+
+async function readBotDB(){
+    const r = getRedisClient();
+    if (r) {
+        try {
+            const data = await r.get('kouverte:bot:db');
+            if (data) return typeof data === 'string' ? JSON.parse(data) : data;
+        } catch(e) {}
+    }
+    // Fallback file
+    try {
+        const p = path.join(__dirname, 'kouverte-bot.json');
+        if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch(e) {}
+    return { users: {} };
+}
+
+app.get('/api/bot/user-stats', async (req, res) => {
+    const chatId = String(req.query.chatId || '').trim();
+    if (!chatId || !/^\d+$/.test(chatId)) return res.status(400).json({ error: 'chatId numerico richiesto' });
+    try {
+        const botDB = await readBotDB();
+        const u = botDB.users?.[chatId];
+        if (!u) return res.json({ chatId, invited: 0, isPremium: false, ownedFrames: [] });
+        res.json({
+            chatId,
+            invited: (u.invitedUsers || []).length,
+            isPremium: !!u.isPremium && (u.premiumExpiry || 0) > Date.now(),
+            premiumExpiry: u.premiumExpiry || 0,
+            ownedFrames: u.ownedFrames || [],
+            joinedAt: u.joinedAt
+        });
+    } catch(e) {
+        res.json({ chatId, invited: 0, isPremium: false, error: e.message });
+    }
+});
+
 app.get('/api/me/premium-status', (req, res) => {
     const userId = req.query.userId;
     if (!userId) return res.status(400).json({ error: 'userId required' });
