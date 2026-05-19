@@ -9,7 +9,7 @@ const path = require('path');
 
 // ⚠️ TEMP: token hardcoded. Da rimuovere quando BOT_TOKEN sarà su Render env.
 const BOT_TOKEN    = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
-const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://kouverte-vox.onrender.com/app.html';
+const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://kouverte-voice.onrender.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
 
 if (!BOT_TOKEN || BOT_TOKEN.length < 30) {
