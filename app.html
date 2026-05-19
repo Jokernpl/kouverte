@@ -651,6 +651,7 @@ let socket=null, user=null, room=null;
 let tTimer=null, isTyping=false, typingUsers={};
 let roomOnline={}, lastSender=null, activeCat='all';
 let selFrameId=null;
+const sessionRooms=new Set(); // conta solo questa sessione, non persiste
 // Preview messaggi per ogni stanza (ultimi 3-4 per la card)
 let roomPreviews={};
 
@@ -745,7 +746,7 @@ function connectSocket(){
       document.getElementById('chatNotif').style.display='block';
     }
   });
-  socket.on('chat-typing',({roomId,u})=>{
+  socket.on('chat-typing',({roomId,user:u})=>{
     if(roomId!==room?.id||u?.id===user.id) return;
     typingUsers[u.id]=u; renderTyping();
   });
@@ -885,13 +886,12 @@ function enterRoom(roomId){
   document.getElementById('chatMsgs').innerHTML='';
   socket.emit('join-chat-room',{roomId,user:pubUser()});
 
-  const vis=new Set(user.roomsVisited||[]);
-  if(!vis.has(roomId)){
-    vis.add(roomId); user.roomsVisited=[...vis];
-    document.getElementById('stRooms').textContent=vis.size;
+  if(!sessionRooms.has(roomId)){
+    sessionRooms.add(roomId);
+    document.getElementById('stRooms').textContent=sessionRooms.size;
     if(roomId.startsWith('it-')) addBadge('italy','Made in Italy');
     if(roomId.startsWith('w-')) addBadge('globe','Cittadino del Mondo');
-    if(vis.size>=3) addBadge('explorer','Esploratore');
+    if(sessionRooms.size>=3) addBadge('explorer','Esploratore');
     saveUser();
   }
 
@@ -992,7 +992,7 @@ function setupInput(){
   inp.addEventListener('input',()=>{
     inp.style.height='auto';
     inp.style.height=Math.min(inp.scrollHeight,100)+'px';
-    if(!isTyping&&room){isTyping=true;socket.emit('chat-typing',{roomId:room.id,u:pubUser()});}
+    if(!isTyping&&room){isTyping=true;socket.emit('chat-typing',{roomId:room.id,user:pubUser()});}
     clearTimeout(tTimer); tTimer=setTimeout(stopTyping,2000);
   });
   inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}});

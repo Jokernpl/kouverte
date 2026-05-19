@@ -2506,6 +2506,15 @@ const userSockets = new Map();
 const userVoiceRooms = new Map(); // userId -> {roomSlug, socketId}
 const battleVoicePeers = {}; // battleId -> Map<socketId, {userId, role}>
 
+// ===== CHAT ROOMS — stato GLOBALE (fuori dal connection handler!) =====
+const chatRoomHistory = {}; // roomId -> ultimi 100 messaggi
+const chatRoomUsers   = {}; // roomId -> Map<socketId, user>
+function getTotalOnline() {
+    let tot = 0;
+    for (const users of Object.values(chatRoomUsers)) tot += users.size;
+    return tot;
+}
+
 io.on('connection', (socket) => {
     console.log('[WEBRTC] Utente connesso:', socket.id);
 
@@ -2673,10 +2682,7 @@ io.on('connection', (socket) => {
         socket.to(data.room).emit('call-ended');
     });
 
-    // ===== CHAT ROOMS (nuovo sistema anonimo) =====
-    const chatRoomHistory = {}; // roomId -> [last 50 msgs] (in-memory)
-    const chatRoomUsers   = {}; // roomId -> Map<socketId, user>
-
+    // ===== CHAT ROOMS =====
     socket.on('join-chat-room', ({ roomId, user }) => {
         if (!roomId || typeof roomId !== 'string') return;
         // Lascia eventuali stanze chat precedenti
@@ -2738,12 +2744,6 @@ io.on('connection', (socket) => {
         if (!roomId) return;
         socket.to('chat-' + roomId).emit('chat-stop-typing', { roomId, userId });
     });
-
-    function getTotalOnline() {
-        let tot = 0;
-        for (const users of Object.values(chatRoomUsers)) tot += users.size;
-        return tot;
-    }
 
     socket.on('disconnect', () => {
         // Rimuovi dalle chat rooms
