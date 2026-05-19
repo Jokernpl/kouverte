@@ -525,13 +525,6 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
       <div class="home-anon">🔒 100% Anonimo</div>
     </div>
 
-    <!-- Category tabs -->
-    <div class="cat-row" id="catFilter">
-      <div class="cat-btn active" data-cat="all">✨ Tutte</div>
-      <div class="cat-btn" data-cat="pub">🌐 Pubbliche</div>
-      <div class="cat-btn" data-cat="event">⚡ Eventi</div>
-      <div class="cat-btn" data-cat="secret">🔒 Segrete</div>
-    </div>
   </div>
 
   <div class="home-body">
@@ -758,36 +751,17 @@ function levelLabel(lvl, isPremium){
   return '🌱 Rookie';
 }
 
-// Stanze divise in 3 tier: pubbliche, segrete (locked), eventi (a tempo)
+// Stanze attive — partiamo piccoli, poi espandiamo
 const ROOMS = [
-  // ─── PUBBLICHE ───
-  { id:'italia',       name:'Italia',            emoji:'🇮🇹', desc:'Chat generale italiana',                 cat:'pub',   tier:'public', color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
-  { id:'gaming',       name:'Gaming',            emoji:'🎮', desc:'Console, PC, mobile, esports',           cat:'pub',   tier:'public', color:'#3b82f6', dot1:'#3b82f6',dot2:'#60a5fa',dot3:'#93c5fd' },
-  { id:'relazioni',    name:'Relazioni',         emoji:'❤️', desc:'Amore, amicizia, storie',                cat:'pub',   tier:'public', color:'#f472b6', dot1:'#f472b6',dot2:'#ec4899',dot3:'#fb7185' },
-  { id:'notturna',     name:'Notturna 🌙',       emoji:'🌙', desc:'La notte porta pensieri profondi...',    cat:'pub',   tier:'public', color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
-  { id:'confessioni',  name:'Confessioni',       emoji:'🤫', desc:'Quello che non diresti a nessuno',       cat:'pub',   tier:'public', color:'#a855f7', dot1:'#a855f7',dot2:'#c084fc',dot3:'#e879f9' },
-  { id:'musica',       name:'Musica',            emoji:'🎵', desc:'Tracce, generi, artisti',                cat:'pub',   tier:'public', color:'#4ade80', dot1:'#4ade80',dot2:'#34d399',dot3:'#6ee7b7' },
-  { id:'horror',       name:'Horror 🎃',         emoji:'🎃', desc:'Storie, paure, leggende',                cat:'pub',   tier:'public', color:'#ea580c', dot1:'#ea580c',dot2:'#f97316',dot3:'#fb923c' },
-  { id:'deep-talk',    name:'Deep Talk',         emoji:'💭', desc:'Filosofia, vita, esistenza',             cat:'pub',   tier:'public', color:'#22d3ee', dot1:'#22d3ee',dot2:'#06b6d4',dot3:'#0891b2' },
-
-  // ─── SEGRETE (richiedono codice) ───
-  { id:'segreta-vip',     name:'VIP Lounge',     emoji:'👑', desc:'Solo per chi conosce il codice...',      cat:'secret', tier:'secret', color:'#fbbf24', code:'KOUVERTE2026', dot1:'#fbbf24',dot2:'#f59e0b',dot3:'#fcd34d' },
-  { id:'segreta-undergr', name:'Underground',    emoji:'🕳️', desc:'Una stanza che non dovresti conoscere',  cat:'secret', tier:'secret', color:'#7c3aed', code:'GHOST',       dot1:'#7c3aed',dot2:'#6d28d9',dot3:'#5b21b6' },
-
-  // ─── EVENTI A TEMPO ───
-  // Caos totale: solo dopo le 23 e prima delle 4
-  { id:'evento-caos',     name:'Ore 02:00 — Caos totale', emoji:'⚡', desc:'Stanza apertissima, attiva di notte', cat:'event', tier:'event', color:'#ef4444', eventHours:[23,0,1,2,3], dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
-  // Domande anonime: sempre attiva ma stile "ask me anything"
-  { id:'evento-ask',      name:'Domande Anonime', emoji:'❓', desc:'Chiedi tutto. Nessuno saprà chi sei.',  cat:'event', tier:'event', color:'#06b6d4', eventHours:'always', dot1:'#06b6d4',dot2:'#22d3ee',dot3:'#67e8f9' },
-  // Speed chat: solo dalle 18 alle 22
-  { id:'evento-speed',    name:'Speed Chat ⚡',  emoji:'⚡', desc:'Conversazioni rapide, dalle 18 alle 22', cat:'event', tier:'event', color:'#facc15', eventHours:[18,19,20,21], dot1:'#facc15',dot2:'#fde047',dot3:'#fef08a' },
+  { id:'mondo',     name:'🌍 Mondo',    emoji:'🌍', desc:'Chat globale, tutte le lingue',        tier:'public', color:'#a78bfa', dot1:'#a78bfa',dot2:'#c084fc',dot3:'#e879f9' },
+  { id:'italia',    name:'🇮🇹 Italia',  emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani', tier:'public', color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
+  { id:'roma',      name:'Roma',       emoji:'🏛️', desc:'Capitale eterna, chat capitolina',     tier:'public', color:'#f59e0b', dot1:'#f59e0b',dot2:'#fbbf24',dot3:'#fcd34d' },
+  { id:'milano',    name:'Milano',     emoji:'🏙️', desc:'Il cuore pulsante del Nord',           tier:'public', color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'campania',  name:'Campania',   emoji:'🌋', desc:'Napoli, Salerno, costiere e dintorni', tier:'public', color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
+  { id:'calabria',  name:'Calabria',   emoji:'🌅', desc:'Mare, sole e chiacchiere',             tier:'public', color:'#fb923c', dot1:'#fb923c',dot2:'#f97316',dot3:'#fbbf24' },
 ];
 
-function isRoomActiveNow(r){
-  if(r.tier!=='event') return true;
-  if(r.eventHours==='always') return true;
-  return r.eventHours.includes(new Date().getHours());
-}
+function isRoomActiveNow(){ return true; }
 
 const FRAMES_CFG = [
   { id:'none',    name:'Nessuna',  emoji:'🎭', price:0,   prem:false, css:'' },
@@ -823,13 +797,8 @@ let roomPreviews={};
 document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
-  initUser(); connectSocket(); renderRooms('all'); renderFrames(); renderBadges(); setupInput();
+  initUser(); connectSocket(); renderRooms(); renderFrames(); renderBadges(); setupInput();
   syncPremiumStatus();
-  document.getElementById('catFilter').addEventListener('click',e=>{
-    const b=e.target.closest('.cat-btn'); if(!b) return;
-    document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
-    b.classList.add('active'); activeCat=b.dataset.cat; renderRooms(activeCat);
-  });
   setTimeout(hideSplash,1200);
 });
 
@@ -1019,29 +988,8 @@ function pubUser(){
 }
 
 // ══ ROOMS ══
-function renderRooms(cat){
-  let html='';
-  if(cat==='all'){
-    const groups=[
-      {label:'🌐 Pubbliche',cat:'pub'},
-      {label:'⚡ Eventi attivi ora',cat:'event'},
-      {label:'🔒 Segrete',cat:'secret'},
-    ];
-    for(const g of groups){
-      let rooms=ROOMS.filter(r=>r.cat===g.cat);
-      // Eventi: solo quelli attivi nell'ora corrente
-      if(g.cat==='event') rooms=rooms.filter(isRoomActiveNow);
-      if(rooms.length===0) continue;
-      html+=`<div class="sec-label">${g.label}</div>`;
-      html+=rooms.map(roomCard).join('');
-    }
-  } else {
-    let rooms=ROOMS.filter(r=>r.cat===cat);
-    if(cat==='event') rooms=rooms.filter(isRoomActiveNow);
-    html=rooms.map(roomCard).join('');
-    if(rooms.length===0) html=`<div style="text-align:center;padding:40px 20px;color:#6b7280;font-size:13px">Nessuna stanza attiva in questa categoria adesso.<br><br>${cat==='event'?'Gli eventi si aprono a orari specifici 🌙':''}</div>`;
-  }
-  document.getElementById('roomsList').innerHTML=html;
+function renderRooms(){
+  document.getElementById('roomsList').innerHTML = ROOMS.map(roomCard).join('');
 }
 
 function roomCard(r){
