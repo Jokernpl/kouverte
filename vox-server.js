@@ -2615,7 +2615,87 @@ io.on('connection', (socket) => {
         socket.to(data.room).emit('call-ended');
     });
 
+    // ===== CHAT ROOMS (nuovo sistema anonimo) =====
+    const chatRoomHistory = {}; // roomId -> [last 50 msgs] (in-memory)
+    const chatRoomUsers   = {}; // roomId -> Map<socketId, user>
+
+    socket.on('join-chat-room', ({ roomId, user }) => {
+        if (!roomId || typeof roomId !== 'string') return;
+        // Lascia eventuali stanze chat precedenti
+        for (const [rid, users] of Object.entries(chatRoomUsers)) {
+            if (users.has(socket.id)) {
+                users.delete(socket.id);
+                io.to('chat-' + rid).emit('room-online', { roomId: rid, count: users.size });
+            }
+        }
+        socket.join('chat-' + roomId);
+        chatRoomUsers[roomId] = chatRoomUsers[roomId] || new Map();
+        chatRoomUsers[roomId].set(socket.id, user);
+        // Invia storia recente
+        const history = (chatRoomHistory[roomId] || []).slice(-50);
+        socket.emit('chat-history', { roomId, messages: history });
+        // Aggiorna contatori
+        const count = chatRoomUsers[roomId].size;
+        io.to('chat-' + roomId).emit('room-online', { roomId, count });
+        io.emit('global-online', { count: getTotalOnline() });
+    });
+
+    socket.on('leave-chat-room', ({ roomId }) => {
+        if (!roomId) return;
+        socket.leave('chat-' + roomId);
+        if (chatRoomUsers[roomId]) {
+            chatRoomUsers[roomId].delete(socket.id);
+            const count = chatRoomUsers[roomId].size;
+            io.to('chat-' + roomId).emit('room-online', { roomId, count });
+        }
+        io.emit('global-online', { count: getTotalOnline() });
+    });
+
+    socket.on('chat-message', ({ roomId, msg }) => {
+        if (!roomId || !msg?.text) return;
+        // Sanitize base
+        const clean = {
+            userId: String(msg.userId || 'anon').slice(0, 40),
+            name:   String(msg.name   || 'Anonimo').slice(0, 30),
+            color:  /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#a855f7',
+            mask:   String(msg.mask   || '🎭').slice(0, 4),
+            text:   String(msg.text).slice(0, 800),
+            ts:     Date.now(),
+            roomId
+        };
+        // Salva in storia (max 100 per stanza)
+        chatRoomHistory[roomId] = chatRoomHistory[roomId] || [];
+        chatRoomHistory[roomId].push(clean);
+        if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
+        // Broadcast a tutti nella stanza TRANNE chi ha inviato (il mittente si gestisce lato client)
+        socket.to('chat-' + roomId).emit('chat-message', { roomId, msg: clean });
+    });
+
+    socket.on('chat-typing', ({ roomId, user }) => {
+        if (!roomId || !user) return;
+        socket.to('chat-' + roomId).emit('chat-typing', { roomId, user });
+    });
+
+    socket.on('chat-stop-typing', ({ roomId, userId }) => {
+        if (!roomId) return;
+        socket.to('chat-' + roomId).emit('chat-stop-typing', { roomId, userId });
+    });
+
+    function getTotalOnline() {
+        let tot = 0;
+        for (const users of Object.values(chatRoomUsers)) tot += users.size;
+        return tot;
+    }
+
     socket.on('disconnect', () => {
+        // Rimuovi dalle chat rooms
+        for (const [rid, users] of Object.entries(chatRoomUsers)) {
+            if (users.has(socket.id)) {
+                users.delete(socket.id);
+                io.to('chat-' + rid).emit('room-online', { roomId: rid, count: users.size });
+            }
+        }
+        io.emit('global-online', { count: getTotalOnline() });
         // Clean up from activeCalls + DB voice_rooms
         for (const [userId, socketId] of activeCalls.entries()) {
             if (socketId === socket.id) {
