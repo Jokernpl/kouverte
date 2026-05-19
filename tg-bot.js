@@ -1,770 +1,524 @@
 // ============================================================
 // KOUVERTE · TELEGRAM BOT
-// "Il velo non si rompe. Si depone."
-// ============================================================
-// Allineato al sito KOUVERTE (app.html):
-//   - Sezioni: Home / Esplora / Chat / Premium / Profilo
-//   - Cornici premium (Avorio → Diamante) con Bitcoin
-//   - Foto profilo Telegram → avatar webapp
-//   - Sistema invita & guadagni con cornici regalo
+// Chat Mondiale Anonima — pagamenti in Telegram Stars
 // ============================================================
 
 const TelegramBot = require('node-telegram-bot-api');
-const fs = require('fs');
+const fs   = require('fs');
 const path = require('path');
 
-// ⚠️ HARDCODED TEMP: env Render ha token vecchio revocato, uso questo direttamente
-// DA RIMUOVERE: una volta che l'utente revoca + imposta correttamente BOT_TOKEN su Render
-const BOT_TOKEN    = '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
-const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
+// ⚠️ TEMP: token hardcoded. Da rimuovere quando BOT_TOKEN sarà su Render env.
+const BOT_TOKEN    = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://kouverte-vox.onrender.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
-const BTC_ADDRESS  = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
 
-if (!BOT_TOKEN || BOT_TOKEN.startsWith('INSERISCI') || BOT_TOKEN.length < 30) {
-  console.error('\n❌ BOT_TOKEN mancante o invalido.');
-  console.error('   Imposta la env var BOT_TOKEN (o TELEGRAM_BOT_TOKEN) con il token di BotFather.');
-  console.error('   Il bot non verrà avviato — l\'applicazione web continua a funzionare.\n');
-  // Esporta uno stub no-op così require('./tg-bot.js') non crasha
-  module.exports = { ok: false, error: 'BOT_TOKEN_MISSING' };
+if (!BOT_TOKEN || BOT_TOKEN.length < 30) {
+  console.error('❌ BOT_TOKEN mancante/invalido.');
+  module.exports = { ok:false, error:'BOT_TOKEN_MISSING' };
   return;
 }
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-console.log('🕯️  Kouverte Bot avviato · @' + BOT_USERNAME);
-console.log('    WebApp: ' + WEBAPP_URL);
-console.log('    BTC:    ' + BTC_ADDRESS);
+console.log('🎭 Kouverte Bot avviato · @' + BOT_USERNAME);
+console.log('   WebApp: ' + WEBAPP_URL);
 
-// Cleanup: rimuovi eventuali webhook fantasma che bloccano il polling
-// (succede se in passato qualcuno ha provato a impostare un webhook al bot)
 bot.deleteWebHook({ drop_pending_updates: false })
-   .then(() => console.log('    Webhook: cleared (polling mode active)'))
-   .catch(() => {});
+   .then(() => console.log('   Webhook: cleared (polling mode)'))
+   .catch(()=>{});
 
 // ============================================================
-// CATALOGO CORNICI (sincronizzato con app.html — prezzi in Stars Telegram)
-// Stars price: none=0, silver=0, purple=0, gold=30★, flame=40★, diamond=50★
+// CATALOGO CORNICI — allineato 1:1 con app.html
+// Pagamenti SOLO in Telegram Stars (★)
 // ============================================================
 const FRAMES = [
-  { id: 'none',    name: 'Nessuna',  price_stars: 0,  emoji: '🎭', free: true  },
-  { id: 'silver',  name: 'Silver',   price_stars: 0,  emoji: '🥈', free: true  },
-  { id: 'purple',  name: 'Viola',    price_stars: 0,  emoji: '💜', free: true  },
-  { id: 'gold',    name: 'Gold',     price_stars: 30, emoji: '🥇', free: false },
-  { id: 'flame',   name: 'Fiamma',   price_stars: 40, emoji: '🔥', free: false },
-  { id: 'diamond', name: 'Diamond',  price_stars: 50, emoji: '💎', free: false },
+  { id:'none',    name:'Nessuna', emoji:'🎭', stars:0,  prem:false },
+  { id:'silver',  name:'Silver',  emoji:'🥈', stars:0,  prem:false },
+  { id:'purple',  name:'Viola',   emoji:'💜', stars:0,  prem:false },
+  { id:'gold',    name:'Gold',    emoji:'🥇', stars:30, prem:true  },
+  { id:'flame',   name:'Fiamma',  emoji:'🔥', stars:40, prem:true  },
+  { id:'diamond', name:'Diamond', emoji:'💎', stars:50, prem:true  },
+];
+const frameById = id => FRAMES.find(f => f.id === id);
+
+// Stanze allineate con ROOMS in app.html
+const APP_ROOMS = [
+  { cat:'🇮🇹 Italia',        rooms:['Italia generale','Nord','Centro','Sud','Sicilia & Sardegna'] },
+  { cat:'🇪🇺 Europa',         rooms:['Europa generale','Est Europa','Ovest Europa'] },
+  { cat:'🌍 Mondo',           rooms:['Chat Mondiale','Americhe','Asia & Oceania','Africa & M.Oriente'] },
+  { cat:'💬 Mood',            rooms:['Late Night','Random','Gaming','Musica','Divertimento','Amicizia'] }
 ];
 
-// Cambio EUR/BTC (refreshato ogni 10 min via CoinGecko)
-let BTC_RATE_EUR = 95000;
-function eurToBtc(eur) {
-  if (!eur) return '0';
-  const btc = eur / BTC_RATE_EUR;
-  return btc.toFixed(8).replace(/0+$/, '').replace(/\.$/, '');
-}
-function refreshBtcRate() {
-  const https = require('https');
-  https.get('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=eur', (res) => {
-    let data = '';
-    res.on('data', c => data += c);
-    res.on('end', () => {
-      try {
-        const j = JSON.parse(data);
-        if (j?.bitcoin?.eur) BTC_RATE_EUR = j.bitcoin.eur;
-      } catch (e) {}
-    });
-  }).on('error', () => {});
-}
-refreshBtcRate();
-setInterval(refreshBtcRate, 10 * 60 * 1000);
-
-// ============================================================
-// NOTIFICATION POLLING — fetches like/match/message events from server
-// ============================================================
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:8082';
-const BOT_NOTIFY_SECRET = process.env.BOT_NOTIFY_SECRET || 'kouverte-internal';
-
-function pollServerNotifications() {
-  const https = require('https');
-  const http  = require('http');
-  const url = new URL(SERVER_URL + '/api/notifications/pending');
-  const lib = url.protocol === 'https:' ? https : http;
-  const req = lib.request({
-    hostname: url.hostname,
-    port:     url.port || (url.protocol === 'https:' ? 443 : 80),
-    path:     url.pathname,
-    method:   'GET',
-    headers:  { 'x-bot-secret': BOT_NOTIFY_SECRET }
-  }, (res) => {
-    let data = '';
-    res.on('data', c => data += c);
-    res.on('end', () => {
-      try {
-        const j = JSON.parse(data);
-        if (Array.isArray(j.notifications)) {
-          j.notifications.forEach(n => {
-            const tgId = parseInt(n.telegram_id);
-            if (tgId && n.message) {
-              bot.sendMessage(tgId, n.message, { parse_mode: 'HTML' }).catch(() => {});
-            }
-          });
-        }
-      } catch (e) {}
-    });
-  });
-  req.on('error', () => {});
-  req.end();
-}
-setTimeout(pollServerNotifications, 5000);
-setInterval(pollServerNotifications, 30 * 1000);
-
-// Tier di reward per inviti (cornice regalo gratis)
+// Tier referral: ad ogni N inviti → cornice regalo + badge
 const REFERRAL_REWARDS = [
-  { invites: 1,  frame: 'ivory',    label: 'Avorio'   },
-  { invites: 3,  frame: 'emerald',  label: 'Smeraldo' },
-  { invites: 5,  frame: 'ruby',     label: 'Rubino'   },
-  { invites: 10, frame: 'sapphire', label: 'Zaffiro'  },
-  { invites: 15, frame: 'amethyst', label: 'Ametista' },
-  { invites: 25, frame: 'topaz',    label: 'Topazio'  },
-  { invites: 40, frame: 'onyx',     label: 'Onice'    },
-  { invites: 60, frame: 'platinum', label: 'Platino'  },
-  { invites: 100,frame: 'diamond',  label: 'Diamante' }
+  { invites:1,  frame:'silver',  label:'Silver'  },
+  { invites:5,  frame:'purple',  label:'Viola'   },
+  { invites:15, frame:'gold',    label:'Gold'    },
+  { invites:30, frame:'flame',   label:'Fiamma'  },
+  { invites:60, frame:'diamond', label:'Diamond' }
 ];
 
 // ============================================================
-// STORAGE PERSISTENTE (file JSON)
+// STORAGE PERSISTENTE
 // ============================================================
 const DB_PATH = path.join(__dirname, 'kouverte-bot.json');
-let DB = { users: {}, referrals: {} };
-
-function loadDB() {
-  try {
-    if (fs.existsSync(DB_PATH)) {
-      DB = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-      DB.users = DB.users || {};
-      DB.referrals = DB.referrals || {};
-    }
-  } catch (e) { console.error('DB load error:', e.message); }
-}
-function saveDB() {
-  try { fs.writeFileSync(DB_PATH, JSON.stringify(DB, null, 2)); }
-  catch (e) { console.error('DB save error:', e.message); }
-}
+let DB = { users:{} };
+function loadDB(){ try{ if(fs.existsSync(DB_PATH)){ DB = JSON.parse(fs.readFileSync(DB_PATH,'utf8')); DB.users = DB.users||{}; } }catch(e){ console.error('DB load:', e.message); } }
+function saveDB(){ try{ fs.writeFileSync(DB_PATH, JSON.stringify(DB,null,2)); }catch(e){ console.error('DB save:', e.message); } }
 loadDB();
 
-function getUser(chatId) {
+function getUser(chatId){
   const id = String(chatId);
-  if (!DB.users[id]) {
+  if(!DB.users[id]){
     DB.users[id] = {
       id,
       joinedAt: Date.now(),
       invitedBy: null,
       invitedUsers: [],
-      ownedFrames: ['ivory'],
-      earnedEur: 0
+      ownedFrames: ['none','silver','purple'],
+      isPremium: false,
+      premiumExpiry: 0
     };
   }
-  // Migration: vecchi user con earnedSats
-  if (typeof DB.users[id].earnedEur === 'undefined') DB.users[id].earnedEur = 0;
+  // Migrazione automatica da vecchio schema
+  if(!Array.isArray(DB.users[id].ownedFrames) || DB.users[id].ownedFrames.length===0){
+    DB.users[id].ownedFrames = ['none','silver','purple'];
+  }
   return DB.users[id];
 }
+function isPremium(u){ return u.isPremium && Date.now() < (u.premiumExpiry||0); }
 
 // ============================================================
 // HELPERS
 // ============================================================
-function freshUrl(hash = '') {
-  return `${WEBAPP_URL}?v=${Date.now()}${hash}`;
-}
-
-function refLink(chatId) {
-  return `https://t.me/${BOT_USERNAME}?start=ref_${chatId}`;
-}
-
-function nextRewardFor(user) {
-  const count = user.invitedUsers.length;
-  return REFERRAL_REWARDS.find(r => r.invites > count) || null;
-}
-
-function frameById(id) {
-  return FRAMES.find(f => f.id === id);
-}
-
-function formatSats(n) {
-  return n.toLocaleString('it-IT');
-}
-function formatEur(n) {
-  return n.toFixed(2).replace('.', ',');
-}
-
-// Telegram profile photo (file URL) — async
-async function getTgPhotoUrl(chatId) {
-  try {
-    const photos = await bot.getUserProfilePhotos(chatId, { limit: 1 });
-    if (!photos?.photos?.length) return null;
-    const sizes = photos.photos[0];
-    const biggest = sizes[sizes.length - 1];
-    const file = await bot.getFile(biggest.file_id);
-    return `https://api.telegram.org/file/bot${BOT_TOKEN}/${file.file_path}`;
-  } catch (e) {
-    return null;
-  }
+const fresh = (hash='') => `${WEBAPP_URL}?v=${Date.now()}${hash}`;
+const refLink = chatId => `https://t.me/${BOT_USERNAME}?start=ref_${chatId}`;
+function nextReward(u){
+  const c = u.invitedUsers.length;
+  return REFERRAL_REWARDS.find(r => r.invites > c) || null;
 }
 
 // ============================================================
-// /start (con referral tracking)
+// /start con referral tracking
 // ============================================================
 bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
-  const chatId = msg.chat.id;
+  const chatId    = msg.chat.id;
   const firstName = msg.from.first_name || 'amico';
-  const refArg = match[1];
-  const user = getUser(chatId);
+  const refArg    = match[1];
+  const user      = getUser(chatId);
 
-  // Referral tracking
-  if (refArg && refArg.startsWith('ref_')) {
+  if(refArg && refArg.startsWith('ref_')){
     const refFromId = refArg.substring(4);
-    if (refFromId !== String(chatId) && !user.invitedBy) {
+    if(refFromId !== String(chatId) && !user.invitedBy){
       const inviter = getUser(refFromId);
-      if (!inviter.invitedUsers.includes(String(chatId))) {
+      if(!inviter.invitedUsers.includes(String(chatId))){
         inviter.invitedUsers.push(String(chatId));
         user.invitedBy = refFromId;
         saveDB();
-
-        // Notifica all'inviter + reward check
-        notifyReferralEarned(refFromId, firstName);
+        notifyReferralEarned(refFromId, firstName).catch(()=>{});
       }
     }
   }
-
-  const photoUrl = await getTgPhotoUrl(chatId);
 
   const caption =
 `🎭 *KOUVERTE* — Chat Mondiale Anonima
 
 Benvenuto, *${firstName}*!
 
-*Chatta. Conosci. Condividi. Senza essere chi sei.*
-
 🇮🇹 Stanze Italia · Nord, Centro, Sud, Sicilia
-🌍 Chat Mondiale · Europa, Americhe, Asia...
-💬 Mood · Gaming, Musica, Notte Fonda, Fun
+🌍 Europa · Americhe · Asia · Africa
+💬 Mood · Gaming, Musica, Notte Fonda...
 
-🔒 100% Anonimo — nessun nome, nessuna foto
-🎁 100 messaggi gratuiti poi 1€/mese
+🔒 *100% Anonimo* — solo una maschera emoji
+🎁 *100 messaggi gratuiti* poi 1€/mese
 🏆 Badge & cornici da sbloccare
 
-Apri l'app e scegli la tua stanza! 👇`;
+*Chatta. Conosci. Condividi. Senza essere chi sei.*
+
+Tocca il bottone qui sotto 👇`;
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: '🚀 Entra in KOUVERTE', web_app: { url: freshUrl() } }],
+      [{ text:'🚀 Entra in KOUVERTE', web_app:{ url: fresh() } }],
       [
-        { text: '🎭 Profilo & Badge', web_app: { url: freshUrl('#profile') } },
-        { text: '🖼️ Cornici',         callback_data: 'frames_list' }
+        { text:'🎭 Profilo', callback_data:'profile' },
+        { text:'🖼️ Cornici', callback_data:'frames' }
       ],
       [
-        { text: '🔗 Invita & guadagna', callback_data: 'invite_card' },
-        { text: '⭐ Premium 1€/mese',   web_app: { url: freshUrl('#profile') } }
+        { text:'🔗 Invita & guadagna', callback_data:'invite' },
+        { text:'⭐ Premium 1€/mese',   callback_data:'premium' }
       ]
     ]
   };
 
-  // salva subito per evitare duplicati poi rimetti il keyboard originale
-  try {
-    if (photoUrl) {
-      await bot.sendPhoto(chatId, photoUrl, {
-        caption,
-        parse_mode: 'Markdown',
-        reply_markup: _keyboard_override
-      });
-    } else {
-      await bot.sendMessage(chatId, caption, {
-        parse_mode: 'Markdown',
-        reply_markup: _keyboard_override
-      });
-    }
-  } catch (e) {
-    bot.sendMessage(chatId, caption, { parse_mode: 'Markdown', reply_markup: keyboard });
-  }
-
-  setTimeout(() => showMenu(chatId), 600);
+  bot.sendMessage(chatId, caption, { parse_mode:'Markdown', reply_markup: keyboard }).catch(e=>console.error('start:',e.message));
+  setTimeout(()=>showMenu(chatId), 600);
 });
 
 // ============================================================
-// MENU PERSISTENTE
+// Menu reply-keyboard persistente
 // ============================================================
-function showMenu(chatId) {
-  bot.sendMessage(chatId, '⌨️  Menu rapido KOUVERTE', {
+function showMenu(chatId){
+  bot.sendMessage(chatId, '⌨️  Menu rapido', {
     reply_markup: {
       keyboard: [
-        [{ text: '🚀 Entra nella Chat' }, { text: '🎭 Profilo & Badge' }],
-        [{ text: '🖼️ Cornici' },           { text: '🔗 Invita & guadagna' }],
-        [{ text: '⭐ Premium' },            { text: '❓ Aiuto' }]
+        [{ text:'🚀 Entra nella Chat' }, { text:'🎭 Profilo' }],
+        [{ text:'🖼️ Cornici' },          { text:'🔗 Invita & guadagna' }],
+        [{ text:'⭐ Premium' },           { text:'❓ Aiuto' }]
       ],
       resize_keyboard: true,
       persistent: true
     }
-  });
+  }).catch(()=>{});
+}
+bot.onText(/^\/menu$/i, m => showMenu(m.chat.id));
+
+// ============================================================
+// /profilo
+// ============================================================
+function sendProfile(chatId){
+  const u = getUser(chatId);
+  const owned = u.ownedFrames.map(id=>frameById(id)).filter(Boolean);
+  const ownedTxt = owned.map(f=>`${f.emoji} ${f.name}`).join(' · ') || '🎭 Nessuna';
+  const prem = isPremium(u);
+  const premLine = prem
+    ? `⭐ *Premium attivo* fino al ${new Date(u.premiumExpiry).toLocaleDateString('it-IT')}`
+    : `Non Premium · _Sblocca con 1€/mese_`;
+
+  const text =
+`🎭 *Il tuo profilo*
+
+📅 Iscritto: ${new Date(u.joinedAt).toLocaleDateString('it-IT')}
+👥 Amici invitati: *${u.invitedUsers.length}*
+${premLine}
+
+💎 *Cornici possedute:*
+${ownedTxt}`;
+
+  bot.sendMessage(chatId, text, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🎭 Apri profilo in app', web_app:{ url: fresh('#profile') } }],
+        [{ text:'🖼️ Vedi cornici', callback_data:'frames' }],
+        [{ text:'🔗 Invita amici', callback_data:'invite' }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/profilo$/i, m => sendProfile(m.chat.id));
+
+// ============================================================
+// /cornici
+// ============================================================
+function sendFrames(chatId){
+  const u = getUser(chatId);
+  const owned = new Set(u.ownedFrames);
+
+  const lines = FRAMES.map(f => {
+    const has = owned.has(f.id);
+    const price = f.stars === 0 ? (f.prem ? '_Premium_' : 'Gratis') : `${f.stars}★`;
+    return `${f.emoji}  *${f.name}*  — ${has ? '✅ Tua' : price}`;
+  }).join('\n');
+
+  const next = nextReward(u);
+  const reward = next
+    ? `\n\n🎁 *Prossima cornice regalo:* ${next.label} con *${next.invites - u.invitedUsers.length}* inviti.`
+    : '\n\n🏆 Hai sbloccato tutte le cornici premio!';
+
+  bot.sendMessage(chatId,
+`💎 *Catalogo Cornici*
+
+${lines}${reward}
+
+_Acquista con Telegram Stars dall'app, oppure invita amici per riceverle in regalo._`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🛒 Apri cornici in app', web_app:{ url: fresh('#profile') } }],
+        [{ text:'🔗 Invita per guadagnarle', callback_data:'invite' }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/cornici$/i, m => sendFrames(m.chat.id));
+
+// ============================================================
+// /invita
+// ============================================================
+function sendInvite(chatId){
+  const u = getUser(chatId);
+  const link = refLink(chatId);
+  const c = u.invitedUsers.length;
+  const next = nextReward(u);
+
+  const rewardsList = REFERRAL_REWARDS.map(r=>{
+    const done = c >= r.invites;
+    return `${done?'✅':'⬜️'} ${r.invites} inviti → ${frameById(r.frame)?.emoji||''} *${r.label}*`;
+  }).join('\n');
+
+  bot.sendMessage(chatId,
+`🔗 *Invita & Guadagna*
+
+Condividi il tuo link: ogni amico che si iscrive ti regala una cornice.
+
+🪙 *Il tuo link:*
+\`${link}\`
+
+👥 Amici invitati: *${c}*
+${next ? `🎯 Prossima: *${next.label}* tra *${next.invites - c}* inviti` : '🏆 *Tutti i premi sbloccati!*'}
+
+🎁 *Tabella premi:*
+${rewardsList}`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'📤 Condividi su Telegram', switch_inline_query:`Entra su KOUVERTE 🎭 ${link}` }],
+        [{ text:'🎭 Apri app', web_app:{ url: fresh() } }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/invita$/i, m => sendInvite(m.chat.id));
+
+// ============================================================
+// /stanze — solo quelle reali dell'app
+// ============================================================
+function sendRooms(chatId){
+  const lines = APP_ROOMS.map(c =>
+    `*${c.cat}*\n${c.rooms.map(r=>`  · ${r}`).join('\n')}`
+  ).join('\n\n');
+
+  bot.sendMessage(chatId,
+`💬 *Stanze KOUVERTE*
+
+${lines}
+
+Tutte anonime. 100 messaggi gratuiti, poi Premium.`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🚀 Apri le stanze', web_app:{ url: fresh() } }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/stanze$/i, m => sendRooms(m.chat.id));
+
+// ============================================================
+// /premium — 1€/mese = 100★ Telegram Stars
+// ============================================================
+function sendPremium(chatId){
+  const u = getUser(chatId);
+  if(isPremium(u)){
+    return bot.sendMessage(chatId,
+`⭐ *Sei già Premium!*
+
+Premium attivo fino al ${new Date(u.premiumExpiry).toLocaleDateString('it-IT')}.
+✅ Messaggi illimitati
+✅ Cornici Gold, Diamond, Fiamma sbloccate`, { parse_mode:'Markdown' }).catch(()=>{});
+  }
+
+  bot.sendMessage(chatId,
+`⭐ *KOUVERTE Premium*
+
+*Solo 1€/mese = 100★ Telegram Stars*
+
+✅ *Messaggi illimitati* (no limite 100)
+✅ *Cornici premium* sbloccate: Gold 🥇 · Fiamma 🔥 · Diamond 💎
+✅ *Nome brillante* in chat — gli altri vedono che sei Premium
+✅ Cancellabile in qualsiasi momento
+
+_Paghi con Telegram Stars, nessun rinnovo automatico._`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'⭐ Abbonati — 100★ (1€)', callback_data:'buy_premium' }],
+        [{ text:'🎭 Apri app', web_app:{ url: fresh('#profile') } }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/premium$/i, m => sendPremium(m.chat.id));
+
+// ============================================================
+// Invoice Telegram Stars · Premium
+// ============================================================
+async function sendPremiumInvoice(chatId){
+  try {
+    await bot.sendInvoice(
+      chatId,
+      'KOUVERTE Premium',                                // title
+      '1 mese di messaggi illimitati + cornici premium', // description
+      JSON.stringify({ type:'premium', chatId }),        // payload
+      '',                                                 // provider_token (vuoto per Stars)
+      'XTR',                                              // currency = Telegram Stars
+      [{ label: 'Premium 1 mese', amount: 100 }]          // 100 stars
+    );
+  } catch(e){
+    console.error('Premium invoice err:', e.message);
+    bot.sendMessage(chatId, '⚠️ Errore creazione pagamento. Riprova.');
+  }
 }
 
-// ── Telegram Stars: gestione pagamento avvenuto ──
+// ============================================================
+// Pre-checkout → approva
+// ============================================================
+bot.on('pre_checkout_query', q => {
+  bot.answerPreCheckoutQuery(q.id, true).catch(e=>console.error('pre_checkout:',e.message));
+});
+
+// ============================================================
+// Pagamento riuscito (Premium + Cornici)
+// ============================================================
 bot.on('message', async (msg) => {
-  if (!msg.successful_payment) return;
+  if(!msg.successful_payment) return;
   const chatId = msg.chat.id;
   const sp = msg.successful_payment;
   let payload = {};
   try { payload = JSON.parse(sp.invoice_payload); } catch { return; }
 
-  if (payload.type === 'premium') {
-    // Salva premium nel DB bot
-    const user = getUser(chatId);
-    user.premiumExpiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+  const user = getUser(chatId);
+
+  if(payload.type === 'premium'){
     user.isPremium = true;
-    if (!user.ownedFrames.includes('gold'))    user.ownedFrames.push('gold');
-    if (!user.ownedFrames.includes('diamond')) user.ownedFrames.push('diamond');
-    if (!user.ownedFrames.includes('flame'))   user.ownedFrames.push('flame');
+    user.premiumExpiry = Date.now() + 30*24*60*60*1000;
+    ['gold','flame','diamond'].forEach(f => { if(!user.ownedFrames.includes(f)) user.ownedFrames.push(f); });
     saveDB();
     bot.sendMessage(chatId,
-      `🎉 *Grazie! Sei ora KOUVERTE Premium!*\n\n✅ Messaggi illimitati\n✅ Cornici Gold, Diamond, Fiamma sbloccate\n✅ Nome in evidenza in chat\n\nBuona chat! 🎭`,
-      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '🚀 Vai alla Chat', web_app: { url: freshUrl() } }]] } }
-    );
-  } else if (payload.type === 'frame' && payload.frameId) {
-    const user = getUser(chatId);
-    if (!user.ownedFrames.includes(payload.frameId)) user.ownedFrames.push(payload.frameId);
+`🎉 *Sei ora KOUVERTE Premium!*
+
+✅ Messaggi illimitati per 30 giorni
+✅ Cornici Gold 🥇 · Fiamma 🔥 · Diamond 💎 sbloccate
+✅ Nome brillante in chat`, {
+      parse_mode:'Markdown',
+      reply_markup: { inline_keyboard: [[{ text:'🚀 Vai alla chat', web_app:{ url: fresh() } }]] }
+    }).catch(()=>{});
+  }
+  else if(payload.type === 'frame' && payload.frameId){
+    const f = frameById(payload.frameId);
+    if(f && !user.ownedFrames.includes(f.id)) user.ownedFrames.push(f.id);
     saveDB();
-    const f = FRAMES.find(x => x.id === payload.frameId);
     bot.sendMessage(chatId,
-      `${f?.emoji || '🖼️'} *Cornice ${f?.name || payload.frameId} sbloccata!*\n\nApri il tuo profilo per attivarla.`,
-      { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '🎭 Profilo', web_app: { url: freshUrl('#profile') } }]] } }
-    );
+`${f?.emoji||'🖼️'} *Cornice ${f?.name||payload.frameId} sbloccata!*
+
+Apri il profilo per attivarla.`, {
+      parse_mode:'Markdown',
+      reply_markup: { inline_keyboard: [[{ text:'🎭 Profilo', web_app:{ url: fresh('#profile') } }]] }
+    }).catch(()=>{});
   }
 });
 
-// Pre-checkout: approva sempre
-bot.on('pre_checkout_query', (q) => {
-  bot.answerPreCheckoutQuery(q.id, true).catch(() => {});
-});
-bot.onText(/^\/menu$/, (msg) => showMenu(msg.chat.id));
-
 // ============================================================
-// /profilo — mostra la foto Telegram + info
+// /aiuto
 // ============================================================
-async function sendProfile(chatId, fromName) {
-  const user = getUser(chatId);
-  const photoUrl = await getTgPhotoUrl(chatId);
-  const invited = user.invitedUsers.length;
-  const ownedNames = user.ownedFrames
-    .map(id => frameById(id))
-    .filter(Boolean)
-    .map(f => `${f.emoji} ${f.name}`)
-    .join(' · ');
+function sendHelp(chatId){
+  bot.sendMessage(chatId,
+`❓ *Comandi KOUVERTE*
 
-  const text =
-`👤 *Profilo di ${fromName}*
-
-📅 Iscritto: ${new Date(user.joinedAt).toLocaleDateString('it-IT')}
-👥 Amici invitati: *${invited}*
-💰 Valore guadagnato: *${formatEur(user.earnedEur)} €* (${eurToBtc(user.earnedEur)} BTC)
-
-💎 *Cornici possedute:*
-${ownedNames || '🤍 Avorio'}
-
-Tocca il bottone qui sotto per usare questa foto come avatar Kouverte.`;
-
-  const keyboard = {
-    inline_keyboard: [
-      [{ text: '🖼️ Usa questa foto come avatar', web_app: { url: freshUrl('#profile') } }],
-      [{ text: '💎 Le mie cornici', callback_data: 'my_frames' }],
-      [{ text: '🔗 Il mio link invito', callback_data: 'invite_card' }]
-    ]
-  };
-
-  if (photoUrl) {
-    bot.sendPhoto(chatId, photoUrl, { caption: text, parse_mode: 'Markdown', reply_markup: keyboard });
-  } else {
-    bot.sendMessage(chatId, text + '\n\n_Nessuna foto profilo Telegram trovata._', {
-      parse_mode: 'Markdown', reply_markup: keyboard
-    });
-  }
-}
-bot.onText(/^\/profilo$/i, (msg) => sendProfile(msg.chat.id, msg.from.first_name || 'tu'));
-
-// ============================================================
-// /cornici — catalogo completo
-// ============================================================
-function sendFramesList(chatId) {
-  const user = getUser(chatId);
-  const owned = user.ownedFrames;
-
-  const lines = FRAMES.map(f => {
-    const has = owned.includes(f.id);
-    const price = f.price_eur === 0
-      ? 'Gratis'
-      : `${f.price_eur} € · ${eurToBtc(f.price_eur)} BTC`;
-    const status = has ? '✅ Posseduta' : `· ${price}`;
-    return `${f.emoji}  *${f.name}*  — ${status}`;
-  }).join('\n');
-
-  const next = nextRewardFor(user);
-  const reward = next
-    ? `\n\n🎁 *Prossima cornice regalo:* ${next.label} con *${next.invites - user.invitedUsers.length}* inviti.`
-    : '\n\n🏆 Hai sbloccato tutte le cornici regalo possibili!';
-
-  const text =
-`💎 *Catalogo Cornici Kouverte*
-
-${lines}
-${reward}
-
-_Acquista con Bitcoin dall'app o invita amici per riceverle in regalo._`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '🛒 Acquista con BTC', web_app: { url: freshUrl('#profile') } }],
-        [{ text: '🔗 Invita per guadagnarle', callback_data: 'invite_card' }]
-      ]
-    }
-  });
-}
-bot.onText(/^\/cornici$/i, (msg) => sendFramesList(msg.chat.id));
-
-// ============================================================
-// /invita — link referral + reward tier
-// ============================================================
-function sendInviteCard(chatId) {
-  const user = getUser(chatId);
-  const link = refLink(chatId);
-  const count = user.invitedUsers.length;
-  const next = nextRewardFor(user);
-
-  const rewardsList = REFERRAL_REWARDS
-    .map(r => {
-      const done = count >= r.invites;
-      return `${done ? '✅' : '⬜️'} ${r.invites} inviti → cornice *${r.label}*`;
-    })
-    .join('\n');
-
-  const text =
-`🔗 *Invita & Guadagna*
-
-Condividi il tuo link personale: ogni amico che si iscrive ti regala una cornice esclusiva.
-
-🪙 *Il tuo link:*
-\`${link}\`
-
-👥 *Amici invitati:* ${count}
-${next ? `🎯 *Prossimo premio:* cornice *${next.label}* tra *${next.invites - count}* inviti.` : '🏆 *Hai sbloccato tutti i premi!*'}
-
-🎁 *Tabella premi:*
-${rewardsList}`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '📤 Condividi link su Telegram', switch_inline_query: `Entra su Kouverte ✨ ${link}` }],
-        [{ text: '🪙 Vedi guadagni', callback_data: 'earnings' }]
-      ]
-    }
-  });
-}
-bot.onText(/^\/invita$/i, (msg) => sendInviteCard(msg.chat.id));
-
-// ============================================================
-// /guadagni — riepilogo + cornici sbloccate
-// ============================================================
-function sendEarnings(chatId) {
-  const user = getUser(chatId);
-  const count = user.invitedUsers.length;
-  const unlocked = REFERRAL_REWARDS.filter(r => count >= r.invites);
-  const next = nextRewardFor(user);
-
-  const equivalentEur = unlocked.reduce((sum, r) => {
-    const f = frameById(r.frame);
-    return sum + (f ? f.price_eur : 0);
-  }, 0);
-
-  const text =
-`💰 *I tuoi guadagni*
-
-👥 Amici invitati: *${count}*
-🎁 Cornici sbloccate: *${unlocked.length}*
-💎 Valore totale: *${formatEur(equivalentEur)} €*  (${eurToBtc(equivalentEur)} BTC)
-
-${unlocked.length > 0
-  ? '✅ *Sbloccate:* ' + unlocked.map(r => `${frameById(r.frame)?.emoji || ''} ${r.label}`).join(' · ')
-  : '_Inizia a invitare per sbloccare la prima cornice._'}
-
-${next ? `🎯 *Prossima:* cornice *${next.label}* tra *${next.invites - count}* inviti.` : '🏆 *Tutte le cornici premio sono tue!*'}`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '🔗 Invita ancora', callback_data: 'invite_card' }],
-        [{ text: '💎 Vedi cornici', callback_data: 'frames_list' }]
-      ]
-    }
-  });
-}
-bot.onText(/^\/guadagni$/i, (msg) => sendEarnings(msg.chat.id));
-
-// ============================================================
-// /stanze — lista stanze vocali
-// ============================================================
-const ROOMS = [
-  { slug: 'lounge-velluto',    label: 'Lounge Velluto',     desc: 'Conversazioni sottili e raffinate',         emoji: '🍷' },
-  { slug: 'jazz-after-dark',   label: 'Jazz After Dark',    desc: 'Vinili, smoking e voci basse',              emoji: '🎷' },
-  { slug: 'parigi-by-night',   label: 'Parigi by Night',    desc: 'Romance, charme, lingua francese',          emoji: '🗼' },
-  { slug: 'cinema-noir',       label: 'Cinema Noir',        desc: 'Recensioni di film cult e contemporanei',   emoji: '🎬' },
-  { slug: 'segreti-di-cucina', label: 'Segreti di Cucina',  desc: 'Ricette gourmet e racconti dai grandi chef',emoji: '🥂' },
-  { slug: 'arte-e-poesia',     label: 'Arte e Poesia',      desc: 'Letture, mostre, ispirazioni',              emoji: '🎭' },
-  { slug: 'salotto-business',  label: 'Salotto Business',   desc: 'Networking, idee, mentor',                  emoji: '💼' }
-];
-
-function sendRooms(chatId) {
-  const lines = ROOMS.map(r => `${r.emoji}  *${r.label}* — _${r.desc}_`).join('\n\n');
-  const text =
-`🎙️  *Stanze vocali Kouverte*
-
-Conversazioni in tempo reale con persone selezionate:
-
-${lines}
-
-✨ Entra in una stanza dall'app — la tua voce è la tua firma.`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '🎙️ Apri Stanze', web_app: { url: freshUrl('#rooms') } }],
-        ...ROOMS.slice(0, 3).map(r => ([{
-          text: `${r.emoji} ${r.label}`,
-          web_app: { url: freshUrl('#rooms') }
-        }]))
-      ]
-    }
-  });
-}
-bot.onText(/^\/stanze$/i, (msg) => sendRooms(msg.chat.id));
-
-// ============================================================
-// /premium — piani come nel sito
-// ============================================================
-function sendPremium(chatId) {
-  const text =
-`👑 *Kouverte Premium*
-
-Pagamenti in *Bitcoin*. Cambio live aggiornato.
-
-*Vox Pro* · 5 € / mese · _${eurToBtc(5)} BTC_
-◆ Storie per 14 giorni
-◆ Profilo verificato
-◆ Badge Premium
-
-*Vox Elite* · 10 € / mese · _${eurToBtc(10)} BTC_  ⭐ CONSIGLIATO
-◆ Storie per 30 giorni
-◆ Visibilità prioritaria
-◆ Badge Premium
-
-*Vox Infinity* · 20 € / mese · _${eurToBtc(20)} BTC_
-◆ Storie permanenti
-◆ Tutte le funzioni Elite
-◆ Supporto dedicato
-◆ Eventi esclusivi`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '👑 Attiva Premium', web_app: { url: freshUrl('#premium') } }],
-        [{ text: '₿ Paga in Bitcoin', callback_data: 'btc_info' }]
-      ]
-    }
-  });
-}
-bot.onText(/^\/premium$/i, (msg) => sendPremium(msg.chat.id));
-
-// ============================================================
-// /bitcoin — info pagamenti
-// ============================================================
-function sendBtcInfo(chatId) {
-  const text =
-`₿ *Pagamenti in Bitcoin*
-
-Tutti gli acquisti su Kouverte (cornici, Premium) si pagano in Bitcoin.
-
-🔐 *Indirizzo ufficiale:*
-\`${BTC_ADDRESS}\`
-
-⚙️ *Come funziona:*
-1. Scegli una cornice o un piano dall'app
-2. Si apre un *QR code* con importo preciso in sats
-3. Paghi dal tuo wallet (Phoenix, Muun, Wallet of Satoshi, ecc.)
-4. Dopo *4 conferme* sblocchiamo l'acquisto
-
-💡 *Non hai BTC?* Invita amici e ricevi le cornici in regalo con /invita!`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '💎 Vai alle cornici', callback_data: 'frames_list' }],
-        [{ text: '🔗 Modalità regalo (gratis)', callback_data: 'invite_card' }]
-      ]
-    }
-  });
-}
-bot.onText(/^\/bitcoin$/i, (msg) => sendBtcInfo(msg.chat.id));
-
-// ============================================================
-// /aiuto — comandi completi
-// ============================================================
-function sendHelp(chatId) {
-  const text =
-`❓ *Aiuto — Comandi Kouverte*
-
-🏠 /start — Benvenuto + il tuo profilo
-⌨️ /menu — Menu rapido in basso
-👤 /profilo — Mostra la tua foto + info
-🎙️ /stanze — Stanze vocali attive
-💎 /cornici — Catalogo cornici premium
-🔗 /invita — Il tuo link referral
-🪙 /guadagni — Cornici sbloccate
-👑 /premium — Piani Premium
-₿ /bitcoin — Pagamenti in Bitcoin
+🚀 /start — Benvenuto
+⌨️ /menu — Menu rapido
+🎭 /profilo — Il tuo profilo
+💬 /stanze — Lista delle stanze
+🖼️ /cornici — Catalogo cornici
+🔗 /invita — Link referral
+⭐ /premium — Abbonamento 1€/mese
 ❓ /aiuto — Questa lista
 
-🔗 *Vuoi guadagnare?* Invita amici con /invita e ricevi cornici esclusive — fino al Diamante 💎 (vale 50.000 sats!).`;
-
-  bot.sendMessage(chatId, text, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: '🚀 Apri Kouverte', web_app: { url: freshUrl() } }]
-      ]
-    }
-  });
+_KOUVERTE è 100% anonima. Nessun nome reale, nessuna foto._`, {
+    parse_mode:'Markdown',
+    reply_markup: { inline_keyboard: [[{ text:'🚀 Apri KOUVERTE', web_app:{ url: fresh() } }]] }
+  }).catch(()=>{});
 }
-bot.onText(/^\/(aiuto|help|start_help)$/i, (msg) => sendHelp(msg.chat.id));
+bot.onText(/^\/(aiuto|help)$/i, m => sendHelp(m.chat.id));
 
 // ============================================================
-// CALLBACK QUERIES (bottoni inline)
+// CALLBACK QUERIES (inline buttons)
 // ============================================================
-bot.on('callback_query', async (cq) => {
+bot.on('callback_query', cq => {
   const chatId = cq.message.chat.id;
-  const data = cq.data;
-  bot.answerCallbackQuery(cq.id).catch(() => {});
-
-  switch (data) {
-    case 'frames_list':  return sendFramesList(chatId);
-    case 'rooms_list':   return sendRooms(chatId);
-    case 'invite_card':  return sendInviteCard(chatId);
-    case 'earnings':     return sendEarnings(chatId);
-    case 'my_frames':    return sendFramesList(chatId);
-    case 'btc_info':     return sendBtcInfo(chatId);
-    case 'premium':      return sendPremium(chatId);
-    case 'profilo':      return sendProfile(chatId, cq.from.first_name || 'tu');
+  bot.answerCallbackQuery(cq.id).catch(()=>{});
+  switch(cq.data){
+    case 'profile':     return sendProfile(chatId);
+    case 'frames':      return sendFrames(chatId);
+    case 'invite':      return sendInvite(chatId);
+    case 'rooms':       return sendRooms(chatId);
+    case 'premium':     return sendPremium(chatId);
+    case 'help':        return sendHelp(chatId);
+    case 'buy_premium': return sendPremiumInvoice(chatId);
   }
 });
 
 // ============================================================
-// REPLY KEYBOARD HANDLER
+// Reply-keyboard handler (matcha i pulsanti del menu)
 // ============================================================
-bot.on('message', (msg) => {
-  if (!msg.text || msg.text.startsWith('/')) return;
+bot.on('message', msg => {
+  if(!msg.text || msg.text.startsWith('/') || msg.successful_payment) return;
   const chatId = msg.chat.id;
-  const text = msg.text.trim().toLowerCase();
-  const name = msg.from.first_name || 'tu';
+  const t = msg.text.trim();
 
   const actions = {
-    '🏠 home':     () => bot.sendMessage(chatId, '🏠 Apri la *Home* di Kouverte', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl() } }]] } }),
-    '🔍 esplora':  () => bot.sendMessage(chatId, '🔍 Esplora i profili', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl('#explore') } }]] } }),
-    '🎙️ stanze':   () => sendRooms(chatId),
-    '💬 chat':     () => bot.sendMessage(chatId, '💬 Le tue conversazioni', { parse_mode: 'Markdown', reply_markup: { inline_keyboard: [[{ text: '▶ Apri', web_app: { url: freshUrl('#chat') } }]] } }),
-    '👑 premium':  () => sendPremium(chatId),
-    '👤 profilo':  () => sendProfile(chatId, name),
-    '💎 cornici':  () => sendFramesList(chatId),
-    '🔗 invita':   () => sendInviteCard(chatId),
-    '🪙 guadagni': () => sendEarnings(chatId),
-    '₿ bitcoin':   () => sendBtcInfo(chatId),
-    '❓ aiuto':    () => sendHelp(chatId)
+    '🚀 Entra nella Chat':     () => bot.sendMessage(chatId, '🚀 Apri KOUVERTE', { reply_markup:{ inline_keyboard:[[{ text:'▶ Apri', web_app:{ url:fresh() } }]] } }).catch(()=>{}),
+    '🎭 Profilo':              () => sendProfile(chatId),
+    '🖼️ Cornici':              () => sendFrames(chatId),
+    '🔗 Invita & guadagna':    () => sendInvite(chatId),
+    '⭐ Premium':              () => sendPremium(chatId),
+    '❓ Aiuto':                () => sendHelp(chatId),
   };
+  if(actions[t]) return actions[t]();
 
-  for (const key in actions) {
-    if (text === key) return actions[key]();
-  }
+  // Fallback naturali
+  if(/ciao|salve|hey|hi/i.test(t)) return bot.sendMessage(chatId, `🎭 Ciao! Usa /menu per i comandi.`).catch(()=>{});
+  if(/grazie/i.test(t))            return bot.sendMessage(chatId, '🤍 Sempre un piacere.').catch(()=>{});
+  if(/cornic/i.test(t))            return sendFrames(chatId);
+  if(/invit|amic/i.test(t))        return sendInvite(chatId);
+  if(/premium|abbon/i.test(t))     return sendPremium(chatId);
+  if(/stanz|room/i.test(t))        return sendRooms(chatId);
+  if(/profil/i.test(t))            return sendProfile(chatId);
+  if(/aiuto|help/i.test(t))        return sendHelp(chatId);
 
-  // Risposte naturali
-  if (/ciao|salve|hey/i.test(text)) {
-    return bot.sendMessage(chatId, `🕯️ Ciao ${name}. Usa /menu per i comandi.`);
-  }
-  if (/grazie/i.test(text)) {
-    return bot.sendMessage(chatId, '🤍 Sempre un piacere.');
-  }
-  if (/cornic/i.test(text)) return sendFramesList(chatId);
-  if (/invit|amic/i.test(text)) return sendInviteCard(chatId);
-  if (/bitcoin|btc|paga/i.test(text)) return sendBtcInfo(chatId);
-  if (/profilo|account/i.test(text)) return sendProfile(chatId, name);
-  if (/aiuto|help/i.test(text)) return sendHelp(chatId);
-
-  bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu o /aiuto.');
+  bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu.').catch(()=>{});
 });
 
 // ============================================================
-// REFERRAL: notifica + assegnazione cornice
+// Referral: notifica + assegnazione cornice
 // ============================================================
-async function notifyReferralEarned(inviterId, newUserName) {
+async function notifyReferralEarned(inviterId, newUserName){
   const inviter = getUser(inviterId);
-  const count = inviter.invitedUsers.length;
+  const c = inviter.invitedUsers.length;
 
-  // Verifica se ha raggiunto un tier di reward
-  const justUnlocked = REFERRAL_REWARDS.find(r => r.invites === count);
+  const justUnlocked = REFERRAL_REWARDS.find(r => r.invites === c);
   let rewardMsg = '';
-  if (justUnlocked) {
-    if (!inviter.ownedFrames.includes(justUnlocked.frame)) {
+  if(justUnlocked){
+    if(!inviter.ownedFrames.includes(justUnlocked.frame)){
       inviter.ownedFrames.push(justUnlocked.frame);
       const f = frameById(justUnlocked.frame);
-      inviter.earnedEur += (f?.price_eur || 0);
-      saveDB();
-      rewardMsg = `\n\n🎉 *PREMIO SBLOCCATO!*\nHai vinto la cornice ${f.emoji} *${f.name}* (valore ${formatEur(f.price_eur)} € · ${eurToBtc(f.price_eur)} BTC).`;
+      rewardMsg = `\n\n🎉 *PREMIO SBLOCCATO!*\nHai vinto la cornice ${f.emoji} *${f.name}*!`;
     }
-  } else {
-    saveDB();
   }
+  saveDB();
 
-  const next = nextRewardFor(inviter);
+  const next = nextReward(inviter);
   const nextMsg = next
-    ? `\n🎯 Prossima cornice: *${next.label}* tra ${next.invites - count} inviti.`
-    : '\n🏆 Hai sbloccato tutte le cornici premio!';
-
-  const text =
-`🎊 *${newUserName}* si è iscritto col tuo link!
-
-👥 Amici invitati totali: *${count}*${rewardMsg}${nextMsg}`;
+    ? `\n🎯 Prossima cornice: *${next.label}* tra ${next.invites - c} inviti.`
+    : '\n🏆 Hai sbloccato tutte le cornici!';
 
   try {
-    await bot.sendMessage(inviterId, text, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '🪙 Vedi guadagni', callback_data: 'earnings' }],
-          [{ text: '🚀 Apri app', web_app: { url: freshUrl('#profile') } }]
-        ]
-      }
+    await bot.sendMessage(inviterId,
+`🎊 *${newUserName}* si è iscritto col tuo link!
+
+👥 Amici invitati: *${c}*${rewardMsg}${nextMsg}`, {
+      parse_mode:'Markdown',
+      reply_markup: { inline_keyboard: [[{ text:'🎭 Apri profilo', web_app:{ url: fresh('#profile') } }]] }
     });
-  } catch (e) {
-    console.error('Notify referral error:', e.message);
-  }
+  } catch(e){ console.error('Notify referral:', e.message); }
 }
 
 // ============================================================
 // ERROR HANDLING
 // ============================================================
-bot.on('polling_error', (err) => console.error('Polling error:', err.message));
-bot.on('error', (err) => console.error('Bot error:', err.message));
+bot.on('polling_error', e => console.error('Polling error:', e.message));
+bot.on('error',         e => console.error('Bot error:', e.message));
 
-process.on('SIGINT', () => {
-  saveDB();
-  console.log('\n💾 DB salvato. Arrivederci.');
-  process.exit(0);
-});
+process.on('SIGINT', () => { saveDB(); console.log('\n💾 DB salvato.'); process.exit(0); });
+
+module.exports = { ok:true, bot };

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>KOUVERTE</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -847,9 +847,28 @@ function updateFreeBar(){
 }
 
 // ══ SOCKET ══
+const BACKEND = window.location.hostname.includes('onrender.com') || window.location.hostname === 'localhost'
+  ? '' : 'https://kouverte-vox.onrender.com';
+
+function setConnState(state){
+  const el = document.getElementById('chatOnline');
+  if(!el) return;
+  if(state==='connecting') el.textContent='Connessione...';
+  else if(state==='offline') el.textContent='⚠️ Offline — ritento';
+  else if(state==='online' && room) el.textContent=(roomOnline[room.id]??0)+' online';
+}
+
 function connectSocket(){
-  socket=io({transports:['websocket','polling']});
-  socket.on('connect',()=>{ if(room) socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); });
+  if(typeof io==='undefined'){ showToast('⚠️ Impossibile caricare socket.io'); setTimeout(connectSocket,3000); return; }
+  setConnState('connecting');
+  socket=io(BACKEND,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:Infinity});
+  socket.on('connect',()=>{
+    setConnState('online');
+    if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
+  });
+  socket.on('disconnect',()=>setConnState('offline'));
+  socket.on('connect_error',()=>setConnState('offline'));
+  socket.on('reconnect_attempt',()=>setConnState('connecting'));
   socket.on('chat-message',({roomId,msg})=>{
     // Aggiorna preview nella card
     roomPreviews[roomId]=roomPreviews[roomId]||[];
@@ -1076,7 +1095,9 @@ function addSys(text){ appendMsg({type:'system',text}); scrollBot(); }
 function sendMsg(){
   const inp=document.getElementById('msgInput');
   const text=inp.value.trim();
-  if(!text||!room||!socket?.connected) return;
+  if(!text) return;
+  if(!room){showToast('⚠️ Entra in una stanza prima');return;}
+  if(!socket?.connected){showToast('🔄 Connessione in corso...');socket&&socket.connect();return;}
   if(!isPrem()&&(user.freeUsed||0)>=FREE_LIMIT){showPaywall();return;}
 
   const msg={
