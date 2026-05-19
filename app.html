@@ -1432,6 +1432,8 @@ function showScreen(name,btn){
   if(btn) btn.classList.add('active');
   else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
+  // Nascondi bottom nav in chat: copriva l'input dei messaggi
+  document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
 }
 
 // ══ UTILS ══
