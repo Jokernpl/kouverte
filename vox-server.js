@@ -661,6 +661,22 @@ app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, 
     }
 });
 
+// Diagnostica storage e Redis
+app.get('/api/storage/status', (req, res) => {
+    const hasRedisUrl = !!process.env.UPSTASH_REDIS_REST_URL;
+    const hasRedisToken = !!process.env.UPSTASH_REDIS_REST_TOKEN;
+    const r = getServerRedis();
+    res.json({
+        redisConfigured: hasRedisUrl && hasRedisToken,
+        redisActive: !!r,
+        usersCount: (DB.users || []).length,
+        dbFileExists: fs.existsSync(DB_FILE),
+        dbFileSize: fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0,
+        nodeEnv: process.env.NODE_ENV || 'development',
+        env_keys_set: Object.keys(process.env).filter(k => k.includes('UPSTASH') || k.includes('REDIS')).length
+    });
+});
+
 // Get current user
 app.get('/api/auth/me', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
