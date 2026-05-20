@@ -812,18 +812,31 @@ app.post('/api/auth/reset-password', rateLimit('reset', 10, 15 * 60 * 1000), asy
 });
 
 // Login — rate limited 5/15min per IP
+// Accetta sia email che username nel campo "email" o "username"
 app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, res) => {
-    const emailIn = sanitizeEmail(req.body?.email);
+    const identifier = String(req.body?.email || req.body?.username || '').trim().toLowerCase();
     const password = req.body?.password;
-    if (!emailIn || !password) return res.status(400).json({ error: 'Email e password richieste' });
+    if (!identifier || !password) return res.status(400).json({ error: 'Email/username e password richiesti' });
     if (typeof password !== 'string' || password.length > 200) return res.status(400).json({ error: 'Password non valida' });
 
-    const user = DB.users.find(u => u.email === emailIn);
-    if (!user || !user.password_hash) return res.status(401).json({ error: 'Email o password non corretti' });
+    // Cerca per email OR username
+    const isEmail = identifier.includes('@');
+    let user;
+    if (isEmail) {
+        const emailClean = sanitizeEmail(identifier);
+        if (!emailClean) return res.status(400).json({ error: 'Email non valida' });
+        user = DB.users.find(u => u.email === emailClean);
+    } else {
+        const userClean = sanitizeUsername(identifier);
+        if (!userClean) return res.status(400).json({ error: 'Username non valido' });
+        user = DB.users.find(u => u.username === userClean);
+    }
+
+    if (!user || !user.password_hash) return res.status(401).json({ error: 'Email/username o password non corretti' });
 
     try {
         const match = await bcrypt.compare(password, user.password_hash);
-        if (!match) return res.status(401).json({ error: 'Email o password non corretti' });
+        if (!match) return res.status(401).json({ error: 'Email/username o password non corretti' });
 
         user.last_seen = now();
         markDirty();
@@ -3327,6 +3340,8 @@ io.on('connection', (socket) => {
             if (users.has(socket.id)) {
                 users.delete(socket.id);
                 io.to('chat-' + rid).emit('room-online', { roomId: rid, count: users.size });
+                // Broadcast lista aggiornata
+                broadcastChatUsers(rid);
             }
         }
         socket.join('chat-' + roomId);
@@ -3339,6 +3354,8 @@ io.on('connection', (socket) => {
         const count = chatRoomUsers[roomId].size;
         io.to('chat-' + roomId).emit('room-online', { roomId, count });
         io.emit('global-online', { count: getTotalOnline() });
+        // Broadcast lista utenti aggiornata
+        broadcastChatUsers(roomId);
     });
 
     socket.on('leave-chat-room', ({ roomId }) => {
@@ -3348,9 +3365,21 @@ io.on('connection', (socket) => {
             chatRoomUsers[roomId].delete(socket.id);
             const count = chatRoomUsers[roomId].size;
             io.to('chat-' + roomId).emit('room-online', { roomId, count });
+            broadcastChatUsers(roomId);
         }
         io.emit('global-online', { count: getTotalOnline() });
     });
+
+    // Funzione helper: broadcast lista utenti in stanza
+    function broadcastChatUsers(roomId) {
+        const map = chatRoomUsers[roomId];
+        if (!map) return;
+        const users = [];
+        for (const [sid, u] of map.entries()) {
+            users.push({ socketId: sid, ...u });
+        }
+        io.to('chat-' + roomId).emit('chat-users', { roomId, users });
+    }
 
     socket.on('chat-message', ({ roomId, msg }) => {
         if (!roomId || !msg?.text) return;
@@ -3392,8 +3421,12 @@ io.on('connection', (socket) => {
             if (users.has(socket.id)) {
                 users.delete(socket.id);
                 io.to('chat-' + rid).emit('room-online', { roomId: rid, count: users.size });
+                broadcastChatUsers(rid);
             }
         }
+        // Rimuovi da DM tracking
+        if (socket._dmUserId && global.dmUsers) global.dmUsers.delete(socket._dmUserId);
+        if (socket._dmServerId && global.dmServerIds) global.dmServerIds.delete(socket._dmServerId);
         io.emit('global-online', { count: getTotalOnline() });
         // Clean up from activeCalls + DB voice_rooms
         for (const [userId, socketId] of activeCalls.entries()) {

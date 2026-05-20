@@ -1999,6 +1999,20 @@ function connectSocket(){
     document.getElementById('oCount').textContent=count;
     document.getElementById('opill').style.display='flex';
   });
+
+  // NEW: ricevi lista utenti in stanza (per video chat + lista chip)
+  socket.on('chat-users', ({ roomId, users }) => {
+    if (!room || room.id !== roomId) return;
+    chatRoomUsers[roomId] = new Map();
+    users.forEach(u => {
+      chatRoomUsers[roomId].set(u.socketId || u.id, {
+        id: u.id, name: u.name, face: u.face, color: u.color,
+        frame: u.frame, activeFrame: u.activeFrame || u.frame,
+        isPremium: u.isPremium
+      });
+    });
+    renderUsersPanel();
+  });
   socket.on('chat-history',({roomId,messages})=>{
     if(roomId!==room?.id) return;
     document.getElementById('chatMsgs').innerHTML='';
@@ -2346,48 +2360,66 @@ function stopAllWebRTC() {
 function renderUsersPanel() {
   const container = document.getElementById('usersScrollContainer');
   if (!container || !room) return;
-  
+
   container.innerHTML = '';
-  
+
   const usersMap = chatRoomUsers[room.id];
   if (!usersMap || usersMap.size === 0) {
-    container.innerHTML = '<div style="padding: 12px; color: #9ca3af; white-space: nowrap;">Nessun utente</div>';
+    container.innerHTML = '<div style="padding: 12px; color: #9ca3af; white-space: nowrap;">📭 Nessun altro utente in stanza. Aspetta che entrino o invita amici!</div>';
+    // Aggiorna label video
+    const theirLabel = document.getElementById('theirVideoLabel');
+    if (theirLabel) theirLabel.textContent = 'Aspetto qualcuno...';
     return;
   }
-  
+
+  let firstOtherUser = null;
+
   usersMap.forEach((userObj, socketId) => {
     if (userObj.id === user.id) return;
-    
+
+    // Salva il primo utente per auto-select
+    if (!firstOtherUser) firstOtherUser = userObj;
+
     const chip = document.createElement('div');
     chip.className = 'user-chip';
     chip.setAttribute('data-user-id', userObj.id);
     chip.setAttribute('data-socket-id', socketId);
-    
+
+    // Cornice se ce l'ha
+    const ufr = userObj.activeFrame || userObj.frame || 'none';
     const avatar = document.createElement('div');
-    avatar.className = 'user-chip-avatar';
+    avatar.className = 'user-chip-avatar' + (ufr !== 'none' ? ' frame-' + ufr : '');
+    if (userObj.color) avatar.style.background = userObj.color + '33';
     avatar.textContent = userObj.face || '🎭';
-    
+
     const name = document.createElement('div');
     name.className = 'user-chip-name';
     name.textContent = (userObj.name || 'Anonimo').substring(0, 10);
-    
+
     const onlineDot = document.createElement('div');
     onlineDot.className = 'user-chip-online-dot';
-    
+
     const camIndicator = document.createElement('div');
     camIndicator.className = 'user-chip-cam-indicator';
     camIndicator.textContent = '🎥';
     camIndicator.style.display = webrtcEnabled ? 'flex' : 'none';
-    
+    camIndicator.title = 'Tocca per video chat';
+
     chip.appendChild(avatar);
     chip.appendChild(name);
     chip.appendChild(onlineDot);
     chip.appendChild(camIndicator);
-    
+
     chip.addEventListener('click', () => selectUser(userObj.id));
-    
+
     container.appendChild(chip);
   });
+
+  // AUTO-CONNECT: se WebRTC ok e nessun utente selezionato, auto-collega al primo
+  if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
+    console.log('[WebRTC] Auto-connect al primo utente:', firstOtherUser.id);
+    setTimeout(() => selectUser(firstOtherUser.id), 800);
+  }
 }
 
 // ══ ROOMS ══
@@ -2557,13 +2589,15 @@ function appendMsg(msg){
     const lvlBadge = !consec ? `<span style="font-size:9px;color:#9ca3af;margin-left:3px;font-weight:600">lvl ${lvl}</span>` : '';
     const auraClass = (prem || lvl>=10) ? 'aura-prem' : '';
     const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
+    // Click sull'avatar/nome → menu utente
+    const clickData = `data-uid="${esc(msg.userId||'')}" data-uname="${esc(name)}" data-uface="${esc(face)}" data-ucolor="${col}" data-uframe="${esc(msg.activeFrame||'none')}" onclick="openUserMenu(this)" style="cursor:pointer"`;
     row.innerHTML=`
-      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" style="${auraStyle}background:${col}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" ${clickData} style="${auraStyle}background:${col}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px;cursor:pointer" title="Tocca per profilo">
         ${face}
       </div>
       <div class="mbody">
         <div class="mline">
-          ${!consec?`<span class="mname" style="color:${col}${nameGlow}">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
+          ${!consec?`<span class="mname" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
           <span class="mtext">${esc(msg.text)}</span>
         </div>
         ${!consec?`<div class="mtime">${time}</div>`:''}
@@ -3063,8 +3097,8 @@ function createAuthModal(){
 
         <div id="authError" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5"></div>
 
-        <label class="modal-label">Email</label>
-        <input type="email" id="authEmail" class="modal-input" placeholder="tu@email.com" autocomplete="email">
+        <label class="modal-label" id="authEmailLabel">Email o Username</label>
+        <input type="text" id="authEmail" class="modal-input" placeholder="tua@email.com o bob_kouverte" autocomplete="username">
 
         <div id="authUsernameWrap" style="display:none">
           <label class="modal-label">Username</label>
@@ -3105,6 +3139,20 @@ function switchAuthMode(mode){
   document.getElementById('authUsernameWrap').style.display = isRegister ? 'block' : 'none';
   document.getElementById('authSubmitBtn').textContent = isRegister ? '✨ Crea Account' : '🔑 Accedi';
   document.getElementById('authError').style.display = 'none';
+  // Aggiorna label/placeholder a seconda del mode
+  const label = document.getElementById('authEmailLabel');
+  const input = document.getElementById('authEmail');
+  if (label && input) {
+    if (isRegister) {
+      label.textContent = 'Email';
+      input.type = 'email';
+      input.placeholder = 'tua@email.com';
+    } else {
+      label.textContent = 'Email o Username';
+      input.type = 'text';
+      input.placeholder = 'tua@email.com o bob_kouverte';
+    }
+  }
   document.querySelectorAll('.auth-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.mode === mode);
   });
@@ -3119,11 +3167,20 @@ async function doAuth(){
   const errEl = document.getElementById('authError');
   errEl.style.display = 'none';
 
-  // Validazione
-  if (!email || !email.includes('@')) {
-    errEl.textContent = '❌ Email non valida';
-    errEl.style.display = 'block';
-    return;
+  // Validazione: al register richiede email, al login accetta email o username
+  if (mode === 'register') {
+    if (!email || !email.includes('@')) {
+      errEl.textContent = '❌ Email non valida (richiesta per la registrazione)';
+      errEl.style.display = 'block';
+      return;
+    }
+  } else {
+    // Login: identifier = email o username, non vuoto
+    if (!email || email.length < 3) {
+      errEl.textContent = '❌ Inserisci email o username';
+      errEl.style.display = 'block';
+      return;
+    }
   }
   if (!password || password.length < 6) {
     errEl.textContent = '❌ Password minimo 6 caratteri';
@@ -3571,6 +3628,111 @@ document.addEventListener('visibilitychange', () => {
     }).catch(()=>{});
   }
 });
+
+// ══════════════════════════════════════════
+// MENU CLICK UTENTE in CHAT (apri profilo / DM / amico)
+// ══════════════════════════════════════════
+function openUserMenu(el){
+  const uid = el.dataset.uid;
+  const uname = el.dataset.uname;
+  const uface = el.dataset.uface || '🎭';
+  const ucolor = el.dataset.ucolor || '#a855f7';
+  const uframe = el.dataset.uframe || 'none';
+
+  if (!uid) return;
+  if (uid === user.id) { showToast('💜 Sei tu!'); return; }
+
+  let modal = document.getElementById('userMenuModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'userMenuModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:360px">
+      <div class="modal-hdr">
+        <div class="modal-title">👤 Profilo utente</div>
+        <button class="modal-close" onclick="document.getElementById('userMenuModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px 20px">
+        <div class="prof-avatar-hero frame-${uframe}" style="--av-c1:${ucolor};--av-c2:${ucolor};width:90px;height:90px;font-size:48px;margin-bottom:10px">
+          <div class="prof-avatar-face">${uface}</div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:${ucolor};margin-bottom:4px">${esc(uname)}</div>
+        <div style="font-size:11px;color:#9ca3af;margin-bottom:20px">ID: ${uid.substring(0,12)}</div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="modal-btn modal-btn-primary" onclick="actionDmFromUserMenu('${esc(uid)}','${esc(uname)}','${uface}','${ucolor}')" style="width:100%;padding:12px">💬 Manda messaggio privato</button>
+          <button class="modal-btn modal-btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);width:100%;padding:12px" onclick="actionAddFriendFromMenu('${esc(uid)}','${esc(uname)}')">➕ Aggiungi agli amici</button>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionStartWebRTC('${esc(uid)}','${esc(uname)}')">📹 Video chat</button>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionFavoriteFromMenu('${esc(uid)}','${esc(uname)}','${uface}','${ucolor}')">❤️ Aggiungi ai preferiti</button>
+          <button class="modal-btn modal-btn-secondary" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);width:100%;padding:10px" onclick="actionBlockFromMenu('${esc(uid)}','${esc(uname)}','${uface}')">🚫 Blocca utente</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function actionDmFromUserMenu(uid, uname, uface, ucolor){
+  document.getElementById('userMenuModal').classList.remove('show');
+  if (!isLoggedIn) {
+    showToast('🔐 Per chat private serve un account. Fai login!');
+    return;
+  }
+  openDmChat(uid, uname, uface, ucolor);
+}
+
+async function actionAddFriendFromMenu(uid, uname){
+  document.getElementById('userMenuModal').classList.remove('show');
+  if (!isLoggedIn) {
+    showToast('🔐 Per aggiungere amici serve un account');
+    return;
+  }
+  // Per gli ID non-server, non possiamo aggiungerli direttamente (serverId richiesto)
+  // Fallback: salva in localStorage favoriti
+  if (!uid.startsWith('u_')) {
+    actionFavoriteFromMenu(uid, uname);
+    showToast('⚠️ Per amici stabili serve account registrato dell\'utente');
+    return;
+  }
+  await addFriend(uid, uname);
+}
+
+function actionFavoriteFromMenu(uid, uname, uface, ucolor){
+  document.getElementById('userMenuModal').classList.remove('show');
+  user.favorites = user.favorites || [];
+  if (user.favorites.find(f => f.id === uid)) {
+    showToast('❤️ Gia nei preferiti');
+    return;
+  }
+  user.favorites.push({ id: uid, name: uname, face: uface || '🎭', color: ucolor, addedAt: Date.now() });
+  saveUser();
+  showToast('❤️ ' + uname + ' aggiunto ai preferiti!');
+}
+
+function actionBlockFromMenu(uid, uname, uface){
+  document.getElementById('userMenuModal').classList.remove('show');
+  if (!confirm('Bloccare ' + uname + '? Non vedrai più i suoi messaggi.')) return;
+  user.blocked = user.blocked || [];
+  if (!user.blocked.find(b => b.id === uid)) {
+    user.blocked.push({ id: uid, name: uname, face: uface || '🎭', blockedAt: Date.now() });
+    saveUser();
+  }
+  showToast('🚫 ' + uname + ' bloccato');
+}
+
+function actionStartWebRTC(uid, uname){
+  document.getElementById('userMenuModal').classList.remove('show');
+  if (typeof selectUser === 'function') {
+    selectUser(uid);
+    showToast('📹 Connessione video a ' + uname + '...');
+  } else {
+    showToast('⚠️ Video chat non disponibile');
+  }
+}
 
 // ══════════════════════════════════════════
 // SISTEMA AMICI + RICERCA UTENTI + DM
