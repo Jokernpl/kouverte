@@ -1012,7 +1012,8 @@ app.post('/api/kv/sync', verifyToken, (req, res) => {
         'isPremium', 'premExpiry', 'roomsVisited', 'badges',
         'ownedFrames', 'activeFrame', 'coins', 'streak',
         'lastLogin', 'lastSpin', 'tempFrames', 'boostUntil',
-        'confessUsedOn', 'favorites', 'blocked', 'xp', 'level'
+        'confessUsedOn', 'favorites', 'blocked', 'xp', 'level',
+        'bio', 'statusEmoji', 'statusText', 'banner', 'dailyMissions'
     ];
 
     // Costruisci dati safe

@@ -760,6 +760,97 @@ html[data-theme="light"] body {
 .info-item-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
 
 /* ═══════════════════════════════
+   PROFILO - banner, status, bio
+═══════════════════════════════ */
+.prof-banner{height:120px;background:linear-gradient(135deg,#7c3aed,#ec4899,#f97316);background-size:300% 300%;animation:bannerShift 8s ease infinite;position:relative;cursor:pointer;overflow:hidden;border-bottom:3px solid #a855f7}
+.prof-banner-overlay{position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,transparent,#12082a 100%);pointer-events:none}
+.prof-banner-edit{position:absolute;top:10px;right:14px;background:rgba(0,0,0,0.4);color:#fff;font-size:11px;padding:5px 10px;border-radius:14px;font-weight:700;backdrop-filter:blur(4px)}
+@keyframes bannerShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.prof-banner.b-galaxy{background:radial-gradient(ellipse at 30% 50%,#8b5cf6,#1e0d40 60%,#0a0418 100%)}
+.prof-banner.b-sunset{background:linear-gradient(135deg,#f97316,#ec4899,#a855f7)}
+.prof-banner.b-ocean{background:linear-gradient(135deg,#0891b2,#3b82f6,#7c3aed)}
+.prof-banner.b-forest{background:linear-gradient(135deg,#10b981,#059669,#7c3aed)}
+.prof-banner.b-fire{background:linear-gradient(135deg,#dc2626,#f97316,#fbbf24)}
+.prof-banner.b-neon{background:linear-gradient(135deg,#00ffff,#ec4899,#8b5cf6)}
+
+/* Hero profilo posizionato sopra il banner */
+.prof-hero{margin-top:-50px;position:relative;z-index:2}
+.prof-avatar-hero{box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+
+/* Stato personalizzato */
+.prof-status-row{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);border-radius:20px;margin-top:8px;cursor:pointer;transition:all 0.2s}
+.prof-status-row:hover{background:rgba(168,85,247,0.25)}
+.prof-status-emoji{font-size:14px}
+.prof-status-text{font-size:11px;color:#cbd5e1;font-style:italic}
+
+/* Bio */
+.prof-bio{display:flex;align-items:center;gap:6px;padding:8px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.2);border-radius:12px;margin:10px 20px 0;cursor:pointer;font-size:12px;color:#cbd5e1;transition:all 0.2s}
+.prof-bio:hover{background:rgba(255,255,255,0.06);border-color:rgba(168,85,247,0.4)}
+.prof-bio-edit{font-size:11px;opacity:0.5;flex-shrink:0}
+#profBioText{flex:1;line-height:1.4}
+
+/* ═══════════════════════════════
+   LIVE STATS BAR - sensazione mondo vivo
+═══════════════════════════════ */
+.live-stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(59,130,246,0.1),rgba(236,72,153,0.1));border:1px solid rgba(168,85,247,0.3);border-radius:16px;position:relative;overflow:hidden}
+.live-stats-bar::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(168,85,247,0.1),transparent);animation:shimmer 4s linear infinite;pointer-events:none}
+.live-stat{display:flex;align-items:center;gap:8px;justify-content:center;position:relative}
+.live-stat-icon{font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:32px;height:32px}
+.pulse-dot{width:14px;height:14px;background:#10b981;border-radius:50%;position:relative;box-shadow:0 0 12px #10b981}
+.pulse-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:#10b981;animation:ping 2s ease-out infinite;opacity:0.6}
+@keyframes ping{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}
+.live-stat-text{display:flex;flex-direction:column;align-items:flex-start}
+.live-stat-num{font-size:18px;font-weight:900;color:#fff;line-height:1;background:linear-gradient(135deg,#fff,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.live-stat-label{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+
+/* ═══════════════════════════════
+   LIVE FEED - utenti che entrano, stanze create
+═══════════════════════════════ */
+.live-feed{max-height:200px;overflow-y:auto;background:rgba(0,0,0,0.25);border:1px solid rgba(168,85,247,0.2);border-radius:14px;padding:8px;margin-bottom:20px}
+.live-feed::-webkit-scrollbar{width:4px}
+.live-feed::-webkit-scrollbar-thumb{background:#7c3aed;border-radius:2px}
+.live-feed-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;margin-bottom:4px;font-size:12px;color:#cbd5e1;background:rgba(255,255,255,0.02);animation:feedSlideIn 0.5s ease-out;transition:background 0.2s}
+.live-feed-item:hover{background:rgba(168,85,247,0.1)}
+.lf-dot{width:6px;height:6px;border-radius:50%;background:#a855f7;flex-shrink:0;box-shadow:0 0 6px #a855f7;animation:dotPulse 2s ease-in-out infinite}
+.lf-dot.green{background:#10b981;box-shadow:0 0 6px #10b981}
+.lf-dot.orange{background:#f97316;box-shadow:0 0 6px #f97316}
+.lf-dot.pink{background:#ec4899;box-shadow:0 0 6px #ec4899}
+.lf-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-text b{color:#fff}
+.lf-time{font-size:10px;color:#6b7280;flex-shrink:0}
+@keyframes feedSlideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes dotPulse{0%,100%{opacity:0.6;transform:scale(1)}50%{opacity:1;transform:scale(1.2)}}
+
+/* ═══════════════════════════════
+   SFONDO HOME ANIMATO - particelle e glow
+═══════════════════════════════ */
+#home{position:relative;background:#0a0418}
+#home::before{content:'';position:absolute;inset:0;background:
+  radial-gradient(circle at 20% 30%,rgba(168,85,247,0.15) 0%,transparent 40%),
+  radial-gradient(circle at 80% 70%,rgba(236,72,153,0.12) 0%,transparent 40%),
+  radial-gradient(circle at 50% 50%,rgba(59,130,246,0.08) 0%,transparent 50%);
+  pointer-events:none;z-index:0;animation:bgOrbs 12s ease-in-out infinite}
+@keyframes bgOrbs{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(180deg)}}
+#home > *{position:relative;z-index:1}
+/* Particelle */
+.kv-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.kv-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#a855f7;box-shadow:0 0 6px #a855f7;animation:floatParticle 15s linear infinite;opacity:0.6}
+.kv-particle.p2{background:#ec4899;box-shadow:0 0 6px #ec4899;animation-duration:20s}
+.kv-particle.p3{background:#38bdf8;box-shadow:0 0 6px #38bdf8;animation-duration:25s}
+.kv-particle.p4{background:#fbbf24;box-shadow:0 0 8px #fbbf24;animation-duration:18s}
+@keyframes floatParticle{from{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:0.6}90%{opacity:0.6}to{transform:translateY(-10vh) translateX(40px);opacity:0}}
+
+/* ═══════════════════════════════
+   ROOM CARDS - glow potenziato + hover
+═══════════════════════════════ */
+.room-card{position:relative;overflow:hidden;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
+.room-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 30%,var(--rc-glow,rgba(168,85,247,0.2)) 50%,transparent 70%);background-size:200% 200%;background-position:200% 0%;transition:background-position 0.6s ease-out;pointer-events:none;opacity:0}
+.room-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 16px 40px var(--rc-glow,rgba(168,85,247,0.4))}
+.room-card:hover::after{background-position:-200% 0%;opacity:1}
+.room-card.live-room{animation:roomLivePulse 3s ease-in-out infinite}
+@keyframes roomLivePulse{0%,100%{box-shadow:0 0 0 rgba(168,85,247,0.4)}50%{box-shadow:0 0 30px rgba(168,85,247,0.6)}}
+
+/* ═══════════════════════════════
    TELEGRAM BANNER - HOME
 ═══════════════════════════════ */
 .telegram-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0088cc,#229ed9);cursor:pointer;margin-bottom:14px;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,136,204,0.3)}
@@ -945,6 +1036,8 @@ html[data-theme="light"] body {
 
 <!-- ░░ HOME ░░ -->
 <div id="home" class="screen">
+  <!-- Particelle animate sfondo -->
+  <div class="kv-particles" id="kvParticles"></div>
   <div class="home-hdr">
     <div class="home-logo-row">
       <!-- Mini mascot -->
@@ -1001,8 +1094,43 @@ html[data-theme="light"] body {
       </button>
     </div>
 
+    <!-- NEW: Stats Live - sensazione mondo vivo -->
+    <div class="live-stats-bar">
+      <div class="live-stat">
+        <div class="live-stat-icon pulse-dot"></div>
+        <div class="live-stat-text">
+          <span class="live-stat-num" id="liveOnlineCount">0</span>
+          <span class="live-stat-label">online ora</span>
+        </div>
+      </div>
+      <div class="live-stat">
+        <div class="live-stat-icon">🔥</div>
+        <div class="live-stat-text">
+          <span class="live-stat-num" id="liveTrendingCount">3</span>
+          <span class="live-stat-label">stanze HOT</span>
+        </div>
+      </div>
+      <div class="live-stat">
+        <div class="live-stat-icon">✨</div>
+        <div class="live-stat-text">
+          <span class="live-stat-num" id="liveNewRoomsCount">0</span>
+          <span class="live-stat-label">nuove stanze</span>
+        </div>
+      </div>
+    </div>
+
     <div class="sec-label">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
+
+    <!-- NEW: Feed Live - attività in tempo reale -->
+    <div class="sec-label" style="margin-top:20px">📡 Feed Live</div>
+    <div id="liveFeed" class="live-feed">
+      <div class="live-feed-item">
+        <div class="lf-dot"></div>
+        <div class="lf-text">Caricamento attività...</div>
+        <div class="lf-time">ora</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1142,11 +1270,30 @@ html[data-theme="light"] body {
 
 <!-- ░░ PROFILE ░░ -->
 <div id="profile" class="screen">
+  <!-- Banner profilo (sfondo personalizzabile) -->
+  <div class="prof-banner" id="profBanner" onclick="cycleProfileBanner()" title="Tocca per cambiare banner">
+    <div class="prof-banner-overlay"></div>
+    <div class="prof-banner-edit">🎨 Banner</div>
+  </div>
+
   <div class="prof-hero">
     <div id="profAvatarHero" class="prof-avatar-hero" onclick="openFrameSelector()" title="Cambia cornice">
       <div id="profAvatarFace" class="prof-avatar-face">🎭</div>
     </div>
     <div class="prof-name" id="profName" style="color:#fff">Anonimo</div>
+
+    <!-- Stato personalizzato -->
+    <div class="prof-status-row">
+      <span class="prof-status-emoji" id="profStatusEmoji">💭</span>
+      <span class="prof-status-text" id="profStatusText" onclick="editProfileStatus()">Tocca per impostare uno stato...</span>
+    </div>
+
+    <!-- Bio editabile -->
+    <div class="prof-bio" id="profBio" onclick="editProfileBio()">
+      <span id="profBioText" style="color:#9ca3af;font-style:italic">Tocca per aggiungere una bio...</span>
+      <span class="prof-bio-edit">✏️</span>
+    </div>
+
     <div class="prof-anon">🔒 Nessun dato personale salvato</div>
     <div id="premBadge" style="display:none" class="prem-badge">⭐ Premium</div>
     <div id="joinDate" style="font-size:10px;color:#4b5563;margin-top:6px"></div>
@@ -1548,6 +1695,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
   initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl();
+  // Mondo vivo: particelle + feed live + stats
+  initParticles();
+  startLiveFeed();
+  startLiveStats();
   // Auto-login + sync
   tryAutoLogin().then(success => {
     if (success) {
@@ -1844,6 +1995,11 @@ function updateProfileUI(){
     av.style.setProperty('--av-c1', col);
     av.style.setProperty('--av-c2', col);
   }
+
+  // Banner + Stato + Bio
+  if (typeof applyProfileBanner === 'function') applyProfileBanner();
+  if (typeof applyProfileStatus === 'function') applyProfileStatus();
+  if (typeof applyProfileBio === 'function') applyProfileBio();
 
   // Join date
   if(user.joinedAt){
@@ -2432,6 +2588,246 @@ function renderUsersPanel() {
 }
 
 // ══ ROOMS ══
+// ══════════════════════════════════════════
+// PROFILO: banner, stato, bio
+// ══════════════════════════════════════════
+var PROFILE_BANNERS = ['default','b-galaxy','b-sunset','b-ocean','b-forest','b-fire','b-neon'];
+
+function cycleProfileBanner(){
+  user.banner = user.banner || 'default';
+  const idx = PROFILE_BANNERS.indexOf(user.banner);
+  const next = PROFILE_BANNERS[(idx + 1) % PROFILE_BANNERS.length];
+  user.banner = next;
+  saveUser();
+  applyProfileBanner();
+  showToast('🎨 Banner cambiato: ' + next.replace('b-','').replace('default','Standard'));
+}
+
+function applyProfileBanner(){
+  const b = document.getElementById('profBanner');
+  if (!b) return;
+  b.className = 'prof-banner' + (user.banner && user.banner !== 'default' ? ' ' + user.banner : '');
+}
+
+function editProfileStatus(){
+  const STATUS_PRESETS = [
+    { e: '💭', t: 'In ascolto...' },
+    { e: '🎉', t: 'Festeggiamo!' },
+    { e: '😎', t: 'Cerco gente cool' },
+    { e: '🌙', t: 'Online di notte' },
+    { e: '☀️', t: 'Buongiorno mondo' },
+    { e: '🎮', t: 'In gaming' },
+    { e: '🎵', t: 'Ascolto musica' },
+    { e: '❤️', t: 'Aperto a conoscere' },
+    { e: '🔥', t: 'On fire oggi!' },
+    { e: '💼', t: 'Modalita lavoro' },
+    { e: '🤫', t: 'Discreto' },
+    { e: '✨', t: 'Magia' }
+  ];
+  const currentText = user.statusText || '';
+  const preset = prompt('Scegli uno stato (1-' + STATUS_PRESETS.length + ') o scrivi il tuo:\n\n' +
+    STATUS_PRESETS.map((s,i) => (i+1)+'. '+s.e+' '+s.t).join('\n') +
+    '\n\nOppure scrivi il tuo testo personalizzato:',
+    currentText);
+  if (preset === null) return;
+
+  const num = parseInt(preset);
+  if (num >= 1 && num <= STATUS_PRESETS.length) {
+    const p = STATUS_PRESETS[num - 1];
+    user.statusEmoji = p.e;
+    user.statusText = p.t;
+  } else if (preset.trim()) {
+    user.statusEmoji = '💭';
+    user.statusText = preset.trim().slice(0, 50);
+  } else {
+    user.statusEmoji = null;
+    user.statusText = null;
+  }
+  saveUser();
+  applyProfileStatus();
+  showToast('✅ Stato aggiornato');
+}
+
+function applyProfileStatus(){
+  const emoji = document.getElementById('profStatusEmoji');
+  const text = document.getElementById('profStatusText');
+  if (emoji) emoji.textContent = user.statusEmoji || '💭';
+  if (text) text.textContent = user.statusText || 'Tocca per impostare uno stato...';
+}
+
+function editProfileBio(){
+  const current = user.bio || '';
+  const newBio = prompt('Scrivi una bio breve (max 100 caratteri):', current);
+  if (newBio === null) return;
+  user.bio = newBio.trim().slice(0, 100);
+  saveUser();
+  applyProfileBio();
+  showToast(user.bio ? '✅ Bio aggiornata' : '🗑️ Bio rimossa');
+}
+
+function applyProfileBio(){
+  const t = document.getElementById('profBioText');
+  if (!t) return;
+  if (user.bio) {
+    t.textContent = user.bio;
+    t.style.color = '#cbd5e1';
+    t.style.fontStyle = 'normal';
+  } else {
+    t.textContent = 'Tocca per aggiungere una bio...';
+    t.style.color = '#9ca3af';
+    t.style.fontStyle = 'italic';
+  }
+}
+
+// ══════════════════════════════════════════
+// MISSIONI GIORNALIERE - FOMO + gamification
+// ══════════════════════════════════════════
+var DAILY_MISSIONS = [
+  { id:'msg5', label:'Invia 5 messaggi', target:5, reward:10, icon:'💬' },
+  { id:'msg20', label:'Invia 20 messaggi', target:20, reward:30, icon:'🔥' },
+  { id:'rooms3', label:'Visita 3 stanze diverse', target:3, reward:20, icon:'🗺️' },
+  { id:'login', label:'Login giornaliero', target:1, reward:15, icon:'🌅' },
+  { id:'video', label:'Attiva la videocamera', target:1, reward:25, icon:'📹' },
+];
+
+function getTodayKey(){
+  const d = new Date(); d.setHours(0,0,0,0);
+  return d.getTime();
+}
+
+function getDailyProgress(){
+  const today = getTodayKey();
+  if (!user.dailyMissions || user.dailyMissions.day !== today) {
+    user.dailyMissions = { day: today, progress: {}, claimed: {} };
+    saveUser();
+  }
+  return user.dailyMissions;
+}
+
+function incrementDailyMission(id, amount){
+  const m = getDailyProgress();
+  m.progress[id] = (m.progress[id] || 0) + (amount || 1);
+  saveUser();
+}
+
+// ══════════════════════════════════════════
+// PARTICELLE + FEED LIVE + STATS - mondo vivo
+// ══════════════════════════════════════════
+function initParticles(){
+  const wrap = document.getElementById('kvParticles');
+  if (!wrap || wrap.childElementCount > 0) return;
+  for (let i = 0; i < 25; i++) {
+    const p = document.createElement('div');
+    const cls = ['','p2','p3','p4'][Math.floor(Math.random()*4)];
+    p.className = 'kv-particle ' + cls;
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    p.style.animationDuration = (15 + Math.random() * 15) + 's';
+    wrap.appendChild(p);
+  }
+}
+
+// Feed Live: utenti che entrano, stanze create, ecc.
+var liveFeedMessages = [];
+var liveFeedNicks = ['Phantom','Shadow','NightFox','Velvet','Echo','Mystic','Luna','Star','Onyx','Ember','Crimson','Storm','Wolf','Spirit','Stellar'];
+var liveFeedRooms = ['Mondo','Italia','Roma','Milano','Campania','Calabria','Confessionale'];
+var liveFeedActions = [
+  { tpl: '<b>{nick}</b> è entrato in <b>{room}</b>', dot: 'green' },
+  { tpl: '<b>{nick}</b> ha inviato un messaggio in <b>{room}</b>', dot: '' },
+  { tpl: '<b>{nick}</b> lvl {lvl} è online ora', dot: 'orange' },
+  { tpl: '🎉 Nuova stanza creata: <b>{room}</b>', dot: 'pink' },
+  { tpl: '<b>{nick}</b> ha sbloccato badge 🏆', dot: 'orange' },
+  { tpl: '<b>{nick}</b> ha attivato cornice 💎', dot: 'pink' },
+  { tpl: '🔥 <b>{room}</b> è in trend!', dot: 'orange' },
+  { tpl: '<b>{nick}</b> è ora amico di <b>{nick2}</b>', dot: 'green' },
+  { tpl: '📹 Video chat attivata in <b>{room}</b>', dot: '' },
+  { tpl: '<b>{nick}</b> ha raggiunto lvl {lvl} 🌟', dot: 'orange' },
+];
+
+function generateFeedItem(){
+  const a = liveFeedActions[Math.floor(Math.random() * liveFeedActions.length)];
+  const nick = liveFeedNicks[Math.floor(Math.random() * liveFeedNicks.length)] + Math.floor(Math.random() * 99);
+  const nick2 = liveFeedNicks[Math.floor(Math.random() * liveFeedNicks.length)] + Math.floor(Math.random() * 99);
+  const room = liveFeedRooms[Math.floor(Math.random() * liveFeedRooms.length)];
+  const lvl = Math.floor(Math.random() * 30) + 1;
+  const text = a.tpl
+    .replace('{nick}', nick)
+    .replace('{nick2}', nick2)
+    .replace('{room}', room)
+    .replace('{lvl}', lvl);
+  return { text, dot: a.dot, time: 'ora' };
+}
+
+function addFeedItem(item){
+  const feed = document.getElementById('liveFeed');
+  if (!feed) return;
+  // Clear initial loading se prima volta
+  const loading = feed.querySelector('.lf-text');
+  if (loading && loading.textContent.includes('Caricamento')) feed.innerHTML = '';
+
+  const div = document.createElement('div');
+  div.className = 'live-feed-item';
+  div.innerHTML = `
+    <div class="lf-dot ${item.dot||''}"></div>
+    <div class="lf-text">${item.text}</div>
+    <div class="lf-time">${item.time||'ora'}</div>
+  `;
+  feed.insertBefore(div, feed.firstChild);
+  // Limita a 15 elementi
+  while (feed.childElementCount > 15) feed.removeChild(feed.lastChild);
+}
+
+function startLiveFeed(){
+  // Riempie con 5 elementi iniziali
+  const initialFeed = document.getElementById('liveFeed');
+  if (initialFeed) initialFeed.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => addFeedItem(generateFeedItem()), i * 150);
+  }
+  // Aggiunge nuovi elementi ogni 3-7 secondi
+  setInterval(() => {
+    addFeedItem(generateFeedItem());
+  }, 3000 + Math.random() * 4000);
+}
+
+function updateLiveStats(){
+  // Counter "online ora" - mix di reale + boost simulato per dare sensazione di mondo vivo
+  const realOnline = parseInt(document.getElementById('oCount')?.textContent || '0') || 0;
+  const fakeBase = 240 + Math.floor(Math.random() * 80); // 240-320
+  const displayCount = Math.max(realOnline, fakeBase) + Math.floor(Math.random() * 20) - 10;
+
+  const el = document.getElementById('liveOnlineCount');
+  if (el) {
+    const target = displayCount;
+    const current = parseInt(el.textContent) || target;
+    // Anim count
+    let val = current;
+    const step = (target - current) / 20;
+    const animTimer = setInterval(() => {
+      val += step;
+      if ((step > 0 && val >= target) || (step < 0 && val <= target)) {
+        val = target;
+        clearInterval(animTimer);
+      }
+      el.textContent = Math.round(val);
+    }, 30);
+  }
+
+  const trending = document.getElementById('liveTrendingCount');
+  if (trending) trending.textContent = 2 + Math.floor(Math.random() * 4);
+
+  const newRooms = document.getElementById('liveNewRoomsCount');
+  if (newRooms) {
+    const myCodeRooms = getLS('kv4_code_rooms') || [];
+    newRooms.textContent = 8 + myCodeRooms.length + Math.floor(Math.random() * 6);
+  }
+}
+
+function startLiveStats(){
+  updateLiveStats();
+  setInterval(updateLiveStats, 5000); // ogni 5 sec
+}
+
 function renderRooms(){
   document.getElementById('roomsList').innerHTML = ROOMS.map(roomCard).join('');
 }
@@ -3120,7 +3516,11 @@ async function syncUserDataToServer(){
 }
 
 function showLoginWall(){
-  // Login wall: schermata che richiede di loggarsi/registrarsi prima di usare l'app
+  // Mostra welcome screen solo al primo accesso, con opzione "salta"
+  // Se gia visto in questa sessione, skip
+  if (sessionStorage.getItem('kv_welcome_shown') === '1') return;
+  sessionStorage.setItem('kv_welcome_shown', '1');
+
   if (document.getElementById('loginWall')) {
     document.getElementById('loginWall').classList.add('show');
     return;
@@ -3129,38 +3529,36 @@ function showLoginWall(){
   div.id = 'loginWall';
   div.className = 'modal-overlay show';
   div.style.zIndex = '99999';
-  div.style.backdropFilter = 'blur(12px)';
+  div.style.backdropFilter = 'blur(8px)';
+  div.onclick = (e) => { if (e.target === div) closeLoginWall(); };
   div.innerHTML = `
-    <div class="modal-box" style="max-width:440px">
+    <div class="modal-box" style="max-width:440px;position:relative">
+      <button onclick="closeLoginWall()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;z-index:5">✕</button>
       <div class="modal-body" style="text-align:center;padding:30px 24px">
         <div style="font-size:64px;margin-bottom:12px">🎭</div>
         <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:6px">Benvenuto su KOUVERTE</div>
         <div style="font-size:13px;color:#9ca3af;margin-bottom:24px;line-height:1.5">
-          Per usare il sito devi <strong style="color:#a855f7">accedere</strong> o <strong style="color:#10b981">registrarti</strong>.<br>
-          I tuoi dati saranno sicuri e potrai accedere da qualsiasi dispositivo.
+          La <strong style="color:#a855f7">chat mondiale anonima</strong> con video, stanze a codice e amici.
         </div>
 
         <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left">
-          <div style="font-size:12px;color:#a855f7;font-weight:700;margin-bottom:6px">🔒 Perche' registrarsi?</div>
+          <div style="font-size:12px;color:#a855f7;font-weight:700;margin-bottom:6px">🎁 Crea un account (gratis):</div>
           <div style="font-size:11px;color:#cbd5e1;line-height:1.6">
             ✅ Salva monete, XP, livello, badge<br>
             ✅ Accedi da qualsiasi dispositivo<br>
-            ✅ Non perdere mai i tuoi dati<br>
             ✅ Sistema amici e chat private<br>
-            ✅ 100% Anonimo: nessuno vede l'email
+            ✅ 100% Anonimo (nessuno vede l'email)
           </div>
         </div>
 
-        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('login'),100)">🔑 Accedi al mio account</button>
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('login'),100)">🔑 Accedi</button>
         <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;background:linear-gradient(135deg,#10b981,#059669);margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('register'),100)">✨ Crea nuovo account</button>
 
-        <div style="text-align:center;margin-bottom:14px">
+        <div style="text-align:center;margin-bottom:8px">
           <button onclick="openRecoverModal()" style="background:none;border:none;color:#a855f7;font-size:12px;cursor:pointer;text-decoration:underline;font-weight:600">🔓 Password dimenticata?</button>
         </div>
 
-        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">
-          <button onclick="continueAsGuest()" style="background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;text-decoration:underline">Continua senza account (dati locali, perdibili)</button>
-        </div>
+        <button onclick="closeLoginWall()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(168,85,247,0.3);color:#cbd5e1;font-size:13px;font-weight:700;cursor:pointer;padding:12px;width:100%;border-radius:10px;margin-top:8px">👋 Entra come ospite</button>
       </div>
     </div>
   `;
@@ -3173,10 +3571,8 @@ function closeLoginWall(){
 }
 
 function continueAsGuest(){
-  if (confirm('Senza account, i tuoi dati (monete, badge, livello) verranno persi se cancelli la cache o cambi dispositivo. Sei sicuro?')) {
-    closeLoginWall();
-    showToast('⚠️ Modalità ospite: registrati appena puoi per non perdere i progressi');
-  }
+  closeLoginWall();
+  showToast('👋 Modalità ospite: registrati per non perdere i progressi');
 }
 
 function openAuthModal(){
