@@ -151,18 +151,18 @@ let lastGistSave = 0;
 
 function getServerRedis() {
     if (_serverRedis !== null) return _serverRedis;
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    // TRIM env vars per rimuovere whitespace/newline aggiunti accidentalmente
+    const url = (process.env.UPSTASH_REDIS_REST_URL || '').trim().replace(/^["']|["']$/g, '');
+    const token = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim().replace(/^["']|["']$/g, '');
+    if (!url || !token) {
         _serverRedis = false;
-        console.log('[DB] Redis non configurato - tentativo fallback');
+        console.log('[DB] Redis non configurato - URL/Token vuoti dopo trim');
         return null;
     }
     try {
         const { Redis } = require('@upstash/redis');
-        _serverRedis = new Redis({
-            url: process.env.UPSTASH_REDIS_REST_URL,
-            token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        });
-        console.log('[DB] ✅ Redis Upstash connesso - dati persistenti');
+        _serverRedis = new Redis({ url, token });
+        console.log('[DB] ✅ Redis Upstash connesso (url:', url.substring(0,30), ', token len:', token.length, ')');
         return _serverRedis;
     } catch(e) {
         console.error('[DB] Redis init error:', e.message);
