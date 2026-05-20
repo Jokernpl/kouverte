@@ -1906,13 +1906,44 @@ document.addEventListener('DOMContentLoaded',()=>{
   startLiveStats();
   // Hook chat modes (ephemeral, effetti, bot)
   setupChatModesHooks();
-  // Auto-login + sync
+  // Auto-login: pre-marca "ricordato" se token presente per evitare Login Wall
+  // Anche se la fetch al server tarda (cold start Render), l'utente vede dati locali
+  const _hasStoredToken = !!getLS('kv4_auth_token');
+  if (_hasStoredToken) {
+    // Mostra "Ricollegamento..." invece di Login Wall
+    window._authPromptShown = true; // blocca Login Wall
+    isLoggedIn = true; // ottimismo (verra' validato da tryAutoLogin)
+    // Auto-fill nome utente se ricordato
+    const remembered = getLS('kv4_remember_user');
+    if (remembered && (!user.username || user.name === user.id)) {
+      user.username = remembered.includes('@') ? user.username : remembered;
+      if (remembered && !remembered.includes('@')) user.name = remembered;
+    }
+  }
   tryAutoLogin().then(success => {
     if (success) {
       startAutoSync();
       startTokenAutoRefresh();
       updateProfileUI();
       console.log('[Auth] Login automatico OK');
+    } else if (_hasStoredToken) {
+      // Token c'era ma server l'ha rifiutato (es. utente perso su Render)
+      console.warn('[Auth] Token rifiutato dal server - mostra prompt re-login');
+      isLoggedIn = false;
+      // Solo qui mostro Login Wall (delay extra)
+      setTimeout(() => {
+        if (!isLoggedIn) {
+          window._authPromptShown = false;
+          showLoginWall();
+        }
+      }, 1000);
+    }
+  }).catch(err => {
+    // Errore di rete: tieni l'utente "loggato" localmente, riprova dopo
+    console.error('[Auth] tryAutoLogin failed:', err);
+    if (_hasStoredToken) {
+      isLoggedIn = true; // fallback per non bloccare l'utente
+      setTimeout(() => tryAutoLogin(), 30000); // retry tra 30 sec
     }
   });
   // Reset password URL
@@ -4523,6 +4554,9 @@ function showLoginWall(){
   // Mostra welcome screen solo al primo accesso, con opzione "salta"
   // Se gia visto in questa sessione, skip
   if (sessionStorage.getItem('kv_welcome_shown') === '1') return;
+  // Se c'e' un token salvato (utente gia registrato in passato), NON mostrare
+  // Login Wall: aspetta che tryAutoLogin riprovi il login automatico
+  if (getLS('kv4_auth_token')) return;
   sessionStorage.setItem('kv_welcome_shown', '1');
 
   if (document.getElementById('loginWall')) {
