@@ -539,6 +539,48 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ═══════════════════════════════
+   SETTINGS MODAL - Gruppi & Righe
+═══════════════════════════════ */
+.settings-group{margin-bottom:18px;background:rgba(255,255,255,0.03);border-radius:12px;padding:10px;border:1px solid rgba(139,92,246,0.15)}
+.settings-group-title{font-size:11px;color:#a855f7;text-transform:uppercase;letter-spacing:1px;font-weight:700;padding:6px 10px;margin-bottom:4px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;font-size:13px;color:#cbd5e1;cursor:pointer;transition:background 0.2s}
+.settings-row:hover{background:rgba(255,255,255,0.04)}
+.settings-row input[type=checkbox]{width:42px;height:24px;appearance:none;-webkit-appearance:none;background:rgba(100,116,139,0.4);border-radius:12px;position:relative;cursor:pointer;transition:background 0.3s;outline:none}
+.settings-row input[type=checkbox]:checked{background:linear-gradient(135deg,#7c3aed,#a855f7)}
+.settings-row input[type=checkbox]::before{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.3s;box-shadow:0 2px 4px rgba(0,0,0,0.3)}
+.settings-row input[type=checkbox]:checked::before{transform:translateX(18px)}
+.settings-row input[type=checkbox]:disabled{opacity:0.5;cursor:not-allowed}
+.settings-select-small{background:rgba(255,255,255,0.06);border:1px solid rgba(139,92,246,0.3);border-radius:8px;color:#fff;padding:6px 10px;font-size:12px;cursor:pointer;outline:none}
+
+/* ═══════════════════════════════
+   LIST MODAL - Favoriti/Bloccati
+═══════════════════════════════ */
+.list-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:rgba(255,255,255,0.04);margin-bottom:8px;transition:background 0.2s}
+.list-row:hover{background:rgba(255,255,255,0.08)}
+.list-row-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#a855f7);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.list-row-info{flex:1;min-width:0}
+.list-row-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.list-row-sub{font-size:10px;color:#9ca3af}
+.list-row-action{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#fca5a5;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.2s}
+.list-row-action:hover{background:rgba(239,68,68,0.4)}
+.list-row-action.unblock{background:rgba(16,185,129,0.2);border-color:rgba(16,185,129,0.4);color:#86efac}
+.list-row-action.unblock:hover{background:rgba(16,185,129,0.4)}
+
+/* ═══════════════════════════════
+   INFO MODAL - Stats e elenchi
+═══════════════════════════════ */
+.info-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.info-stat-card{background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(139,92,246,0.1));border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:12px 8px;text-align:center}
+.info-stat-icon{font-size:24px;margin-bottom:4px}
+.info-stat-value{font-size:18px;font-weight:900;color:#fff;margin-bottom:2px}
+.info-stat-label{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px}
+.info-section{margin-bottom:16px;background:rgba(255,255,255,0.03);border-radius:12px;padding:12px;border:1px solid rgba(139,92,246,0.15)}
+.info-section-title{font-size:12px;font-weight:800;color:#a855f7;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid rgba(168,85,247,0.2)}
+.info-list{display:flex;flex-direction:column;gap:6px}
+.info-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,0.03);font-size:12px;color:#cbd5e1}
+.info-item-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
+
+/* ═══════════════════════════════
    TELEGRAM BANNER - HOME
 ═══════════════════════════════ */
 .telegram-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0088cc,#229ed9);cursor:pointer;margin-bottom:14px;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,136,204,0.3)}
@@ -2812,49 +2854,171 @@ function closeContinua(){
   document.getElementById('continuaOv').classList.remove('open');
 }
 
+// ══════════════════════════════════════════
+// ONESHOT - Abbinamento casuale rapido
+// ══════════════════════════════════════════
 function oneshot(){
   closeContinua();
-  showToast('⚡ OneShot: Abbinamento casuale con un utente per 5 minuti');
-  // TODO: Implementare matching algoritmo
+  // Scegli una stanza random dalle stanze pubbliche
+  const publicRooms = ROOMS.filter(r => r.tier === 'public');
+  if (publicRooms.length === 0) {
+    showToast('⚠️ Nessuna stanza disponibile');
+    return;
+  }
+  const randomRoom = publicRooms[Math.floor(Math.random() * publicRooms.length)];
+
+  // Mostra modal di conferma
+  const modal = document.getElementById('oneshotModal') || createOneshotModal();
+  document.getElementById('oneshotRoomName').textContent = randomRoom.name;
+  document.getElementById('oneshotRoomEmoji').textContent = randomRoom.emoji;
+  document.getElementById('oneshotEnterBtn').onclick = () => {
+    modal.classList.remove('show');
+    enterRoom(randomRoom.id);
+  };
+  document.getElementById('oneshotShuffleBtn').onclick = () => {
+    modal.classList.remove('show');
+    setTimeout(() => oneshot(), 200);
+  };
+  modal.classList.add('show');
 }
 
+function createOneshotModal(){
+  const div = document.createElement('div');
+  div.id = 'oneshotModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title">⚡ OneShot - Incontra ora</div>
+        <button class="modal-close" onclick="document.getElementById('oneshotModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:30px 20px">
+        <div style="font-size:64px;margin-bottom:14px" id="oneshotRoomEmoji">🌍</div>
+        <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:8px" id="oneshotRoomName">Mondo</div>
+        <div style="font-size:13px;color:#9ca3af;margin-bottom:20px">Stanza random selezionata per te!</div>
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:12px;margin-bottom:8px" id="oneshotEnterBtn">🚀 Entra qui</button>
+        <button class="modal-btn modal-btn-secondary" style="width:100%;padding:12px" id="oneshotShuffleBtn">🎲 Stanza diversa</button>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+// ══════════════════════════════════════════
+// CREATE ROOM / PRIVATE ROOM - Indirizza alle nuove funzioni
+// ══════════════════════════════════════════
 function createRoom(){
   closeContinua();
-  const name = prompt('Nome della stanza:');
-  if(!name) return;
-  const isPrivate = confirm('Stanza privata? (OK=Privata, Cancel=Pubblica)');
-  showToast(isPrivate ? '🔐 Stanza privata creata!' : '🌍 Stanza pubblica creata!');
-  // TODO: Creare stanza nel server
+  openCreateCodeRoom();
 }
 
 function enterPrivateRoom(){
   closeContinua();
-  const code = prompt('Codice stanza privata:');
-  if(!code) return;
-  socket.emit('join-private-room', { code });
-  showToast('🔐 Tentando accesso...');
+  openJoinCodeRoom();
 }
 
+// ══════════════════════════════════════════
+// FAVORITI - Lista utenti
+// ══════════════════════════════════════════
 function showFavorites(){
   closeContinua();
   const favs = user.favorites || [];
-  if(favs.length === 0){
-    showToast('❤️ Nessun utente preferito ancora');
-    return;
+  const modal = document.getElementById('listModal') || createListModal();
+
+  document.getElementById('listModalTitle').textContent = '❤️ Utenti Favoriti';
+  const body = document.getElementById('listModalBody');
+
+  if (favs.length === 0) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:30px 20px;color:#9ca3af">
+        <div style="font-size:48px;margin-bottom:10px">💔</div>
+        <div style="font-size:14px;margin-bottom:6px">Nessun utente nei preferiti</div>
+        <div style="font-size:11px">Aggiungi utenti dai tuoi preferiti durante una chat</div>
+      </div>
+    `;
+  } else {
+    body.innerHTML = favs.map(f => `
+      <div class="list-row">
+        <div class="list-row-avatar">${f.face || '🎭'}</div>
+        <div class="list-row-info">
+          <div class="list-row-name">${esc(f.name || 'Anonimo')}</div>
+          <div class="list-row-sub">Aggiunto ${f.addedAt ? new Date(f.addedAt).toLocaleDateString('it-IT') : 'di recente'}</div>
+        </div>
+        <button class="list-row-action" onclick="removeFavorite('${f.id}')" title="Rimuovi">✕</button>
+      </div>
+    `).join('');
   }
-  showToast('❤️ ' + favs.length + ' utenti favoriti');
-  // TODO: Mostrare lista dettagliata favoriti
+  modal.classList.add('show');
 }
 
+function removeFavorite(userId){
+  if (!user.favorites) return;
+  user.favorites = user.favorites.filter(f => f.id !== userId);
+  saveUser();
+  showToast('❤️ Rimosso dai preferiti');
+  showFavorites();
+}
+
+// ══════════════════════════════════════════
+// BLOCCATI - Lista utenti
+// ══════════════════════════════════════════
 function showBlocked(){
   closeContinua();
   const blocked = user.blocked || [];
-  if(blocked.length === 0){
-    showToast('🚫 Nessun utente bloccato');
-    return;
+  const modal = document.getElementById('listModal') || createListModal();
+
+  document.getElementById('listModalTitle').textContent = '🚫 Utenti Bloccati';
+  const body = document.getElementById('listModalBody');
+
+  if (blocked.length === 0) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:30px 20px;color:#9ca3af">
+        <div style="font-size:48px;margin-bottom:10px">✅</div>
+        <div style="font-size:14px;margin-bottom:6px">Nessun utente bloccato</div>
+        <div style="font-size:11px">Blocca utenti molesti durante una chat</div>
+      </div>
+    `;
+  } else {
+    body.innerHTML = blocked.map(b => `
+      <div class="list-row">
+        <div class="list-row-avatar">${b.face || '🎭'}</div>
+        <div class="list-row-info">
+          <div class="list-row-name">${esc(b.name || 'Anonimo')}</div>
+          <div class="list-row-sub">Bloccato ${b.blockedAt ? new Date(b.blockedAt).toLocaleDateString('it-IT') : 'di recente'}</div>
+        </div>
+        <button class="list-row-action unblock" onclick="unblockUser('${b.id}')" title="Sblocca">🔓</button>
+      </div>
+    `).join('');
   }
-  showToast('🚫 ' + blocked.length + ' utenti bloccati');
-  // TODO: Mostrare lista dettagliata bloccati
+  modal.classList.add('show');
+}
+
+function unblockUser(userId){
+  if (!user.blocked) return;
+  user.blocked = user.blocked.filter(b => b.id !== userId);
+  saveUser();
+  showToast('🔓 Utente sbloccato');
+  showBlocked();
+}
+
+function createListModal(){
+  const div = document.createElement('div');
+  div.id = 'listModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title" id="listModalTitle">Lista</div>
+        <button class="modal-close" onclick="document.getElementById('listModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" id="listModalBody" style="max-height:400px;overflow-y:auto"></div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
 }
 
 function openWebcamSettings(){
@@ -2886,20 +3050,87 @@ function closeWebcamSettings(){
   document.getElementById('webcamSettingsOv').classList.remove('open');
 }
 
-function switchCamera(n){
+async function switchCamera(n){
   const sel = document.getElementById('cameraSelect' + n);
   const deviceId = sel.value;
   console.log('[Webcam] Switching camera ' + n + ' to:', deviceId);
-  // TODO: Re-initialize stream con nuovo device
-  showToast('🎥 Webcam ' + n + ' aggiornata');
+
+  // Salva la preferenza
+  const prefs = getLS('kv4_webcam_prefs') || {};
+  prefs['camera' + n] = deviceId;
+  setLS('kv4_webcam_prefs', prefs);
+
+  // Re-inizializza lo stream solo se è la camera principale
+  if (n === 1 && webrtcEnabled) {
+    try {
+      // Stop existing tracks
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
+
+      // Get resolution preference
+      const resSel = document.getElementById('resolutionSelect1');
+      const resolution = resSel?.value || '720';
+      const height = parseInt(resolution);
+      const width = Math.round(height * 16 / 9);
+
+      // Re-acquire with new device
+      const constraints = {
+        audio: { echoCancellation: true, noiseSuppression: true },
+        video: deviceId ? {
+          deviceId: { exact: deviceId },
+          width: { ideal: width },
+          height: { ideal: height }
+        } : {
+          width: { ideal: width },
+          height: { ideal: height },
+          facingMode: 'user'
+        }
+      };
+
+      localStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const myVideo = document.getElementById('myVideo');
+      if (myVideo) {
+        myVideo.srcObject = localStream;
+        myVideo.play().catch(()=>{});
+      }
+
+      // Replace tracks in all peer connections
+      Object.values(peerConnections).forEach(pc => {
+        const senders = pc.getSenders();
+        localStream.getTracks().forEach(track => {
+          const sender = senders.find(s => s.track && s.track.kind === track.kind);
+          if (sender) sender.replaceTrack(track);
+        });
+      });
+
+      showToast('🎥 Webcam aggiornata!');
+    } catch (err) {
+      console.error('[Webcam] Errore switch:', err);
+      showToast('⚠️ Impossibile cambiare webcam');
+    }
+  } else {
+    showToast('💾 Preferenza salvata');
+  }
 }
 
-function setResolution(n){
+async function setResolution(n){
   const sel = document.getElementById('resolutionSelect' + n);
   const res = sel.value;
   console.log('[Webcam] Setting resolution ' + n + ':', res + 'p');
-  showToast('📹 Risoluzione ' + res + 'p impostata');
-  // TODO: Aggiornare vincoli mediaDevices
+
+  // Salva preferenza
+  const prefs = getLS('kv4_webcam_prefs') || {};
+  prefs['resolution' + n] = res;
+  setLS('kv4_webcam_prefs', prefs);
+
+  // Riaplica con nuova risoluzione
+  if (n === 1 && localStream && webrtcEnabled) {
+    const camSel = document.getElementById('cameraSelect1');
+    await switchCamera(1); // Re-init con stessa camera ma nuova risoluzione
+  } else {
+    showToast('📹 Risoluzione ' + res + 'p salvata');
+  }
 }
 
 function toggleAudio(){
@@ -2907,7 +3138,20 @@ function toggleAudio(){
   if(localStream){
     const audioTracks = localStream.getAudioTracks();
     audioTracks.forEach(t => t.enabled = toggle.checked);
+    // Sincronizza con il bottone mic principale
+    const micBtn = document.getElementById('myMicBtn');
+    if (micBtn) {
+      if (toggle.checked) {
+        micBtn.classList.remove('off');
+        micBtn.textContent = '🎤';
+      } else {
+        micBtn.classList.add('off');
+        micBtn.textContent = '🔇';
+      }
+    }
     showToast(toggle.checked ? '🎤 Microfono attivo' : '🔇 Microfono mutato');
+  } else {
+    showToast('⚠️ Stream non disponibile');
   }
 }
 
@@ -2916,31 +3160,353 @@ function testCamera(){
     showToast('⚠️ Webcam non inizializzata. Ricarica la pagina.');
     return;
   }
-  showToast('✅ Webcam funziona correttamente!');
+  const videoTracks = localStream.getVideoTracks();
+  const audioTracks = localStream.getAudioTracks();
+
+  const videoOk = videoTracks.length > 0 && videoTracks[0].readyState === 'live';
+  const audioOk = audioTracks.length > 0 && audioTracks[0].readyState === 'live';
+
+  if (videoOk && audioOk) {
+    showToast('✅ Webcam + Microfono OK!');
+  } else if (videoOk) {
+    showToast('✅ Webcam OK · ⚠️ Microfono assente');
+  } else if (audioOk) {
+    showToast('⚠️ Webcam assente · ✅ Microfono OK');
+  } else {
+    showToast('❌ Nessun dispositivo funzionante');
+  }
 }
 
+// ══════════════════════════════════════════
+// IMPOSTAZIONI - Modal completo
+// ══════════════════════════════════════════
 function openSettings(){
   closeContinua();
-  showToast('⚙️ Impostazioni generali (privacy, notifiche, etc.)');
-  // TODO: Mostrare modal completo impostazioni
+  const modal = document.getElementById('settingsModal') || createSettingsModal();
+  loadSettingsValues();
+  modal.classList.add('show');
+}
+
+function createSettingsModal(){
+  const div = document.createElement('div');
+  div.id = 'settingsModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title">⚙️ Impostazioni</div>
+        <button class="modal-close" onclick="document.getElementById('settingsModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+
+        <div class="settings-group">
+          <div class="settings-group-title">🔔 Notifiche & Suoni</div>
+          <label class="settings-row">
+            <span>Suono nuovo messaggio</span>
+            <input type="checkbox" id="setSound" onchange="updateSetting('sound', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Vibrazione (mobile)</span>
+            <input type="checkbox" id="setVibrate" onchange="updateSetting('vibrate', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Notifica utenti che entrano</span>
+            <input type="checkbox" id="setJoinNotify" onchange="updateSetting('joinNotify', this.checked)">
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">🎨 Aspetto</div>
+          <label class="settings-row">
+            <span>Modalità scura (sempre attiva)</span>
+            <input type="checkbox" checked disabled>
+          </label>
+          <label class="settings-row">
+            <span>Animazioni</span>
+            <input type="checkbox" id="setAnimations" onchange="updateSetting('animations', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Mostra emoji nelle chat</span>
+            <input type="checkbox" id="setEmojis" onchange="updateSetting('emojis', this.checked)">
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">🎥 Privacy Video</div>
+          <label class="settings-row">
+            <span>Camera attiva all'avvio</span>
+            <input type="checkbox" id="setCamAutostart" onchange="updateSetting('camAutostart', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Microfono attivo all'avvio</span>
+            <input type="checkbox" id="setMicAutostart" onchange="updateSetting('micAutostart', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Richiedi conferma per condividere video</span>
+            <input type="checkbox" id="setVideoConfirm" onchange="updateSetting('videoConfirm', this.checked)">
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">🔒 Privacy & Sicurezza</div>
+          <label class="settings-row">
+            <span>Mostra "online" agli altri</span>
+            <input type="checkbox" id="setShowOnline" onchange="updateSetting('showOnline', this.checked)">
+          </label>
+          <label class="settings-row">
+            <span>Permetti messaggi diretti</span>
+            <input type="checkbox" id="setAllowDM" onchange="updateSetting('allowDM', this.checked)">
+          </label>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;margin-top:10px" onclick="clearChatHistory()">🗑️ Cancella cronologia locale</button>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">🌐 Lingua</div>
+          <label class="settings-row">
+            <span>Lingua interfaccia</span>
+            <select id="setLanguage" class="settings-select-small" onchange="updateSetting('language', this.value)">
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="es">🇪🇸 Español</option>
+              <option value="fr">🇫🇷 Français</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">📱 App</div>
+          <div style="font-size:11px;color:#9ca3af;line-height:1.6;padding:8px">
+            Versione: <strong>2.5.0</strong><br>
+            Build: KOUVERTE Web v2025<br>
+            Server: ${SITE_URL_FULL}
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" onclick="resetSettings()">🔄 Ripristina</button>
+        <button class="modal-btn modal-btn-primary" onclick="document.getElementById('settingsModal').classList.remove('show');showToast('✅ Impostazioni salvate')">Salva</button>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+function loadSettingsValues(){
+  const s = getLS('kv4_settings') || getDefaultSettings();
+  document.getElementById('setSound').checked = s.sound;
+  document.getElementById('setVibrate').checked = s.vibrate;
+  document.getElementById('setJoinNotify').checked = s.joinNotify;
+  document.getElementById('setAnimations').checked = s.animations;
+  document.getElementById('setEmojis').checked = s.emojis;
+  document.getElementById('setCamAutostart').checked = s.camAutostart;
+  document.getElementById('setMicAutostart').checked = s.micAutostart;
+  document.getElementById('setVideoConfirm').checked = s.videoConfirm;
+  document.getElementById('setShowOnline').checked = s.showOnline;
+  document.getElementById('setAllowDM').checked = s.allowDM;
+  document.getElementById('setLanguage').value = s.language;
+}
+
+function getDefaultSettings(){
+  return {
+    sound: true, vibrate: true, joinNotify: false,
+    animations: true, emojis: true,
+    camAutostart: false, micAutostart: false, videoConfirm: true,
+    showOnline: true, allowDM: true,
+    language: 'it'
+  };
+}
+
+function updateSetting(key, value){
+  const s = getLS('kv4_settings') || getDefaultSettings();
+  s[key] = value;
+  setLS('kv4_settings', s);
+
+  // Applica subito alcune impostazioni
+  if (key === 'animations') {
+    document.body.style.setProperty('--anim-speed', value ? '1' : '0');
+  }
+}
+
+function resetSettings(){
+  if (confirm('Ripristinare tutte le impostazioni predefinite?')) {
+    setLS('kv4_settings', getDefaultSettings());
+    loadSettingsValues();
+    showToast('🔄 Impostazioni ripristinate');
+  }
+}
+
+function clearChatHistory(){
+  if (confirm('Cancellare TUTTA la cronologia chat locale? Questa azione è irreversibile.')) {
+    // Pulisce solo i dati chat locali
+    const keysToKeep = ['kv4_user', 'kv4_settings'];
+    const allKeys = Object.keys(localStorage);
+    allKeys.forEach(k => {
+      if (k.startsWith('kv4_') && !keysToKeep.includes(k)) {
+        localStorage.removeItem(k);
+      }
+    });
+    showToast('🗑️ Cronologia cancellata');
+  }
 }
 
 function openVIP(){
   closeContinua();
-  document.getElementById('paywallOv').classList.add('open');
+  const ov = document.getElementById('paywallOv');
+  if (ov) {
+    ov.classList.add('open');
+  } else {
+    showToast('👑 Diventa VIP: contatta @Kouverte_bot per le opzioni');
+  }
 }
 
+// ══════════════════════════════════════════
+// INFO PUNTI - Modal completo
+// ══════════════════════════════════════════
 function showInfo(){
   closeContinua();
-  showToast('ℹ️ Info Punti: Guadagna punti chattando e riscuotili per premi!');
-  // TODO: Mostrare pagina info punti
+  const modal = document.getElementById('infoModal') || createInfoModal();
+  document.getElementById('infoUserCoins').textContent = user.coins || 0;
+  document.getElementById('infoUserXp').textContent = user.xp || 0;
+  document.getElementById('infoUserMsgs').textContent = user.msgCount || 0;
+  modal.classList.add('show');
 }
 
+function createInfoModal(){
+  const div = document.createElement('div');
+  div.id = 'infoModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title">ℹ️ Info Punti & XP</div>
+        <button class="modal-close" onclick="document.getElementById('infoModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:60vh;overflow-y:auto">
+
+        <div class="info-stats">
+          <div class="info-stat-card">
+            <div class="info-stat-icon">🪙</div>
+            <div class="info-stat-value" id="infoUserCoins">0</div>
+            <div class="info-stat-label">Monete</div>
+          </div>
+          <div class="info-stat-card">
+            <div class="info-stat-icon">⭐</div>
+            <div class="info-stat-value" id="infoUserXp">0</div>
+            <div class="info-stat-label">XP</div>
+          </div>
+          <div class="info-stat-card">
+            <div class="info-stat-icon">💬</div>
+            <div class="info-stat-value" id="infoUserMsgs">0</div>
+            <div class="info-stat-label">Messaggi</div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <div class="info-section-title">🪙 Come guadagnare monete</div>
+          <div class="info-list">
+            <div class="info-item"><span class="info-item-icon">💬</span><span>Invia messaggi: <strong>+1 moneta</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">📅</span><span>Login giornaliero: <strong>+20 monete</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🔥</span><span>Streak 7 giorni: <strong>+100 monete</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">👥</span><span>Invita amici: <strong>+50 monete</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🎰</span><span>Ruota fortuna: <strong>fino a 500</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🏆</span><span>Sblocca badge: <strong>+10-50</strong></span></div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <div class="info-section-title">⭐ Come guadagnare XP</div>
+          <div class="info-list">
+            <div class="info-item"><span class="info-item-icon">💬</span><span>Ogni messaggio: <strong>+5 XP</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🎉</span><span>Entrare in stanza: <strong>+10 XP</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🔥</span><span>Streak settimanale: <strong>+50 XP</strong></span></div>
+            <div class="info-item"><span class="info-item-icon">🎊</span><span>Aiutare nuovi utenti: <strong>+20 XP</strong></span></div>
+          </div>
+        </div>
+
+        <div class="info-section">
+          <div class="info-section-title">🎁 Cosa puoi sbloccare</div>
+          <div class="info-list">
+            <div class="info-item"><span class="info-item-icon">🖼️</span><span><strong>Cornici premium</strong> per il tuo avatar</span></div>
+            <div class="info-item"><span class="info-item-icon">😀</span><span><strong>Sticker speciali</strong> da inviare in chat</span></div>
+            <div class="info-item"><span class="info-item-icon">🎭</span><span><strong>Maschere uniche</strong> per la tua identità</span></div>
+            <div class="info-item"><span class="info-item-icon">⭐</span><span><strong>Status Premium</strong> con badge esclusivo</span></div>
+            <div class="info-item"><span class="info-item-icon">🏆</span><span><strong>Badge livello</strong> per mostrare i tuoi titoli</span></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-primary" style="width:100%" onclick="document.getElementById('infoModal').classList.remove('show')">Ho capito</button>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+// ══════════════════════════════════════════
+// LOGOUT - Sicuro con backup opzioni
+// ══════════════════════════════════════════
 function logout(){
-  if(confirm('⚠️ Sei sicuro di voler uscire?')){
+  closeContinua();
+  const modal = document.getElementById('logoutModal') || createLogoutModal();
+  modal.classList.add('show');
+}
+
+function createLogoutModal(){
+  const div = document.createElement('div');
+  div.id = 'logoutModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title">↪️ Uscita</div>
+        <button class="modal-close" onclick="document.getElementById('logoutModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:24px 20px">
+        <div style="font-size:48px;margin-bottom:14px">👋</div>
+        <div style="font-size:15px;color:#fff;font-weight:600;margin-bottom:8px">Vuoi davvero uscire?</div>
+        <div style="font-size:12px;color:#9ca3af;line-height:1.5;margin-bottom:16px">
+          Le tue impostazioni e monete saranno mantenute.<br>
+          Potrai accedere di nuovo in qualsiasi momento.
+        </div>
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px;margin-bottom:14px">
+          <div style="font-size:11px;color:#fca5a5;font-weight:600">⚠️ Opzione avanzata:</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:6px;cursor:pointer;font-size:12px;color:#cbd5e1">
+            <input type="checkbox" id="logoutClearAll">
+            Cancella TUTTI i dati (monete, badge, cronologia)
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('logoutModal').classList.remove('show')">Annulla</button>
+        <button class="modal-btn modal-btn-primary" style="background:linear-gradient(135deg,#dc2626,#ef4444)" onclick="confirmLogout()">Esci</button>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+function confirmLogout(){
+  const clearAll = document.getElementById('logoutClearAll')?.checked;
+  if (clearAll) {
     localStorage.clear();
-    location.reload();
+  } else {
+    // Mantiene solo settings e user base
+    const settings = getLS('kv4_settings');
+    const user_data = getLS('kv4_user');
+    localStorage.clear();
+    if (settings) setLS('kv4_settings', settings);
+    if (user_data) setLS('kv4_user', user_data);
   }
+  showToast('👋 Arrivederci!');
+  setTimeout(() => location.reload(), 800);
 }
 </script>
 </body>
