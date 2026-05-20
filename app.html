@@ -1554,7 +1554,18 @@ document.addEventListener('DOMContentLoaded',()=>{
 function hideSplash(){
   const s=document.getElementById('splash');
   s.style.transition='opacity .5s'; s.style.opacity='0';
-  setTimeout(()=>{s.classList.remove('active');showScreen('home');},500);
+  setTimeout(()=>{
+    s.classList.remove('active');
+    showScreen('home');
+    // LOGIN OBBLIGATORIO: se l'utente non e' loggato, mostra modal auth
+    // ma diamo 1 secondo per tryAutoLogin di completare
+    setTimeout(() => {
+      if (!isLoggedIn && !window._authPromptShown) {
+        window._authPromptShown = true;
+        showLoginWall();
+      }
+    }, 1500);
+  },500);
   
   // NEW: Initialize WebRTC (non-blocking, graceful degradation)
   setTimeout(()=>{
@@ -2747,15 +2758,49 @@ function renderFrames(){
 function selFrame(id){
   const f=FRAMES_CFG.find(x=>x.id===id);
   if(!f) return;
+  // Se gia posseduta → attiva
   if(new Set(user.ownedFrames).has(id)){
     user.activeFrame=id; saveUser(); renderFrames(); updateProfileUI();
-    showToast('✅ Cornice '+f.name+' attivata!'); return;
+    showToast('✅ Cornice '+f.emoji+' '+f.name+' attivata!'); return;
   }
-  // Cornici premium: solo via Premium o referral
+  // Cornici premium: solo via Premium
   if(f.prem && !isPrem()){
     closeFrameM(); showPaywall(); return;
   }
-  // Le free le possiedi già; non dovremmo arrivare qui
+  // Cornici a pagamento con monete (non premium)
+  if(!f.prem && f.price>0){
+    const coins = user.coins || 0;
+    if(coins < f.price){
+      showToast('⚠️ Servono '+f.price+' 🪙 (hai '+coins+' 🪙). Chatta o usa la ruota per guadagnare!');
+      return;
+    }
+    // Conferma acquisto
+    if(confirm('Acquistare '+f.emoji+' '+f.name+' per '+f.price+' 🪙?\nHai '+coins+' 🪙 disponibili.')){
+      user.coins = coins - f.price;
+      user.ownedFrames = user.ownedFrames || [];
+      if(!user.ownedFrames.includes(id)) user.ownedFrames.push(id);
+      user.activeFrame = id;
+      saveUser();
+      renderFrames();
+      updateProfileUI();
+      updateCoinBar();
+      // Check badge collezionista
+      if((user.ownedFrames || []).length >= 5) addBadge('frame_collector','Collezionista');
+      showToast('🎉 '+f.emoji+' '+f.name+' acquistata e attivata!');
+    }
+    return;
+  }
+  // Cornice gratuita non posseduta: aggiungila e attiva
+  if(!f.prem && f.price === 0){
+    user.ownedFrames = user.ownedFrames || [];
+    if(!user.ownedFrames.includes(id)) user.ownedFrames.push(id);
+    user.activeFrame = id;
+    saveUser();
+    renderFrames();
+    updateProfileUI();
+    showToast('✅ Cornice '+f.emoji+' '+f.name+' sbloccata e attivata!');
+    return;
+  }
   showToast('⚠️ Cornice non disponibile');
 }
 function closeFrameM(){document.getElementById('frameOv').classList.remove('open');selFrameId=null;}
@@ -2908,6 +2953,62 @@ async function syncUserDataToServer(){
     console.error('[Sync] Errore:', e);
   }
   return false;
+}
+
+function showLoginWall(){
+  // Login wall: schermata che richiede di loggarsi/registrarsi prima di usare l'app
+  if (document.getElementById('loginWall')) {
+    document.getElementById('loginWall').classList.add('show');
+    return;
+  }
+  const div = document.createElement('div');
+  div.id = 'loginWall';
+  div.className = 'modal-overlay show';
+  div.style.zIndex = '99999';
+  div.style.backdropFilter = 'blur(12px)';
+  div.innerHTML = `
+    <div class="modal-box" style="max-width:440px">
+      <div class="modal-body" style="text-align:center;padding:30px 24px">
+        <div style="font-size:64px;margin-bottom:12px">🎭</div>
+        <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:6px">Benvenuto su KOUVERTE</div>
+        <div style="font-size:13px;color:#9ca3af;margin-bottom:24px;line-height:1.5">
+          Per usare il sito devi <strong style="color:#a855f7">accedere</strong> o <strong style="color:#10b981">registrarti</strong>.<br>
+          I tuoi dati saranno sicuri e potrai accedere da qualsiasi dispositivo.
+        </div>
+
+        <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left">
+          <div style="font-size:12px;color:#a855f7;font-weight:700;margin-bottom:6px">🔒 Perche' registrarsi?</div>
+          <div style="font-size:11px;color:#cbd5e1;line-height:1.6">
+            ✅ Salva monete, XP, livello, badge<br>
+            ✅ Accedi da qualsiasi dispositivo<br>
+            ✅ Non perdere mai i tuoi dati<br>
+            ✅ Sistema amici e chat private<br>
+            ✅ 100% Anonimo: nessuno vede l'email
+          </div>
+        </div>
+
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('login'),100)">🔑 Accedi al mio account</button>
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;background:linear-gradient(135deg,#10b981,#059669);margin-bottom:14px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('register'),100)">✨ Crea nuovo account</button>
+
+        <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">
+          <button onclick="continueAsGuest()" style="background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;text-decoration:underline">Continua senza account (dati locali, perdibili)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+}
+
+function closeLoginWall(){
+  const w = document.getElementById('loginWall');
+  if (w) w.classList.remove('show');
+}
+
+function continueAsGuest(){
+  if (confirm('Senza account, i tuoi dati (monete, badge, livello) verranno persi se cancelli la cache o cambi dispositivo. Sei sicuro?')) {
+    closeLoginWall();
+    showToast('⚠️ Modalità ospite: registrati appena puoi per non perdere i progressi');
+  }
 }
 
 function openAuthModal(){
@@ -3112,6 +3213,7 @@ async function doAuth(){
     }
 
     document.getElementById('authModal').classList.remove('show');
+    closeLoginWall(); // chiudi anche il login wall se aperto
     showToast(mode === 'register' ? '✨ Account creato!' : '🔑 Bentornato ' + (json.user.username || ''));
     startAutoSync();
   } catch(e) {
