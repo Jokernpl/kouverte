@@ -28,8 +28,14 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .video-wrapper video{width:100%;height:100%;object-fit:cover;display:block}
 #myVideo{transform:scaleX(-1)}
 .video-label{position:absolute;bottom:4px;left:4px;font-size:11px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;color:#a0aec0}
-.video-mic-btn,.video-cam-indicator{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:background 0.3s}
-.video-mic-btn:hover{background:rgba(168,85,247,0.6)}
+.video-controls{position:absolute;top:4px;right:4px;display:flex;gap:4px;z-index:5}
+.video-mic-btn,.video-cam-btn,.video-cam-indicator{width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:all 0.3s;user-select:none;-webkit-tap-highlight-color:transparent}
+.video-mic-btn:hover,.video-cam-btn:hover{background:rgba(168,85,247,0.8);transform:scale(1.1)}
+.video-mic-btn.off,.video-cam-btn.off{background:rgba(239,68,68,0.8);opacity:0.85}
+.video-mic-btn.off:hover,.video-cam-btn.off:hover{background:rgba(220,38,38,0.95)}
+.video-cam-off-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:#9ca3af;font-size:11px;z-index:3}
+.video-cam-off-overlay.show{display:flex}
+.video-cam-off-overlay .cam-off-icon{font-size:28px;opacity:0.6}
 
 /* ═══════════════════════════════
    CHAT USERS SECTION
@@ -533,6 +539,53 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ═══════════════════════════════
+   STANZE A CODICE - HOME
+═══════════════════════════════ */
+.code-rooms-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.code-room-btn{display:flex;align-items:center;gap:10px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#1e1040,#2a1555);border:1.5px solid #5b21b6;cursor:pointer;transition:all 0.3s;color:#fff;text-align:left;width:100%}
+.code-room-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(168,85,247,0.3);border-color:#a855f7}
+.code-room-btn.create{background:linear-gradient(135deg,#581c87,#7c3aed)}
+.code-room-btn.join{background:linear-gradient(135deg,#0f4c81,#2563eb)}
+.crb-icon{font-size:24px;flex-shrink:0;width:42px;height:42px;background:rgba(255,255,255,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.crb-text{flex:1;min-width:0}
+.crb-title{font-size:13px;font-weight:800;color:#fff;margin-bottom:2px}
+.crb-sub{font-size:10px;color:rgba(255,255,255,0.7);line-height:1.3}
+
+/* ═══════════════════════════════
+   MODAL OVERLAY (Crea/Entra stanza)
+═══════════════════════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;backdrop-filter:blur(8px)}
+.modal-overlay.show{display:flex}
+.modal-box{background:linear-gradient(180deg,#1a0f2e,#0f0a1e);border:2px solid #7c3aed;border-radius:18px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(168,85,247,0.4)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(139,92,246,0.2)}
+.modal-title{font-size:16px;font-weight:800;color:#fff}
+.modal-close{background:rgba(255,255,255,0.08);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:rgba(239,68,68,0.3)}
+.modal-body{padding:20px}
+.modal-label{display:block;font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;margin-top:14px}
+.modal-label:first-child{margin-top:0}
+.modal-input{width:100%;padding:12px 14px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(139,92,246,0.3);border-radius:10px;color:#fff;font-size:14px;font-family:inherit;outline:none;transition:all 0.3s}
+.modal-input:focus{border-color:#a855f7;background:rgba(255,255,255,0.1)}
+.modal-input.code-input{font-size:24px;text-align:center;letter-spacing:8px;font-weight:800;font-family:'Courier New',monospace}
+.emoji-picker{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.emoji-opt{font-size:22px;padding:8px;border-radius:10px;cursor:pointer;background:rgba(255,255,255,0.04);border:2px solid transparent;transition:all 0.2s}
+.emoji-opt:hover{background:rgba(168,85,247,0.2);transform:scale(1.1)}
+.emoji-opt.selected{border-color:#a855f7;background:rgba(168,85,247,0.3);box-shadow:0 0 12px rgba(168,85,247,0.5)}
+.code-result{margin-top:18px;padding:16px;background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(34,197,94,0.1));border:1.5px solid #10b981;border-radius:12px;text-align:center}
+.code-result-label{font-size:12px;color:#10b981;margin-bottom:10px;font-weight:600}
+.code-display{font-size:32px;font-weight:900;color:#fff;letter-spacing:8px;font-family:'Courier New',monospace;padding:12px;background:rgba(0,0,0,0.4);border-radius:10px;margin-bottom:10px;text-shadow:0 0 12px rgba(16,185,129,0.6)}
+.code-copy-btn{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;width:100%;margin-bottom:8px}
+.code-copy-btn:hover{background:linear-gradient(135deg,#059669,#047857)}
+.code-hint{font-size:10px;color:#9ca3af;line-height:1.4;margin-top:8px}
+.modal-footer{padding:14px 20px;border-top:1px solid rgba(139,92,246,0.2);display:flex;gap:10px;justify-content:flex-end}
+.modal-btn{padding:10px 20px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;transition:all 0.3s}
+.modal-btn-secondary{background:rgba(255,255,255,0.08);color:#cbd5e1}
+.modal-btn-secondary:hover{background:rgba(255,255,255,0.15)}
+.modal-btn-primary{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+.modal-btn-primary:hover{background:linear-gradient(135deg,#6d28d9,#9333ea);transform:translateY(-1px);box-shadow:0 4px 12px rgba(168,85,247,0.4)}
+.modal-btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+
+/* ═══════════════════════════════
    MOBILE RESPONSIVE - VIDEO SECTION
 ═══════════════════════════════ */
 @media(max-width:768px){
@@ -687,8 +740,85 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 
   <div class="home-body">
+    <!-- NEW: Stanze private a codice -->
+    <div class="sec-label">🔐 Stanze Private con Codice</div>
+    <div class="code-rooms-section">
+      <button class="code-room-btn create" onclick="openCreateCodeRoom()">
+        <div class="crb-icon">➕</div>
+        <div class="crb-text">
+          <div class="crb-title">Crea Stanza</div>
+          <div class="crb-sub">Invita i tuoi amici con un codice</div>
+        </div>
+      </button>
+      <button class="code-room-btn join" onclick="openJoinCodeRoom()">
+        <div class="crb-icon">🔑</div>
+        <div class="crb-text">
+          <div class="crb-title">Entra con Codice</div>
+          <div class="crb-sub">Hai ricevuto un codice da un amico?</div>
+        </div>
+      </button>
+    </div>
+
     <div class="sec-label">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
+  </div>
+</div>
+
+<!-- ░░ MODAL: Crea stanza con codice ░░ -->
+<div id="modalCreateRoom" class="modal-overlay" onclick="if(event.target===this)closeModal('modalCreateRoom')">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">➕ Crea Stanza Privata</div>
+      <button class="modal-close" onclick="closeModal('modalCreateRoom')">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="modal-label">Nome della stanza</label>
+      <input type="text" id="newRoomName" class="modal-input" placeholder="Es. Amici del bar" maxlength="30">
+
+      <label class="modal-label">Emoji (opzionale)</label>
+      <div class="emoji-picker">
+        <span class="emoji-opt selected" data-emoji="🎉">🎉</span>
+        <span class="emoji-opt" data-emoji="💎">💎</span>
+        <span class="emoji-opt" data-emoji="🔥">🔥</span>
+        <span class="emoji-opt" data-emoji="🚀">🚀</span>
+        <span class="emoji-opt" data-emoji="⚽">⚽</span>
+        <span class="emoji-opt" data-emoji="🎮">🎮</span>
+        <span class="emoji-opt" data-emoji="🎵">🎵</span>
+        <span class="emoji-opt" data-emoji="❤️">❤️</span>
+        <span class="emoji-opt" data-emoji="🌟">🌟</span>
+        <span class="emoji-opt" data-emoji="🏆">🏆</span>
+      </div>
+
+      <div id="codeResult" class="code-result" style="display:none">
+        <div class="code-result-label">✅ Stanza creata! Condividi il codice:</div>
+        <div class="code-display" id="generatedCode">------</div>
+        <button class="code-copy-btn" onclick="copyRoomCode()">📋 Copia Codice</button>
+        <div class="code-hint">I tuoi amici possono entrare usando questo codice in "Entra con Codice"</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('modalCreateRoom')">Annulla</button>
+      <button class="modal-btn modal-btn-primary" id="createRoomBtn" onclick="createCodeRoom()">Genera Codice</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ MODAL: Entra con codice ░░ -->
+<div id="modalJoinRoom" class="modal-overlay" onclick="if(event.target===this)closeModal('modalJoinRoom')">
+  <div class="modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">🔑 Entra con Codice</div>
+      <button class="modal-close" onclick="closeModal('modalJoinRoom')">✕</button>
+    </div>
+    <div class="modal-body">
+      <label class="modal-label">Inserisci il codice della stanza</label>
+      <input type="text" id="joinRoomCode" class="modal-input code-input" placeholder="ABC123" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      <div class="code-hint">Il codice è di 6 caratteri (lettere e numeri)</div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-secondary" onclick="closeModal('modalJoinRoom')">Annulla</button>
+      <button class="modal-btn modal-btn-primary" onclick="joinCodeRoom()">Entra</button>
+    </div>
   </div>
 </div>
 
@@ -698,14 +828,23 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   <div class="chat-video-section">
     <div class="video-wrapper">
       <video id="myVideo" autoplay muted playsinline></video>
+      <div class="video-cam-off-overlay" id="myCamOffOverlay">
+        <div class="cam-off-icon">📷</div>
+        <div>Camera OFF</div>
+      </div>
       <div class="video-label">Tu</div>
-      <div class="video-mic-btn">🎤</div>
+      <div class="video-controls">
+        <div class="video-cam-btn" id="myCamBtn" onclick="toggleCamera()" title="Camera ON/OFF">📹</div>
+        <div class="video-mic-btn" id="myMicBtn" onclick="toggleMicrophone()" title="Microfono ON/OFF">🎤</div>
+      </div>
     </div>
 
     <div class="video-wrapper">
       <video id="theirVideo" autoplay playsinline></video>
       <div class="video-label" id="theirVideoLabel">Seleziona utente</div>
-      <div class="video-cam-indicator">🎥</div>
+      <div class="video-controls">
+        <div class="video-cam-indicator">🎥</div>
+      </div>
     </div>
   </div>
 
@@ -1137,7 +1276,7 @@ let chatRoomUsers={};
 document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
-  initUser(); connectSocket(); renderRooms(); renderFrames(); renderBadges(); setupInput();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput();
   syncPremiumStatus();
   // Setup button event listeners
   const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
@@ -1619,12 +1758,8 @@ async function initWebRTC() {
     
     webrtcEnabled = true;
     console.log('[WebRTC] Inizializzazione completata ✓');
-    
-    const micBtn = document.querySelector('.video-mic-btn');
-    if (micBtn) {
-      micBtn.addEventListener('click', toggleMicrophone);
-    }
-    
+    // I bottoni mic e cam sono gestiti tramite onclick inline (toggleMicrophone, toggleCamera)
+
   } catch (err) {
     console.error('[WebRTC] Errore getUserMedia:', err);
     webrtcEnabled = false;
@@ -1634,16 +1769,72 @@ async function initWebRTC() {
 }
 
 function toggleMicrophone() {
-  if (!localStream) return;
-  
+  if (!localStream) {
+    showToast('🎤 Microfono non disponibile');
+    return;
+  }
+
   const audioTracks = localStream.getAudioTracks();
+  if (audioTracks.length === 0) {
+    showToast('🎤 Nessun microfono');
+    return;
+  }
+
+  const newState = !audioTracks[0].enabled;
   audioTracks.forEach(track => {
-    track.enabled = !track.enabled;
+    track.enabled = newState;
   });
-  
-  const micBtn = document.querySelector('.video-mic-btn');
+
+  const micBtn = document.getElementById('myMicBtn');
   if (micBtn) {
-    micBtn.style.opacity = audioTracks[0]?.enabled ? '1' : '0.5';
+    if (newState) {
+      micBtn.classList.remove('off');
+      micBtn.textContent = '🎤';
+      micBtn.title = 'Microfono ON';
+      showToast('🎤 Microfono ON');
+    } else {
+      micBtn.classList.add('off');
+      micBtn.textContent = '🔇';
+      micBtn.title = 'Microfono OFF';
+      showToast('🔇 Microfono OFF');
+    }
+  }
+}
+
+function toggleCamera() {
+  if (!localStream) {
+    showToast('📷 Camera non disponibile');
+    return;
+  }
+
+  const videoTracks = localStream.getVideoTracks();
+  if (videoTracks.length === 0) {
+    showToast('📷 Nessuna camera');
+    return;
+  }
+
+  const newState = !videoTracks[0].enabled;
+  videoTracks.forEach(track => {
+    track.enabled = newState;
+  });
+
+  const camBtn = document.getElementById('myCamBtn');
+  const overlay = document.getElementById('myCamOffOverlay');
+
+  if (camBtn) {
+    if (newState) {
+      camBtn.classList.remove('off');
+      camBtn.textContent = '📹';
+      camBtn.title = 'Camera ON';
+      if (overlay) overlay.classList.remove('show');
+      showToast('📹 Camera ON');
+    } else {
+      camBtn.classList.add('off');
+      camBtn.textContent = '📷';
+      camBtn.title = 'Camera OFF';
+      if (overlay) overlay.classList.add('show');
+      showToast('📷 Camera OFF');
+    }
   }
 }
 
@@ -2307,6 +2498,201 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function saveUser(){setLS('kv4_user',user);}
+
+// ══════════════════════════════════════════
+// STANZE A CODICE - Crea / Entra
+// ══════════════════════════════════════════
+let currentRoomCode = null;
+let selectedEmoji = '🎉';
+
+function openCreateCodeRoom(){
+  document.getElementById('modalCreateRoom').classList.add('show');
+  document.getElementById('newRoomName').value = '';
+  document.getElementById('codeResult').style.display = 'none';
+  document.getElementById('createRoomBtn').textContent = 'Genera Codice';
+  document.getElementById('createRoomBtn').onclick = createCodeRoom;
+  currentRoomCode = null;
+
+  // Reset emoji selection
+  document.querySelectorAll('.emoji-opt').forEach(el => {
+    el.classList.remove('selected');
+    el.onclick = () => {
+      document.querySelectorAll('.emoji-opt').forEach(e => e.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedEmoji = el.dataset.emoji;
+    };
+  });
+  const firstEmoji = document.querySelector('.emoji-opt');
+  if (firstEmoji) {
+    firstEmoji.classList.add('selected');
+    selectedEmoji = firstEmoji.dataset.emoji;
+  }
+
+  setTimeout(() => document.getElementById('newRoomName').focus(), 100);
+}
+
+function openJoinCodeRoom(){
+  document.getElementById('modalJoinRoom').classList.add('show');
+  document.getElementById('joinRoomCode').value = '';
+  setTimeout(() => document.getElementById('joinRoomCode').focus(), 100);
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+}
+
+function generateRoomCode(){
+  // Genera codice 6 caratteri: lettere maiuscole + numeri
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
+function createCodeRoom(){
+  const name = document.getElementById('newRoomName').value.trim();
+  if (!name) {
+    showToast('⚠️ Inserisci un nome per la stanza');
+    document.getElementById('newRoomName').focus();
+    return;
+  }
+  if (name.length < 3) {
+    showToast('⚠️ Il nome deve avere almeno 3 caratteri');
+    return;
+  }
+
+  // Genera codice
+  const code = generateRoomCode();
+  currentRoomCode = code;
+
+  // Crea config stanza locale
+  const customRoom = {
+    id: 'code_' + code,
+    name: selectedEmoji + ' ' + name,
+    emoji: selectedEmoji,
+    desc: 'Stanza privata - Codice: ' + code,
+    tier: 'code',
+    color: '#a855f7',
+    dot1: '#a855f7', dot2: '#ec4899', dot3: '#f97316',
+    code: code,
+    ownerId: user.id
+  };
+
+  // Salva stanza nelle stanze custom locali
+  let myCodeRooms = getLS('kv4_code_rooms') || [];
+  myCodeRooms.push(customRoom);
+  setLS('kv4_code_rooms', myCodeRooms);
+
+  // Notifica server
+  if (socket && socket.connected) {
+    socket.emit('create-code-room', { room: customRoom });
+  }
+
+  // Mostra risultato
+  document.getElementById('generatedCode').textContent = code;
+  document.getElementById('codeResult').style.display = 'block';
+  document.getElementById('createRoomBtn').textContent = 'Entra nella stanza';
+  document.getElementById('createRoomBtn').onclick = () => {
+    closeModal('modalCreateRoom');
+    enterCodeRoom(customRoom);
+  };
+
+  showToast('✅ Stanza creata! Codice: ' + code);
+}
+
+function copyRoomCode(){
+  const code = currentRoomCode;
+  if (!code) return;
+
+  const shareText = `🎉 Unisciti alla mia stanza KOUVERTE!\n\nCodice: ${code}\n\nVai su www.kouverte.com → Entra con Codice`;
+
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText).then(() => {
+      showToast('📋 Codice copiato!');
+    }).catch(() => {
+      fallbackCopy(shareText);
+    });
+  } else {
+    fallbackCopy(shareText);
+  }
+}
+
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('📋 Codice copiato!');
+  } catch(e) {
+    showToast('⚠️ Copia manualmente: ' + currentRoomCode);
+  }
+  document.body.removeChild(ta);
+}
+
+function joinCodeRoom(){
+  const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+  if (!code || code.length !== 6) {
+    showToast('⚠️ Inserisci un codice di 6 caratteri');
+    return;
+  }
+
+  // Cerca prima nelle stanze locali
+  const myCodeRooms = getLS('kv4_code_rooms') || [];
+  let foundRoom = myCodeRooms.find(r => r.code === code);
+
+  if (!foundRoom) {
+    // Crea stanza temporanea solo con il codice e chiedi al server
+    foundRoom = {
+      id: 'code_' + code,
+      name: '🔐 Stanza ' + code,
+      emoji: '🔐',
+      desc: 'Stanza privata - Codice: ' + code,
+      tier: 'code',
+      color: '#a855f7',
+      dot1: '#a855f7', dot2: '#ec4899', dot3: '#f97316',
+      code: code
+    };
+
+    // Salva localmente
+    myCodeRooms.push(foundRoom);
+    setLS('kv4_code_rooms', myCodeRooms);
+  }
+
+  closeModal('modalJoinRoom');
+  enterCodeRoom(foundRoom);
+}
+
+function enterCodeRoom(roomCfg){
+  // Aggiungi temporaneamente alla lista ROOMS se non c'è
+  if (!ROOMS.find(r => r.id === roomCfg.id)) {
+    ROOMS.push(roomCfg);
+  }
+
+  // Notifica il server della stanza con codice
+  if (socket && socket.connected) {
+    socket.emit('join-code-room', { code: roomCfg.code, room: roomCfg });
+  }
+
+  // Usa la funzione esistente enterRoom
+  enterRoom(roomCfg.id);
+  showToast('🔐 Entrato in: ' + roomCfg.name);
+}
+
+// Carica le stanze a codice salvate localmente all'avvio
+function loadSavedCodeRooms(){
+  const myCodeRooms = getLS('kv4_code_rooms') || [];
+  myCodeRooms.forEach(r => {
+    if (!ROOMS.find(x => x.id === r.id)) {
+      ROOMS.push(r);
+    }
+  });
+}
 
 // ══════════════════════════════════════════
 // CONTINUA MENU FUNCTIONS

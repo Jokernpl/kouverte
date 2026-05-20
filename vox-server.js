@@ -2819,6 +2819,57 @@ io.on('connection', (socket) => {
         socket.to(data.room).emit('call-ended');
     });
 
+    // ===== STANZE A CODICE (Custom Rooms) =====
+    // codeRooms: codice -> { code, name, emoji, ownerId, createdAt }
+    if (!global.codeRooms) global.codeRooms = new Map();
+
+    socket.on('create-code-room', ({ room }) => {
+        if (!room || !room.code || typeof room.code !== 'string') return;
+        const code = String(room.code).toUpperCase().slice(0, 6);
+        if (code.length !== 6) return;
+
+        const safeRoom = {
+            id: 'code_' + code,
+            name: String(room.name || 'Stanza Privata').slice(0, 50),
+            emoji: String(room.emoji || '🔐').slice(0, 4),
+            code: code,
+            ownerId: String(room.ownerId || '').slice(0, 40),
+            tier: 'code',
+            createdAt: Date.now()
+        };
+
+        global.codeRooms.set(code, safeRoom);
+        console.log(`[CODE-ROOM] Created: ${code} - ${safeRoom.name} by ${safeRoom.ownerId}`);
+
+        socket.emit('code-room-created', { room: safeRoom });
+    });
+
+    socket.on('join-code-room', ({ code, room }) => {
+        if (!code) return;
+        const upperCode = String(code).toUpperCase();
+
+        // Se la stanza non esiste sul server ma il client ha il codice, la creiamo
+        if (!global.codeRooms.has(upperCode) && room) {
+            const safeRoom = {
+                id: 'code_' + upperCode,
+                name: String(room.name || ('Stanza ' + upperCode)).slice(0, 50),
+                emoji: String(room.emoji || '🔐').slice(0, 4),
+                code: upperCode,
+                ownerId: '',
+                tier: 'code',
+                createdAt: Date.now()
+            };
+            global.codeRooms.set(upperCode, safeRoom);
+            console.log(`[CODE-ROOM] Joined and registered: ${upperCode}`);
+        }
+
+        const codeRoom = global.codeRooms.get(upperCode);
+        if (codeRoom) {
+            socket.emit('code-room-joined', { room: codeRoom });
+            console.log(`[CODE-ROOM] User joining code room: ${upperCode}`);
+        }
+    });
+
     // ===== CHAT ROOMS =====
     socket.on('join-chat-room', ({ roomId, user }) => {
         if (!roomId || typeof roomId !== 'string') return;
