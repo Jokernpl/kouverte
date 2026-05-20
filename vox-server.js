@@ -140,6 +140,36 @@ function loadDB() {
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
 }
 
+// ============================================================
+// PERSISTENZA: file LOCALE + backup REDIS (Upstash)
+// Risolve il problema di Render filesystem ephemeral
+// ============================================================
+const REDIS_DB_KEY = 'kouverte:vox:db';
+let _serverRedis = null;
+let lastRedisSave = 0;
+
+function getServerRedis() {
+    if (_serverRedis !== null) return _serverRedis;
+    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+        _serverRedis = false;
+        console.log('[DB] Redis non configurato - solo file locale (ephemeral)');
+        return null;
+    }
+    try {
+        const { Redis } = require('@upstash/redis');
+        _serverRedis = new Redis({
+            url: process.env.UPSTASH_REDIS_REST_URL,
+            token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        });
+        console.log('[DB] ✅ Redis Upstash connesso - dati persistenti');
+        return _serverRedis;
+    } catch(e) {
+        console.error('[DB] Redis init error:', e.message);
+        _serverRedis = false;
+        return null;
+    }
+}
+
 // Atomic write per evitare corruzione DB su kill
 let dbDirty = false;
 function saveDB(db) {
@@ -148,10 +178,70 @@ function saveDB(db) {
     fs.writeFileSync(tmp, data, 'utf8');
     fs.renameSync(tmp, DB_FILE);
     dbDirty = false;
+
+    // Backup su Redis (async, non blocca, max ogni 5 secondi)
+    const now_ms = Date.now();
+    if (now_ms - lastRedisSave > 5000) {
+        lastRedisSave = now_ms;
+        const r = getServerRedis();
+        if (r) {
+            const backup = { db, savedAt: now_ms, source: 'vox-server' };
+            r.set(REDIS_DB_KEY, JSON.stringify(backup)).catch(e => {
+                console.error('[DB] Redis save error:', e.message);
+            });
+        }
+    }
 }
 function markDirty() { dbDirty = true; }
 
+// Restore da Redis allo startup (se piu recente di file locale)
+async function tryRestoreFromRedis() {
+    const r = getServerRedis();
+    if (!r) return false;
+    try {
+        const data = await r.get(REDIS_DB_KEY);
+        if (!data) {
+            console.log('[DB] Redis: nessun backup trovato');
+            return false;
+        }
+        const backup = typeof data === 'string' ? JSON.parse(data) : data;
+        if (!backup.db || !backup.savedAt) return false;
+
+        // Check timestamp file
+        let fileTime = 0;
+        try {
+            if (fs.existsSync(DB_FILE)) {
+                fileTime = fs.statSync(DB_FILE).mtimeMs;
+            }
+        } catch(e) {}
+
+        if (backup.savedAt > fileTime) {
+            // Redis e' piu recente - ripristina!
+            console.log('[DB] ✅ Ripristinato da Redis backup (timestamp:', new Date(backup.savedAt).toISOString(), ')');
+            console.log('[DB] Utenti ripristinati:', (backup.db.users || []).length);
+            fs.writeFileSync(DB_FILE, JSON.stringify(backup.db, null, 2));
+            return true;
+        }
+        console.log('[DB] File locale piu recente di Redis backup');
+        return false;
+    } catch(e) {
+        console.error('[DB] Restore error:', e.message);
+        return false;
+    }
+}
+
 let DB = loadDB();
+
+// All'avvio, se file locale è vuoto/nuovo, prova restore da Redis
+(async () => {
+    if (!DB.users || DB.users.length === 0 || (DB.users.length === 1 && DB.users[0].email === 'test1@kouverte.local')) {
+        const restored = await tryRestoreFromRedis();
+        if (restored) {
+            DB = loadDB();
+            console.log('[DB] Database ricaricato da backup Redis');
+        }
+    }
+})();
 
 // Initialize test user password hash on startup
 (async () => {
