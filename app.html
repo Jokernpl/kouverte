@@ -2600,8 +2600,11 @@ function saveUser(){setLS('kv4_user',user);}
 // ══════════════════════════════════════════
 // LOGIN / REGISTRAZIONE + SYNC DATI
 // ══════════════════════════════════════════
-let authToken = null;
-let isLoggedIn = false;
+// IMPORTANTE: usare var per evitare Temporal Dead Zone
+// (funzioni che vengono chiamate da DOMContentLoaded o onclick HTML)
+var authToken = null;
+var isLoggedIn = false;
+var syncTimer = null;
 
 function getAuthToken(){
   if (authToken) return authToken;
@@ -2669,7 +2672,7 @@ async function tryAutoLogin(){
 }
 
 // Sync periodica con server (ogni 30 secondi se loggato)
-let syncTimer = null;
+// syncTimer dichiarata in alto con var per evitare TDZ
 function startAutoSync(){
   if (syncTimer) clearInterval(syncTimer);
   syncTimer = setInterval(() => {
