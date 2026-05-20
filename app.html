@@ -1552,6 +1552,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   tryAutoLogin().then(success => {
     if (success) {
       startAutoSync();
+      startTokenAutoRefresh();
       updateProfileUI();
       console.log('[Auth] Login automatico OK');
     }
@@ -2979,6 +2980,114 @@ async function tryAutoLogin(){
   return false;
 }
 
+// Decode JWT payload (no verify, solo per leggere exp)
+function decodeJWTPayload(token){
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return payload;
+  } catch(e) { return null; }
+}
+
+// Auto-refresh token quando manca <7 giorni alla scadenza
+var refreshTimer = null;
+async function refreshAuthToken(){
+  if (!isLoggedIn || !authToken) return;
+  try {
+    const res = await fetch('/api/auth/refresh-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: JSON.stringify({ rememberMe: true })
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json.token) {
+        setAuthToken(json.token);
+        console.log('[Auth] ✅ Token rinnovato, scade tra', Math.round((json.expiresInSeconds || 0)/86400), 'giorni');
+      }
+    } else {
+      // Token scaduto: forza login
+      console.warn('[Auth] Token scaduto, richiede nuovo login');
+      handleTokenExpired();
+    }
+  } catch(e) {
+    console.error('[Auth] Errore refresh token:', e);
+  }
+}
+
+function startTokenAutoRefresh(){
+  if (refreshTimer) clearInterval(refreshTimer);
+  // Check ogni 6 ore se serve rinnovare
+  refreshTimer = setInterval(() => {
+    if (!isLoggedIn || !authToken) return;
+    const payload = decodeJWTPayload(authToken);
+    if (!payload || !payload.exp) return;
+    const now = Math.floor(Date.now() / 1000);
+    const remaining = payload.exp - now;
+    // Se mancano meno di 7 giorni → rinnova
+    if (remaining < 7 * 24 * 3600 && remaining > 0) {
+      console.log('[Auth] Token scade tra', Math.round(remaining/86400), 'giorni → refresh');
+      refreshAuthToken();
+    } else if (remaining <= 0) {
+      handleTokenExpired();
+    }
+  }, 6 * 3600 * 1000); // ogni 6 ore
+
+  // Check immediato al login/start
+  setTimeout(() => {
+    const payload = decodeJWTPayload(authToken);
+    if (payload && payload.exp) {
+      const remaining = payload.exp - Math.floor(Date.now() / 1000);
+      if (remaining < 7 * 24 * 3600 && remaining > 0) refreshAuthToken();
+    }
+  }, 5000);
+}
+
+function handleTokenExpired(){
+  // Token scaduto: pulisci sessione e mostra prompt con auto-fill
+  isLoggedIn = false;
+  authToken = null;
+  try { localStorage.removeItem('kv4_auth_token'); } catch(e){}
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+
+  // Mostra modal di re-login NON invasivo (toast persistente con click)
+  showReloginPrompt();
+}
+
+function showReloginPrompt(){
+  // Toast persistente in alto che dice "Sessione scaduta - riconnetti"
+  const existing = document.getElementById('reloginToast');
+  if (existing) return;
+
+  const remembered = getLS('kv4_remember_user') || '';
+  const div = document.createElement('div');
+  div.id = 'reloginToast';
+  div.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;padding:14px 20px;border-radius:14px;box-shadow:0 8px 24px rgba(168,85,247,0.4);z-index:99999;display:flex;align-items:center;gap:12px;font-size:13px;max-width:90vw;animation:slideDown 0.4s ease-out';
+  div.innerHTML = `
+    <div style="font-size:24px">🔐</div>
+    <div style="flex:1">
+      <div style="font-weight:800;margin-bottom:2px">Sessione scaduta</div>
+      <div style="font-size:11px;opacity:0.9">${remembered ? 'Reinserisci la password per ' + remembered : 'Riconnetti il tuo account'}</div>
+    </div>
+    <button onclick="document.getElementById('reloginToast').remove();openAuthModal();setTimeout(()=>switchAuthMode('login'),100)" style="background:#fff;color:#7c3aed;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;flex-shrink:0">🔑 Accedi</button>
+    <button onclick="document.getElementById('reloginToast').remove()" style="background:transparent;border:none;color:#fff;font-size:16px;cursor:pointer;opacity:0.6;flex-shrink:0">✕</button>
+  `;
+  document.body.appendChild(div);
+
+  // Aggiungi keyframe animazione se non già presente
+  if (!document.getElementById('reloginToastStyle')) {
+    const s = document.createElement('style');
+    s.id = 'reloginToastStyle';
+    s.textContent = '@keyframes slideDown{from{transform:translateX(-50%) translateY(-100px);opacity:0}to{transform:translateX(-50%) translateY(0);opacity:1}}';
+    document.head.appendChild(s);
+  }
+}
+
 // Sync periodica con server (ogni 30 secondi se loggato)
 // syncTimer dichiarata in alto con var per evitare TDZ
 function startAutoSync(){
@@ -3363,6 +3472,7 @@ async function doAuth(){
       showToast('🔑 Bentornato ' + (json.user.username || ''));
     }
     startAutoSync();
+    startTokenAutoRefresh();
   } catch(e) {
     console.error('[Auth] Errore:', e);
     errEl.textContent = '❌ Errore di connessione: ' + e.message;

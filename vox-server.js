@@ -973,6 +973,29 @@ app.get('/api/auth/me', verifyToken, (req, res) => {
     res.json({ user: { id: user.id, email: user.email, username: user.username, profile: user.profile, stats: user.stats, kvData: user.kvData || null } });
 });
 
+// Refresh token: emette nuovo token mantenendo durata rememberMe
+// Chiamato automaticamente quando il token sta per scadere
+app.post('/api/auth/refresh-token', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    user.last_seen = now();
+    markDirty();
+
+    // Genera nuovo token con durata 30 giorni (rememberMe sempre true per refresh)
+    const rememberMe = req.body?.rememberMe !== false;
+    const newToken = generateToken(user.id, rememberMe);
+
+    // Calcola tempo a scadenza per il client
+    const expiresIn = rememberMe ? 30 * 24 * 60 * 60 : 7 * 24 * 60 * 60; // secondi
+    res.json({
+        ok: true,
+        token: newToken,
+        expiresInSeconds: expiresIn,
+        expiresAt: now() + expiresIn * 1000
+    });
+});
+
 // ============================================================
 // KOUVERTE: Sync dati gioco (monete, XP, badge, cornici, etc.)
 // ============================================================
