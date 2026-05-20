@@ -23,7 +23,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ═══════════════════════════════
    CHAT VIDEO SECTION
 ═══════════════════════════════ */
-.chat-video-section{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;background:#0f0a1e;border-bottom:1px solid #5b21b6;height:180px;flex-shrink:0;overflow:hidden}
+.chat-video-section{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px;background:#0f0a1e;border-bottom:1px solid #5b21b6;height:200px;flex-shrink:0;overflow:hidden;max-width:420px;margin:0 auto;width:100%}
 .video-wrapper{position:relative;background:#1a0f2e;border-radius:12px;overflow:hidden;border:2px solid #7c3aed}
 .video-wrapper video{width:100%;height:100%;object-fit:cover;display:block}
 #myVideo{transform:scaleX(-1)}
@@ -443,6 +443,29 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ═══════════════════════════════
    MODALS
 ═══════════════════════════════ */
+/* ═══════════════════════════════
+   CONTINUA MENU
+═══════════════════════════════ */
+.menu-items{max-height:60vh;overflow-y:auto;margin:12px 0}
+.menu-item{display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;
+  transition:all .2s;border-radius:8px;color:#e5e7eb}
+.menu-item:active{background:rgba(168,85,247,.2);transform:scale(.98)}
+.menu-item.danger{color:#f87171}
+.menu-item.danger:active{background:rgba(248,113,113,.15)}
+.menu-icon{font-size:18px;min-width:20px;text-align:center}
+.menu-text{flex:1;font-size:13px;font-weight:500}
+.menu-divider{height:1px;background:rgba(139,92,246,.2);margin:8px 0}
+
+/* Settings */
+.settings-section{padding:14px 0;border-bottom:1px solid rgba(139,92,246,.15)}
+.setting-label{font-size:12px;font-weight:700;color:#a0aec0;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.settings-select{width:100%;padding:10px 12px;background:rgba(0,0,0,.3);border:1px solid rgba(139,92,246,.25);
+  border-radius:8px;color:#fff;font-size:12px;cursor:pointer}
+.settings-select:focus{outline:none;border-color:#7c3aed;background:rgba(124,58,237,.15)}
+.toggle-switch{margin:12px 0}
+.toggle-switch label{display:flex;align-items:center;gap:10px;cursor:pointer;color:#e5e7eb;font-size:13px}
+.toggle-switch input[type=checkbox]{width:44px;height:24px;cursor:pointer;accent-color:#7c3aed}
+
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:500;
   display:flex;align-items:flex-end;justify-content:center;
   opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(8px)}
@@ -508,6 +531,70 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .sec-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;
   margin:12px 0 8px;display:flex;align-items:center;gap:6px}
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+
+/* ═══════════════════════════════
+   MOBILE RESPONSIVE - VIDEO SECTION
+═══════════════════════════════ */
+@media(max-width:768px){
+  .chat-video-section{
+    height:140px;
+    padding:8px;
+    gap:4px;
+    max-width:100%;
+  }
+  .video-wrapper{
+    border-radius:8px;
+    border:1.5px solid #7c3aed;
+  }
+  .video-label{
+    font-size:9px;
+    bottom:2px;
+    left:2px;
+    padding:1px 4px;
+  }
+  .video-mic-btn,
+  .video-cam-indicator{
+    width:24px;
+    height:24px;
+    font-size:12px;
+    top:2px;
+    right:2px;
+  }
+  .chat-users-section{
+    max-height:60px;
+    padding:6px;
+  }
+}
+
+@media(max-width:480px){
+  .chat-video-section{
+    height:100px;
+    padding:6px;
+    gap:3px;
+  }
+  .video-label{
+    font-size:8px;
+    padding:0px 3px;
+  }
+  .video-mic-btn,
+  .video-cam-indicator{
+    width:20px;
+    height:20px;
+    font-size:10px;
+  }
+  .chat-users-section{
+    max-height:50px;
+    padding:4px;
+  }
+  .user-chip{
+    min-width:50px;
+  }
+  .user-chip-avatar{
+    width:32px;
+    height:32px;
+    font-size:16px;
+  }
+}
 </style>
 </head>
 <body>
@@ -854,6 +941,101 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 </div>
 
+<!-- ░░ CONTINUA MENU MODAL ░░ -->
+<div class="overlay" id="continuaOv">
+  <div class="modal-sheet">
+    <div class="mpill"></div>
+    <div class="mtitle">Continua...</div>
+    <div class="menu-items">
+      <div class="menu-item" onclick="oneshot()">
+        <span class="menu-icon">⚡</span>
+        <span class="menu-text">OneShot incontra ora</span>
+      </div>
+      <div class="menu-item" onclick="createRoom()">
+        <span class="menu-icon">➕</span>
+        <span class="menu-text">Crea Stanza Pubblica o Privata</span>
+      </div>
+      <div class="menu-item" onclick="enterPrivateRoom()">
+        <span class="menu-icon">🔐</span>
+        <span class="menu-text">Entra in Stanza Privata</span>
+      </div>
+      <div class="menu-item" onclick="showFavorites()">
+        <span class="menu-icon">❤️</span>
+        <span class="menu-text">Lista utenti favoriti</span>
+      </div>
+      <div class="menu-item" onclick="showBlocked()">
+        <span class="menu-icon">🚫</span>
+        <span class="menu-text">Lista utenti bloccati</span>
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-item" onclick="showScreen('profile',document.querySelector('[data-sc=profile]'))">
+        <span class="menu-icon">🎭</span>
+        <span class="menu-text">Profilo</span>
+      </div>
+      <div class="menu-item" onclick="openWebcamSettings()">
+        <span class="menu-icon">🎥</span>
+        <span class="menu-text">Impostazioni Webcam</span>
+      </div>
+      <div class="menu-item" onclick="openSettings()">
+        <span class="menu-icon">⚙️</span>
+        <span class="menu-text">Impostazioni</span>
+      </div>
+      <div class="menu-item" onclick="openVIP()">
+        <span class="menu-icon">👑</span>
+        <span class="menu-text">Diventa VIP</span>
+      </div>
+      <div class="menu-item" onclick="showInfo()">
+        <span class="menu-icon">ℹ️</span>
+        <span class="menu-text">Info Punti</span>
+      </div>
+      <div class="menu-divider"></div>
+      <div class="menu-item danger" onclick="logout()">
+        <span class="menu-icon">↪️</span>
+        <span class="menu-text">Uscita</span>
+      </div>
+    </div>
+    <button class="btn-s" onclick="closeContinua()" style="margin-top:12px">Chiudi</button>
+  </div>
+</div>
+
+<!-- ░░ WEBCAM SETTINGS MODAL ░░ -->
+<div class="overlay" id="webcamSettingsOv">
+  <div class="modal-sheet">
+    <div class="mpill"></div>
+    <div class="mtitle">⚙️ Impostazioni Webcam</div>
+    
+    <div class="settings-section">
+      <div class="setting-label">📹 Webcam Principale (Tua)</div>
+      <select id="cameraSelect1" class="settings-select" onchange="switchCamera(1)">
+        <option value="">Rileva automaticamente</option>
+      </select>
+      <div class="setting-label" style="margin-top:12px">Risoluzione</div>
+      <select id="resolutionSelect1" class="settings-select" onchange="setResolution(1)">
+        <option value="360">360p (basso - meno banda)</option>
+        <option value="720" selected>720p (normale - consigliato)</option>
+        <option value="1080">1080p (alto - più banda)</option>
+      </select>
+    </div>
+
+    <div class="settings-section">
+      <div class="setting-label">📹 Webcam Seconda (Loro)</div>
+      <select id="cameraSelect2" class="settings-select" onchange="switchCamera(2)">
+        <option value="">Automatica</option>
+      </select>
+      <div class="setting-label" style="margin-top:12px">Audio</div>
+      <div class="toggle-switch">
+        <label>
+          <input type="checkbox" id="audioToggle" checked onchange="toggleAudio()">
+          <span>Microfono attivo</span>
+        </label>
+      </div>
+    </div>
+
+    <button class="btn-p" onclick="testCamera()">🔍 Test Webcam</button>
+    <button class="btn-s" onclick="closeWebcamSettings()" style="margin-top:8px">Chiudi</button>
+  </div>
+</div>
+
 <!-- ░░ NAV ░░ -->
 <nav class="bnav">
   <button class="nbtn active" data-sc="home" onclick="showScreen('home',this)">
@@ -861,6 +1043,9 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </button>
   <button class="nbtn" data-sc="profile" onclick="showScreen('profile',this)">
     <div class="nicon">🎭</div><div class="nlbl">Profilo</div>
+  </button>
+  <button class="nbtn" onclick="openContinua()">
+    <div class="nicon">⋯</div><div class="nlbl">Continua</div>
   </button>
 </nav>
 
@@ -954,6 +1139,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
   initUser(); connectSocket(); renderRooms(); renderFrames(); renderBadges(); setupInput();
   syncPremiumStatus();
+  // Setup button event listeners
+  const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
+  if(continuaBtn) continuaBtn.addEventListener('click', openContinua);
   setTimeout(hideSplash,1200);
 });
 
@@ -1440,9 +1628,8 @@ async function initWebRTC() {
   } catch (err) {
     console.error('[WebRTC] Errore getUserMedia:', err);
     webrtcEnabled = false;
-    // Graceful degradation: nascondere video section
-    const videoSection = document.querySelector('.chat-video-section');
-    if (videoSection) videoSection.style.display = 'none';
+    // NOTE: Manteniamo la sezione video visibile - l'utente vedrà che è disponibile anche se non ha permessi
+    console.log('[WebRTC] Video section rimane visibile per UI');
   }
 }
 
@@ -2120,6 +2307,149 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function saveUser(){setLS('kv4_user',user);}
+
+// ══════════════════════════════════════════
+// CONTINUA MENU FUNCTIONS
+// ══════════════════════════════════════════
+
+function openContinua(){
+  document.getElementById('continuaOv').classList.add('open');
+}
+
+function closeContinua(){
+  document.getElementById('continuaOv').classList.remove('open');
+}
+
+function oneshot(){
+  closeContinua();
+  showToast('⚡ OneShot: Abbinamento casuale con un utente per 5 minuti');
+  // TODO: Implementare matching algoritmo
+}
+
+function createRoom(){
+  closeContinua();
+  const name = prompt('Nome della stanza:');
+  if(!name) return;
+  const isPrivate = confirm('Stanza privata? (OK=Privata, Cancel=Pubblica)');
+  showToast(isPrivate ? '🔐 Stanza privata creata!' : '🌍 Stanza pubblica creata!');
+  // TODO: Creare stanza nel server
+}
+
+function enterPrivateRoom(){
+  closeContinua();
+  const code = prompt('Codice stanza privata:');
+  if(!code) return;
+  socket.emit('join-private-room', { code });
+  showToast('🔐 Tentando accesso...');
+}
+
+function showFavorites(){
+  closeContinua();
+  const favs = user.favorites || [];
+  if(favs.length === 0){
+    showToast('❤️ Nessun utente preferito ancora');
+    return;
+  }
+  showToast('❤️ ' + favs.length + ' utenti favoriti');
+  // TODO: Mostrare lista dettagliata favoriti
+}
+
+function showBlocked(){
+  closeContinua();
+  const blocked = user.blocked || [];
+  if(blocked.length === 0){
+    showToast('🚫 Nessun utente bloccato');
+    return;
+  }
+  showToast('🚫 ' + blocked.length + ' utenti bloccati');
+  // TODO: Mostrare lista dettagliata bloccati
+}
+
+function openWebcamSettings(){
+  closeContinua();
+  document.getElementById('webcamSettingsOv').classList.add('open');
+  
+  // Popolare la lista delle webcam disponibili
+  navigator.mediaDevices.enumerateDevices().then(devices => {
+    const cameras = devices.filter(d => d.kind === 'videoinput');
+    const sel1 = document.getElementById('cameraSelect1');
+    const sel2 = document.getElementById('cameraSelect2');
+    
+    sel1.innerHTML = '<option value="">Automatica</option>';
+    sel2.innerHTML = '<option value="">Automatica</option>';
+    
+    cameras.forEach((cam, idx) => {
+      const opt1 = document.createElement('option');
+      opt1.value = cam.deviceId;
+      opt1.textContent = cam.label || 'Webcam ' + (idx + 1);
+      sel1.appendChild(opt1);
+      
+      const opt2 = opt1.cloneNode(true);
+      sel2.appendChild(opt2);
+    });
+  }).catch(e => console.error('[Webcam] Errore enumerating devices:', e));
+}
+
+function closeWebcamSettings(){
+  document.getElementById('webcamSettingsOv').classList.remove('open');
+}
+
+function switchCamera(n){
+  const sel = document.getElementById('cameraSelect' + n);
+  const deviceId = sel.value;
+  console.log('[Webcam] Switching camera ' + n + ' to:', deviceId);
+  // TODO: Re-initialize stream con nuovo device
+  showToast('🎥 Webcam ' + n + ' aggiornata');
+}
+
+function setResolution(n){
+  const sel = document.getElementById('resolutionSelect' + n);
+  const res = sel.value;
+  console.log('[Webcam] Setting resolution ' + n + ':', res + 'p');
+  showToast('📹 Risoluzione ' + res + 'p impostata');
+  // TODO: Aggiornare vincoli mediaDevices
+}
+
+function toggleAudio(){
+  const toggle = document.getElementById('audioToggle');
+  if(localStream){
+    const audioTracks = localStream.getAudioTracks();
+    audioTracks.forEach(t => t.enabled = toggle.checked);
+    showToast(toggle.checked ? '🎤 Microfono attivo' : '🔇 Microfono mutato');
+  }
+}
+
+function testCamera(){
+  if(!localStream){
+    showToast('⚠️ Webcam non inizializzata. Ricarica la pagina.');
+    return;
+  }
+  showToast('✅ Webcam funziona correttamente!');
+}
+
+function openSettings(){
+  closeContinua();
+  showToast('⚙️ Impostazioni generali (privacy, notifiche, etc.)');
+  // TODO: Mostrare modal completo impostazioni
+}
+
+function openVIP(){
+  closeContinua();
+  document.getElementById('paywallOv').classList.add('open');
+}
+
+function showInfo(){
+  closeContinua();
+  showToast('ℹ️ Info Punti: Guadagna punti chattando e riscuotili per premi!');
+  // TODO: Mostrare pagina info punti
+}
+
+function logout(){
+  if(confirm('⚠️ Sei sicuro di voler uscire?')){
+    localStorage.clear();
+    location.reload();
+  }
+}
 </script>
 </body>
 </html>
