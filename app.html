@@ -379,6 +379,54 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .prof-mascot{width:80px;height:80px;margin:0 auto 10px;position:relative;
   animation:float 3s ease-in-out infinite}
 .prof-mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
+
+/* ── Avatar profilo grande con cornice ── */
+.prof-avatar-hero{width:110px;height:110px;margin:0 auto 12px;position:relative;
+  border-radius:50%;background:linear-gradient(135deg,var(--av-c1,#7c3aed),var(--av-c2,#a855f7));
+  display:flex;align-items:center;justify-content:center;
+  font-size:60px;cursor:pointer;transition:transform 0.3s;
+  border:4px solid transparent}
+.prof-avatar-hero:hover{transform:scale(1.05)}
+.prof-avatar-face{display:flex;align-items:center;justify-content:center;width:100%;height:100%;
+  border-radius:50%;background:rgba(255,255,255,0.05)}
+/* Stili cornici - applicati a .prof-avatar-hero quando ha la classe corrispondente */
+.prof-avatar-hero.frame-silver{border-color:#94a3b8;box-shadow:0 0 16px #94a3b8}
+.prof-avatar-hero.frame-purple{border-color:#a855f7;box-shadow:0 0 18px #a855f7}
+.prof-avatar-hero.frame-gold{border-color:#fbbf24;box-shadow:0 0 22px #fbbf24}
+.prof-avatar-hero.frame-flame{border-color:#f97316;box-shadow:0 0 22px #f97316;animation:flame-pulse 1.5s ease-in-out infinite}
+.prof-avatar-hero.frame-diamond{border-color:#38bdf8;box-shadow:0 0 24px #38bdf8;animation:diamond-shimmer 3s ease-in-out infinite}
+.prof-avatar-hero.frame-neon{border-color:#00ffff;box-shadow:0 0 24px #00ffff,inset 0 0 10px rgba(0,255,255,0.3)}
+.prof-avatar-hero.frame-emerald{border-color:#10b981;box-shadow:0 0 20px #10b981}
+.prof-avatar-hero.frame-ruby{border-color:#ef4444;box-shadow:0 0 20px #ef4444}
+.prof-avatar-hero.frame-rainbow{border:4px solid transparent;background:linear-gradient(#1a0f2e,#1a0f2e) padding-box,linear-gradient(45deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f) border-box;animation:rainbow-spin 3s linear infinite}
+.prof-avatar-hero.frame-galaxy{border-color:#8b5cf6;box-shadow:0 0 28px #8b5cf6,inset 0 0 15px rgba(139,92,246,0.5);background:radial-gradient(circle,#4c1d95,#1a0f2e)}
+.prof-avatar-hero.frame-royal{border:4px double #fbbf24;box-shadow:0 0 24px #fbbf24,inset 0 0 8px rgba(251,191,36,0.4)}
+.prof-avatar-hero.frame-skull{border-color:#1f2937;box-shadow:0 0 14px #1f2937,inset 0 0 8px rgba(239,68,68,0.5)}
+@keyframes flame-pulse{0%,100%{box-shadow:0 0 22px #f97316}50%{box-shadow:0 0 35px #ef4444,0 0 50px #f97316}}
+@keyframes diamond-shimmer{0%,100%{box-shadow:0 0 24px #38bdf8}50%{box-shadow:0 0 40px #38bdf8,0 0 60px #60a5fa}}
+@keyframes rainbow-spin{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+
+/* Cornice anche in chat messages (visibile agli altri) */
+.mavatar.frame-silver{box-shadow:0 0 8px #94a3b8;border:2px solid #94a3b8}
+.mavatar.frame-purple{box-shadow:0 0 10px #a855f7;border:2px solid #a855f7}
+.mavatar.frame-gold{box-shadow:0 0 12px #fbbf24;border:2px solid #fbbf24}
+.mavatar.frame-flame{box-shadow:0 0 12px #f97316;border:2px solid #f97316}
+.mavatar.frame-diamond{box-shadow:0 0 14px #38bdf8;border:2px solid #38bdf8}
+.mavatar.frame-neon{box-shadow:0 0 14px #00ffff;border:2px solid #00ffff}
+.mavatar.frame-emerald{box-shadow:0 0 12px #10b981;border:2px solid #10b981}
+.mavatar.frame-ruby{box-shadow:0 0 12px #ef4444;border:2px solid #ef4444}
+.mavatar.frame-rainbow{border:2px solid transparent;background:linear-gradient(#7c3aed,#7c3aed) padding-box,linear-gradient(45deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f) border-box}
+.mavatar.frame-galaxy{box-shadow:0 0 14px #8b5cf6;border:2px solid #8b5cf6}
+.mavatar.frame-royal{border:2px double #fbbf24;box-shadow:0 0 12px #fbbf24}
+.mavatar.frame-skull{border:2px solid #1f2937;box-shadow:0 0 8px rgba(239,68,68,0.5)}
+
+/* Anche user-chip */
+.user-chip-avatar.frame-silver{border:2px solid #94a3b8;box-shadow:0 0 6px #94a3b8}
+.user-chip-avatar.frame-purple{border:2px solid #a855f7;box-shadow:0 0 8px #a855f7}
+.user-chip-avatar.frame-gold{border:2px solid #fbbf24;box-shadow:0 0 10px #fbbf24}
+.user-chip-avatar.frame-flame{border:2px solid #f97316;box-shadow:0 0 10px #f97316}
+.user-chip-avatar.frame-diamond{border:2px solid #38bdf8;box-shadow:0 0 12px #38bdf8}
+.user-chip-avatar.frame-neon{border:2px solid #00ffff;box-shadow:0 0 12px #00ffff}
 .prof-name{font-size:22px;font-weight:900;animation:logo-glow 3s ease-in-out infinite}
 .prof-anon{font-size:11px;color:#6b7280;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px}
 .prem-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
@@ -533,10 +581,116 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   box-shadow:0 0 20px rgba(124,58,237,.4)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ═══════════════════════════════
+   FRIENDS MODAL - Lista amici e ricerca
+═══════════════════════════════ */
+.friends-search-bar{position:relative;margin-bottom:14px}
+.friends-search-bar input{width:100%;padding:10px 14px 10px 38px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(139,92,246,0.3);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.friends-search-bar input:focus{border-color:#a855f7;background:rgba(255,255,255,0.1)}
+.friends-search-bar::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px}
+.friends-tabs{display:flex;gap:6px;margin-bottom:12px;background:rgba(255,255,255,0.04);padding:4px;border-radius:10px}
+.friends-tab{flex:1;padding:8px;border:none;background:transparent;color:#9ca3af;font-size:12px;font-weight:700;cursor:pointer;border-radius:8px;transition:all 0.3s}
+.friends-tab.active{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+.friend-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.04);margin-bottom:8px;transition:background 0.2s}
+.friend-row:hover{background:rgba(255,255,255,0.08)}
+.friend-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.friend-info{flex:1;min-width:0}
+.friend-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.friend-username{font-size:10px;color:#9ca3af}
+.friend-actions{display:flex;gap:6px;flex-shrink:0}
+.friend-btn{padding:6px 10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;transition:all 0.2s}
+.friend-btn.add{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
+.friend-btn.chat{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff}
+.friend-btn.remove{background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#fca5a5}
+.friend-empty{text-align:center;padding:30px 20px;color:#9ca3af}
+.friend-empty-icon{font-size:48px;margin-bottom:10px}
+
+/* DM Chat private */
+.dm-chat-container{display:flex;flex-direction:column;height:60vh;max-height:500px}
+.dm-messages{flex:1;overflow-y:auto;padding:8px;background:rgba(0,0,0,0.2);border-radius:10px;margin-bottom:8px}
+.dm-msg{padding:6px 10px;border-radius:12px;margin-bottom:6px;max-width:80%;font-size:13px;word-wrap:break-word}
+.dm-msg.in{background:rgba(255,255,255,0.08);align-self:flex-start;margin-right:auto}
+.dm-msg.out{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;margin-left:auto}
+.dm-input-bar{display:flex;gap:6px}
+.dm-input-bar input{flex:1;padding:10px 14px;background:rgba(255,255,255,0.06);border:1.5px solid rgba(139,92,246,0.3);border-radius:10px;color:#fff;font-size:14px;outline:none}
+.dm-input-bar button{padding:10px 16px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:14px}
+
 /* Sezione label */
 .sec-lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;
   margin:12px 0 8px;display:flex;align-items:center;gap:6px}
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+
+/* ═══════════════════════════════
+   TEMA CHIARO (light mode)
+═══════════════════════════════ */
+body[data-theme="light"],
+html[data-theme="light"] body {
+  background: #f5f3ff !important;
+  color: #1f2937 !important;
+}
+[data-theme="light"] .home-hdr,
+[data-theme="light"] .home-body,
+[data-theme="light"] #home,
+[data-theme="light"] #profile,
+[data-theme="light"] #chat {
+  background: #f5f3ff !important;
+  color: #1f2937 !important;
+}
+[data-theme="light"] .room-card,
+[data-theme="light"] .chat-hdr,
+[data-theme="light"] .chat-bar,
+[data-theme="light"] .free-bar {
+  background: linear-gradient(135deg, #ffffff, #ede9fe) !important;
+  color: #1f2937 !important;
+  border-color: #c4b5fd !important;
+}
+[data-theme="light"] .mtext,
+[data-theme="light"] .mname,
+[data-theme="light"] .mrow:not(.self) .mline {
+  color: #1f2937 !important;
+}
+[data-theme="light"] .cinput {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #c4b5fd !important;
+}
+[data-theme="light"] .modal-box {
+  background: linear-gradient(180deg, #ffffff, #f5f3ff) !important;
+  color: #1f2937 !important;
+}
+[data-theme="light"] .modal-title,
+[data-theme="light"] .modal-label,
+[data-theme="light"] .settings-row {
+  color: #1f2937 !important;
+}
+[data-theme="light"] .modal-input {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #c4b5fd !important;
+}
+[data-theme="light"] .home-title,
+[data-theme="light"] .prof-name,
+[data-theme="light"] .chat-hdr-name {
+  color: #4c1d95 !important;
+}
+[data-theme="light"] .nbtn {
+  color: #6d28d9;
+}
+[data-theme="light"] .nbtn.active {
+  color: #fff;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+}
+[data-theme="light"] .overlay,
+[data-theme="light"] .modal-sheet {
+  background: rgba(255,255,255,0.95) !important;
+  color: #1f2937 !important;
+}
+[data-theme="light"] .menu-item {
+  color: #1f2937 !important;
+}
+[data-theme="light"] .telegram-banner {
+  /* Mantieni colore Telegram identico */
+}
 
 /* ═══════════════════════════════
    AUTH MODAL - Login/Register Tabs
@@ -972,22 +1126,8 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 <!-- ░░ PROFILE ░░ -->
 <div id="profile" class="screen">
   <div class="prof-hero">
-    <div class="prof-mascot">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
-        <path d="M22 72 Q20 95 50 96 Q80 95 78 72" fill="#1e1050"/>
-        <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
-        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
-        <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
-        <circle cx="43" cy="46" r="5" fill="#fff"/>
-        <circle cx="57" cy="46" r="5" fill="#fff"/>
-        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
-        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
-        <circle cx="45" cy="45" r="1" fill="#fff"/>
-        <circle cx="59" cy="45" r="1" fill="#fff"/>
-        <path d="M46 18 Q50 8 54 18" fill="#1e0d50" stroke="#3b1fa8" stroke-width="1"/>
-        <circle cx="50" cy="44" r="22" fill="none" stroke="#7c3aed" stroke-width="1.5" opacity=".5"/>
-      </svg>
+    <div id="profAvatarHero" class="prof-avatar-hero" onclick="openFrameSelector()" title="Cambia cornice">
+      <div id="profAvatarFace" class="prof-avatar-face">🎭</div>
     </div>
     <div class="prof-name" id="profName" style="color:#fff">Anonimo</div>
     <div class="prof-anon">🔒 Nessun dato personale salvato</div>
@@ -1179,9 +1319,13 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <span class="menu-text">Lista utenti bloccati</span>
       </div>
       <div class="menu-divider"></div>
-      <div class="menu-item" onclick="showScreen('profile',document.querySelector('[data-sc=profile]'))">
+      <div class="menu-item" onclick="closeContinua();showScreen('profile',document.querySelector('[data-sc=&quot;profile&quot;]'))">
         <span class="menu-icon">🎭</span>
         <span class="menu-text">Profilo</span>
+      </div>
+      <div class="menu-item" onclick="openFriendsModal()" style="background:linear-gradient(135deg,#10b98115,#06b6d415)">
+        <span class="menu-icon">👥</span>
+        <span class="menu-text">Amici & Ricerca Utenti</span>
       </div>
       <div class="menu-item" onclick="openWebcamSettings()">
         <span class="menu-icon">🎥</span>
@@ -1329,21 +1473,46 @@ const FRAMES_CFG = [
   { id:'none',    name:'Nessuna',  emoji:'🎭', price:0,   prem:false, css:'' },
   { id:'silver',  name:'Silver',   emoji:'🥈', price:0,   prem:false, css:'border:2px solid #94a3b8;box-shadow:0 0 8px #94a3b8' },
   { id:'purple',  name:'Viola',    emoji:'💜', price:0,   prem:false, css:'border:2px solid #a855f7;box-shadow:0 0 10px #a855f7' },
+  { id:'emerald', name:'Smeraldo', emoji:'💚', price:15,  prem:false, css:'border:2px solid #10b981;box-shadow:0 0 10px #10b981' },
+  { id:'ruby',    name:'Rubino',   emoji:'❤️', price:18,  prem:false, css:'border:2px solid #ef4444;box-shadow:0 0 10px #ef4444' },
   { id:'gold',    name:'Gold',     emoji:'🥇', price:30,  prem:true,  css:'border:2px solid #fbbf24;box-shadow:0 0 12px #fbbf24' },
   { id:'flame',   name:'Fiamma',   emoji:'🔥', price:40,  prem:true,  css:'border:2px solid #f97316;box-shadow:0 0 12px #f97316' },
   { id:'diamond', name:'Diamond',  emoji:'💎', price:50,  prem:true,  css:'border:2px solid #38bdf8;box-shadow:0 0 14px #38bdf8' },
+  { id:'neon',    name:'Neon Cyber',emoji:'🌟',price:60,  prem:true,  css:'border:2px solid #00ffff;box-shadow:0 0 14px #00ffff' },
+  { id:'galaxy',  name:'Galassia', emoji:'🌌', price:80,  prem:true,  css:'border:2px solid #8b5cf6;box-shadow:0 0 16px #8b5cf6' },
+  { id:'rainbow', name:'Arcobaleno',emoji:'🌈',price:100, prem:true,  css:'border:2px solid transparent;background:linear-gradient(45deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f) border-box' },
+  { id:'royal',   name:'Reale',    emoji:'👑', price:120, prem:true,  css:'border:3px double #fbbf24;box-shadow:0 0 16px #fbbf24' },
+  { id:'skull',   name:'Teschio',  emoji:'💀', price:35,  prem:false, css:'border:2px solid #1f2937;box-shadow:0 0 8px rgba(239,68,68,0.5)' },
 ];
 
 const BADGES = [
-  { id:'first_msg',  emoji:'💬', name:'Prima Parola'   },
-  { id:'chatter',    emoji:'🔥', name:'Chiacchierone'  },
-  { id:'globe',      emoji:'🌍', name:'Cittadino Mondo' },
-  { id:'explorer',   emoji:'🗺️', name:'Esploratore'    },
-  { id:'nocturnal',  emoji:'🌙', name:'Nottambulo'     },
-  { id:'legend',     emoji:'👑', name:'Leggenda'       },
-  { id:'premium',    emoji:'⭐', name:'Premium'        },
-  { id:'italy',      emoji:'🇮🇹', name:'Made in Italy'  },
-  { id:'friendly',   emoji:'❤️', name:'Amichevole'    },
+  { id:'welcome',    emoji:'🎁', name:'Pacchetto Benvenuto', desc:'Primo accesso' },
+  { id:'first_msg',  emoji:'💬', name:'Prima Parola',     desc:'Invia il primo messaggio' },
+  { id:'chatter',    emoji:'🔥', name:'Chiacchierone',     desc:'Invia 50 messaggi' },
+  { id:'master',     emoji:'💎', name:'Maestro Chat',      desc:'Invia 500 messaggi' },
+  { id:'godlike',    emoji:'🌟', name:'Leggenda Vivente',  desc:'Invia 5000 messaggi' },
+  { id:'globe',      emoji:'🌍', name:'Cittadino Mondo',   desc:'Entra nella stanza Mondo' },
+  { id:'explorer',   emoji:'🗺️', name:'Esploratore',       desc:'Visita 3+ stanze diverse' },
+  { id:'globetrotter', emoji:'✈️', name:'Globetrotter',    desc:'Visita 10+ stanze' },
+  { id:'nocturnal',  emoji:'🌙', name:'Nottambulo',        desc:'Chatta dopo le 2 di notte' },
+  { id:'morning',    emoji:'☀️', name:'Mattiniero',        desc:'Chatta prima delle 7' },
+  { id:'streak3',    emoji:'🔥', name:'Streak 3 giorni',   desc:'Accedi 3 giorni di fila' },
+  { id:'streak7',    emoji:'🔥', name:'Streak Settimana',  desc:'Accedi 7 giorni di fila' },
+  { id:'streak30',   emoji:'💯', name:'Streak Mese',       desc:'Accedi 30 giorni di fila' },
+  { id:'legend',     emoji:'👑', name:'Leggenda',          desc:'Raggiungi livello 50' },
+  { id:'premium',    emoji:'⭐', name:'Premium',           desc:'Diventa Premium' },
+  { id:'italy',      emoji:'🇮🇹', name:'Made in Italy',    desc:'Entra in stanza Italia' },
+  { id:'friendly',   emoji:'❤️', name:'Amichevole',       desc:'Aggiungi 5 amici' },
+  { id:'social',     emoji:'🤝', name:'Social',            desc:'Aggiungi 20 amici' },
+  { id:'host',       emoji:'🎉', name:'Host',              desc:'Crea una stanza privata' },
+  { id:'creator',    emoji:'🎨', name:'Creatore',          desc:'Crea 5 stanze private' },
+  { id:'video_star', emoji:'📹', name:'Video Star',        desc:'Usa la webcam per la prima volta' },
+  { id:'wheel_winner',emoji:'🎰',name:'Ruota Fortuna',     desc:'Vinci alla ruota della fortuna' },
+  { id:'confessor',  emoji:'🕯️', name:'Confessore',       desc:'Usa il confessionale' },
+  { id:'frame_collector',emoji:'🖼️',name:'Collezionista', desc:'Possiedi 5+ cornici' },
+  { id:'badge_hunter',emoji:'🏆',name:'Cacciatore Badge', desc:'Sblocca 10+ badge' },
+  { id:'verified',   emoji:'✅', name:'Verificato',        desc:'Account con login email' },
+  { id:'og',         emoji:'🥇', name:'OG',                desc:'Membro dal lancio' },
 ];
 
 // ══ STATE ══
@@ -1630,6 +1799,23 @@ function updateProfileUI(){
   document.getElementById('stBadges').textContent=(user.badges||[]).length;
   document.getElementById('premBadge').style.display=isPrem()?'inline-flex':'none';
 
+  // Avatar profilo: mostra emoji face + cornice utente
+  const av = document.getElementById('profAvatarHero');
+  const face = document.getElementById('profAvatarFace');
+  if (av && face) {
+    face.textContent = user.face || '🎭';
+    // Rimuovi vecchie classi frame-*
+    av.className = 'prof-avatar-hero';
+    const activeFrame = user.activeFrame || 'none';
+    if (activeFrame && activeFrame !== 'none') {
+      av.classList.add('frame-' + activeFrame);
+    }
+    // Colore di sfondo basato sul colore utente
+    const col = user.color || '#7c3aed';
+    av.style.setProperty('--av-c1', col);
+    av.style.setProperty('--av-c2', col);
+  }
+
   // Join date
   if(user.joinedAt){
     const d=new Date(user.joinedAt);
@@ -1725,6 +1911,15 @@ function connectSocket(){
   socket.on('connect',()=>{
     setConnState('online');
     if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
+    // Registra utente per DM (con il suo serverId se loggato)
+    if (user) {
+      socket.emit('dm-register', { userId: user.id, serverId: user.serverId, username: user.username });
+    }
+    // Registra DM listener una volta sola
+    if (typeof registerDmListener === 'function' && !window._dmListenerRegistered) {
+      registerDmListener();
+      window._dmListenerRegistered = true;
+    }
   });
   socket.on('disconnect',()=>setConnState('offline'));
   socket.on('connect_error',()=>setConnState('offline'));
@@ -1815,7 +2010,7 @@ function connectSocket(){
 
 function pubUser(){
   return {id:user.id,name:user.name,color:user.color,face:user.face,
-    frame:user.activeFrame,isPremium:isPrem(),msgCount:user.msgCount||0};
+    frame:user.activeFrame,activeFrame:user.activeFrame,isPremium:isPrem(),msgCount:user.msgCount||0};
 }
 
 // ════════════════════════════════════════════
@@ -2312,6 +2507,10 @@ function appendMsg(msg){
 
   const row=document.createElement('div');
 
+  // Cornice attiva mittente: per me uso user.activeFrame, per altri msg.activeFrame
+  const senderFrame = isSelf ? (user.activeFrame || 'none') : (msg.activeFrame || 'none');
+  const frameClass = (senderFrame && senderFrame !== 'none') ? ' frame-' + senderFrame : '';
+
   if(isSelf){
     // Bubble viola a destra + avatar del MIO utente
     row.className='mrow self';
@@ -2320,7 +2519,7 @@ function appendMsg(msg){
     const myAuraClass=(isPrem()||myLvl>=10)?'aura-prem':'';
     const myAuraStyle=(isPrem()||myLvl>=10)?`color:${myCol};`:'';
     row.innerHTML=`
-      <div class="mavatar ${myAuraClass} ${consec?'hidden':''}" style="${myAuraStyle}background:${myCol}22;border:2px solid ${myCol}77;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+      <div class="mavatar${frameClass} ${myAuraClass} ${consec?'hidden':''}" style="${myAuraStyle}background:${myCol}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
         ${myFace}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
@@ -2339,7 +2538,7 @@ function appendMsg(msg){
     const auraClass = (prem || lvl>=10) ? 'aura-prem' : '';
     const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
     row.innerHTML=`
-      <div class="mavatar ${auraClass} ${consec?'hidden':''}" style="${auraStyle}background:${col}22;border:2px solid ${col}55;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" style="${auraStyle}background:${col}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
         ${face}
       </div>
       <div class="mbody">
@@ -2382,7 +2581,8 @@ function sendMsg(){
     text, ts:Date.now(), roomId:room.id, msgCount:0
   } : {
     userId:user.id, name:user.name, color:user.color,
-    face:user.face, frame:user.activeFrame, isPremium:isPrem(),
+    face:user.face, frame:user.activeFrame, activeFrame:user.activeFrame,
+    isPremium:isPrem(),
     text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount
   };
   socket.emit('chat-message',{roomId:room.id,msg});
@@ -2522,6 +2722,14 @@ function activatePremium(){
 }
 
 // ══ FRAMES ══
+function openFrameSelector(){
+  showScreen('profile', document.querySelector('[data-sc="profile"]'));
+  setTimeout(() => {
+    const grid = document.getElementById('framesGrid');
+    if (grid) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
+}
+
 function renderFrames(){
   const owned=new Set(user.ownedFrames||['none']);
   const active=user.activeFrame||'none';
@@ -3013,6 +3221,305 @@ document.addEventListener('visibilitychange', () => {
     }).catch(()=>{});
   }
 });
+
+// ══════════════════════════════════════════
+// SISTEMA AMICI + RICERCA UTENTI + DM
+// ══════════════════════════════════════════
+var friendsList = [];
+var dmHistory = {}; // {friendId: [msg, msg, ...]}
+
+function openFriendsModal(){
+  closeContinua();
+  const modal = document.getElementById('friendsModal') || createFriendsModal();
+  modal.classList.add('show');
+  switchFriendsTab('friends');
+}
+
+function createFriendsModal(){
+  const div = document.createElement('div');
+  div.id = 'friendsModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-hdr">
+        <div class="modal-title">👥 Amici & Utenti</div>
+        <button class="modal-close" onclick="document.getElementById('friendsModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:65vh;overflow-y:auto">
+        <div class="friends-tabs">
+          <button class="friends-tab active" data-tab="friends" onclick="switchFriendsTab('friends')">👥 I miei Amici</button>
+          <button class="friends-tab" data-tab="search" onclick="switchFriendsTab('search')">🔍 Cerca Utenti</button>
+        </div>
+
+        <div id="friendsTabContent">
+          <!-- Tab content -->
+        </div>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+function switchFriendsTab(tab){
+  document.querySelectorAll('.friends-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  const content = document.getElementById('friendsTabContent');
+  if (tab === 'friends') {
+    renderFriendsList(content);
+  } else {
+    renderSearchTab(content);
+  }
+}
+
+function renderFriendsList(container){
+  if (!isLoggedIn) {
+    container.innerHTML = `
+      <div class="friend-empty">
+        <div class="friend-empty-icon">🔐</div>
+        <div style="margin-bottom:12px">Devi loggarti per avere amici</div>
+        <button class="modal-btn modal-btn-primary" onclick="document.getElementById('friendsModal').classList.remove('show');openAuthModal()">🔑 Login / Registrati</button>
+      </div>
+    `;
+    return;
+  }
+  container.innerHTML = '<div style="text-align:center;padding:14px;color:#9ca3af">Caricamento amici...</div>';
+  fetch('/api/me/friends', {
+    headers: { 'Authorization': 'Bearer ' + authToken }
+  }).then(r => r.json()).then(json => {
+    const friends = json.friends || [];
+    friendsList = friends;
+    if (friends.length === 0) {
+      container.innerHTML = `
+        <div class="friend-empty">
+          <div class="friend-empty-icon">💔</div>
+          <div style="margin-bottom:6px">Non hai ancora amici</div>
+          <div style="font-size:11px">Usa "Cerca Utenti" per aggiungerne!</div>
+        </div>
+      `;
+      return;
+    }
+    container.innerHTML = friends.map(f => `
+      <div class="friend-row">
+        <div class="friend-avatar frame-${f.kvActiveFrame || 'none'}" style="background:${f.kvColor||'#7c3aed'}22">${f.kvFace || '🎭'}</div>
+        <div class="friend-info">
+          <div class="friend-name">${esc(f.kvName || f.username)}</div>
+          <div class="friend-username">@${esc(f.username)}</div>
+        </div>
+        <div class="friend-actions">
+          <button class="friend-btn chat" onclick="openDmChat('${f.id}','${esc(f.username)}','${f.kvFace||''}','${f.kvColor||'#7c3aed'}')">💬</button>
+          <button class="friend-btn remove" onclick="removeFriend('${f.id}')">✕</button>
+        </div>
+      </div>
+    `).join('');
+  }).catch(e => {
+    container.innerHTML = '<div class="friend-empty">❌ Errore caricamento</div>';
+  });
+}
+
+function renderSearchTab(container){
+  container.innerHTML = `
+    <div class="friends-search-bar">
+      <input type="text" id="friendsSearchInput" placeholder="Cerca per username (min 2 caratteri)..." oninput="searchUsers(this.value)" autocomplete="off">
+    </div>
+    <div id="searchResults" style="min-height:200px">
+      <div class="friend-empty">
+        <div class="friend-empty-icon">🔍</div>
+        <div>Inizia a digitare un username</div>
+      </div>
+    </div>
+  `;
+  setTimeout(() => document.getElementById('friendsSearchInput')?.focus(), 100);
+}
+
+var _searchTimer = null;
+function searchUsers(q){
+  clearTimeout(_searchTimer);
+  const container = document.getElementById('searchResults');
+  if (!q || q.length < 2) {
+    container.innerHTML = '<div class="friend-empty"><div class="friend-empty-icon">🔍</div><div>Inizia a digitare un username (min 2 caratteri)</div></div>';
+    return;
+  }
+  _searchTimer = setTimeout(() => {
+    container.innerHTML = '<div style="text-align:center;padding:14px;color:#9ca3af">Ricerca...</div>';
+    fetch('/api/users/search?q=' + encodeURIComponent(q))
+      .then(r => r.json()).then(json => {
+        const users = json.users || [];
+        if (users.length === 0) {
+          container.innerHTML = '<div class="friend-empty"><div class="friend-empty-icon">😶</div><div>Nessun utente trovato</div></div>';
+          return;
+        }
+        const myFriends = friendsList.map(f => f.id);
+        container.innerHTML = users.map(u => {
+          const isMe = u.id === user?.serverId;
+          const isFriend = myFriends.includes(u.id);
+          return `
+            <div class="friend-row">
+              <div class="friend-avatar frame-${u.kvActiveFrame || 'none'}" style="background:${u.kvColor||'#7c3aed'}22">${u.kvFace || '🎭'}</div>
+              <div class="friend-info">
+                <div class="friend-name">${esc(u.kvName || u.username)}</div>
+                <div class="friend-username">@${esc(u.username)}</div>
+              </div>
+              <div class="friend-actions">
+                ${isMe ? '<span style="font-size:10px;color:#9ca3af">Tu</span>' :
+                  isFriend ? '<button class="friend-btn chat" onclick="openDmChat(&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;,&quot;'+(u.kvFace||'')+'&quot;,&quot;'+(u.kvColor||'#7c3aed')+'&quot;)">💬</button>' :
+                  '<button class="friend-btn add" onclick="addFriend(&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;)">➕ Aggiungi</button>'
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+      }).catch(e => {
+        container.innerHTML = '<div class="friend-empty">❌ Errore ricerca</div>';
+      });
+  }, 350);
+}
+
+async function addFriend(friendId, username){
+  if (!isLoggedIn) {
+    showToast('🔐 Devi loggarti per aggiungere amici');
+    return;
+  }
+  try {
+    const res = await fetch('/api/me/friends/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ friendId })
+    });
+    const json = await res.json();
+    if (res.ok) {
+      showToast('✅ ' + username + ' aggiunto agli amici!');
+      // Aggiorna friendsList localmente
+      const q = document.getElementById('friendsSearchInput')?.value;
+      if (q) searchUsers(q);
+      // Refetch friends
+      fetch('/api/me/friends', { headers: { 'Authorization': 'Bearer ' + authToken } })
+        .then(r => r.json()).then(d => { friendsList = d.friends || []; });
+    } else {
+      showToast('❌ ' + (json.error || 'Errore'));
+    }
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+async function removeFriend(friendId){
+  if (!confirm('Rimuovere questo amico?')) return;
+  try {
+    const res = await fetch('/api/me/friends/remove', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ friendId })
+    });
+    if (res.ok) {
+      showToast('🔓 Amico rimosso');
+      switchFriendsTab('friends');
+    }
+  } catch(e) {
+    showToast('❌ ' + e.message);
+  }
+}
+
+// DM Chat 1:1 via socket.io
+function openDmChat(friendId, friendUsername, friendFace, friendColor){
+  document.getElementById('friendsModal').classList.remove('show');
+  const modal = document.getElementById('dmModal') || createDmModal();
+  document.getElementById('dmTitle').textContent = '💬 ' + friendUsername;
+  document.getElementById('dmTargetId').value = friendId;
+  document.getElementById('dmTargetName').value = friendUsername;
+  document.getElementById('dmTargetFace').value = friendFace || '🎭';
+  document.getElementById('dmTargetColor').value = friendColor || '#7c3aed';
+
+  // Carica history locale
+  const history = dmHistory[friendId] || [];
+  const msgsContainer = document.getElementById('dmMessages');
+  msgsContainer.innerHTML = history.map(m => `<div class="dm-msg ${m.out?'out':'in'}">${esc(m.text)}</div>`).join('') ||
+    '<div style="text-align:center;color:#9ca3af;padding:20px;font-size:12px">Inizia la conversazione!</div>';
+  modal.classList.add('show');
+  setTimeout(() => {
+    msgsContainer.scrollTop = msgsContainer.scrollHeight;
+    document.getElementById('dmInput').focus();
+  }, 100);
+
+  // Notifica server: open DM
+  if (socket && socket.connected) {
+    socket.emit('dm-open', { withUserId: friendId });
+  }
+}
+
+function createDmModal(){
+  const div = document.createElement('div');
+  div.id = 'dmModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-hdr">
+        <div class="modal-title" id="dmTitle">💬 Chat</div>
+        <button class="modal-close" onclick="document.getElementById('dmModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="dmTargetId">
+        <input type="hidden" id="dmTargetName">
+        <input type="hidden" id="dmTargetFace">
+        <input type="hidden" id="dmTargetColor">
+        <div class="dm-chat-container">
+          <div class="dm-messages" id="dmMessages"></div>
+          <div class="dm-input-bar">
+            <input type="text" id="dmInput" placeholder="Scrivi un messaggio..." onkeydown="if(event.key==='Enter')sendDm()" maxlength="500">
+            <button onclick="sendDm()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+function sendDm(){
+  const input = document.getElementById('dmInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const targetId = document.getElementById('dmTargetId').value;
+  if (!targetId || !socket || !socket.connected) {
+    showToast('❌ Connessione persa');
+    return;
+  }
+
+  const msg = { from: user.id, to: targetId, text, ts: Date.now() };
+  socket.emit('dm-send', msg);
+
+  // Append local
+  dmHistory[targetId] = dmHistory[targetId] || [];
+  dmHistory[targetId].push({ text, out: true, ts: msg.ts });
+  const c = document.getElementById('dmMessages');
+  c.insertAdjacentHTML('beforeend', `<div class="dm-msg out">${esc(text)}</div>`);
+  c.scrollTop = c.scrollHeight;
+  input.value = '';
+}
+
+// Listener socket per DM ricevuti (registrato dopo connectSocket)
+function registerDmListener(){
+  if (!socket) return;
+  socket.on('dm-receive', (data) => {
+    const fromId = data.from;
+    dmHistory[fromId] = dmHistory[fromId] || [];
+    dmHistory[fromId].push({ text: data.text, out: false, ts: data.ts });
+    // Se il DM modal è aperto e su questo utente, mostra
+    const dmModal = document.getElementById('dmModal');
+    const currTargetId = document.getElementById('dmTargetId')?.value;
+    if (dmModal && dmModal.classList.contains('show') && currTargetId === fromId) {
+      const c = document.getElementById('dmMessages');
+      c.insertAdjacentHTML('beforeend', `<div class="dm-msg in">${esc(data.text)}</div>`);
+      c.scrollTop = c.scrollHeight;
+    } else {
+      showToast('💬 Nuovo messaggio da ' + (data.fromName || 'amico'));
+    }
+  });
+}
 
 // ══════════════════════════════════════════
 // TELEGRAM BOT & CONDIVISIONE
@@ -3669,8 +4176,8 @@ function createSettingsModal(){
         <div class="settings-group">
           <div class="settings-group-title">🎨 Aspetto</div>
           <label class="settings-row">
-            <span>Modalità scura (sempre attiva)</span>
-            <input type="checkbox" checked disabled>
+            <span>🌙 Tema Scuro (default) / ☀️ Chiaro</span>
+            <input type="checkbox" id="setDarkMode" onchange="toggleTheme(this.checked)">
           </label>
           <label class="settings-row">
             <span>Animazioni</span>
@@ -3758,6 +4265,9 @@ function loadSettingsValues(){
   document.getElementById('setShowOnline').checked = s.showOnline;
   document.getElementById('setAllowDM').checked = s.allowDM;
   document.getElementById('setLanguage').value = s.language;
+  // Tema: NON checked = scuro (default), checked = chiaro
+  const darkBox = document.getElementById('setDarkMode');
+  if (darkBox) darkBox.checked = s.theme === 'light';
 }
 
 function getDefaultSettings(){
@@ -3766,7 +4276,8 @@ function getDefaultSettings(){
     animations: true, emojis: true,
     camAutostart: false, micAutostart: false, videoConfirm: true,
     showOnline: true, allowDM: true,
-    language: 'it'
+    language: 'it',
+    theme: 'dark'
   };
 }
 
@@ -3780,6 +4291,24 @@ function updateSetting(key, value){
     document.body.style.setProperty('--anim-speed', value ? '1' : '0');
   }
 }
+
+function toggleTheme(isLight){
+  const theme = isLight ? 'light' : 'dark';
+  applyTheme(theme);
+  updateSetting('theme', theme);
+  showToast(isLight ? '☀️ Tema chiaro attivato' : '🌙 Tema scuro attivato');
+}
+
+function applyTheme(theme){
+  document.body.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+}
+
+// Applica tema all'avvio
+(function(){
+  const s = getLS('kv4_settings');
+  if (s && s.theme) applyTheme(s.theme);
+})();
 
 function resetSettings(){
   if (confirm('Ripristinare tutte le impostazioni predefinite?')) {
@@ -3946,18 +4475,33 @@ function createLogoutModal(){
 
 function confirmLogout(){
   const clearAll = document.getElementById('logoutClearAll')?.checked;
+
+  // SEMPRE cancellare token autenticazione e dati account
+  authToken = null;
+  isLoggedIn = false;
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+
   if (clearAll) {
+    // Reset totale: cancella tutto
     localStorage.clear();
   } else {
-    // Mantiene solo settings e user base
+    // Reset auth ma mantieni settings + crea nuovo utente anonimo
     const settings = getLS('kv4_settings');
-    const user_data = getLS('kv4_user');
     localStorage.clear();
     if (settings) setLS('kv4_settings', settings);
-    if (user_data) setLS('kv4_user', user_data);
+    // NON ripristina kv4_user → al reload viene creato nuovo anonimo
+    // NON ripristina kv4_auth_token → richiede nuovo login
   }
-  showToast('👋 Arrivederci!');
-  setTimeout(() => location.reload(), 800);
+
+  // Pulisci eventuali variabili in memoria
+  if (typeof user === 'object' && user) {
+    user.username = null;
+    user.serverEmail = null;
+    user.serverId = null;
+  }
+
+  showToast('👋 Disconnesso! Per rientrare fai login con email e password.');
+  setTimeout(() => location.reload(), 1200);
 }
 </script>
 </body>

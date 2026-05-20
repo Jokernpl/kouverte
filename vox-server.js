@@ -840,6 +840,75 @@ app.get('/api/users/list', (req, res) => {
     res.json({ users });
 });
 
+// Ricerca utenti per username (autocomplete)
+app.get('/api/users/search', (req, res) => {
+    const q = String(req.query.q || '').toLowerCase().trim();
+    if (q.length < 2) return res.json({ users: [] });
+    const matches = DB.users
+        .filter(u => u.username && u.username.toLowerCase().includes(q))
+        .slice(0, 20)
+        .map(u => ({
+            id: u.id,
+            username: u.username,
+            avatar_letter: u.profile?.avatar_letter || u.username.charAt(0).toUpperCase(),
+            kvFace: u.kvData?.face || '🎭',
+            kvColor: u.kvData?.color || '#a855f7',
+            kvActiveFrame: u.kvData?.activeFrame || 'none',
+            kvName: u.kvData?.name || u.username
+        }));
+    res.json({ users: matches });
+});
+
+// Lista amici dell'utente (richiede auth)
+app.get('/api/me/friends', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const friendIds = user.friends || [];
+    const friends = friendIds.map(fid => {
+        const f = DB.users.find(u => u.id === fid);
+        if (!f) return null;
+        return {
+            id: f.id,
+            username: f.username,
+            kvFace: f.kvData?.face || '🎭',
+            kvColor: f.kvData?.color || '#a855f7',
+            kvActiveFrame: f.kvData?.activeFrame || 'none',
+            kvName: f.kvData?.name || f.username,
+            online: false // TODO: tracking real-time
+        };
+    }).filter(Boolean);
+    res.json({ friends });
+});
+
+// Aggiungi amico
+app.post('/api/me/friends/add', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const friendId = String(req.body?.friendId || '');
+    if (!friendId) return res.status(400).json({ error: 'friendId richiesto' });
+    if (friendId === user.id) return res.status(400).json({ error: 'Non puoi aggiungere te stesso' });
+    const friend = DB.users.find(u => u.id === friendId);
+    if (!friend) return res.status(404).json({ error: 'Amico non trovato' });
+
+    user.friends = user.friends || [];
+    if (!user.friends.includes(friendId)) {
+        user.friends.push(friendId);
+        markDirty();
+    }
+    res.json({ ok: true, friendsCount: user.friends.length });
+});
+
+// Rimuovi amico
+app.post('/api/me/friends/remove', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const friendId = String(req.body?.friendId || '');
+    if (!friendId) return res.status(400).json({ error: 'friendId richiesto' });
+    user.friends = (user.friends || []).filter(id => id !== friendId);
+    markDirty();
+    res.json({ ok: true, friendsCount: user.friends.length });
+});
+
 // Get profile by username
 app.get('/api/profile/:username', (req, res) => {
     const user = DB.users.find(u => u.username === req.params.username.toLowerCase());
@@ -3076,6 +3145,41 @@ io.on('connection', (socket) => {
         socket.to(data.room).emit('call-ended');
     });
 
+    // ===== DM 1:1 (Messaggi diretti tra amici) =====
+    if (!global.dmUsers) global.dmUsers = new Map(); // userId -> socketId
+    if (!global.dmServerIds) global.dmServerIds = new Map(); // serverId -> socketId
+
+    socket.on('dm-register', (data) => {
+        if (!data) return;
+        const uid = String(data.userId || '').slice(0, 60);
+        const sid = String(data.serverId || '').slice(0, 60);
+        if (uid) global.dmUsers.set(uid, socket.id);
+        if (sid) global.dmServerIds.set(sid, socket.id);
+        socket._dmUserId = uid;
+        socket._dmServerId = sid;
+    });
+
+    socket.on('dm-send', (data) => {
+        if (!data || !data.to || !data.text) return;
+        const safe = {
+            from: String(data.from || socket._dmUserId || '').slice(0, 60),
+            fromServerId: socket._dmServerId || '',
+            to: String(data.to || '').slice(0, 60),
+            text: String(data.text).slice(0, 500),
+            ts: Date.now(),
+            fromName: String(data.fromName || '').slice(0, 30)
+        };
+        // Cerca destinatario per userId OR serverId
+        const targetSocketId = global.dmUsers.get(safe.to) || global.dmServerIds.get(safe.to);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('dm-receive', safe);
+        }
+    });
+
+    socket.on('dm-open', (data) => {
+        // Placeholder: in futuro caricare history dal DB
+    });
+
     // ===== STANZE A CODICE (Custom Rooms) =====
     // codeRooms: codice -> { code, name, emoji, ownerId, createdAt }
     if (!global.codeRooms) global.codeRooms = new Map();
@@ -3169,6 +3273,7 @@ io.on('connection', (socket) => {
             color:     /^#[0-9a-f]{6}$/i.test(msg.color) ? msg.color : '#a855f7',
             face:      String(msg.face   || '🎭').slice(0, 4),
             mask:      String(msg.mask   || '🎭').slice(0, 4),
+            activeFrame: /^[a-z]{1,20}$/i.test(msg.activeFrame || '') ? msg.activeFrame : 'none',
             isPremium: !!msg.isPremium,
             msgCount:  Math.max(0, Math.min(99999, parseInt(msg.msgCount) || 0)),
             text:      String(msg.text).slice(0, 800),
