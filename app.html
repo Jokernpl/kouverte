@@ -20,6 +20,33 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 #splash{background:radial-gradient(ellipse at 50% 30%,#1e0d40 0%,#0a0418 70%);
   align-items:center;justify-content:center;overflow:hidden}
 
+/* ═══════════════════════════════
+   CHAT VIDEO SECTION
+═══════════════════════════════ */
+.chat-video-section{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:8px;background:#0f0a1e;border-bottom:1px solid #5b21b6;height:180px;flex-shrink:0;overflow:hidden}
+.video-wrapper{position:relative;background:#1a0f2e;border-radius:12px;overflow:hidden;border:2px solid #7c3aed}
+.video-wrapper video{width:100%;height:100%;object-fit:cover;display:block}
+#myVideo{transform:scaleX(-1)}
+.video-label{position:absolute;bottom:4px;left:4px;font-size:11px;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:4px;color:#a0aec0}
+.video-mic-btn,.video-cam-indicator{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;transition:background 0.3s}
+.video-mic-btn:hover{background:rgba(168,85,247,0.6)}
+
+/* ═══════════════════════════════
+   CHAT USERS SECTION
+═══════════════════════════════ */
+.chat-users-section{flex-shrink:0;padding:8px;border-top:1px solid #5b21b6;background:linear-gradient(180deg,#0f0a1e,#1a0f2e);max-height:80px;overflow:hidden}
+.users-scroll{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
+.users-scroll::-webkit-scrollbar{height:4px}
+.users-scroll::-webkit-scrollbar-thumb{background:#7c3aed;border-radius:2px}
+.user-chip{display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px;min-width:60px;cursor:pointer;border-radius:8px;transition:all 0.2s;position:relative}
+.user-chip:hover{background:rgba(168,85,247,0.2);transform:scale(1.05)}
+.user-chip.selected{background:linear-gradient(135deg,#a855f7,#ec4899);box-shadow:0 0 12px rgba(168,85,247,0.6)}
+.user-chip-avatar{width:40px;height:40px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:bold;color:white;border:2px solid transparent}
+.user-chip.selected .user-chip-avatar{border-color:#fff}
+.user-chip-name{font-size:10px;color:#cbd5e1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;max-width:56px}
+.user-chip-online-dot{position:absolute;top:0;right:0;width:10px;height:10px;border-radius:50%;background:#10b981;border:2px solid #0f0a1e}
+.user-chip-cam-indicator{position:absolute;bottom:0;right:0;font-size:12px;background:rgba(168,85,247,0.8);width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #0f0a1e}
+
 /* ── ANIMAZIONI GLOBALI ── */
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
 @keyframes glow-pulse{0%,100%{filter:drop-shadow(0 0 12px #7c3aed) drop-shadow(0 0 24px #a855f7)}50%{filter:drop-shadow(0 0 24px #a855f7) drop-shadow(0 0 48px #ec4899)}}
@@ -580,6 +607,21 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
 <!-- ░░ CHAT ░░ -->
 <div id="chat" class="screen">
+  <!-- NEW: Video section (top) -->
+  <div class="chat-video-section">
+    <div class="video-wrapper">
+      <video id="myVideo" autoplay muted playsinline></video>
+      <div class="video-label">Tu</div>
+      <div class="video-mic-btn">🎤</div>
+    </div>
+
+    <div class="video-wrapper">
+      <video id="theirVideo" autoplay playsinline></video>
+      <div class="video-label" id="theirVideoLabel">Seleziona utente</div>
+      <div class="video-cam-indicator">🎥</div>
+    </div>
+  </div>
+
   <div class="chat-hdr">
     <button class="chat-back" onclick="leaveRoom()">←</button>
     <div class="chat-hdr-icon" id="chatIcon"></div>
@@ -609,10 +651,22 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
     <span class="fb-lbl" id="fbCount">0/100</span>
   </div>
 
+  <!-- NEW: Users list (bottom) -->
+  <div class="chat-users-section">
+    <div class="users-scroll" id="usersScrollContainer">
+      <!-- dynamic: .user-chip per ogni utente online -->
+    </div>
+  </div>
+
   <div class="chat-bar">
     <div class="chat-bar-row">
+      <button class="sticker-btn" onclick="toggleStickerPicker()" title="Sticker">😀</button>
       <textarea class="cinput" id="msgInput" placeholder="Type anonymously..." rows="1"></textarea>
       <button class="csend" onclick="sendMsg()">➤</button>
+    </div>
+    <!-- Sticker picker (toggle) -->
+    <div class="sticker-picker" id="stickerPicker">
+      <div class="sticker-grid" id="stickerGrid"></div>
     </div>
   </div>
 </div>
@@ -891,6 +945,8 @@ let selFrameId=null;
 const sessionRooms=new Set(); // conta solo questa sessione, non persiste
 // Preview messaggi per ogni stanza (ultimi 3-4 per la card)
 let roomPreviews={};
+// WebRTC: track users in current room
+let chatRoomUsers={};
 
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
@@ -905,6 +961,13 @@ function hideSplash(){
   const s=document.getElementById('splash');
   s.style.transition='opacity .5s'; s.style.opacity='0';
   setTimeout(()=>{s.classList.remove('active');showScreen('home');},500);
+  
+  // NEW: Initialize WebRTC (non-blocking, graceful degradation)
+  setTimeout(()=>{
+    initWebRTC().catch(err => {
+      console.warn('[WebRTC] Inizializzazione non disponibile:', err);
+    });
+  }, 800);
 }
 
 // ══ USER ══
@@ -1248,6 +1311,20 @@ function connectSocket(){
     if(roomPreviews[roomId].length>4) roomPreviews[roomId].shift();
 
     if(room?.id===roomId){
+      // NEW: Track user in WebRTC chatRoomUsers
+      if(!chatRoomUsers[roomId]) chatRoomUsers[roomId] = new Map();
+      if(msg.userId && msg.name){
+        chatRoomUsers[roomId].set(msg.userId, {
+          id: msg.userId,
+          name: msg.name,
+          color: msg.color,
+          face: msg.face,
+          isPremium: msg.isPremium,
+          msgCount: msg.msgCount
+        });
+        renderUsersPanel();
+      }
+      
       if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
     }
   });
@@ -1273,7 +1350,10 @@ function connectSocket(){
         if(card){card.classList.remove('just-joined');void card.offsetWidth;card.classList.add('just-joined');}
       }
     }
-    if(room?.id===roomId) document.getElementById('chatOnline').textContent=count+' online';
+    if(room?.id===roomId){
+      document.getElementById('chatOnline').textContent=count+' online';
+      renderUsersPanel();
+    }
   });
   socket.on('global-online',({count})=>{
     document.getElementById('oCount').textContent=count;
@@ -1285,8 +1365,25 @@ function connectSocket(){
     lastSender=null;
     // Init preview dalla storia
     roomPreviews[roomId]=(messages||[]).slice(-4);
+    
+    // NEW: Initialize chatRoomUsers from chat history
+    if(!chatRoomUsers[roomId]) chatRoomUsers[roomId] = new Map();
+    (messages||[]).forEach(m=>{
+      if(m.userId && m.name && !chatRoomUsers[roomId].has(m.userId)){
+        chatRoomUsers[roomId].set(m.userId, {
+          id: m.userId,
+          name: m.name,
+          color: m.color,
+          face: m.face,
+          isPremium: m.isPremium,
+          msgCount: m.msgCount
+        });
+      }
+    });
+    
     (messages||[]).forEach(m=>appendMsg(m));
     addSys('Benvenuto in '+room.name+' 👋  Sei anonimo.');
+    renderUsersPanel();
     scrollBot();
   });
 }
@@ -1294,6 +1391,312 @@ function connectSocket(){
 function pubUser(){
   return {id:user.id,name:user.name,color:user.color,face:user.face,
     frame:user.activeFrame,isPremium:isPrem(),msgCount:user.msgCount||0};
+}
+
+// ════════════════════════════════════════════
+// WEBRTC VIDEO STREAMING
+// ════════════════════════════════════════════
+
+let localStream = null;
+let peerConnections = {};
+let selectedUserId = null;
+let webrtcEnabled = false;
+
+const RTC_CONFIG = {
+  iceServers: [
+    { urls: ['stun:stun.l.google.com:19302'] },
+    { urls: ['stun:stun1.l.google.com:19302'] },
+    { urls: ['stun:stun2.l.google.com:19302'] }
+  ]
+};
+
+async function initWebRTC() {
+  try {
+    console.log('[WebRTC] Richiedendo accesso media...');
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true },
+      video: { 
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user'
+      }
+    });
+    
+    const myVideo = document.getElementById('myVideo');
+    if (myVideo) {
+      myVideo.srcObject = localStream;
+      myVideo.onloadedmetadata = () => myVideo.play();
+      console.log('[WebRTC] Video locale attached');
+    }
+    
+    webrtcEnabled = true;
+    console.log('[WebRTC] Inizializzazione completata ✓');
+    
+    const micBtn = document.querySelector('.video-mic-btn');
+    if (micBtn) {
+      micBtn.addEventListener('click', toggleMicrophone);
+    }
+    
+  } catch (err) {
+    console.error('[WebRTC] Errore getUserMedia:', err);
+    webrtcEnabled = false;
+    // Graceful degradation: nascondere video section
+    const videoSection = document.querySelector('.chat-video-section');
+    if (videoSection) videoSection.style.display = 'none';
+  }
+}
+
+function toggleMicrophone() {
+  if (!localStream) return;
+  
+  const audioTracks = localStream.getAudioTracks();
+  audioTracks.forEach(track => {
+    track.enabled = !track.enabled;
+  });
+  
+  const micBtn = document.querySelector('.video-mic-btn');
+  if (micBtn) {
+    micBtn.style.opacity = audioTracks[0]?.enabled ? '1' : '0.5';
+  }
+}
+
+async function selectUser(userId) {
+  if (!webrtcEnabled) {
+    console.warn('[WebRTC] WebRTC non abilitato');
+    return;
+  }
+  
+  if (selectedUserId === userId) {
+    deselectUser();
+    return;
+  }
+  
+  if (selectedUserId) {
+    closePeerConnection(selectedUserId);
+  }
+  
+  selectedUserId = userId;
+  console.log(`[WebRTC] Selezionato utente: ${userId}`);
+  
+  document.querySelectorAll('.user-chip').forEach(chip => {
+    chip.classList.remove('selected');
+  });
+  document.querySelector(`.user-chip[data-user-id="${userId}"]`)?.classList.add('selected');
+  
+  // Ottenere nome utente per label
+  const usersList = chatRoomUsers[room?.id];
+  if (usersList) {
+    for (let [socketId, userData] of usersList) {
+      if (userData.id === userId) {
+        document.getElementById('theirVideoLabel').textContent = userData.name || 'Utente';
+        break;
+      }
+    }
+  }
+  
+  await createPeerConnection(userId);
+}
+
+function deselectUser() {
+  if (!selectedUserId) return;
+  
+  closePeerConnection(selectedUserId);
+  selectedUserId = null;
+  
+  document.querySelectorAll('.user-chip').forEach(chip => {
+    chip.classList.remove('selected');
+  });
+  
+  document.getElementById('theirVideoLabel').textContent = 'Seleziona utente';
+  document.getElementById('theirVideo').srcObject = null;
+  
+  console.log('[WebRTC] Utente deselezionato');
+}
+
+async function createPeerConnection(userId) {
+  try {
+    console.log(`[WebRTC] Creando RTCPeerConnection per ${userId}`);
+    
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    peerConnections[userId] = pc;
+    
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+    }
+    
+    pc.ontrack = (event) => {
+      console.log('[WebRTC] Traccia remota ricevuta:', event.track.kind);
+      const theirVideo = document.getElementById('theirVideo');
+      if (theirVideo && event.streams[0]) {
+        theirVideo.srcObject = event.streams[0];
+        theirVideo.onloadedmetadata = () => theirVideo.play();
+      }
+    };
+    
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        console.log('[WebRTC] Inviando ICE candidate');
+        socket.emit('voice-ice', {
+          to: userId,
+          from: user.id,
+          roomId: room.id,
+          candidate: event.candidate
+        });
+      }
+    };
+    
+    pc.onconnectionstatechange = () => {
+      console.log(`[WebRTC] Connection state (${userId}):`, pc.connectionState);
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        closePeerConnection(userId);
+      }
+    };
+    
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    
+    socket.emit('voice-offer', {
+      to: userId,
+      from: user.id,
+      roomId: room.id,
+      offer: pc.localDescription
+    });
+    
+    console.log(`[WebRTC] Offer inviato a ${userId}`);
+    
+  } catch (err) {
+    console.error('[WebRTC] Errore createPeerConnection:', err);
+  }
+}
+
+function closePeerConnection(userId) {
+  const pc = peerConnections[userId];
+  if (pc) {
+    pc.close();
+    delete peerConnections[userId];
+    console.log(`[WebRTC] Connessione chiusa: ${userId}`);
+  }
+}
+
+// Socket.io handlers per WebRTC
+socket.on('voice-offer', async (data) => {
+  try {
+    const { from, offer } = data;
+    console.log(`[WebRTC] Ricevuto offer da ${from}`);
+    
+    if (!peerConnections[from]) {
+      await createPeerConnection(from);
+    }
+    
+    const pc = peerConnections[from];
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    
+    socket.emit('voice-answer', {
+      to: from,
+      from: user.id,
+      roomId: room.id,
+      answer: pc.localDescription
+    });
+    
+    console.log(`[WebRTC] Answer inviato a ${from}`);
+  } catch (err) {
+    console.error('[WebRTC] Errore processing offer:', err);
+  }
+});
+
+socket.on('voice-answer', async (data) => {
+  try {
+    const { from, answer } = data;
+    console.log(`[WebRTC] Ricevuto answer da ${from}`);
+    
+    const pc = peerConnections[from];
+    if (pc && pc.signalingState === 'have-local-offer') {
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      console.log(`[WebRTC] Remote description settata da ${from}`);
+    }
+  } catch (err) {
+    console.error('[WebRTC] Errore processing answer:', err);
+  }
+});
+
+socket.on('voice-ice', async (data) => {
+  try {
+    const { from, candidate } = data;
+    const pc = peerConnections[from];
+    
+    if (pc && candidate) {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      console.log(`[WebRTC] ICE candidate aggiunto da ${from}`);
+    }
+  } catch (err) {
+    console.error('[WebRTC] Errore aggiungendo ICE:', err);
+  }
+});
+
+function stopAllWebRTC() {
+  if (localStream) {
+    localStream.getTracks().forEach(track => track.stop());
+    localStream = null;
+  }
+  
+  Object.keys(peerConnections).forEach(userId => {
+    closePeerConnection(userId);
+  });
+  
+  selectedUserId = null;
+  console.log('[WebRTC] Tutte le connessioni chiuse');
+}
+
+function renderUsersPanel() {
+  const container = document.getElementById('usersScrollContainer');
+  if (!container || !room) return;
+  
+  container.innerHTML = '';
+  
+  const usersMap = chatRoomUsers[room.id];
+  if (!usersMap || usersMap.size === 0) {
+    container.innerHTML = '<div style="padding: 12px; color: #9ca3af; white-space: nowrap;">Nessun utente</div>';
+    return;
+  }
+  
+  usersMap.forEach((userObj, socketId) => {
+    if (userObj.id === user.id) return;
+    
+    const chip = document.createElement('div');
+    chip.className = 'user-chip';
+    chip.setAttribute('data-user-id', userObj.id);
+    chip.setAttribute('data-socket-id', socketId);
+    
+    const avatar = document.createElement('div');
+    avatar.className = 'user-chip-avatar';
+    avatar.textContent = userObj.face || '🎭';
+    
+    const name = document.createElement('div');
+    name.className = 'user-chip-name';
+    name.textContent = (userObj.name || 'Anonimo').substring(0, 10);
+    
+    const onlineDot = document.createElement('div');
+    onlineDot.className = 'user-chip-online-dot';
+    
+    const camIndicator = document.createElement('div');
+    camIndicator.className = 'user-chip-cam-indicator';
+    camIndicator.textContent = '🎥';
+    camIndicator.style.display = webrtcEnabled ? 'flex' : 'none';
+    
+    chip.appendChild(avatar);
+    chip.appendChild(name);
+    chip.appendChild(onlineDot);
+    chip.appendChild(camIndicator);
+    
+    chip.addEventListener('click', () => selectUser(userObj.id));
+    
+    container.appendChild(chip);
+  });
 }
 
 // ══ ROOMS ══
@@ -1399,11 +1802,17 @@ function enterRoom(roomId){
     saveUser();
   }
 
+  // NEW: Render users panel
+  renderUsersPanel();
+
   updateFreeBar();
   showScreen('chat');
   setTimeout(scrollBot,150);
 }
 function leaveRoom(){
+  // NEW: Stop WebRTC before leaving room
+  stopAllWebRTC();
+  
   if(room){socket.emit('leave-chat-room',{roomId:room.id});room=null;}
   showScreen('home',document.querySelector('[data-sc="home"]'));
 }
