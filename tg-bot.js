@@ -173,6 +173,45 @@ bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
     }
   }
 
+  // Deep link "reset" / "recover" / "reset_USERNAME" - mostra istruzioni reset password
+  if(refArg && (refArg === 'reset' || refArg === 'recover' || refArg.startsWith('reset_') || refArg.startsWith('recover_'))){
+    let prefilledUser = '';
+    if (refArg.startsWith('reset_')) prefilledUser = refArg.substring(6);
+    else if (refArg.startsWith('recover_')) prefilledUser = refArg.substring(8);
+
+    const text = `🔓 *Recupero Password KOUVERTE*
+
+${prefilledUser ? `Account rilevato: \`${prefilledUser}\`\n\n` : ''}*Come funziona il recupero via Telegram:*
+
+1️⃣ Usa il comando \`/reset USERNAME\` (o email)
+   Esempio: \`/reset bob_kouverte\`
+2️⃣ Ti invieremo un *codice OTP a 6 cifre* (valido 10 min)
+3️⃣ Inserisci il codice sul sito + nuova password
+
+🔑 *Hai i codici di backup salvati?*
+Usa quelli direttamente sul sito su www.kouverte.com → "Password dimenticata"
+
+⚠️ *Importante:*
+• Il codice è valido solo 10 minuti
+• Usa solo se sei TU il proprietario dell'account
+• Non condividere mai il codice con nessuno
+
+${prefilledUser ? `\n👇 Tocca per richiedere il codice:` : '\n👇 Premi il bottone per richiedere il codice OTP'}`;
+
+    return bot.sendMessage(chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          prefilledUser
+            ? [{ text: `🔑 Richiedi codice per ${prefilledUser}`, callback_data: 'reset_quick_' + prefilledUser.substring(0,30) }]
+            : [{ text: '🔑 Come richiedere il codice', callback_data: 'reset_help' }],
+          [{ text: '🌐 Apri il sito KOUVERTE', url: SITE_URL }],
+          [{ text: '🏠 Menu principale', callback_data: 'help' }]
+        ]
+      }
+    }).catch(e=>console.error('start reset:',e.message));
+  }
+
   const caption =
 `🎭 *KOUVERTE* — Chat Mondiale Anonima
 
@@ -614,6 +653,130 @@ L'importo Premium ha un suffisso univoco di pochi sat per identificare il tuo pa
 bot.onText(/^\/bitcoin$/i, m => sendBtcInfo(m.chat.id));
 
 // ============================================================
+// /reset <username> - Genera OTP per reset password via Telegram
+// ============================================================
+function generateOTP(){
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+async function saveResetOTP(identifier, otp, chatId){
+  const ttlSec = 600; // 10 minuti
+  const key = 'kouverte:reset_otp:' + identifier.toLowerCase();
+  const data = JSON.stringify({ otp, chatId: String(chatId), createdAt: Date.now() });
+
+  if (redis) {
+    try {
+      await redis.set(key, data, { ex: ttlSec });
+      return true;
+    } catch(e) {
+      console.error('[Reset] Redis save error:', e.message);
+    }
+  }
+  // Fallback memoria locale (perso al restart, ma valido 10min)
+  global._resetOTPs = global._resetOTPs || new Map();
+  global._resetOTPs.set(key, { ...JSON.parse(data), expiresAt: Date.now() + ttlSec*1000 });
+  // Cleanup OTP scaduti
+  for (const [k, v] of global._resetOTPs.entries()) {
+    if (v.expiresAt < Date.now()) global._resetOTPs.delete(k);
+  }
+  return true;
+}
+
+bot.onText(/^\/reset(?:\s+(\S+))?$/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const identifier = (match[1] || '').trim().toLowerCase();
+
+  if (!identifier) {
+    return bot.sendMessage(chatId,
+`🔓 *Reset Password via Telegram*
+
+Usa: \`/reset USERNAME\` o \`/reset email@example.com\`
+
+*Esempio:* \`/reset bob_kouverte\`
+
+Riceverai un codice OTP di 6 cifre valido 10 minuti.
+
+💡 Hai i codici di backup? Usa direttamente quelli sul sito → Password dimenticata.`, {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: [
+        [{ text: '🌐 Apri sito KOUVERTE', url: SITE_URL }]
+      ]}
+    }).catch(()=>{});
+  }
+
+  // Validazione
+  if (identifier.length < 3 || identifier.length > 80) {
+    return bot.sendMessage(chatId, '❌ Username o email non valido.').catch(()=>{});
+  }
+
+  // Genera OTP
+  const otp = generateOTP();
+  const saved = await saveResetOTP(identifier, otp, chatId);
+  if (!saved) {
+    return bot.sendMessage(chatId, '❌ Errore generazione codice. Riprova.').catch(()=>{});
+  }
+
+  // Invia OTP
+  bot.sendMessage(chatId,
+`🔐 *Codice di Recupero Password*
+
+Per: \`${identifier}\`
+
+Il tuo codice OTP:
+
+🔢 *${otp}*
+
+⏰ *Valido per 10 minuti.*
+
+*Come usarlo:*
+1️⃣ Vai su www.kouverte.com
+2️⃣ Tocca "Password dimenticata"
+3️⃣ Scegli "Recupera via Telegram OTP"
+4️⃣ Inserisci username/email + codice OTP + nuova password
+
+⚠️ *Non condividere questo codice con nessuno!*
+Se non hai richiesto tu il reset, ignora questo messaggio.`, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🌐 Apri sito → Inserisci codice', url: SITE_URL + '/app.html#otp=' + encodeURIComponent(identifier) }],
+        [{ text: '🚀 Apri WebApp', web_app: { url: fresh('#otp=' + encodeURIComponent(identifier)) } }]
+      ]
+    }
+  }).catch(e=>console.error('reset otp:',e.message));
+});
+
+// ============================================================
+// /backup - info sui codici di backup
+// ============================================================
+bot.onText(/^\/backup$/i, m => {
+  bot.sendMessage(m.chat.id,
+`🔑 *Codici di Backup*
+
+Quando ti sei registrato su KOUVERTE, hai ricevuto *5 codici di recupero* di 8 caratteri.
+
+*Come usarli:*
+1️⃣ Vai su www.kouverte.com
+2️⃣ Tocca "Password dimenticata"
+3️⃣ Inserisci username + uno dei codici + nuova password
+4️⃣ Il codice viene consumato (one-time use)
+
+*Hai perso tutti i codici?*
+Usa /reset USERNAME per ricevere un OTP via Telegram!
+
+*Vuoi nuovi codici?*
+Vai su Impostazioni nel sito → "🔑 Rigenera codici di recupero"`, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: '🌐 Apri sito', url: SITE_URL }],
+        [{ text: '🔐 Reset con OTP', callback_data: 'reset_help' }]
+      ]
+    }
+  }).catch(()=>{});
+});
+
+// ============================================================
 // /aiuto
 // ============================================================
 function sendHelp(chatId){
@@ -639,6 +802,10 @@ function sendHelp(chatId){
 ₿ /bitcoin — Info pagamento BTC
 ❓ /aiuto — Questa lista
 
+🔓 *Recupero password:*
+🔑 /reset USERNAME — Ricevi OTP per reset password
+🔐 /backup — Info sui codici di backup
+
 🔒 *KOUVERTE è 100% anonima.*
 Nessun nome reale, nessuna foto salvata.`, {
     parse_mode:'Markdown',
@@ -658,6 +825,15 @@ bot.onText(/^\/(aiuto|help)$/i, m => sendHelp(m.chat.id));
 bot.on('callback_query', cq => {
   const chatId = cq.message.chat.id;
   bot.answerCallbackQuery(cq.id).catch(()=>{});
+
+  // reset_quick_USERNAME -> richiede subito OTP
+  if (cq.data && cq.data.startsWith('reset_quick_')) {
+    const identifier = cq.data.substring(12);
+    // Simula /reset USERNAME
+    bot.processUpdate({ update_id: Date.now(), message: { chat: { id: chatId }, from: cq.from, text: '/reset ' + identifier, message_id: Date.now() } });
+    return;
+  }
+
   switch(cq.data){
     case 'profile':     return sendProfile(chatId);
     case 'frames':      return sendFrames(chatId);
@@ -670,6 +846,23 @@ bot.on('callback_query', cq => {
     case 'join_room':   return sendJoinRoom(chatId);
     case 'video':       return sendVideoInfo(chatId);
     case 'site':        return sendSiteLink(chatId);
+    case 'reset_help':
+      return bot.sendMessage(chatId,
+`🔓 *Come resettare la password*
+
+Usa il comando:
+\`/reset USERNAME\`
+oppure
+\`/reset email@example.com\`
+
+Esempio: \`/reset bob_kouverte\`
+
+Riceverai un codice OTP di 6 cifre valido 10 minuti.
+
+Poi vai sul sito www.kouverte.com → Password dimenticata → Recupera via Telegram OTP.`, {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: [[{ text: '🌐 Apri sito', url: SITE_URL }]] }
+      }).catch(()=>{});
   }
 });
 

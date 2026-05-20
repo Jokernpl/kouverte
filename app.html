@@ -3405,7 +3405,7 @@ function fallbackCopyText(text){
   document.body.removeChild(ta);
 }
 
-// ══ Modal Recupera Password (con backup code) ══
+// ══ Modal Recupera Password (con 2 opzioni: backup code / Telegram OTP) ══
 function openRecoverModal(){
   closeLoginWall();
   document.getElementById('authModal')?.classList.remove('show');
@@ -3419,7 +3419,7 @@ function openRecoverModal(){
     document.body.appendChild(modal);
   }
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:440px">
+    <div class="modal-box" style="max-width:460px">
       <div class="modal-hdr">
         <div class="modal-title">🔓 Recupera Password</div>
         <button class="modal-close" onclick="document.getElementById('recoverModal').classList.remove('show')">✕</button>
@@ -3427,15 +3427,28 @@ function openRecoverModal(){
       <div class="modal-body">
         <div id="recoverError" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5"></div>
 
-        <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
-          Inserisci il tuo username o email e uno dei codici di recupero che hai salvato alla registrazione.
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-rmode="code" onclick="switchRecoverMode('code')">🔑 Codice backup</button>
+          <button class="auth-tab" data-rmode="otp" onclick="switchRecoverMode('otp')">📱 Telegram OTP</button>
+        </div>
+
+        <div id="recoverHelpBox" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
+          Inserisci il tuo username/email e uno dei codici di recupero salvati alla registrazione.
         </div>
 
         <label class="modal-label">Username o Email</label>
         <input type="text" id="recoverUser" class="modal-input" placeholder="bob_kouverte o tua@email.com">
 
-        <label class="modal-label">Codice di Recupero (8 caratteri)</label>
-        <input type="text" id="recoverCode" class="modal-input code-input" placeholder="ABC12345" maxlength="8" oninput="this.value=this.value.toUpperCase()" style="font-size:18px;letter-spacing:4px">
+        <div id="recoverCodeWrap">
+          <label class="modal-label">Codice di Backup (8 caratteri)</label>
+          <input type="text" id="recoverCode" class="modal-input code-input" placeholder="ABC12345" maxlength="8" oninput="this.value=this.value.toUpperCase()" style="font-size:18px;letter-spacing:4px">
+        </div>
+
+        <div id="recoverOtpWrap" style="display:none">
+          <label class="modal-label">Codice OTP Telegram (6 cifre)</label>
+          <input type="text" id="recoverOtp" class="modal-input code-input" placeholder="123456" maxlength="6" inputmode="numeric" oninput="this.value=this.value.replace(/\\D/g,'')" style="font-size:22px;letter-spacing:8px">
+          <button onclick="requestTelegramOTP()" style="margin-top:8px;width:100%;padding:10px;background:linear-gradient(135deg,#0088cc,#229ed9);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">📱 Apri Bot Telegram per richiedere OTP</button>
+        </div>
 
         <label class="modal-label">Nuova Password</label>
         <input type="password" id="recoverNewPwd" class="modal-input" placeholder="Min 6 caratteri" minlength="6">
@@ -3448,31 +3461,88 @@ function openRecoverModal(){
   `;
   modal.classList.add('show');
   setTimeout(() => document.getElementById('recoverUser')?.focus(), 100);
+  window._recoverMode = 'code';
+
+  // Auto-detect URL hash #otp=USERNAME
+  const hash = window.location.hash;
+  if (hash.startsWith('#otp=')) {
+    const id = decodeURIComponent(hash.substring(5));
+    setTimeout(() => {
+      switchRecoverMode('otp');
+      const userInput = document.getElementById('recoverUser');
+      if (userInput && id) userInput.value = id;
+      document.getElementById('recoverOtp')?.focus();
+    }, 200);
+  }
+}
+
+function switchRecoverMode(mode){
+  window._recoverMode = mode;
+  document.querySelectorAll('[data-rmode]').forEach(t => {
+    t.classList.toggle('active', t.dataset.rmode === mode);
+  });
+  document.getElementById('recoverCodeWrap').style.display = mode === 'code' ? 'block' : 'none';
+  document.getElementById('recoverOtpWrap').style.display = mode === 'otp' ? 'block' : 'none';
+  document.getElementById('recoverHelpBox').innerHTML = mode === 'code'
+    ? 'Inserisci il tuo username/email e uno dei <strong>codici di backup</strong> (8 caratteri) che hai salvato alla registrazione.'
+    : '📱 <strong>Recupero via Telegram:</strong> Scrivi al bot <a href="' + TG_BOT_URL + '" target="_blank" style="color:#a855f7">@' + TG_BOT_USERNAME + '</a> il comando <code style="background:rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px">/reset USERNAME</code>. Riceverai un <strong>OTP a 6 cifre</strong> valido 10 minuti.';
+}
+
+function requestTelegramOTP(){
+  const userInput = document.getElementById('recoverUser');
+  const id = userInput?.value?.trim();
+  if (!id) {
+    showToast('⚠️ Inserisci prima username o email');
+    userInput?.focus();
+    return;
+  }
+  // Apri il bot con deep link reset_<USERNAME>
+  const url = TG_BOT_URL + '?start=reset_' + encodeURIComponent(id);
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📱 Apri Telegram → scrivi /reset ' + id + ' al bot');
 }
 
 async function doRecover(){
+  const mode = window._recoverMode || 'code';
   const userIn = document.getElementById('recoverUser').value.trim().toLowerCase();
-  const code = document.getElementById('recoverCode').value.trim().toUpperCase();
   const newPwd = document.getElementById('recoverNewPwd').value;
   const errEl = document.getElementById('recoverError');
   errEl.style.display = 'none';
 
   if (!userIn) { errEl.textContent = '❌ Inserisci username o email'; errEl.style.display = 'block'; return; }
-  if (!code || code.length !== 8) { errEl.textContent = '❌ Codice deve essere di 8 caratteri'; errEl.style.display = 'block'; return; }
   if (!newPwd || newPwd.length < 6) { errEl.textContent = '❌ Password min 6 caratteri'; errEl.style.display = 'block'; return; }
+
+  let endpoint, body;
+  const isEmail = userIn.includes('@');
+
+  if (mode === 'code') {
+    const code = document.getElementById('recoverCode').value.trim().toUpperCase();
+    if (!code || code.length !== 8) { errEl.textContent = '❌ Codice backup deve essere 8 caratteri'; errEl.style.display = 'block'; return; }
+    endpoint = '/api/auth/recover-with-code';
+    body = isEmail
+      ? { email: userIn, code, newPassword: newPwd }
+      : { username: userIn, code, newPassword: newPwd };
+  } else {
+    const otp = document.getElementById('recoverOtp').value.trim();
+    if (!otp || !/^\d{6}$/.test(otp)) { errEl.textContent = '❌ OTP deve essere 6 cifre'; errEl.style.display = 'block'; return; }
+    endpoint = '/api/auth/recover-with-otp';
+    body = isEmail
+      ? { email: userIn, otp, newPassword: newPwd }
+      : { username: userIn, otp, newPassword: newPwd };
+  }
 
   const btn = document.getElementById('recoverSubmitBtn');
   btn.disabled = true;
   btn.textContent = '⏳ Verifica...';
 
   try {
-    // Determina se è email o username
-    const isEmail = userIn.includes('@');
-    const body = isEmail
-      ? { email: userIn, code, newPassword: newPwd }
-      : { username: userIn, code, newPassword: newPwd };
-
-    const res = await fetch('/api/auth/recover-with-code', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
@@ -3498,8 +3568,12 @@ async function doRecover(){
       updateProfileUI();
     }
     document.getElementById('recoverModal').classList.remove('show');
-    showToast('✅ Password reimpostata! Sei loggato. Codici rimanenti: ' + (json.remainingCodes || 0));
+    closeLoginWall();
+    const remaining = json.remainingCodes !== undefined ? ' Codici rimanenti: ' + json.remainingCodes : '';
+    showToast('✅ Password reimpostata! Sei loggato.' + remaining);
     startAutoSync();
+    // Rimuovi #otp dall'URL
+    if (window.location.hash.startsWith('#otp=')) history.replaceState(null, '', window.location.pathname);
   } catch(e) {
     errEl.textContent = '❌ ' + e.message;
     errEl.style.display = 'block';

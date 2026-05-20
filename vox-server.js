@@ -689,6 +689,81 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
     }
 });
 
+// Recupero password con OTP Telegram
+app.post('/api/auth/recover-with-otp', rateLimit('recover-otp', 10, 15 * 60 * 1000), async (req, res) => {
+    const usernameIn = sanitizeUsername(req.body?.username || '');
+    const emailIn = sanitizeEmail(req.body?.email || '');
+    const otp = String(req.body?.otp || '').trim();
+    const newPassword = req.body?.newPassword;
+
+    if (!usernameIn && !emailIn) return res.status(400).json({ error: 'Username o email richiesti' });
+    if (!otp || !/^\d{6}$/.test(otp)) return res.status(400).json({ error: 'OTP deve essere 6 cifre' });
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Nuova password min 6 caratteri' });
+
+    // Trova utente
+    const user = DB.users.find(u =>
+        (usernameIn && u.username === usernameIn) ||
+        (emailIn && u.email === emailIn)
+    );
+    if (!user) return res.status(401).json({ error: 'Account non trovato' });
+
+    // L'OTP è salvato da tg-bot.js con chiave: kouverte:reset_otp:<identifier>
+    // Cerca per username e per email
+    const identifiers = [user.username, user.email].filter(Boolean);
+    let validOtp = false;
+    let foundKey = null;
+
+    // Prova Redis
+    const r = getServerRedis();
+    if (r) {
+        for (const id of identifiers) {
+            const key = 'kouverte:reset_otp:' + id.toLowerCase();
+            try {
+                const data = await r.get(key);
+                if (data) {
+                    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                    if (parsed.otp === otp) {
+                        validOtp = true;
+                        foundKey = key;
+                        break;
+                    }
+                }
+            } catch(e) {}
+        }
+    }
+
+    // Fallback memoria locale del bot (stesso processo se mono-process, altrimenti non funziona)
+    if (!validOtp && global._resetOTPs) {
+        for (const id of identifiers) {
+            const key = 'kouverte:reset_otp:' + id.toLowerCase();
+            const data = global._resetOTPs.get(key);
+            if (data && data.otp === otp && data.expiresAt > Date.now()) {
+                validOtp = true;
+                foundKey = key;
+                break;
+            }
+        }
+    }
+
+    if (!validOtp) {
+        return res.status(401).json({ error: 'OTP non valido o scaduto. Richiedi un nuovo /reset al bot Telegram.' });
+    }
+
+    try {
+        user.password_hash = await bcrypt.hash(newPassword, 10);
+        markDirty();
+
+        // Invalida OTP
+        if (r && foundKey) try { await r.del(foundKey); } catch(e){}
+        if (global._resetOTPs && foundKey) global._resetOTPs.delete(foundKey);
+
+        const newToken = generateToken(user.id);
+        res.json({ ok: true, token: newToken, user: publicUser(user) });
+    } catch(e) {
+        res.status(500).json({ error: 'Errore reset password' });
+    }
+});
+
 // Recupero password con backup code
 app.post('/api/auth/recover-with-code', rateLimit('recover', 10, 15 * 60 * 1000), async (req, res) => {
     const usernameIn = sanitizeUsername(req.body?.username);
