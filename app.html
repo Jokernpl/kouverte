@@ -3272,7 +3272,7 @@ async function doAuth(){
     setAuthToken(json.token);
 
     // RICORDA DATI: salva username/email per autocompletare al prossimo login
-    const rememberMe = document.getElementById('authRemember')?.checked;
+    // (rememberMe gia letto sopra come 'const rememberMe' all'inizio della funzione)
     if (rememberMe !== false) {
       // Salva email o username (NON la password) per autocompletare
       const identifier = json.user?.email || email;
