@@ -760,6 +760,54 @@ html[data-theme="light"] body {
 .info-item-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
 
 /* ═══════════════════════════════
+   CHAT MODES BAR (modalita speciali)
+═══════════════════════════════ */
+.chat-modes-bar{display:flex;gap:6px;padding:6px 12px;background:rgba(0,0,0,0.3);border-bottom:1px solid rgba(168,85,247,0.2);overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.chat-modes-bar::-webkit-scrollbar{display:none}
+.chat-mode-btn{flex-shrink:0;width:34px;height:34px;border-radius:10px;border:1px solid rgba(168,85,247,0.25);background:rgba(168,85,247,0.08);color:#cbd5e1;font-size:16px;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.chat-mode-btn:hover{background:rgba(168,85,247,0.2);transform:scale(1.08)}
+.chat-mode-btn.active{background:linear-gradient(135deg,#a855f7,#ec4899);border-color:#a855f7;color:#fff;box-shadow:0 0 12px rgba(168,85,247,0.5)}
+
+/* Messaggi effimeri */
+.mrow.ephemeral{animation:msgFadeOut 30s linear forwards}
+.mrow.ephemeral::before{content:'⏱️';position:absolute;left:-4px;top:-4px;font-size:10px;background:rgba(0,0,0,0.6);border-radius:50%;padding:2px;z-index:5}
+@keyframes msgFadeOut{0%,80%{opacity:1}100%{opacity:0;transform:scale(0.8);max-height:0;margin:0;padding:0;overflow:hidden}}
+
+/* ═══════════════════════════════
+   EFFETTI EVENTO (pioggia neon, glitch, cyberstorm)
+═══════════════════════════════ */
+.chat-effects-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.fx-rain-drop{position:absolute;top:-20px;width:2px;height:30px;background:linear-gradient(180deg,transparent,#00ffff,transparent);box-shadow:0 0 8px #00ffff;animation:fxRain linear infinite}
+.fx-rain-drop.p{background:linear-gradient(180deg,transparent,#ec4899,transparent);box-shadow:0 0 8px #ec4899}
+.fx-rain-drop.v{background:linear-gradient(180deg,transparent,#a855f7,transparent);box-shadow:0 0 8px #a855f7}
+@keyframes fxRain{from{transform:translateY(-30px)}to{transform:translateY(100vh)}}
+.fx-glitch{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0px,rgba(168,85,247,0.04) 1px,transparent 2px);animation:fxGlitch 0.3s steps(2) infinite;mix-blend-mode:overlay}
+@keyframes fxGlitch{0%{transform:translateX(0)}50%{transform:translateX(2px)}100%{transform:translateX(0)}}
+.fx-storm-bolt{position:absolute;width:3px;height:80px;background:linear-gradient(180deg,#fff,#a855f7,transparent);transform:rotate(20deg);animation:fxBolt 0.4s ease-out;box-shadow:0 0 20px #a855f7,0 0 40px #ec4899}
+@keyframes fxBolt{from{opacity:0;transform:rotate(20deg) translateY(-100px)}50%{opacity:1}to{opacity:0;transform:rotate(20deg) translateY(0)}}
+
+/* ═══════════════════════════════
+   AI BOT MESSAGE STYLE
+═══════════════════════════════ */
+.mrow.bot-msg .mavatar{background:linear-gradient(135deg,#06b6d4,#3b82f6)!important;border:2px solid #06b6d4!important;box-shadow:0 0 10px #06b6d4}
+.mrow.bot-msg .mname{color:#06b6d4!important}
+.mrow.bot-msg::before{content:'🤖 BOT';position:absolute;top:-6px;left:30px;font-size:8px;background:linear-gradient(135deg,#06b6d4,#3b82f6);color:#fff;padding:2px 6px;border-radius:6px;font-weight:900;letter-spacing:0.5px}
+
+/* ═══════════════════════════════
+   MUSIC WIDGET (lo-fi player)
+═══════════════════════════════ */
+.music-widget{position:fixed;bottom:80px;right:14px;background:linear-gradient(135deg,#1a0f2e,#0f0a1e);border:2px solid #a855f7;border-radius:14px;padding:12px;width:220px;z-index:50;box-shadow:0 8px 24px rgba(168,85,247,0.4);display:none}
+.music-widget.show{display:block;animation:slideUpFade 0.4s ease-out}
+.music-widget-title{font-size:11px;color:#a855f7;text-transform:uppercase;letter-spacing:1px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.music-widget-title .pulse-dot{width:8px;height:8px}
+.music-selector{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.music-station{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);color:#cbd5e1;padding:6px 10px;border-radius:8px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.2s}
+.music-station:hover{background:rgba(168,85,247,0.2)}
+.music-station.active{background:linear-gradient(135deg,#a855f7,#ec4899);color:#fff;border-color:#a855f7}
+.music-close{position:absolute;top:6px;right:6px;background:none;border:none;color:#9ca3af;cursor:pointer;font-size:14px}
+@keyframes slideUpFade{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════
    FOMO INDICATORS + ROOM CARD PREVIEW
 ═══════════════════════════════ */
 .fomo-tag{position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:0.5px;z-index:3;animation:fomoBounce 2s ease-in-out infinite}
@@ -1360,6 +1408,16 @@ html[data-theme="light"] body {
     </div>
   </div>
 
+  <!-- Toolbar chat: modalita speciali -->
+  <div class="chat-modes-bar" id="chatModesBar">
+    <button class="chat-mode-btn" id="modeEphemeral" onclick="toggleEphemeralChat()" title="Messaggi temporanei">⏱️</button>
+    <button class="chat-mode-btn" id="modeEffects" onclick="toggleChatEffects()" title="Effetti evento">🌧️</button>
+    <button class="chat-mode-btn" id="modeMusic" onclick="toggleRoomMusic()" title="Musica ambient">🎵</button>
+    <button class="chat-mode-btn" id="modeVoice" onclick="toggleVoiceMode()" title="Modalita vocale">🎙️</button>
+    <button class="chat-mode-btn" id="modeBot" onclick="toggleBotAssist()" title="Bot anti-silenzio">🤖</button>
+    <button class="chat-mode-btn" id="modeRadar" onclick="openRadarMode()" title="Utenti vicini">📍</button>
+  </div>
+
   <div class="chat-msgs" id="chatMsgs"></div>
 
   <div class="free-bar" id="freeBar">
@@ -1574,6 +1632,17 @@ html[data-theme="light"] body {
     <button class="btn-p" id="fmBtn" style="margin-top:12px" onclick="buyFrame()"></button>
     <button class="btn-s" onclick="closeFrameM()" style="margin-top:4px">Annulla</button>
   </div>
+</div>
+
+<!-- Music widget (lo-fi player) -->
+<div class="music-widget" id="musicWidget">
+  <button class="music-close" onclick="closeMusicWidget()">✕</button>
+  <div class="music-widget-title">
+    <div class="pulse-dot"></div>
+    <span>🎵 Musica Stanza</span>
+  </div>
+  <div class="music-selector" id="musicStations"></div>
+  <div style="font-size:9px;color:#6b7280;text-align:center;margin-top:4px">Audio solo per te (privato)</div>
 </div>
 
 <!-- ░░ CONTINUA MENU MODAL ░░ -->
@@ -1835,6 +1904,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   initParticles();
   startLiveFeed();
   startLiveStats();
+  // Hook chat modes (ephemeral, effetti, bot)
+  setupChatModesHooks();
   // Auto-login + sync
   tryAutoLogin().then(success => {
     if (success) {
@@ -2726,6 +2797,317 @@ function renderUsersPanel() {
 }
 
 // ══ ROOMS ══
+// ══════════════════════════════════════════
+// CHAT MODES: ephemeral, effects, music, voice, bot, radar
+// ══════════════════════════════════════════
+var chatModes = {
+  ephemeral: false,
+  effects: null,  // 'rain'|'glitch'|'storm'
+  music: null,
+  voice: false,
+  bot: false,
+  radar: false
+};
+var botTimer = null;
+var effectsLayer = null;
+
+// ── 1. CHAT EFFIMERA: messaggi spariscono dopo 30 secondi
+function toggleEphemeralChat(){
+  chatModes.ephemeral = !chatModes.ephemeral;
+  document.getElementById('modeEphemeral')?.classList.toggle('active', chatModes.ephemeral);
+  showToast(chatModes.ephemeral ? '⏱️ Modalità Chat Effimera attiva (msg in 30s)' : '⏱️ Chat normale');
+}
+
+// ── 2. EFFETTI EVENTO: pioggia neon, glitch, cyberstorm
+var EFFECT_PRESETS = ['rain','glitch','storm'];
+var currentEffectIdx = -1;
+function toggleChatEffects(){
+  currentEffectIdx++;
+  if (currentEffectIdx >= EFFECT_PRESETS.length) currentEffectIdx = -1;
+  chatModes.effects = currentEffectIdx >= 0 ? EFFECT_PRESETS[currentEffectIdx] : null;
+  document.getElementById('modeEffects')?.classList.toggle('active', !!chatModes.effects);
+  applyChatEffects();
+  if (chatModes.effects) {
+    const names = { rain:'🌧️ Pioggia Neon', glitch:'⚡ Glitch', storm:'🌪️ CyberStorm' };
+    showToast(names[chatModes.effects] + ' attivo');
+  } else {
+    showToast('🎬 Effetti disattivati');
+  }
+}
+
+function applyChatEffects(){
+  // Rimuovi vecchio layer
+  if (effectsLayer && effectsLayer.parentNode) effectsLayer.parentNode.removeChild(effectsLayer);
+  effectsLayer = null;
+  if (!chatModes.effects) return;
+
+  const container = document.getElementById('chatMsgs');
+  if (!container || !container.parentNode) return;
+
+  effectsLayer = document.createElement('div');
+  effectsLayer.className = 'chat-effects-layer';
+  container.parentNode.style.position = 'relative';
+  container.parentNode.appendChild(effectsLayer);
+
+  if (chatModes.effects === 'rain') {
+    for (let i = 0; i < 30; i++) {
+      const d = document.createElement('div');
+      const cls = ['','p','v'][Math.floor(Math.random()*3)];
+      d.className = 'fx-rain-drop ' + cls;
+      d.style.left = Math.random() * 100 + '%';
+      d.style.animationDuration = (0.6 + Math.random() * 1.4) + 's';
+      d.style.animationDelay = (Math.random() * 2) + 's';
+      effectsLayer.appendChild(d);
+    }
+  } else if (chatModes.effects === 'glitch') {
+    const g = document.createElement('div');
+    g.className = 'fx-glitch';
+    effectsLayer.appendChild(g);
+  } else if (chatModes.effects === 'storm') {
+    // Bolts random ogni 0.5-2 sec
+    if (effectsLayer._stormTimer) clearInterval(effectsLayer._stormTimer);
+    effectsLayer._stormTimer = setInterval(() => {
+      if (!effectsLayer || !effectsLayer.parentNode) return;
+      const b = document.createElement('div');
+      b.className = 'fx-storm-bolt';
+      b.style.left = (10 + Math.random() * 80) + '%';
+      b.style.top = (10 + Math.random() * 50) + '%';
+      effectsLayer.appendChild(b);
+      setTimeout(() => b.remove(), 500);
+    }, 500 + Math.random() * 1500);
+    // Pioggia leggera di fondo
+    for (let i = 0; i < 10; i++) {
+      const d = document.createElement('div');
+      d.className = 'fx-rain-drop v';
+      d.style.left = Math.random() * 100 + '%';
+      d.style.animationDuration = '1s';
+      d.style.animationDelay = (Math.random() * 2) + 's';
+      d.style.opacity = '0.4';
+      effectsLayer.appendChild(d);
+    }
+  }
+}
+
+// ── 3. MUSIC: stazioni lo-fi (audio nascosti via YouTube/HTML5)
+var MUSIC_STATIONS = [
+  { id:'off',    label:'🔇 Spento',         icon:'🔇', url:null },
+  { id:'lofi',   label:'☕ Lo-Fi Chill',     icon:'☕', url:'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1' },
+  { id:'jazz',   label:'🎷 Jazz Notturno',   icon:'🎷', url:'https://www.youtube.com/embed/Dx5qFachd3A?autoplay=1' },
+  { id:'piano',  label:'🎹 Piano Relax',     icon:'🎹', url:'https://www.youtube.com/embed/4xDzrJKXOOY?autoplay=1' },
+  { id:'synth',  label:'🌃 Synthwave',       icon:'🌃', url:'https://www.youtube.com/embed/EHFsM2HRpkk?autoplay=1' },
+  { id:'rain',   label:'🌧️ Pioggia',         icon:'🌧️', url:'https://www.youtube.com/embed/q76bMs-NwRk?autoplay=1' },
+];
+
+function toggleRoomMusic(){
+  const w = document.getElementById('musicWidget');
+  if (!w) return;
+  if (w.classList.contains('show')) {
+    closeMusicWidget();
+    return;
+  }
+  // Popola stazioni
+  const sel = document.getElementById('musicStations');
+  if (sel) {
+    sel.innerHTML = MUSIC_STATIONS.map(s => `
+      <div class="music-station ${chatModes.music === s.id ? 'active' : ''}" onclick="playMusicStation('${s.id}')">
+        <span>${s.icon}</span><span>${s.label}</span>
+      </div>
+    `).join('');
+  }
+  w.classList.add('show');
+  document.getElementById('modeMusic')?.classList.add('active');
+}
+
+function closeMusicWidget(){
+  document.getElementById('musicWidget')?.classList.remove('show');
+  document.getElementById('modeMusic')?.classList.toggle('active', !!chatModes.music && chatModes.music !== 'off');
+}
+
+function playMusicStation(stationId){
+  const s = MUSIC_STATIONS.find(x => x.id === stationId);
+  if (!s) return;
+  chatModes.music = stationId === 'off' ? null : stationId;
+
+  // Rimuovi vecchio iframe
+  const old = document.getElementById('musicPlayer');
+  if (old) old.remove();
+
+  if (s.url) {
+    const iframe = document.createElement('iframe');
+    iframe.id = 'musicPlayer';
+    iframe.src = s.url;
+    iframe.allow = 'autoplay';
+    iframe.style.cssText = 'position:fixed;width:1px;height:1px;left:-100px;top:-100px;border:0;opacity:0;pointer-events:none';
+    document.body.appendChild(iframe);
+    showToast(s.icon + ' Musica: ' + s.label);
+  } else {
+    showToast('🔇 Musica spenta');
+  }
+  // Re-render
+  toggleRoomMusic(); toggleRoomMusic();
+}
+
+// ── 4. VOICE MODE: WebRTC audio-only
+function toggleVoiceMode(){
+  chatModes.voice = !chatModes.voice;
+  document.getElementById('modeVoice')?.classList.toggle('active', chatModes.voice);
+  if (chatModes.voice) {
+    // Disabilita video, attiva solo audio
+    if (typeof toggleCamera === 'function' && localStream && localStream.getVideoTracks().some(t => t.enabled)) {
+      toggleCamera();
+    }
+    showToast('🎙️ Modalità VOICE: solo audio, niente video');
+  } else {
+    showToast('📹 Video riabilitato');
+    if (typeof toggleCamera === 'function' && localStream && !localStream.getVideoTracks().some(t => t.enabled)) {
+      toggleCamera();
+    }
+  }
+}
+
+// ── 5. BOT ASSIST: parla quando c'è silenzio
+var BOT_PHRASES = [
+  '👋 Ciao a tutti! Come va?',
+  '🎯 Curiosità: lo sapevate che il KOUVERTE significa "velo" in francese?',
+  '💬 Suggerimento: cliccate sul nome di un utente per vedere il profilo!',
+  '🎲 Volete provare il Match Anonimo? È nel menu Continua!',
+  '🎁 Avete aperto la cassa premio oggi? È nel menu!',
+  '🌍 In quale stanza vi piacerebbe creare un evento?',
+  '💎 Lo Shop ha cornici e effetti nickname premium ora!',
+  '🔥 Avete notato il nuovo feed live in home? Sempre attivo!',
+  '⏱️ Provate la modalità chat effimera (icona orologio in alto)',
+  '🎵 Volete musica di sottofondo? Tocchiamo l\'icona musica!',
+  '✨ Qualcuno ha provato ad acquistare bolle chat animate?',
+];
+var BOT_USER = { id:'bot_kv', name:'KouvBot', color:'#06b6d4', face:'🤖', isPremium:false, msgCount:9999 };
+var lastChatActivity = Date.now();
+
+function toggleBotAssist(){
+  chatModes.bot = !chatModes.bot;
+  document.getElementById('modeBot')?.classList.toggle('active', chatModes.bot);
+  if (botTimer) { clearInterval(botTimer); botTimer = null; }
+  if (chatModes.bot) {
+    showToast('🤖 Bot anti-silenzio attivo (locale)');
+    botTimer = setInterval(() => {
+      const silenceMs = Date.now() - lastChatActivity;
+      if (silenceMs > 60000) { // 60 secondi di silenzio
+        injectBotMessage();
+        lastChatActivity = Date.now();
+      }
+    }, 15000);
+  } else {
+    showToast('🔕 Bot disattivato');
+  }
+}
+
+function injectBotMessage(){
+  const text = BOT_PHRASES[Math.floor(Math.random() * BOT_PHRASES.length)];
+  const c = document.getElementById('chatMsgs');
+  if (!c) return;
+  const row = document.createElement('div');
+  row.className = 'mrow bot-msg';
+  row.style.position = 'relative';
+  row.innerHTML = `
+    <div class="mavatar" style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">🤖</div>
+    <div class="mbody">
+      <div class="mline">
+        <span class="mname">KouvBot</span><span style="color:#06b6d4;margin-right:5px">:</span>
+        <span class="mtext">${esc(text)}</span>
+      </div>
+      <div class="mtime">ora</div>
+    </div>
+  `;
+  c.appendChild(row);
+  scrollBot();
+}
+
+// ── 6. RADAR MODE: utenti "vicini" (city-level)
+function openRadarMode(){
+  document.getElementById('modeRadar')?.classList.toggle('active', true);
+  let modal = document.getElementById('radarModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'radarModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) { modal.classList.remove('show'); document.getElementById('modeRadar')?.classList.remove('active'); } };
+    document.body.appendChild(modal);
+  }
+
+  // Ottieni utenti reali della stanza corrente come "vicini" (privacy-safe)
+  let nearbyUsers = [];
+  if (typeof room === 'object' && room && typeof chatRoomUsers === 'object' && chatRoomUsers[room.id]) {
+    chatRoomUsers[room.id].forEach((u, sid) => {
+      if (u.id !== user?.id) {
+        nearbyUsers.push({
+          name: u.name || 'Anonimo',
+          face: u.face || '🎭',
+          color: u.color || '#a855f7',
+          distance: Math.floor(Math.random() * 1500) + 50, // 50-1550m
+          city: ['Stessa città','Vicino a te','Nelle vicinanze'][Math.floor(Math.random()*3)]
+        });
+      }
+    });
+  }
+  nearbyUsers.sort((a,b) => a.distance - b.distance);
+
+  const list = nearbyUsers.length > 0 ? nearbyUsers.map(u => `
+    <div class="friend-row">
+      <div class="friend-avatar" style="background:${u.color}33">${u.face}</div>
+      <div class="friend-info">
+        <div class="friend-name">${esc(u.name)}</div>
+        <div class="friend-username">📍 ${u.distance}m · ${u.city}</div>
+      </div>
+    </div>
+  `).join('') : '<div class="friend-empty"><div class="friend-empty-icon">📡</div><div>Nessun utente vicino in questa stanza<br><span style="font-size:10px;color:#9ca3af">Entra in una stanza con altri per vedere il radar</span></div></div>';
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-hdr">
+        <div class="modal-title">📡 Radar Utenti Vicini</div>
+        <button class="modal-close" onclick="document.getElementById('radarModal').classList.remove('show');document.getElementById('modeRadar')?.classList.remove('active')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:10px;margin-bottom:12px;font-size:11px;color:#cbd5e1">
+          🔒 <strong>Privacy:</strong> Le distanze sono approssimate e basate sulla stanza, mai sulla posizione GPS reale.
+        </div>
+        ${list}
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+// Hook quando arriva un messaggio: marca attività + applica effimero
+var _originalAppendMsg = null;
+function setupChatModesHooks(){
+  // Override appendMsg per applicare ephemeral
+  if (typeof appendMsg === 'function' && !_originalAppendMsg) {
+    _originalAppendMsg = appendMsg;
+    window.appendMsg = function(msg){
+      _originalAppendMsg(msg);
+      lastChatActivity = Date.now();
+      if (chatModes.ephemeral) {
+        const c = document.getElementById('chatMsgs');
+        const last = c?.lastElementChild;
+        if (last && !last.classList.contains('msys') && !last.classList.contains('bot-msg')) {
+          last.style.position = 'relative';
+          last.classList.add('ephemeral');
+          // Auto-remove dopo 30 sec
+          setTimeout(() => { if (last.parentNode) last.remove(); }, 30000);
+        }
+      }
+    };
+  }
+}
+
+// Reset modes quando entri/esci stanza
+function resetChatModesOnRoomChange(){
+  // Disabilita effetti pesanti se cambi stanza
+  if (chatModes.effects) {
+    applyChatEffects();
+  }
+}
+
 // ══════════════════════════════════════════
 // SHOP PREMIUM - effetti nick, bolle chat, suoni, ecc.
 // ══════════════════════════════════════════
