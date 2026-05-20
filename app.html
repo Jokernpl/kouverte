@@ -2909,13 +2909,17 @@ async function tryAutoLogin(){
           // Merge dati server con locali
           Object.assign(user, json.user.kvData);
           delete user._syncedAt;
-          saveUser();
-          updateProfileUI();
-          updateCoinBar();
-          console.log('[Auth] Dati sincronizzati dal server');
         }
       }
+      // Forza name = username (l'utente vuole vedere sempre il suo username)
+      if (json.user.username) {
+        user.name = json.user.username;
+      }
+      saveUser();
+      updateProfileUI();
+      updateCoinBar();
       updateAuthMenuText();
+      console.log('[Auth] Auto-login OK, nome:', user.name);
       return true;
     }
   } catch(e) {
@@ -3166,6 +3170,13 @@ async function doAuth(){
       user.serverEmail = json.user.email;
       user.serverId = json.user.id;
 
+      // ── REGISTRAZIONE: imposta name = username scelto ──
+      if (mode === 'register') {
+        user.name = json.user.username;
+        // Aggiorna anche il link referral se serve
+        console.log('[Auth] Registrazione: nome impostato a', user.name);
+      }
+
       // ── LOGIN con dati esistenti ──
       // Strategy: usa i dati SERVER se più recenti dei locali, altrimenti tieni locali
       if (mode === 'login') {
@@ -3199,14 +3210,27 @@ async function doAuth(){
           } else {
             console.log('[Auth] Tenuti dati locali (piu recenti)');
           }
-        } else {
-          console.log('[Auth] Nessun dato server, mantengo locali');
+        }
+
+        // Anche al LOGIN: forza il nome utente del server (priorita su tutto)
+        // perche' l'utente vuole vedere SEMPRE il suo username come nome
+        if (json.user.username) {
+          user.name = json.user.username;
+          console.log('[Auth] Login: nome impostato a username', user.name);
         }
       }
 
+      // Re-render: aggiorna chat header se in stanza, rank bar, etc.
       saveUser();
       updateProfileUI();
       updateCoinBar();
+      // Aggiorna anche il nome se siamo in una chat room
+      if (typeof room === 'object' && room) {
+        // Re-emit join con nuovo pubUser (nuovo nome)
+        if (socket && socket.connected) {
+          socket.emit('join-chat-room', { roomId: room.id, user: pubUser() });
+        }
+      }
 
       // Sync IMMEDIATO al server (per essere sicuri)
       await syncUserDataToServer();
