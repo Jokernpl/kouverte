@@ -241,9 +241,12 @@ function saveDB(db) {
         const r = getServerRedis();
         if (r) {
             const backup = { db, savedAt: now_ms, source: 'vox-server' };
-            r.set(REDIS_DB_KEY, JSON.stringify(backup)).catch(e => {
-                console.error('[DB] Redis save error:', e.message);
-            });
+            console.log('[DB] Backup Redis in corso... users:', (db.users || []).length);
+            r.set(REDIS_DB_KEY, JSON.stringify(backup))
+              .then(() => console.log('[DB] ✅ Backup Redis OK'))
+              .catch(e => console.error('[DB] ❌ Redis save error:', e.message));
+        } else {
+            console.warn('[DB] Skip Redis backup - non disponibile');
         }
     }
 
@@ -745,19 +748,42 @@ app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, 
 });
 
 // Diagnostica storage e Redis
-app.get('/api/storage/status', (req, res) => {
+app.get('/api/storage/status', async (req, res) => {
     const hasRedisUrl = !!process.env.UPSTASH_REDIS_REST_URL;
     const hasRedisToken = !!process.env.UPSTASH_REDIS_REST_TOKEN;
+    const urlValue = process.env.UPSTASH_REDIS_REST_URL || '';
     const r = getServerRedis();
+
+    // Test ping a Redis se disponibile
+    let pingResult = 'not_tested';
+    if (r) {
+        try {
+            const ping = await r.ping();
+            pingResult = String(ping);
+        } catch(e) {
+            pingResult = 'error: ' + e.message;
+        }
+    }
+
     res.json({
         redisConfigured: hasRedisUrl && hasRedisToken,
         redisActive: !!r,
+        redisPing: pingResult,
+        urlLength: urlValue.length,
+        urlPrefix: urlValue.substring(0, 20),
         usersCount: (DB.users || []).length,
         dbFileExists: fs.existsSync(DB_FILE),
         dbFileSize: fs.existsSync(DB_FILE) ? fs.statSync(DB_FILE).size : 0,
         nodeEnv: process.env.NODE_ENV || 'development',
-        env_keys_set: Object.keys(process.env).filter(k => k.includes('UPSTASH') || k.includes('REDIS')).length
+        env_keys_set: Object.keys(process.env).filter(k => k.includes('UPSTASH') || k.includes('REDIS')).length,
+        all_upstash_keys: Object.keys(process.env).filter(k => k.includes('UPSTASH'))
     });
+});
+
+// Trigger backup manuale per debug
+app.get('/api/storage/backup-now', (req, res) => {
+    saveDB(DB);
+    res.json({ ok: true, msg: 'saveDB triggered, check logs' });
 });
 
 // Get current user
