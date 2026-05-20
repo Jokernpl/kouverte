@@ -1347,15 +1347,15 @@ const BADGES = [
 ];
 
 // ══ STATE ══
-let socket=null, user=null, room=null;
-let tTimer=null, isTyping=false, typingUsers={};
-let roomOnline={}, lastSender=null, activeCat='all';
-let selFrameId=null;
+var socket=null, user=null, room=null;
+var tTimer=null, isTyping=false, typingUsers={};
+var roomOnline={}, lastSender=null, activeCat='all';
+var selFrameId=null;
 const sessionRooms=new Set(); // conta solo questa sessione, non persiste
 // Preview messaggi per ogni stanza (ultimi 3-4 per la card)
-let roomPreviews={};
+var roomPreviews={};
 // WebRTC: track users in current room
-let chatRoomUsers={};
+var chatRoomUsers={};
 
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1822,10 +1822,10 @@ function pubUser(){
 // WEBRTC VIDEO STREAMING
 // ════════════════════════════════════════════
 
-let localStream = null;
-let peerConnections = {};
-let selectedUserId = null;
-let webrtcEnabled = false;
+var localStream = null;
+var peerConnections = {};
+var selectedUserId = null;
+var webrtcEnabled = false;
 
 const RTC_CONFIG = {
   iceServers: [
@@ -3101,8 +3101,8 @@ function autoJoinFromUrl(){
 // ══════════════════════════════════════════
 // STANZE A CODICE - Crea / Entra
 // ══════════════════════════════════════════
-let currentRoomCode = null;
-let selectedEmoji = '🎉';
+var currentRoomCode = null;
+var selectedEmoji = '🎉';
 
 function openCreateCodeRoom(){
   document.getElementById('modalCreateRoom').classList.add('show');
