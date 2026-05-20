@@ -2825,45 +2825,89 @@ async function doAuth(){
     const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
     const body = mode === 'register' ? { email, username, password } : { email, password };
 
+    console.log('[Auth] Richiesta:', endpoint, body);
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
     const json = await res.json();
+    console.log('[Auth] Risposta:', res.status, json);
 
     if (!res.ok) {
-      errEl.textContent = '❌ ' + (json.error || 'Errore sconosciuto');
+      errEl.textContent = '❌ ' + (json.error || 'Errore sconosciuto (HTTP ' + res.status + ')');
       errEl.style.display = 'block';
       btn.disabled = false;
       btn.textContent = mode === 'register' ? '✨ Crea Account' : '🔑 Accedi';
       return;
     }
 
-    // Successo!
+    if (!json.token) {
+      errEl.textContent = '❌ Token mancante dalla risposta';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = mode === 'register' ? '✨ Crea Account' : '🔑 Accedi';
+      return;
+    }
+
+    // Successo - imposta token e info utente
     setAuthToken(json.token);
     if (json.user) {
       user.username = json.user.username;
       user.serverEmail = json.user.email;
       user.serverId = json.user.id;
 
-      // Se è login con dati esistenti, ripristina
-      if (mode === 'login' && json.user.kvData) {
-        Object.assign(user, json.user.kvData);
-        delete user._syncedAt;
-        updateProfileUI();
-        updateCoinBar();
+      // ── LOGIN con dati esistenti ──
+      // Strategy: usa i dati SERVER se più recenti dei locali, altrimenti tieni locali
+      if (mode === 'login') {
+        // Prova prima a leggere kvData dal user object
+        let serverData = json.user.kvData;
+
+        // Se non c'è nel publicUser, fai un fetch esplicito
+        if (!serverData) {
+          try {
+            const syncRes = await fetch('/api/kv/sync', {
+              headers: { 'Authorization': 'Bearer ' + json.token }
+            });
+            if (syncRes.ok) {
+              const syncJson = await syncRes.json();
+              serverData = syncJson.data;
+              console.log('[Auth] kvData caricato via /api/kv/sync:', serverData);
+            }
+          } catch(e) {
+            console.error('[Auth] Errore fetch kvData:', e);
+          }
+        }
+
+        // Merge intelligente: il piu recente vince
+        if (serverData && serverData._syncedAt) {
+          const localUpdated = user._localUpdated || 0;
+          if (serverData._syncedAt > localUpdated) {
+            // Server piu recente: ripristina
+            Object.assign(user, serverData);
+            console.log('[Auth] ✅ Dati server ripristinati (server piu recente)');
+            showToast('💾 Dati ripristinati: ' + (user.coins || 0) + ' 🪙, lvl ' + (user.level || 1));
+          } else {
+            console.log('[Auth] Tenuti dati locali (piu recenti)');
+          }
+        } else {
+          console.log('[Auth] Nessun dato server, mantengo locali');
+        }
       }
 
       saveUser();
-      // Sync immediato al server
-      syncUserDataToServer();
+      updateProfileUI();
+      updateCoinBar();
+
+      // Sync IMMEDIATO al server (per essere sicuri)
+      await syncUserDataToServer();
     }
 
     document.getElementById('authModal').classList.remove('show');
     showToast(mode === 'register' ? '✨ Account creato!' : '🔑 Bentornato ' + (json.user.username || ''));
     startAutoSync();
   } catch(e) {
+    console.error('[Auth] Errore:', e);
     errEl.textContent = '❌ Errore di connessione: ' + e.message;
     errEl.style.display = 'block';
     btn.disabled = false;
@@ -2918,12 +2962,57 @@ const _originalSaveUser = window.saveUser;
 window.saveUser = function(){
   user._localUpdated = Date.now();
   setLS('kv4_user', user);
-  // Sync al server se loggato (debounced)
+  // Sync al server se loggato (debounced solo 500ms per essere veloci)
   if (isLoggedIn) {
     clearTimeout(window._syncDebounce);
-    window._syncDebounce = setTimeout(() => syncUserDataToServer(), 2000);
+    window._syncDebounce = setTimeout(() => syncUserDataToServer(), 500);
   }
 };
+
+// Sync IMMEDIATO al server (non debounced) - usare per eventi critici
+function syncUserDataNow(){
+  if (!isLoggedIn) return Promise.resolve(false);
+  return syncUserDataToServer();
+}
+
+// Sync al chiudere/cambiare pagina
+window.addEventListener('beforeunload', () => {
+  if (isLoggedIn && navigator.sendBeacon) {
+    user._localUpdated = Date.now();
+    const blob = new Blob([JSON.stringify({ data: user })], { type: 'application/json' });
+    // Usa sendBeacon che funziona anche durante unload
+    fetch('/api/kv/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: JSON.stringify({ data: user }),
+      keepalive: true
+    }).catch(()=>{});
+  }
+});
+
+// Sync quando l'app torna in foreground (mobile)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isLoggedIn) {
+    // Ricarica dati dal server al ritorno
+    fetch('/api/kv/sync', {
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    }).then(r => r.json()).then(json => {
+      if (json.data && json.data._syncedAt) {
+        const localUpdated = user._localUpdated || 0;
+        if (json.data._syncedAt > localUpdated + 5000) { // 5s di tolleranza
+          Object.assign(user, json.data);
+          setLS('kv4_user', user);
+          updateProfileUI();
+          updateCoinBar();
+          console.log('[Sync] Dati aggiornati al ritorno in foreground');
+        }
+      }
+    }).catch(()=>{});
+  }
+});
 
 // ══════════════════════════════════════════
 // TELEGRAM BOT & CONDIVISIONE

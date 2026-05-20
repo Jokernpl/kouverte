@@ -263,7 +263,8 @@ function publicUser(u) {
         created_at: u.created_at,
         battle_wins: u.battle_wins || 0,
         battle_losses: u.battle_losses || 0,
-        is_champion: !!(u.champion_until && u.champion_until > now())
+        is_champion: !!(u.champion_until && u.champion_until > now()),
+        kvData: u.kvData || null  // Include game data (coins, XP, level, badges, etc.)
     };
 }
 
