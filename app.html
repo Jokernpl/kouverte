@@ -693,6 +693,14 @@ html[data-theme="light"] body {
 }
 
 /* ═══════════════════════════════
+   AUTH - Checkbox Ricordami (toggle)
+═══════════════════════════════ */
+#authRemember{position:relative;transition:background 0.3s}
+#authRemember:checked{background:linear-gradient(135deg,#7c3aed,#a855f7)!important}
+#authRemember::before{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+#authRemember:checked::before{transform:translateX(18px)}
+
+/* ═══════════════════════════════
    BACKUP CODES MODAL
 ═══════════════════════════════ */
 .backup-codes-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
@@ -3087,12 +3095,12 @@ function createAuthModal(){
         <div class="modal-title" id="authTitle">🔑 Accedi al tuo account</div>
         <button class="modal-close" onclick="document.getElementById('authModal').classList.remove('show')">✕</button>
       </div>
-      <div class="modal-body">
+      <form class="modal-body" onsubmit="event.preventDefault();doAuth();return false" autocomplete="on">
         <input type="hidden" id="authMode" value="login">
 
         <div class="auth-tabs">
-          <button class="auth-tab active" data-mode="login" onclick="switchAuthMode('login')">🔑 Accedi</button>
-          <button class="auth-tab" data-mode="register" onclick="switchAuthMode('register')">✨ Registrati</button>
+          <button type="button" class="auth-tab active" data-mode="login" onclick="switchAuthMode('login')">🔑 Accedi</button>
+          <button type="button" class="auth-tab" data-mode="register" onclick="switchAuthMode('register')">✨ Registrati</button>
         </div>
 
         <div id="authError" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5"></div>
@@ -3109,6 +3117,15 @@ function createAuthModal(){
         <label class="modal-label">Password</label>
         <input type="password" id="authPassword" class="modal-input" placeholder="Min 6 caratteri" autocomplete="current-password" minlength="6">
 
+        <!-- Checkbox Ricordami (solo al login) -->
+        <div id="authRememberWrap" style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px;background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:8px">
+          <input type="checkbox" id="authRemember" checked style="width:40px;height:22px;appearance:none;-webkit-appearance:none;background:rgba(100,116,139,0.4);border-radius:11px;position:relative;cursor:pointer;outline:none">
+          <label for="authRemember" style="flex:1;cursor:pointer;font-size:12px;color:#cbd5e1">
+            <strong style="color:#a855f7">💾 Ricorda i miei dati</strong><br>
+            <span style="font-size:10px;color:#9ca3af">Resta connesso per 30 giorni (sicuro su questo dispositivo)</span>
+          </label>
+        </div>
+
         <div id="authInfo" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:8px;padding:12px;margin-top:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
           <strong style="color:#a855f7">🔒 Perché registrarsi?</strong><br>
           ✅ Mantieni il tuo nome, monete, XP, badge<br>
@@ -3118,12 +3135,12 @@ function createAuthModal(){
         </div>
 
         <div style="text-align:center;margin-top:12px">
-          <a href="#" onclick="openRecoverModal();return false" style="font-size:12px;color:#a855f7;text-decoration:none;font-weight:600">🔓 Password dimenticata? Recupera con codice</a>
+          <a href="#" onclick="openRecoverModal();return false" style="font-size:12px;color:#a855f7;text-decoration:none;font-weight:600">🔓 Password dimenticata? Recupera con codice o Telegram</a>
         </div>
-      </div>
+      </form>
       <div class="modal-footer">
-        <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('authModal').classList.remove('show')">Annulla</button>
-        <button class="modal-btn modal-btn-primary" id="authSubmitBtn" onclick="doAuth()">🔑 Accedi</button>
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="document.getElementById('authModal').classList.remove('show')">Annulla</button>
+        <button type="submit" class="modal-btn modal-btn-primary" id="authSubmitBtn" onclick="doAuth()">🔑 Accedi</button>
       </div>
     </div>
   `;
@@ -3139,6 +3156,10 @@ function switchAuthMode(mode){
   document.getElementById('authUsernameWrap').style.display = isRegister ? 'block' : 'none';
   document.getElementById('authSubmitBtn').textContent = isRegister ? '✨ Crea Account' : '🔑 Accedi';
   document.getElementById('authError').style.display = 'none';
+  // Mostra "Ricordami" solo al login (non al register)
+  const rememberWrap = document.getElementById('authRememberWrap');
+  if (rememberWrap) rememberWrap.style.display = isRegister ? 'none' : 'flex';
+
   // Aggiorna label/placeholder a seconda del mode
   const label = document.getElementById('authEmailLabel');
   const input = document.getElementById('authEmail');
@@ -3153,6 +3174,17 @@ function switchAuthMode(mode){
       input.placeholder = 'tua@email.com o bob_kouverte';
     }
   }
+
+  // Al LOGIN: auto-fill dati ricordati
+  if (!isRegister) {
+    const remembered = getLS('kv4_remember_user');
+    if (remembered && input && !input.value) {
+      input.value = remembered;
+      // Focus sulla password se username gia ricordato
+      setTimeout(() => document.getElementById('authPassword')?.focus(), 200);
+    }
+  }
+
   document.querySelectorAll('.auth-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.mode === mode);
   });
@@ -3206,9 +3238,12 @@ async function doAuth(){
 
   try {
     const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
-    const body = mode === 'register' ? { email, username, password } : { email, password };
+    const rememberMe = document.getElementById('authRemember')?.checked !== false;
+    const body = mode === 'register'
+      ? { email, username, password }
+      : { email, password, rememberMe };
 
-    console.log('[Auth] Richiesta:', endpoint, body);
+    console.log('[Auth] Richiesta:', endpoint, {...body, password:'***'});
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -3235,6 +3270,18 @@ async function doAuth(){
 
     // Successo - imposta token e info utente
     setAuthToken(json.token);
+
+    // RICORDA DATI: salva username/email per autocompletare al prossimo login
+    const rememberMe = document.getElementById('authRemember')?.checked;
+    if (rememberMe !== false) {
+      // Salva email o username (NON la password) per autocompletare
+      const identifier = json.user?.email || email;
+      if (identifier) setLS('kv4_remember_user', identifier);
+    } else {
+      // Se "Ricordami" deselezionato, rimuovi dati salvati
+      try { localStorage.removeItem('kv4_remember_user'); } catch(e) {}
+    }
+
     if (json.user) {
       user.username = json.user.username;
       user.serverEmail = json.user.email;

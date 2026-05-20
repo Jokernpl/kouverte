@@ -401,8 +401,10 @@ function verifyAdmin(req, res, next) {
     }
 }
 
-function generateToken(userId) {
-    return jwt.sign({ userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+function generateToken(userId, rememberMe) {
+    // Se rememberMe = true → token dura 30 giorni invece di 7
+    const expiresIn = rememberMe ? '30d' : JWT_EXPIRES;
+    return jwt.sign({ userId }, JWT_SECRET, { expiresIn });
 }
 
 function genId(prefix) {
@@ -916,8 +918,10 @@ app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, 
         user.last_seen = now();
         markDirty();
 
-        const token = generateToken(user.id);
-        res.json({ ok: true, token, user: publicUser(user) });
+        // rememberMe: true (default) → token 30 giorni; false → 7 giorni
+        const rememberMe = req.body?.rememberMe !== false;
+        const token = generateToken(user.id, rememberMe);
+        res.json({ ok: true, token, user: publicUser(user), expiresIn: rememberMe ? '30d' : '7d' });
     } catch(e) {
         res.status(500).json({ error: 'Errore login' });
     }
