@@ -802,14 +802,14 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
   <div class="home-body">
     <!-- NEW: Telegram Bot quick access -->
-    <div class="telegram-banner" onclick="openTelegramBot()">
+    <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener noreferrer" class="telegram-banner" style="text-decoration:none;color:inherit">
       <div class="tg-icon">✈️</div>
       <div class="tg-text">
         <div class="tg-title">Apri il bot Telegram</div>
         <div class="tg-sub">@Kouverte_bot · Comandi, invita amici e altro</div>
       </div>
       <div class="tg-arrow">→</div>
-    </div>
+    </a>
 
     <!-- NEW: Stanze private a codice -->
     <div class="sec-label">🔐 Stanze Private con Codice</div>
@@ -1204,10 +1204,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <span class="menu-icon">🔑</span>
         <span class="menu-text" id="authMenuText">Login / Registrati</span>
       </div>
-      <div class="menu-item" onclick="openTelegramBot()" style="background:linear-gradient(135deg,#0088cc15,#229ed915)">
+      <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener noreferrer" class="menu-item" onclick="closeContinua()" style="background:linear-gradient(135deg,#0088cc15,#229ed915);text-decoration:none;color:inherit">
         <span class="menu-icon">✈️</span>
         <span class="menu-text">Apri Bot Telegram</span>
-      </div>
+      </a>
       <div class="menu-item" onclick="shareApp()" style="background:linear-gradient(135deg,#a855f715,#ec489915)">
         <span class="menu-icon">📤</span>
         <span class="menu-text">Condividi KOUVERTE</span>
@@ -2933,38 +2933,23 @@ const TG_BOT_URL = 'https://t.me/' + TG_BOT_USERNAME;
 const SITE_URL_FULL = 'https://www.kouverte.com';
 
 function openTelegramBot(){
+  // Nota: i link al bot Telegram sono ora gestiti tramite <a href> nell'HTML
+  // perché i browser bloccano window.open() chiamato da JavaScript come popup.
+  // Questa funzione viene usata SOLO come fallback se chiamata da codice
+  // (es. dentro Telegram WebApp).
   closeContinua();
   const tg = window.Telegram?.WebApp;
 
-  // Se siamo dentro Telegram WebApp, usa l'API Telegram
-  if (tg && tg.initData && tg.initData.length > 0) {
-    if (tg.openTelegramLink) {
-      tg.openTelegramLink(TG_BOT_URL);
-      return;
-    }
-    showToast('✈️ Sei già nel bot Telegram!');
+  if (tg && tg.initData && tg.initData.length > 0 && tg.openTelegramLink) {
+    tg.openTelegramLink(TG_BOT_URL);
     return;
   }
 
-  // Su browser desktop/mobile, prova diverse strategie
+  // Fallback: navigation diretta
   try {
-    // 1. Prova ad aprire come link normale
-    const link = document.createElement('a');
-    link.href = TG_BOT_URL;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('✈️ Apertura Telegram...');
-  } catch(err) {
-    // 2. Fallback: window.location
-    try {
-      window.location.href = TG_BOT_URL;
-    } catch(e) {
-      // 3. Ultima risorsa: mostra link
-      prompt('Apri questo link nel browser:', TG_BOT_URL);
-    }
+    window.location.assign(TG_BOT_URL);
+  } catch(e) {
+    prompt('Apri questo link nel browser:', TG_BOT_URL);
   }
 }
 
