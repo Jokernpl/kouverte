@@ -141,18 +141,19 @@ function loadDB() {
 }
 
 // ============================================================
-// PERSISTENZA: file LOCALE + backup REDIS (Upstash)
+// PERSISTENZA: file LOCALE + backup REDIS (Upstash) + GitHub Gist
 // Risolve il problema di Render filesystem ephemeral
 // ============================================================
 const REDIS_DB_KEY = 'kouverte:vox:db';
 let _serverRedis = null;
 let lastRedisSave = 0;
+let lastGistSave = 0;
 
 function getServerRedis() {
     if (_serverRedis !== null) return _serverRedis;
     if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
         _serverRedis = false;
-        console.log('[DB] Redis non configurato - solo file locale (ephemeral)');
+        console.log('[DB] Redis non configurato - tentativo fallback');
         return null;
     }
     try {
@@ -166,6 +167,60 @@ function getServerRedis() {
     } catch(e) {
         console.error('[DB] Redis init error:', e.message);
         _serverRedis = false;
+        return null;
+    }
+}
+
+// Backup su GitHub Gist (alternativa free se no Redis)
+async function backupToGist(db) {
+    const ghToken = process.env.GITHUB_GIST_TOKEN;
+    const gistId = process.env.GITHUB_GIST_ID;
+    if (!ghToken || !gistId) return false;
+    try {
+        const body = JSON.stringify({
+            files: {
+                'kouverte-data.json': {
+                    content: JSON.stringify({
+                        savedAt: Date.now(),
+                        db: db
+                    })
+                }
+            }
+        });
+        const res = await fetch('https://api.github.com/gists/' + gistId, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': 'token ' + ghToken,
+                'Content-Type': 'application/json',
+                'User-Agent': 'kouverte-server'
+            },
+            body
+        });
+        return res.ok;
+    } catch(e) {
+        console.error('[DB] Gist backup error:', e.message);
+        return false;
+    }
+}
+
+async function restoreFromGist() {
+    const ghToken = process.env.GITHUB_GIST_TOKEN;
+    const gistId = process.env.GITHUB_GIST_ID;
+    if (!ghToken || !gistId) return null;
+    try {
+        const res = await fetch('https://api.github.com/gists/' + gistId, {
+            headers: {
+                'Authorization': 'token ' + ghToken,
+                'User-Agent': 'kouverte-server'
+            }
+        });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const content = data.files?.['kouverte-data.json']?.content;
+        if (!content) return null;
+        return JSON.parse(content);
+    } catch(e) {
+        console.error('[DB] Gist restore error:', e.message);
         return null;
     }
 }
@@ -191,43 +246,71 @@ function saveDB(db) {
             });
         }
     }
+
+    // Backup su GitHub Gist (max ogni 30 secondi, evita rate limit)
+    if (now_ms - lastGistSave > 30000) {
+        lastGistSave = now_ms;
+        backupToGist(db).catch(()=>{});
+    }
 }
 function markDirty() { dbDirty = true; }
 
-// Restore da Redis allo startup (se piu recente di file locale)
+// Restore da Redis o Gist allo startup (il piu recente vince)
 async function tryRestoreFromRedis() {
+    let bestBackup = null;
+    let bestSource = '';
+
+    // 1. Prova Redis
     const r = getServerRedis();
-    if (!r) return false;
-    try {
-        const data = await r.get(REDIS_DB_KEY);
-        if (!data) {
-            console.log('[DB] Redis: nessun backup trovato');
-            return false;
-        }
-        const backup = typeof data === 'string' ? JSON.parse(data) : data;
-        if (!backup.db || !backup.savedAt) return false;
-
-        // Check timestamp file
-        let fileTime = 0;
+    if (r) {
         try {
-            if (fs.existsSync(DB_FILE)) {
-                fileTime = fs.statSync(DB_FILE).mtimeMs;
+            const data = await r.get(REDIS_DB_KEY);
+            if (data) {
+                const backup = typeof data === 'string' ? JSON.parse(data) : data;
+                if (backup.db && backup.savedAt) {
+                    bestBackup = backup;
+                    bestSource = 'Redis';
+                    console.log('[DB] Redis backup trovato:', new Date(backup.savedAt).toISOString());
+                }
             }
-        } catch(e) {}
-
-        if (backup.savedAt > fileTime) {
-            // Redis e' piu recente - ripristina!
-            console.log('[DB] ✅ Ripristinato da Redis backup (timestamp:', new Date(backup.savedAt).toISOString(), ')');
-            console.log('[DB] Utenti ripristinati:', (backup.db.users || []).length);
-            fs.writeFileSync(DB_FILE, JSON.stringify(backup.db, null, 2));
-            return true;
+        } catch(e) {
+            console.error('[DB] Redis read error:', e.message);
         }
-        console.log('[DB] File locale piu recente di Redis backup');
-        return false;
-    } catch(e) {
-        console.error('[DB] Restore error:', e.message);
+    }
+
+    // 2. Prova GitHub Gist (se piu recente di Redis)
+    try {
+        const gistBackup = await restoreFromGist();
+        if (gistBackup && gistBackup.savedAt && gistBackup.db) {
+            console.log('[DB] Gist backup trovato:', new Date(gistBackup.savedAt).toISOString());
+            if (!bestBackup || gistBackup.savedAt > bestBackup.savedAt) {
+                bestBackup = gistBackup;
+                bestSource = 'Gist';
+            }
+        }
+    } catch(e) {}
+
+    if (!bestBackup) {
+        console.log('[DB] Nessun backup remoto trovato');
         return false;
     }
+
+    // Check timestamp file
+    let fileTime = 0;
+    try {
+        if (fs.existsSync(DB_FILE)) {
+            fileTime = fs.statSync(DB_FILE).mtimeMs;
+        }
+    } catch(e) {}
+
+    if (bestBackup.savedAt > fileTime) {
+        console.log('[DB] ✅ Ripristinato da', bestSource, 'backup');
+        console.log('[DB] Utenti ripristinati:', (bestBackup.db.users || []).length);
+        fs.writeFileSync(DB_FILE, JSON.stringify(bestBackup.db, null, 2));
+        return true;
+    }
+    console.log('[DB] File locale piu recente di backup remoto');
+    return false;
 }
 
 let DB = loadDB();
