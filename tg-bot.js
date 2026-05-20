@@ -8,8 +8,9 @@ const fs   = require('fs');
 const path = require('path');
 
 const BOT_TOKEN    = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN || '';
-const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://kouverte-voice.onrender.com/app.html';
+const WEBAPP_URL   = process.env.WEBAPP_URL   || 'https://www.kouverte.com/app.html';
 const BOT_USERNAME = process.env.BOT_USERNAME || 'Kouverte_bot';
+const SITE_URL     = process.env.SITE_URL     || 'https://www.kouverte.com';
 
 if (!BOT_TOKEN || BOT_TOKEN.length < 30) {
   console.error('❌ BOT_TOKEN mancante/invalido.');
@@ -39,12 +40,11 @@ const FRAMES = [
 ];
 const frameById = id => FRAMES.find(f => f.id === id);
 
-// Stanze allineate con ROOMS in app.html
+// Stanze allineate con ROOMS in app.html (aggiornate)
 const APP_ROOMS = [
-  { cat:'🇮🇹 Italia',        rooms:['Italia generale','Nord','Centro','Sud','Sicilia & Sardegna'] },
-  { cat:'🇪🇺 Europa',         rooms:['Europa generale','Est Europa','Ovest Europa'] },
-  { cat:'🌍 Mondo',           rooms:['Chat Mondiale','Americhe','Asia & Oceania','Africa & M.Oriente'] },
-  { cat:'💬 Mood',            rooms:['Late Night','Random','Gaming','Musica','Divertimento','Amicizia'] }
+  { cat:'🌍 Pubbliche', rooms:['Mondo - Chat globale','Italia - Generale italiani','Roma - Capitale','Milano - Nord','Campania - Sud','Calabria - Sud'] },
+  { cat:'🕯️ Speciali',  rooms:['Confessionale - 1 messaggio anonimo al giorno'] },
+  { cat:'🔐 Private',   rooms:['Stanze a codice - Crea con amici (6 caratteri)'] }
 ];
 
 // Tier referral: ad ogni N inviti → cornice regalo + badge
@@ -178,15 +178,20 @@ bot.onText(/^\/start(?:\s+(\S+))?$/, async (msg, match) => {
 
 Benvenuto, *${firstName}*!
 
-🇮🇹 Stanze Italia · Nord, Centro, Sud, Sicilia
-🌍 Europa · Americhe · Asia · Africa
-💬 Mood · Gaming, Musica, Notte Fonda...
+🆕 *NOVITÀ:*
+📹 *Video Chat* — webcam P2P anonima
+🔐 *Stanze a Codice* — crea con i tuoi amici
+
+🌍 *Stanze Pubbliche:*
+🇮🇹 Italia · Roma · Milano · Campania · Calabria
+🌍 Mondo · 🕯️ Confessionale
 
 🔒 *100% Anonimo* — solo una maschera emoji
 🎁 *100 messaggi gratuiti* poi 5€/mese in BTC
 🏆 Badge & cornici da sbloccare
+🎤 *Toggle Mic & Camera* in ogni chat
 
-*Chatta. Conosci. Condividi. Senza essere chi sei.*
+*Chatta. Vediti. Conosci. Senza essere chi sei.*
 
 Tocca il bottone qui sotto 👇`;
 
@@ -194,13 +199,18 @@ Tocca il bottone qui sotto 👇`;
     inline_keyboard: [
       [{ text:'🚀 Entra in KOUVERTE', web_app:{ url: fresh() } }],
       [
+        { text:'🔐 Crea Stanza Codice', callback_data:'create_room' },
+        { text:'🔑 Entra con Codice',   callback_data:'join_room' }
+      ],
+      [
         { text:'🎭 Profilo', callback_data:'profile' },
         { text:'🖼️ Cornici', callback_data:'frames' }
       ],
       [
         { text:'🔗 Invita & guadagna', callback_data:'invite' },
         { text:'⭐ Premium 5€/mese',   callback_data:'premium' }
-      ]
+      ],
+      [{ text:'🌐 Apri sul sito', url: SITE_URL }]
     ]
   };
 
@@ -215,9 +225,11 @@ function showMenu(chatId){
   bot.sendMessage(chatId, '⌨️  Menu rapido', {
     reply_markup: {
       keyboard: [
-        [{ text:'🚀 Entra nella Chat' }, { text:'🎭 Profilo' }],
-        [{ text:'🖼️ Cornici' },          { text:'🔗 Invita & guadagna' }],
-        [{ text:'⭐ Premium' },           { text:'❓ Aiuto' }]
+        [{ text:'🚀 Entra nella Chat' }, { text:'📹 Video Chat' }],
+        [{ text:'🔐 Crea Stanza' },      { text:'🔑 Entra con Codice' }],
+        [{ text:'🎭 Profilo' },          { text:'🖼️ Cornici' }],
+        [{ text:'🔗 Invita & guadagna' }, { text:'⭐ Premium' }],
+        [{ text:'🌐 Sito' },             { text:'❓ Aiuto' }]
       ],
       resize_keyboard: true,
       persistent: true
@@ -347,16 +359,197 @@ function sendRooms(chatId){
 
 ${lines}
 
-Tutte anonime. 100 messaggi gratuiti, poi Premium 5€/mese in BTC.`, {
+Tutte anonime. 100 messaggi gratuiti, poi Premium 5€/mese in BTC.
+
+📹 *In ogni stanza:* video chat P2P + audio anonimo`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text:'🚀 Apri le stanze', web_app:{ url: fresh() } }]
+        [{ text:'🚀 Apri le stanze', web_app:{ url: fresh() } }],
+        [
+          { text:'🔐 Crea Stanza', callback_data:'create_room' },
+          { text:'🔑 Entra con Codice', callback_data:'join_room' }
+        ]
       ]
     }
   }).catch(()=>{});
 }
 bot.onText(/^\/stanze$/i, m => sendRooms(m.chat.id));
+
+// ============================================================
+// /crea — Crea stanza a codice
+// ============================================================
+function sendCreateRoom(chatId){
+  bot.sendMessage(chatId,
+`🔐 *Crea una Stanza Privata*
+
+Crea una stanza solo per te e i tuoi amici!
+
+*Come funziona:*
+1️⃣ Apri l'app KOUVERTE
+2️⃣ Tocca "*➕ Crea Stanza*"
+3️⃣ Scegli nome ed emoji
+4️⃣ Ricevi un *codice di 6 caratteri* (es. K3FD92)
+5️⃣ Condividi il codice con i tuoi amici
+6️⃣ Loro entrano in "*🔑 Entra con Codice*"
+
+🎉 *Caratteristiche:*
+✅ Solo chi ha il codice può entrare
+✅ Video chat e audio anonimi
+✅ 100% privata e sicura
+✅ Niente cronologia salvata`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🔐 Crea Stanza Ora', web_app:{ url: fresh('#create') } }],
+        [{ text:'🔑 Ho già un codice', callback_data:'join_room' }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/crea$/i, m => sendCreateRoom(m.chat.id));
+
+// ============================================================
+// /entra — Entra in stanza tramite codice
+// ============================================================
+function sendJoinRoom(chatId){
+  bot.sendMessage(chatId,
+`🔑 *Entra con un Codice*
+
+Hai ricevuto un codice da un amico?
+
+*Come usare il codice:*
+1️⃣ Apri l'app KOUVERTE
+2️⃣ Tocca "*🔑 Entra con Codice*"
+3️⃣ Inserisci il codice di 6 caratteri
+4️⃣ Sei nella stanza con i tuoi amici!
+
+📹 *In stanza puoi:*
+✅ Attivare/disattivare camera 📹
+✅ Attivare/disattivare microfono 🎤
+✅ Chattare in modo anonimo
+✅ Vedere video di chi è connesso
+
+_Non hai un codice? Crea la tua stanza ora!_`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🔑 Entra con Codice', web_app:{ url: fresh('#join') } }],
+        [{ text:'🔐 Crea la mia Stanza', callback_data:'create_room' }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/entra$/i, m => sendJoinRoom(m.chat.id));
+
+// ============================================================
+// /video — Info su video chat
+// ============================================================
+function sendVideoInfo(chatId){
+  bot.sendMessage(chatId,
+`📹 *Video Chat Anonima*
+
+KOUVERTE ora ha la *video chat P2P*!
+
+🎥 *In ogni stanza:*
+✅ La tua webcam in alto a sinistra
+✅ Quella del tuo interlocutore a destra
+✅ Lista utenti online in basso
+
+🎤 *Controlli:*
+📹 Tocca per disattivare la camera
+🎤 Tocca per disattivare il microfono
+🔇 Quando spento → icona rossa
+📷 Camera OFF → overlay nero
+
+🔒 *Privacy:*
+✅ Comunicazione *P2P diretta* (no server)
+✅ Niente registrazioni
+✅ Niente storage
+✅ 100% Anonimo
+
+⚠️ *Funziona solo su HTTPS* (sito + Telegram WebApp)`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'📹 Prova Video Chat', web_app:{ url: fresh() } }],
+        [{ text:'🌐 Apri sul sito web', url: SITE_URL }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/video$/i, m => sendVideoInfo(m.chat.id));
+
+// ============================================================
+// /sito — Link al sito web
+// ============================================================
+function sendSiteLink(chatId){
+  bot.sendMessage(chatId,
+`🌐 *KOUVERTE sul Web*
+
+Apri KOUVERTE direttamente dal browser:
+
+🔗 *${SITE_URL}*
+
+Funziona su:
+📱 Mobile (Android, iOS)
+💻 Desktop (Chrome, Firefox, Safari)
+🌐 Qualsiasi browser moderno
+
+✅ Anonimato totale
+✅ Video chat HD
+✅ Stanze pubbliche e private
+✅ Niente download, niente account
+
+_Salvalo nei segnalibri per accesso veloce!_`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🌐 Apri ' + SITE_URL.replace('https://',''), url: SITE_URL }],
+        [{ text:'🚀 O usa la WebApp', web_app:{ url: fresh() } }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/sito$/i, m => sendSiteLink(m.chat.id));
+
+// ============================================================
+// /condividi <codice> — Condividi codice stanza
+// ============================================================
+bot.onText(/^\/condividi(?:\s+(\S+))?$/i, (msg, match) => {
+  const chatId = msg.chat.id;
+  const code = match[1] ? match[1].toUpperCase() : null;
+
+  if (!code || code.length !== 6 || !/^[A-Z0-9]{6}$/.test(code)) {
+    return bot.sendMessage(chatId,
+`📤 *Condividi una stanza*
+
+Usa: \`/condividi CODICE\`
+
+Esempio: \`/condividi K3FD92\`
+
+Il codice deve essere di 6 caratteri (lettere maiuscole e numeri).
+
+_Non hai ancora una stanza? Creane una con /crea_`, { parse_mode:'Markdown' }).catch(()=>{});
+  }
+
+  const shareText = `🎭 Unisciti alla mia stanza KOUVERTE!\n\n🔐 Codice: *${code}*\n\nApri 👉 ${SITE_URL}\nO la WebApp del bot @${BOT_USERNAME}\n\nPoi tocca "🔑 Entra con Codice"`;
+
+  bot.sendMessage(chatId,
+`📤 *Codice pronto da condividere!*
+
+${shareText}
+
+Premi il bottone qui sotto per inviarlo ai tuoi amici 👇`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'📤 Condividi nella chat', switch_inline_query: shareText.replace(/\*/g, '') }],
+        [{ text:'🔑 Entra nella stanza', web_app:{ url: fresh('#code=' + code) } }]
+      ]
+    }
+  }).catch(()=>{});
+});
 
 // ============================================================
 // /premium — 1€/mese = 100★ Telegram Stars
@@ -427,8 +620,17 @@ function sendHelp(chatId){
   bot.sendMessage(chatId,
 `❓ *Comandi KOUVERTE*
 
-🚀 /start — Benvenuto
+🚀 /start — Benvenuto + apri app
 ⌨️ /menu — Menu rapido
+🌐 /sito — Apri www.kouverte.com
+
+🆕 *NUOVE FUNZIONALITÀ:*
+📹 /video — Info su video chat anonima
+🔐 /crea — Crea stanza con codice
+🔑 /entra — Entra in stanza con codice
+📤 /condividi <codice> — Condividi codice
+
+📋 *Altri comandi:*
 🎭 /profilo — Il tuo profilo
 💬 /stanze — Lista delle stanze
 🖼️ /cornici — Catalogo cornici
@@ -437,9 +639,15 @@ function sendHelp(chatId){
 ₿ /bitcoin — Info pagamento BTC
 ❓ /aiuto — Questa lista
 
-_KOUVERTE è 100% anonima. Nessun nome reale, nessuna foto._`, {
+🔒 *KOUVERTE è 100% anonima.*
+Nessun nome reale, nessuna foto salvata.`, {
     parse_mode:'Markdown',
-    reply_markup: { inline_keyboard: [[{ text:'🚀 Apri KOUVERTE', web_app:{ url: fresh() } }]] }
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'🚀 Apri KOUVERTE', web_app:{ url: fresh() } }],
+        [{ text:'🌐 Apri sul Sito', url: SITE_URL }]
+      ]
+    }
   }).catch(()=>{});
 }
 bot.onText(/^\/(aiuto|help)$/i, m => sendHelp(m.chat.id));
@@ -451,13 +659,17 @@ bot.on('callback_query', cq => {
   const chatId = cq.message.chat.id;
   bot.answerCallbackQuery(cq.id).catch(()=>{});
   switch(cq.data){
-    case 'profile':  return sendProfile(chatId);
-    case 'frames':   return sendFrames(chatId);
-    case 'invite':   return sendInvite(chatId);
-    case 'rooms':    return sendRooms(chatId);
-    case 'premium':  return sendPremium(chatId);
-    case 'btc_info': return sendBtcInfo(chatId);
-    case 'help':     return sendHelp(chatId);
+    case 'profile':     return sendProfile(chatId);
+    case 'frames':      return sendFrames(chatId);
+    case 'invite':      return sendInvite(chatId);
+    case 'rooms':       return sendRooms(chatId);
+    case 'premium':     return sendPremium(chatId);
+    case 'btc_info':    return sendBtcInfo(chatId);
+    case 'help':        return sendHelp(chatId);
+    case 'create_room': return sendCreateRoom(chatId);
+    case 'join_room':   return sendJoinRoom(chatId);
+    case 'video':       return sendVideoInfo(chatId);
+    case 'site':        return sendSiteLink(chatId);
   }
 });
 
@@ -469,12 +681,32 @@ bot.on('message', msg => {
   const chatId = msg.chat.id;
   const t = msg.text.trim();
 
+  // Rilevamento codice stanza (6 caratteri maiuscoli/numeri)
+  if (/^[A-Z0-9]{6}$/.test(t)) {
+    return bot.sendMessage(chatId,
+`🔍 *Codice rilevato:* \`${t}\`
+
+Vuoi entrare nella stanza con questo codice?`, {
+      parse_mode:'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          [{ text:`🔑 Entra in ${t}`, web_app:{ url: fresh('#code=' + t) } }],
+          [{ text:'❌ Annulla', callback_data:'help' }]
+        ]
+      }
+    }).catch(()=>{});
+  }
+
   const actions = {
     '🚀 Entra nella Chat':     () => bot.sendMessage(chatId, '🚀 Apri KOUVERTE', { reply_markup:{ inline_keyboard:[[{ text:'▶ Apri', web_app:{ url:fresh() } }]] } }).catch(()=>{}),
+    '📹 Video Chat':           () => sendVideoInfo(chatId),
+    '🔐 Crea Stanza':          () => sendCreateRoom(chatId),
+    '🔑 Entra con Codice':     () => sendJoinRoom(chatId),
     '🎭 Profilo':              () => sendProfile(chatId),
     '🖼️ Cornici':              () => sendFrames(chatId),
     '🔗 Invita & guadagna':    () => sendInvite(chatId),
     '⭐ Premium':              () => sendPremium(chatId),
+    '🌐 Sito':                 () => sendSiteLink(chatId),
     '❓ Aiuto':                () => sendHelp(chatId),
   };
   if(actions[t]) return actions[t]();
@@ -488,8 +720,12 @@ bot.on('message', msg => {
   if(/stanz|room/i.test(t))        return sendRooms(chatId);
   if(/profil/i.test(t))            return sendProfile(chatId);
   if(/aiuto|help/i.test(t))        return sendHelp(chatId);
+  if(/video|cam|webcam/i.test(t))  return sendVideoInfo(chatId);
+  if(/crea/i.test(t))              return sendCreateRoom(chatId);
+  if(/entra|codice/i.test(t))      return sendJoinRoom(chatId);
+  if(/sito|web|link/i.test(t))     return sendSiteLink(chatId);
 
-  bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu.').catch(()=>{});
+  bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu per i comandi.\n\n💡 *Suggerimento:* Se hai un codice stanza, scrivilo direttamente!', { parse_mode:'Markdown' }).catch(()=>{});
 });
 
 // ============================================================

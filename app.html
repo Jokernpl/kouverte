@@ -539,6 +539,17 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ═══════════════════════════════
+   TELEGRAM BANNER - HOME
+═══════════════════════════════ */
+.telegram-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0088cc,#229ed9);cursor:pointer;margin-bottom:14px;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,136,204,0.3)}
+.telegram-banner:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,136,204,0.5)}
+.tg-icon{font-size:28px;flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.tg-text{flex:1;min-width:0;color:#fff}
+.tg-title{font-size:14px;font-weight:800;margin-bottom:2px}
+.tg-sub{font-size:11px;opacity:0.9}
+.tg-arrow{font-size:20px;color:#fff;font-weight:bold;flex-shrink:0;opacity:0.8}
+
+/* ═══════════════════════════════
    STANZE A CODICE - HOME
 ═══════════════════════════════ */
 .code-rooms-section{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
@@ -740,6 +751,16 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   </div>
 
   <div class="home-body">
+    <!-- NEW: Telegram Bot quick access -->
+    <div class="telegram-banner" onclick="openTelegramBot()">
+      <div class="tg-icon">✈️</div>
+      <div class="tg-text">
+        <div class="tg-title">Apri il bot Telegram</div>
+        <div class="tg-sub">@Kouverte_bot · Comandi, invita amici e altro</div>
+      </div>
+      <div class="tg-arrow">→</div>
+    </div>
+
     <!-- NEW: Stanze private a codice -->
     <div class="sec-label">🔐 Stanze Private con Codice</div>
     <div class="code-rooms-section">
@@ -793,6 +814,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <div class="code-result-label">✅ Stanza creata! Condividi il codice:</div>
         <div class="code-display" id="generatedCode">------</div>
         <button class="code-copy-btn" onclick="copyRoomCode()">📋 Copia Codice</button>
+        <button class="code-copy-btn" onclick="shareCodeOnTelegram(currentRoomCode)" style="background:linear-gradient(135deg,#0088cc,#229ed9);margin-top:6px">✈️ Condividi su Telegram</button>
         <div class="code-hint">I tuoi amici possono entrare usando questo codice in "Entra con Codice"</div>
       </div>
     </div>
@@ -1128,6 +1150,15 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <span class="menu-text">Info Punti</span>
       </div>
       <div class="menu-divider"></div>
+      <div class="menu-item" onclick="openTelegramBot()" style="background:linear-gradient(135deg,#0088cc15,#229ed915)">
+        <span class="menu-icon">✈️</span>
+        <span class="menu-text">Apri Bot Telegram</span>
+      </div>
+      <div class="menu-item" onclick="shareApp()" style="background:linear-gradient(135deg,#a855f715,#ec489915)">
+        <span class="menu-icon">📤</span>
+        <span class="menu-text">Condividi KOUVERTE</span>
+      </div>
+      <div class="menu-divider"></div>
       <div class="menu-item danger" onclick="logout()">
         <span class="menu-icon">↪️</span>
         <span class="menu-text">Uscita</span>
@@ -1276,7 +1307,7 @@ let chatRoomUsers={};
 document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl();
   syncPremiumStatus();
   // Setup button event listeners
   const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
@@ -2498,6 +2529,81 @@ function showToast(m){const t=document.getElementById('toast');t.textContent=m;t
 function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function saveUser(){setLS('kv4_user',user);}
+
+// ══════════════════════════════════════════
+// TELEGRAM BOT & CONDIVISIONE
+// ══════════════════════════════════════════
+const TG_BOT_USERNAME = 'Kouverte_bot';
+const TG_BOT_URL = 'https://t.me/' + TG_BOT_USERNAME;
+const SITE_URL_FULL = 'https://www.kouverte.com';
+
+function openTelegramBot(){
+  // Se siamo dentro Telegram WebApp, mostra messaggio
+  const tg = window.Telegram?.WebApp;
+  if (tg && tg.initData) {
+    showToast('✈️ Sei già nel bot Telegram!');
+    return;
+  }
+  // Altrimenti apri il bot
+  window.open(TG_BOT_URL, '_blank');
+  closeContinua();
+}
+
+function shareApp(){
+  const shareText = '🎭 Ho scoperto KOUVERTE!\n\n💬 Chat anonima con video\n🔐 Stanze private con codice\n🌍 Utenti da tutto il mondo\n\nProvala qui:\n' + SITE_URL_FULL + '\n\nO sul bot: ' + TG_BOT_URL;
+
+  if (navigator.share) {
+    navigator.share({
+      title: 'KOUVERTE - Chat Anonima',
+      text: shareText,
+      url: SITE_URL_FULL
+    }).then(() => {
+      showToast('📤 Condiviso!');
+    }).catch(err => {
+      if (err.name !== 'AbortError') fallbackShareApp(shareText);
+    });
+  } else {
+    fallbackShareApp(shareText);
+  }
+  closeContinua();
+}
+
+function fallbackShareApp(text){
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('📋 Link copiato negli appunti!');
+    }).catch(() => {
+      window.open('https://t.me/share/url?url=' + encodeURIComponent(SITE_URL_FULL) + '&text=' + encodeURIComponent('🎭 Prova KOUVERTE - Chat Anonima'), '_blank');
+    });
+  } else {
+    window.open('https://t.me/share/url?url=' + encodeURIComponent(SITE_URL_FULL) + '&text=' + encodeURIComponent('🎭 Prova KOUVERTE - Chat Anonima'), '_blank');
+  }
+}
+
+function shareCodeOnTelegram(code){
+  if (!code) return;
+  const text = `🎭 Unisciti alla mia stanza KOUVERTE!\n\n🔐 Codice: ${code}\n\n👉 ${SITE_URL_FULL}\n(Tocca "🔑 Entra con Codice")\n\nO usa il bot: ${TG_BOT_URL}`;
+  const url = 'https://t.me/share/url?url=' + encodeURIComponent(SITE_URL_FULL) + '&text=' + encodeURIComponent(text);
+  window.open(url, '_blank');
+}
+
+// Rileva codice da URL hash (es: #code=ABC123) per join automatico
+function autoJoinFromUrl(){
+  const hash = window.location.hash;
+  if (hash.startsWith('#code=')) {
+    const code = hash.substring(6).toUpperCase();
+    if (/^[A-Z0-9]{6}$/.test(code)) {
+      setTimeout(() => {
+        openJoinCodeRoom();
+        document.getElementById('joinRoomCode').value = code;
+      }, 1500);
+    }
+  } else if (hash === '#create') {
+    setTimeout(() => openCreateCodeRoom(), 1500);
+  } else if (hash === '#join') {
+    setTimeout(() => openJoinCodeRoom(), 1500);
+  }
+}
 
 // ══════════════════════════════════════════
 // STANZE A CODICE - Crea / Entra
