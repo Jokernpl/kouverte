@@ -574,7 +574,48 @@ app.post('/api/auth/login', rateLimit('login', 10, 15 * 60 * 1000), async (req, 
 app.get('/api/auth/me', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
-    res.json({ user: { id: user.id, email: user.email, username: user.username, profile: user.profile, stats: user.stats } });
+    res.json({ user: { id: user.id, email: user.email, username: user.username, profile: user.profile, stats: user.stats, kvData: user.kvData || null } });
+});
+
+// ============================================================
+// KOUVERTE: Sync dati gioco (monete, XP, badge, cornici, etc.)
+// ============================================================
+app.post('/api/kv/sync', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    const data = req.body?.data;
+    if (!data || typeof data !== 'object') return res.status(400).json({ error: 'Dati richiesti' });
+
+    // Whitelist dei campi salvabili (sicurezza)
+    const ALLOWED_FIELDS = [
+        'name', 'face', 'color', 'msgCount', 'freeUsed',
+        'isPremium', 'premExpiry', 'roomsVisited', 'badges',
+        'ownedFrames', 'activeFrame', 'coins', 'streak',
+        'lastLogin', 'lastSpin', 'tempFrames', 'boostUntil',
+        'confessUsedOn', 'favorites', 'blocked', 'xp', 'level'
+    ];
+
+    // Costruisci dati safe
+    const safeData = {};
+    for (const key of ALLOWED_FIELDS) {
+        if (data[key] !== undefined) {
+            safeData[key] = data[key];
+        }
+    }
+    safeData._syncedAt = now();
+
+    user.kvData = safeData;
+    markDirty();
+
+    res.json({ ok: true, syncedAt: safeData._syncedAt });
+});
+
+// Get dati gioco salvati
+app.get('/api/kv/sync', verifyToken, (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    res.json({ ok: true, data: user.kvData || null });
 });
 
 // Lista utenti (per chiamate)

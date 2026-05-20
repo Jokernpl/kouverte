@@ -539,6 +539,14 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .sec-lbl::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ═══════════════════════════════
+   AUTH MODAL - Login/Register Tabs
+═══════════════════════════════ */
+.auth-tabs{display:flex;gap:6px;margin-bottom:16px;background:rgba(255,255,255,0.04);padding:4px;border-radius:10px}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;color:#9ca3af;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;transition:all 0.3s}
+.auth-tab:hover{color:#fff;background:rgba(255,255,255,0.05)}
+.auth-tab.active{background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;box-shadow:0 2px 8px rgba(168,85,247,0.4)}
+
+/* ═══════════════════════════════
    SETTINGS MODAL - Gruppi & Righe
 ═══════════════════════════════ */
 .settings-group{margin-bottom:18px;background:rgba(255,255,255,0.03);border-radius:12px;padding:10px;border:1px solid rgba(139,92,246,0.15)}
@@ -1192,6 +1200,10 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
         <span class="menu-text">Info Punti</span>
       </div>
       <div class="menu-divider"></div>
+      <div class="menu-item" onclick="openAuthModal()" style="background:linear-gradient(135deg,#10b98115,#06b6d415)">
+        <span class="menu-icon">🔑</span>
+        <span class="menu-text" id="authMenuText">Login / Registrati</span>
+      </div>
       <div class="menu-item" onclick="openTelegramBot()" style="background:linear-gradient(135deg,#0088cc15,#229ed915)">
         <span class="menu-icon">✈️</span>
         <span class="menu-text">Apri Bot Telegram</span>
@@ -1350,6 +1362,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
   initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl();
+  // Auto-login + sync
+  tryAutoLogin().then(success => {
+    if (success) {
+      startAutoSync();
+      updateProfileUI();
+      console.log('[Auth] Login automatico OK');
+    }
+  });
+  // Reset password URL
+  if (window.location.hash.startsWith('#reset=')) {
+    const token = window.location.hash.substring(7);
+    setTimeout(() => promptResetPassword(token), 1500);
+  }
   syncPremiumStatus();
   // Setup button event listeners
   const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
@@ -2573,6 +2598,331 @@ function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function saveUser(){setLS('kv4_user',user);}
 
 // ══════════════════════════════════════════
+// LOGIN / REGISTRAZIONE + SYNC DATI
+// ══════════════════════════════════════════
+let authToken = null;
+let isLoggedIn = false;
+
+function getAuthToken(){
+  if (authToken) return authToken;
+  authToken = getLS('kv4_auth_token');
+  return authToken;
+}
+
+function setAuthToken(token){
+  authToken = token;
+  if (token) {
+    setLS('kv4_auth_token', token);
+    isLoggedIn = true;
+    updateAuthMenuText();
+  } else {
+    localStorage.removeItem('kv4_auth_token');
+    isLoggedIn = false;
+    updateAuthMenuText();
+  }
+}
+
+function updateAuthMenuText(){
+  const el = document.getElementById('authMenuText');
+  if (el) el.textContent = isLoggedIn ? `✅ ${user.username || user.name} (Logout account)` : 'Login / Registrati';
+}
+
+async function tryAutoLogin(){
+  const token = getAuthToken();
+  if (!token) return false;
+
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!res.ok) {
+      setAuthToken(null);
+      return false;
+    }
+    const json = await res.json();
+    if (json.user) {
+      isLoggedIn = true;
+      user.username = json.user.username;
+      user.serverEmail = json.user.email;
+      user.serverId = json.user.id;
+
+      // Recupera dati salvati sul server (se più recenti)
+      if (json.user.kvData && json.user.kvData._syncedAt) {
+        const localUpdated = user._localUpdated || 0;
+        if (json.user.kvData._syncedAt > localUpdated) {
+          // Merge dati server con locali
+          Object.assign(user, json.user.kvData);
+          delete user._syncedAt;
+          saveUser();
+          updateProfileUI();
+          updateCoinBar();
+          console.log('[Auth] Dati sincronizzati dal server');
+        }
+      }
+      updateAuthMenuText();
+      return true;
+    }
+  } catch(e) {
+    console.error('[Auth] Errore auto-login:', e);
+  }
+  return false;
+}
+
+// Sync periodica con server (ogni 30 secondi se loggato)
+let syncTimer = null;
+function startAutoSync(){
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(() => {
+    if (isLoggedIn) syncUserDataToServer();
+  }, 30000);
+}
+
+async function syncUserDataToServer(){
+  if (!isLoggedIn || !authToken) return false;
+  try {
+    user._localUpdated = Date.now();
+    const res = await fetch('/api/kv/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
+      body: JSON.stringify({ data: user })
+    });
+    if (res.ok) {
+      console.log('[Sync] Dati salvati sul server');
+      return true;
+    }
+  } catch(e) {
+    console.error('[Sync] Errore:', e);
+  }
+  return false;
+}
+
+function openAuthModal(){
+  closeContinua();
+  if (isLoggedIn) {
+    if (confirm('Vuoi disconnettere l\'account?\n\nI tuoi dati locali resteranno.')) {
+      setAuthToken(null);
+      showToast('🚪 Disconnesso');
+    }
+    return;
+  }
+  const modal = document.getElementById('authModal') || createAuthModal();
+  modal.classList.add('show');
+  document.getElementById('authMode').value = 'login';
+  switchAuthMode('login');
+}
+
+function createAuthModal(){
+  const div = document.createElement('div');
+  div.id = 'authModal';
+  div.className = 'modal-overlay';
+  div.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title" id="authTitle">🔑 Accedi al tuo account</div>
+        <button class="modal-close" onclick="document.getElementById('authModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="authMode" value="login">
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-mode="login" onclick="switchAuthMode('login')">🔑 Accedi</button>
+          <button class="auth-tab" data-mode="register" onclick="switchAuthMode('register')">✨ Registrati</button>
+        </div>
+
+        <div id="authError" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5"></div>
+
+        <label class="modal-label">Email</label>
+        <input type="email" id="authEmail" class="modal-input" placeholder="tu@email.com" autocomplete="email">
+
+        <div id="authUsernameWrap" style="display:none">
+          <label class="modal-label">Username</label>
+          <input type="text" id="authUsername" class="modal-input" placeholder="es. marco_92" autocomplete="username" maxlength="20">
+          <div class="code-hint">3-20 caratteri: lettere, numeri, underscore</div>
+        </div>
+
+        <label class="modal-label">Password</label>
+        <input type="password" id="authPassword" class="modal-input" placeholder="Min 6 caratteri" autocomplete="current-password" minlength="6">
+
+        <div id="authInfo" style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:8px;padding:12px;margin-top:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
+          <strong style="color:#a855f7">🔒 Perché registrarsi?</strong><br>
+          ✅ Mantieni il tuo nome, monete, XP, badge<br>
+          ✅ Accedi da qualsiasi dispositivo<br>
+          ✅ Recovery in caso di reset del browser<br>
+          ✅ I dati sono sempre 100% anonimi
+        </div>
+
+        <div style="text-align:center;margin-top:12px">
+          <a href="#" onclick="forgotPassword();return false" style="font-size:11px;color:#a855f7;text-decoration:none">Password dimenticata?</a>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('authModal').classList.remove('show')">Annulla</button>
+        <button class="modal-btn modal-btn-primary" id="authSubmitBtn" onclick="doAuth()">🔑 Accedi</button>
+      </div>
+    </div>
+  `;
+  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  document.body.appendChild(div);
+  return div;
+}
+
+function switchAuthMode(mode){
+  const isRegister = mode === 'register';
+  document.getElementById('authMode').value = mode;
+  document.getElementById('authTitle').textContent = isRegister ? '✨ Crea il tuo account' : '🔑 Accedi al tuo account';
+  document.getElementById('authUsernameWrap').style.display = isRegister ? 'block' : 'none';
+  document.getElementById('authSubmitBtn').textContent = isRegister ? '✨ Crea Account' : '🔑 Accedi';
+  document.getElementById('authError').style.display = 'none';
+  document.querySelectorAll('.auth-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+}
+
+async function doAuth(){
+  const mode = document.getElementById('authMode').value;
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
+  const password = document.getElementById('authPassword').value;
+  const username = mode === 'register' ? document.getElementById('authUsername').value.trim().toLowerCase() : null;
+
+  const errEl = document.getElementById('authError');
+  errEl.style.display = 'none';
+
+  // Validazione
+  if (!email || !email.includes('@')) {
+    errEl.textContent = '❌ Email non valida';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!password || password.length < 6) {
+    errEl.textContent = '❌ Password minimo 6 caratteri';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (mode === 'register') {
+    if (!username || username.length < 3) {
+      errEl.textContent = '❌ Username minimo 3 caratteri';
+      errEl.style.display = 'block';
+      return;
+    }
+    if (!/^[a-z0-9_]+$/i.test(username)) {
+      errEl.textContent = '❌ Username: solo lettere, numeri, underscore';
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
+  const btn = document.getElementById('authSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Attendi...';
+
+  try {
+    const endpoint = mode === 'register' ? '/api/auth/register' : '/api/auth/login';
+    const body = mode === 'register' ? { email, username, password } : { email, password };
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = '❌ ' + (json.error || 'Errore sconosciuto');
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = mode === 'register' ? '✨ Crea Account' : '🔑 Accedi';
+      return;
+    }
+
+    // Successo!
+    setAuthToken(json.token);
+    if (json.user) {
+      user.username = json.user.username;
+      user.serverEmail = json.user.email;
+      user.serverId = json.user.id;
+
+      // Se è login con dati esistenti, ripristina
+      if (mode === 'login' && json.user.kvData) {
+        Object.assign(user, json.user.kvData);
+        delete user._syncedAt;
+        updateProfileUI();
+        updateCoinBar();
+      }
+
+      saveUser();
+      // Sync immediato al server
+      syncUserDataToServer();
+    }
+
+    document.getElementById('authModal').classList.remove('show');
+    showToast(mode === 'register' ? '✨ Account creato!' : '🔑 Bentornato ' + (json.user.username || ''));
+    startAutoSync();
+  } catch(e) {
+    errEl.textContent = '❌ Errore di connessione: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = mode === 'register' ? '✨ Crea Account' : '🔑 Accedi';
+  }
+}
+
+async function forgotPassword(){
+  const email = prompt('Inserisci la tua email per ricevere le istruzioni di reset:');
+  if (!email) return;
+  try {
+    const res = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() })
+    });
+    const json = await res.json();
+    showToast(json.message || '📧 Controlla la tua email');
+  } catch(e) {
+    showToast('❌ Errore: ' + e.message);
+  }
+}
+
+async function promptResetPassword(token){
+  const newPwd = prompt('🔐 Reset password\n\nInserisci la nuova password (min 6 caratteri):');
+  if (!newPwd || newPwd.length < 6) {
+    showToast('❌ Password troppo corta');
+    return;
+  }
+  try {
+    const res = await fetch('/api/auth/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password: newPwd })
+    });
+    const json = await res.json();
+    if (res.ok && json.token) {
+      setAuthToken(json.token);
+      showToast('✅ Password aggiornata! Ora sei loggato.');
+      // Rimuovi hash dall'URL
+      history.replaceState(null, '', window.location.pathname);
+    } else {
+      showToast('❌ ' + (json.error || 'Token scaduto'));
+    }
+  } catch(e) {
+    showToast('❌ Errore: ' + e.message);
+  }
+}
+
+// Hook saveUser per syncare automaticamente
+const _originalSaveUser = window.saveUser;
+window.saveUser = function(){
+  user._localUpdated = Date.now();
+  setLS('kv4_user', user);
+  // Sync al server se loggato (debounced)
+  if (isLoggedIn) {
+    clearTimeout(window._syncDebounce);
+    window._syncDebounce = setTimeout(() => syncUserDataToServer(), 2000);
+  }
+};
+
+// ══════════════════════════════════════════
 // TELEGRAM BOT & CONDIVISIONE
 // ══════════════════════════════════════════
 const TG_BOT_USERNAME = 'Kouverte_bot';
@@ -2580,15 +2930,39 @@ const TG_BOT_URL = 'https://t.me/' + TG_BOT_USERNAME;
 const SITE_URL_FULL = 'https://www.kouverte.com';
 
 function openTelegramBot(){
-  // Se siamo dentro Telegram WebApp, mostra messaggio
+  closeContinua();
   const tg = window.Telegram?.WebApp;
-  if (tg && tg.initData) {
+
+  // Se siamo dentro Telegram WebApp, usa l'API Telegram
+  if (tg && tg.initData && tg.initData.length > 0) {
+    if (tg.openTelegramLink) {
+      tg.openTelegramLink(TG_BOT_URL);
+      return;
+    }
     showToast('✈️ Sei già nel bot Telegram!');
     return;
   }
-  // Altrimenti apri il bot
-  window.open(TG_BOT_URL, '_blank');
-  closeContinua();
+
+  // Su browser desktop/mobile, prova diverse strategie
+  try {
+    // 1. Prova ad aprire come link normale
+    const link = document.createElement('a');
+    link.href = TG_BOT_URL;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('✈️ Apertura Telegram...');
+  } catch(err) {
+    // 2. Fallback: window.location
+    try {
+      window.location.href = TG_BOT_URL;
+    } catch(e) {
+      // 3. Ultima risorsa: mostra link
+      prompt('Apri questo link nel browser:', TG_BOT_URL);
+    }
+  }
 }
 
 function shareApp(){
