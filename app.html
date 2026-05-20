@@ -693,6 +693,15 @@ html[data-theme="light"] body {
 }
 
 /* ═══════════════════════════════
+   BACKUP CODES MODAL
+═══════════════════════════════ */
+.backup-codes-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.backup-code-row{display:flex;align-items:center;gap:6px;padding:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(168,85,247,0.3);border-radius:8px}
+.backup-code-num{font-size:10px;color:#9ca3af;font-weight:700;min-width:14px}
+.backup-code{font-family:'Courier New',monospace;font-size:14px;font-weight:900;color:#fbbf24;letter-spacing:1px;flex:1;text-align:center;background:none;padding:0}
+.modal-btn.modal-btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+
+/* ═══════════════════════════════
    AUTH MODAL - Login/Register Tabs
 ═══════════════════════════════ */
 .auth-tabs{display:flex;gap:6px;margin-bottom:16px;background:rgba(255,255,255,0.04);padding:4px;border-radius:10px}
@@ -2992,7 +3001,11 @@ function showLoginWall(){
         </div>
 
         <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('login'),100)">🔑 Accedi al mio account</button>
-        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;background:linear-gradient(135deg,#10b981,#059669);margin-bottom:14px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('register'),100)">✨ Crea nuovo account</button>
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:15px;background:linear-gradient(135deg,#10b981,#059669);margin-bottom:8px" onclick="closeLoginWall();openAuthModal();setTimeout(()=>switchAuthMode('register'),100)">✨ Crea nuovo account</button>
+
+        <div style="text-align:center;margin-bottom:14px">
+          <button onclick="openRecoverModal()" style="background:none;border:none;color:#a855f7;font-size:12px;cursor:pointer;text-decoration:underline;font-weight:600">🔓 Password dimenticata?</button>
+        </div>
 
         <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:14px">
           <button onclick="continueAsGuest()" style="background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;text-decoration:underline">Continua senza account (dati locali, perdibili)</button>
@@ -3071,7 +3084,7 @@ function createAuthModal(){
         </div>
 
         <div style="text-align:center;margin-top:12px">
-          <a href="#" onclick="forgotPassword();return false" style="font-size:11px;color:#a855f7;text-decoration:none">Password dimenticata?</a>
+          <a href="#" onclick="openRecoverModal();return false" style="font-size:12px;color:#a855f7;text-decoration:none;font-weight:600">🔓 Password dimenticata? Recupera con codice</a>
         </div>
       </div>
       <div class="modal-footer">
@@ -3238,7 +3251,13 @@ async function doAuth(){
 
     document.getElementById('authModal').classList.remove('show');
     closeLoginWall(); // chiudi anche il login wall se aperto
-    showToast(mode === 'register' ? '✨ Account creato!' : '🔑 Bentornato ' + (json.user.username || ''));
+
+    // Se REGISTRAZIONE: mostra modal con backup codes
+    if (mode === 'register' && json.backupCodes && json.backupCodes.length > 0) {
+      showBackupCodesModal(json.backupCodes, true);
+    } else {
+      showToast('🔑 Bentornato ' + (json.user.username || ''));
+    }
     startAutoSync();
   } catch(e) {
     console.error('[Auth] Errore:', e);
@@ -3246,6 +3265,211 @@ async function doAuth(){
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = mode === 'register' ? '✨ Crea Account' : '🔑 Accedi';
+  }
+}
+
+function showBackupCodesModal(codes, isNew){
+  let modal = document.getElementById('backupCodesModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'backupCodesModal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '99998';
+    document.body.appendChild(modal);
+  }
+  const codesHtml = codes.map((c, i) => `
+    <div class="backup-code-row">
+      <span class="backup-code-num">${i+1}.</span>
+      <code class="backup-code">${c}</code>
+    </div>
+  `).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:460px">
+      <div class="modal-hdr">
+        <div class="modal-title">🔑 ${isNew?'Account creato!':'Nuovi codici di recupero'}</div>
+      </div>
+      <div class="modal-body">
+        <div style="background:rgba(251,191,36,0.1);border:1.5px solid #fbbf24;border-radius:12px;padding:14px;margin-bottom:16px">
+          <div style="font-size:13px;color:#fbbf24;font-weight:800;margin-bottom:6px">⚠️ IMPORTANTE: Salva questi codici!</div>
+          <div style="font-size:11px;color:#cbd5e1;line-height:1.5">
+            Se dimentichi la password, usa uno di questi codici per recuperarla.<br>
+            <strong>Ogni codice funziona UNA SOLA VOLTA</strong>. Salvali in posto sicuro!
+          </div>
+        </div>
+
+        <div class="backup-codes-list">
+          ${codesHtml}
+        </div>
+
+        <button class="code-copy-btn" onclick="copyBackupCodes()" style="margin-top:14px">📋 Copia tutti i codici</button>
+
+        <div style="font-size:10px;color:#9ca3af;text-align:center;margin-top:10px;line-height:1.5">
+          Suggerimento: copiali in Note, Google Keep, o stampa questa pagina.<br>
+          Puoi rigenerare codici in Impostazioni se ne usi tutti.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#cbd5e1;cursor:pointer;margin-right:auto">
+          <input type="checkbox" id="backupCodesConfirm" onchange="document.getElementById('backupCodesCloseBtn').disabled=!this.checked">
+          Ho salvato i codici
+        </label>
+        <button id="backupCodesCloseBtn" class="modal-btn modal-btn-primary" disabled onclick="document.getElementById('backupCodesModal').classList.remove('show')">OK, chiudi</button>
+      </div>
+    </div>
+  `;
+  window._currentBackupCodes = codes;
+  modal.classList.add('show');
+}
+
+function copyBackupCodes(){
+  const codes = window._currentBackupCodes || [];
+  if (codes.length === 0) return;
+  const text = '🔑 KOUVERTE - Codici di Recupero Password\n\nUsername: ' + (user.username || '') +
+    '\nEmail: ' + (user.serverEmail || '') +
+    '\n\nCodici (un uso ciascuno):\n' +
+    codes.map((c,i) => (i+1) + '. ' + c).join('\n') +
+    '\n\nUsa questi codici su www.kouverte.com → Login → "Password dimenticata"';
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 Codici copiati negli appunti!')).catch(() => fallbackCopyText(text));
+  } else {
+    fallbackCopyText(text);
+  }
+}
+
+function fallbackCopyText(text){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); showToast('📋 Codici copiati!'); } catch(e) { showToast('⚠️ Copia manualmente'); }
+  document.body.removeChild(ta);
+}
+
+// ══ Modal Recupera Password (con backup code) ══
+function openRecoverModal(){
+  closeLoginWall();
+  document.getElementById('authModal')?.classList.remove('show');
+  let modal = document.getElementById('recoverModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'recoverModal';
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '99998';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:440px">
+      <div class="modal-hdr">
+        <div class="modal-title">🔓 Recupera Password</div>
+        <button class="modal-close" onclick="document.getElementById('recoverModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="recoverError" style="display:none;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#fca5a5"></div>
+
+        <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.3);border-radius:10px;padding:12px;margin-bottom:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
+          Inserisci il tuo username o email e uno dei codici di recupero che hai salvato alla registrazione.
+        </div>
+
+        <label class="modal-label">Username o Email</label>
+        <input type="text" id="recoverUser" class="modal-input" placeholder="bob_kouverte o tua@email.com">
+
+        <label class="modal-label">Codice di Recupero (8 caratteri)</label>
+        <input type="text" id="recoverCode" class="modal-input code-input" placeholder="ABC12345" maxlength="8" oninput="this.value=this.value.toUpperCase()" style="font-size:18px;letter-spacing:4px">
+
+        <label class="modal-label">Nuova Password</label>
+        <input type="password" id="recoverNewPwd" class="modal-input" placeholder="Min 6 caratteri" minlength="6">
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn modal-btn-secondary" onclick="document.getElementById('recoverModal').classList.remove('show')">Annulla</button>
+        <button class="modal-btn modal-btn-primary" id="recoverSubmitBtn" onclick="doRecover()">🔓 Reimposta Password</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('recoverUser')?.focus(), 100);
+}
+
+async function doRecover(){
+  const userIn = document.getElementById('recoverUser').value.trim().toLowerCase();
+  const code = document.getElementById('recoverCode').value.trim().toUpperCase();
+  const newPwd = document.getElementById('recoverNewPwd').value;
+  const errEl = document.getElementById('recoverError');
+  errEl.style.display = 'none';
+
+  if (!userIn) { errEl.textContent = '❌ Inserisci username o email'; errEl.style.display = 'block'; return; }
+  if (!code || code.length !== 8) { errEl.textContent = '❌ Codice deve essere di 8 caratteri'; errEl.style.display = 'block'; return; }
+  if (!newPwd || newPwd.length < 6) { errEl.textContent = '❌ Password min 6 caratteri'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('recoverSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Verifica...';
+
+  try {
+    // Determina se è email o username
+    const isEmail = userIn.includes('@');
+    const body = isEmail
+      ? { email: userIn, code, newPassword: newPwd }
+      : { username: userIn, code, newPassword: newPwd };
+
+    const res = await fetch('/api/auth/recover-with-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = '❌ ' + (json.error || 'Errore');
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '🔓 Reimposta Password';
+      return;
+    }
+
+    // Successo: login automatico
+    setAuthToken(json.token);
+    if (json.user) {
+      user.username = json.user.username;
+      user.serverEmail = json.user.email;
+      user.serverId = json.user.id;
+      user.name = json.user.username;
+      saveUser();
+      updateProfileUI();
+    }
+    document.getElementById('recoverModal').classList.remove('show');
+    showToast('✅ Password reimpostata! Sei loggato. Codici rimanenti: ' + (json.remainingCodes || 0));
+    startAutoSync();
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = '🔓 Reimposta Password';
+  }
+}
+
+async function regenerateBackupCodes(){
+  if (!isLoggedIn) {
+    showToast('🔐 Devi essere loggato');
+    return;
+  }
+  if (!confirm('Rigenerare i codici di recupero?\n\n⚠️ I vecchi codici NON funzioneranno più.')) return;
+  try {
+    const res = await fetch('/api/me/regenerate-backup-codes', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + authToken }
+    });
+    const json = await res.json();
+    if (res.ok && json.backupCodes) {
+      showBackupCodesModal(json.backupCodes, false);
+    } else {
+      showToast('❌ ' + (json.error || 'Errore'));
+    }
+  } catch(e) {
+    showToast('❌ ' + e.message);
   }
 }
 
@@ -4342,6 +4566,7 @@ function createSettingsModal(){
             <input type="checkbox" id="setAllowDM" onchange="updateSetting('allowDM', this.checked)">
           </label>
           <button class="modal-btn modal-btn-secondary" style="width:100%;margin-top:10px" onclick="clearChatHistory()">🗑️ Cancella cronologia locale</button>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#000;font-weight:700" onclick="regenerateBackupCodes()">🔑 Rigenera codici di recupero password</button>
         </div>
 
         <div class="settings-group">

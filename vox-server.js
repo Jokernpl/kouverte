@@ -613,11 +613,20 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
 
     try {
         const password_hash = await bcrypt.hash(password, 10);
+        // Genera 5 backup codes per il recupero password
+        const backupCodes = [];
+        const backupCodeHashes = [];
+        for (let i = 0; i < 5; i++) {
+            const code = crypto.randomBytes(4).toString('hex').toUpperCase(); // 8 caratteri hex
+            backupCodes.push(code);
+            backupCodeHashes.push(await bcrypt.hash(code, 8)); // hash per sicurezza
+        }
         const user = {
             id: genId('u'),
             email: emailIn,
             username: usernameIn,
             password_hash,
+            backup_code_hashes: backupCodeHashes, // codici hashed
             is_admin: false,
             profile: {
                 avatar_letter: usernameIn.charAt(0).toUpperCase(),
@@ -669,9 +678,88 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
         saveDB(DB);
 
         const token = generateToken(user.id);
-        res.json({ ok: true, token, user: publicUser(user) });
+        res.json({
+            ok: true,
+            token,
+            user: publicUser(user),
+            backupCodes // SOLO al register: codici in chiaro per recupero password
+        });
     } catch(e) {
         res.status(500).json({ error: 'Errore registrazione' });
+    }
+});
+
+// Recupero password con backup code
+app.post('/api/auth/recover-with-code', rateLimit('recover', 10, 15 * 60 * 1000), async (req, res) => {
+    const usernameIn = sanitizeUsername(req.body?.username);
+    const emailIn = sanitizeEmail(req.body?.email);
+    const code = String(req.body?.code || '').toUpperCase().trim();
+    const newPassword = req.body?.newPassword;
+
+    if (!usernameIn && !emailIn) return res.status(400).json({ error: 'Username o email richiesti' });
+    if (!code || code.length !== 8) return res.status(400).json({ error: 'Codice di recupero non valido (8 caratteri)' });
+    if (!newPassword || newPassword.length < 6) return res.status(400).json({ error: 'Nuova password min 6 caratteri' });
+
+    // Trova utente
+    const user = DB.users.find(u =>
+        (usernameIn && u.username === usernameIn) ||
+        (emailIn && u.email === emailIn)
+    );
+    if (!user) {
+        // Non rivelare se esiste o no per sicurezza
+        return res.status(401).json({ error: 'Username/email o codice non corretti' });
+    }
+
+    // Verifica backup codes
+    const codeHashes = user.backup_code_hashes || [];
+    let matchedIndex = -1;
+    for (let i = 0; i < codeHashes.length; i++) {
+        try {
+            const ok = await bcrypt.compare(code, codeHashes[i]);
+            if (ok) { matchedIndex = i; break; }
+        } catch(e) {}
+    }
+
+    if (matchedIndex === -1) {
+        return res.status(401).json({ error: 'Username/email o codice non corretti' });
+    }
+
+    try {
+        // Aggiorna password e rimuovi il codice usato
+        user.password_hash = await bcrypt.hash(newPassword, 10);
+        user.backup_code_hashes.splice(matchedIndex, 1);
+        markDirty();
+
+        const newToken = generateToken(user.id);
+        res.json({
+            ok: true,
+            token: newToken,
+            user: publicUser(user),
+            remainingCodes: user.backup_code_hashes.length
+        });
+    } catch(e) {
+        res.status(500).json({ error: 'Errore reset password' });
+    }
+});
+
+// Genera nuovi backup codes (richiede login)
+app.post('/api/me/regenerate-backup-codes', verifyToken, async (req, res) => {
+    const user = DB.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+
+    try {
+        const newCodes = [];
+        const newHashes = [];
+        for (let i = 0; i < 5; i++) {
+            const code = crypto.randomBytes(4).toString('hex').toUpperCase();
+            newCodes.push(code);
+            newHashes.push(await bcrypt.hash(code, 8));
+        }
+        user.backup_code_hashes = newHashes;
+        markDirty();
+        res.json({ ok: true, backupCodes: newCodes });
+    } catch(e) {
+        res.status(500).json({ error: 'Errore generazione codici' });
     }
 });
 
