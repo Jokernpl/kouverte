@@ -760,6 +760,126 @@ html[data-theme="light"] body {
 .info-item-icon{font-size:18px;width:24px;text-align:center;flex-shrink:0}
 
 /* ═══════════════════════════════
+   FOMO INDICATORS + ROOM CARD PREVIEW
+═══════════════════════════════ */
+.fomo-tag{position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:0.5px;z-index:3;animation:fomoBounce 2s ease-in-out infinite}
+.fomo-tag.almost-full{background:linear-gradient(135deg,#dc2626,#f59e0b);color:#fff;box-shadow:0 0 12px rgba(220,38,38,0.6)}
+.fomo-tag.trending{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;box-shadow:0 0 10px rgba(249,115,22,0.5)}
+.fomo-tag.live{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 0 10px rgba(16,185,129,0.5)}
+@keyframes fomoBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+.rc-preview{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(0,0,0,0.25);border-radius:8px;margin-top:8px;font-size:10px;animation:feedSlideIn 0.5s ease-out}
+.rc-preview-dot{width:5px;height:5px;background:#10b981;border-radius:50%;box-shadow:0 0 4px #10b981;flex-shrink:0;animation:dotPulse 1.5s ease-in-out infinite}
+.rc-preview-name{font-weight:700;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-preview-text{flex:1;color:#cbd5e1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+/* ═══════════════════════════════
+   SHOP PREMIUM
+═══════════════════════════════ */
+.shop-coins-bar{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(249,115,22,0.1));border:1px solid rgba(251,191,36,0.4);border-radius:12px;margin-bottom:14px}
+.shop-cat-title{font-size:11px;color:#a855f7;text-transform:uppercase;letter-spacing:1.5px;font-weight:800;margin:14px 0 8px;padding:6px 10px;background:rgba(168,85,247,0.1);border-radius:8px;border-left:3px solid #a855f7}
+.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.shop-item{position:relative;background:linear-gradient(135deg,rgba(255,255,255,0.04),rgba(168,85,247,0.05));border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:14px 10px;cursor:pointer;transition:all 0.3s;text-align:center;overflow:hidden}
+.shop-item:hover{transform:translateY(-2px);border-color:#a855f7;box-shadow:0 6px 16px rgba(168,85,247,0.3)}
+.shop-item.owned{background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.05));border-color:#10b981}
+.shop-item.active{background:linear-gradient(135deg,rgba(168,85,247,0.2),rgba(236,72,153,0.15));border-color:#a855f7;box-shadow:0 0 12px rgba(168,85,247,0.4)}
+.shop-item.rare{background:linear-gradient(135deg,rgba(251,191,36,0.1),rgba(249,115,22,0.05));border-color:#fbbf24}
+.shop-item.rare:hover{box-shadow:0 6px 16px rgba(251,191,36,0.4)}
+.rare-tag{position:absolute;top:4px;right:4px;background:linear-gradient(135deg,#fbbf24,#f97316);color:#000;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px;letter-spacing:0.5px}
+.active-tag{position:absolute;top:4px;left:4px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-size:8px;font-weight:900;padding:2px 6px;border-radius:6px}
+.shop-emoji{font-size:36px;margin-bottom:6px}
+.shop-name{font-size:12px;font-weight:800;color:#fff;margin-bottom:3px}
+.shop-desc{font-size:10px;color:#9ca3af;line-height:1.3;margin-bottom:8px}
+.shop-price{font-size:11px;font-weight:700;color:#fbbf24;padding-top:6px;border-top:1px solid rgba(168,85,247,0.15)}
+.shop-price.owned{color:#10b981}
+
+/* ═══════════════════════════════
+   MATCH ANONIMO MODAL
+═══════════════════════════════ */
+.match-modes{display:flex;flex-direction:column;gap:8px}
+.match-mode-btn{display:flex;align-items:center;gap:12px;padding:14px;background:linear-gradient(135deg,var(--mc,#a855f7)22,var(--mc,#a855f7)11);border:1.5px solid var(--mc,#a855f7);border-radius:14px;cursor:pointer;color:#fff;transition:all 0.3s}
+.match-mode-btn:hover{transform:translateX(4px);box-shadow:0 4px 12px var(--mc,#a855f7)55}
+.mm-emoji{font-size:32px;flex-shrink:0;width:48px;height:48px;background:rgba(0,0,0,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.mm-info{flex:1;text-align:left;min-width:0}
+.mm-name{font-size:14px;font-weight:800;margin-bottom:2px}
+.mm-desc{font-size:11px;color:#cbd5e1;opacity:0.85}
+.mm-arrow{font-size:20px;color:#fff;font-weight:900;opacity:0.6;flex-shrink:0}
+.match-progress-bar{height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:14px 0 6px}
+.match-progress-fill{height:100%;background:linear-gradient(90deg,#a855f7,#ec4899,#f97316);background-size:200% 100%;animation:matchProgress 2.5s linear forwards,bubbleShift 1s linear infinite}
+@keyframes matchProgress{from{width:0%}to{width:100%}}
+@keyframes matchSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════
+   LOOT BOX
+═══════════════════════════════ */
+.loot-box-img{font-size:96px;margin-bottom:14px;animation:lootShake 2s ease-in-out infinite;filter:drop-shadow(0 0 20px #fbbf24)}
+@keyframes lootShake{0%,100%{transform:rotate(0deg) scale(1)}25%{transform:rotate(-5deg) scale(1.05)}75%{transform:rotate(5deg) scale(1.05)}}
+@keyframes lootReveal{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.3) rotate(15deg);opacity:1}100%{transform:scale(1) rotate(0deg);opacity:1}}
+
+/* ═══════════════════════════════
+   ACHIEVEMENTS & MISSIONI
+═══════════════════════════════ */
+.ach-section-title{font-size:12px;font-weight:800;color:#a855f7;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid rgba(168,85,247,0.2)}
+.mission-row{display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.04);border-radius:10px;margin-bottom:6px;border:1px solid rgba(168,85,247,0.15)}
+.mission-row.done{background:rgba(16,185,129,0.08);border-color:rgba(16,185,129,0.3)}
+.mission-row.claimed{opacity:0.6}
+.mission-icon{font-size:24px;flex-shrink:0;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(168,85,247,0.15);border-radius:10px}
+.mission-info{flex:1;min-width:0}
+.mission-label{font-size:12px;font-weight:700;color:#fff;margin-bottom:4px}
+.mission-progress-bar{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.mission-progress-fill{height:100%;background:linear-gradient(90deg,#a855f7,#ec4899);transition:width 0.4s ease-out}
+.mission-subline{font-size:10px;color:#9ca3af}
+.mission-claim{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer}
+.mission-claim:hover{transform:scale(1.05)}
+.mission-status{font-size:18px;flex-shrink:0}
+.ach-badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ach-badge{position:relative;background:rgba(255,255,255,0.04);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:10px 6px;text-align:center;transition:all 0.2s}
+.ach-badge.unlocked{background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(249,115,22,0.08));border-color:#fbbf24}
+.ach-badge.locked{opacity:0.4;filter:grayscale(1)}
+.ach-badge-emoji{font-size:24px;margin-bottom:4px}
+.ach-badge-name{font-size:9px;font-weight:700;color:#fff;line-height:1.2}
+.ach-badge-lock{position:absolute;top:4px;right:4px;font-size:10px;opacity:0.8}
+
+/* ═══════════════════════════════
+   EFFETTI NICKNAME (premium)
+═══════════════════════════════ */
+.nick-fx-glow{text-shadow:0 0 8px currentColor,0 0 16px currentColor;animation:nickGlow 2s ease-in-out infinite}
+.nick-fx-fire{background:linear-gradient(180deg,#fbbf24,#f97316,#dc2626);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:nickFire 1.5s ease-in-out infinite;text-shadow:0 0 6px #f97316}
+.nick-fx-rainbow{background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:nickRainbow 3s linear infinite}
+.nick-fx-neon{color:#00ffff!important;text-shadow:0 0 6px #00ffff,0 0 12px #00ffff,0 0 18px #00ffff;animation:nickFlicker 4s linear infinite}
+.nick-fx-pulse{animation:nickPulse 1s ease-in-out infinite;display:inline-block}
+.nick-fx-shake{display:inline-block;animation:nickShake 0.5s ease-in-out infinite}
+.nick-fx-vip{background:linear-gradient(135deg,#fbbf24,#fff,#fbbf24);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:vipShine 2s linear infinite;text-shadow:0 0 8px rgba(251,191,36,0.6)}
+@keyframes nickGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.3)}}
+@keyframes nickFire{0%,100%{filter:brightness(1)}50%{filter:brightness(1.2) saturate(1.3)}}
+@keyframes nickRainbow{from{background-position:0% 50%}to{background-position:200% 50%}}
+@keyframes nickFlicker{0%,18%,22%,25%,53%,57%,100%{opacity:1}19%,23%,54%{opacity:0.6}}
+@keyframes nickPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes nickShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-1px)}75%{transform:translateX(1px)}}
+@keyframes vipShine{from{background-position:0% 50%}to{background-position:200% 50%}}
+
+/* ═══════════════════════════════
+   BOLLE CHAT ANIMATE (effetti messaggi)
+═══════════════════════════════ */
+.mbubble-self.bubble-gradient{background:linear-gradient(135deg,#7c3aed,#ec4899,#f97316)!important;background-size:200% 100%;animation:bubbleShift 4s ease infinite}
+.mbubble-self.bubble-neon{background:linear-gradient(135deg,#00ffff22,#ec489922)!important;border:1.5px solid #00ffff;box-shadow:0 0 12px #00ffff,inset 0 0 8px rgba(0,255,255,0.2)}
+.mbubble-self.bubble-fire{background:linear-gradient(180deg,#dc2626,#f97316)!important;box-shadow:0 0 14px rgba(249,115,22,0.6);animation:bubbleFire 1.5s ease-in-out infinite}
+.mbubble-self.bubble-galaxy{background:radial-gradient(circle at 30% 50%,#a855f7,#1e0d40 80%)!important;border:1px solid #8b5cf6;box-shadow:0 0 12px rgba(139,92,246,0.5)}
+.mbubble-self.bubble-rainbow{background:linear-gradient(90deg,#f0044f,#f97316,#fbbf24,#10b981,#3b82f6,#a855f7)!important;background-size:300% 100%;animation:bubbleRainbow 5s linear infinite}
+@keyframes bubbleShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes bubbleFire{0%,100%{box-shadow:0 0 14px rgba(249,115,22,0.6)}50%{box-shadow:0 0 22px rgba(220,38,38,0.8)}}
+@keyframes bubbleRainbow{from{background-position:0% 50%}to{background-position:300% 50%}}
+
+/* Effetti messaggio (particelle one-shot) */
+.msg-effect{position:absolute;pointer-events:none;z-index:5;font-size:18px;animation:effectRise 1.5s ease-out forwards}
+@keyframes effectRise{from{opacity:1;transform:translateY(0) scale(1)}to{opacity:0;transform:translateY(-40px) scale(1.5)}}
+
+/* ═══════════════════════════════
+   GLASSMORPHISM (design premium)
+═══════════════════════════════ */
+.modal-box,.code-room-btn,.room-card{backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+
+/* ═══════════════════════════════
    PROFILO - banner, status, bio
 ═══════════════════════════════ */
 .prof-banner{height:120px;background:linear-gradient(135deg,#7c3aed,#ec4899,#f97316);background-size:300% 300%;animation:bannerShift 8s ease infinite;position:relative;cursor:pointer;overflow:hidden;border-bottom:3px solid #a855f7}
@@ -1465,6 +1585,22 @@ html[data-theme="light"] body {
       <div class="menu-item" onclick="oneshot()">
         <span class="menu-icon">⚡</span>
         <span class="menu-text">OneShot incontra ora</span>
+      </div>
+      <div class="menu-item" onclick="openMatchAnonimo()" style="background:linear-gradient(135deg,#a855f715,#ec489915)">
+        <span class="menu-icon">🎲</span>
+        <span class="menu-text">Match Anonimo Intelligente</span>
+      </div>
+      <div class="menu-item" onclick="openShop()" style="background:linear-gradient(135deg,#fbbf2415,#f9731615)">
+        <span class="menu-icon">🛍️</span>
+        <span class="menu-text">Shop Premium</span>
+      </div>
+      <div class="menu-item" onclick="openLootBox()" style="background:linear-gradient(135deg,#ec489915,#a855f715)">
+        <span class="menu-icon">🎁</span>
+        <span class="menu-text">Cassa Premio Misteriosa</span>
+      </div>
+      <div class="menu-item" onclick="openAchievements()" style="background:linear-gradient(135deg,#10b98115,#06b6d415)">
+        <span class="menu-icon">🏆</span>
+        <span class="menu-text">Achievements & Missioni</span>
       </div>
       <div class="menu-item" onclick="createRoom()">
         <span class="menu-icon">➕</span>
@@ -2209,7 +2345,9 @@ function connectSocket(){
 
 function pubUser(){
   return {id:user.id,name:user.name,color:user.color,face:user.face,
-    frame:user.activeFrame,activeFrame:user.activeFrame,isPremium:isPrem(),msgCount:user.msgCount||0};
+    frame:user.activeFrame,activeFrame:user.activeFrame,
+    active_nickFx:user.active_nickFx,active_bubble:user.active_bubble,
+    isPremium:isPrem(),msgCount:user.msgCount||0};
 }
 
 // ════════════════════════════════════════════
@@ -2589,6 +2727,437 @@ function renderUsersPanel() {
 
 // ══ ROOMS ══
 // ══════════════════════════════════════════
+// SHOP PREMIUM - effetti nick, bolle chat, suoni, ecc.
+// ══════════════════════════════════════════
+var SHOP_ITEMS = [
+  // Effetti nickname
+  { id:'nick_glow',    cat:'Effetti Nickname', emoji:'✨', name:'Nick Glow',     desc:'Il tuo nome brilla soft',          price:50,  type:'nickFx', val:'glow' },
+  { id:'nick_fire',    cat:'Effetti Nickname', emoji:'🔥', name:'Nick Fuoco',    desc:'Nome in fiamme animate',           price:120, type:'nickFx', val:'fire' },
+  { id:'nick_rainbow', cat:'Effetti Nickname', emoji:'🌈', name:'Nick Rainbow',  desc:'Colori arcobaleno scorrevoli',     price:200, type:'nickFx', val:'rainbow' },
+  { id:'nick_neon',    cat:'Effetti Nickname', emoji:'💎', name:'Nick Neon',     desc:'Effetto cyberpunk lampeggiante',   price:180, type:'nickFx', val:'neon' },
+  { id:'nick_pulse',   cat:'Effetti Nickname', emoji:'💗', name:'Nick Pulse',    desc:'Pulsazioni morbide',               price:60,  type:'nickFx', val:'pulse' },
+  { id:'nick_vip',     cat:'Effetti Nickname', emoji:'👑', name:'Nick VIP Gold', desc:'Effetto dorato esclusivo',         price:500, type:'nickFx', val:'vip', rare:true },
+
+  // Bolle chat
+  { id:'bub_gradient', cat:'Bolle Chat',       emoji:'💬', name:'Bolla Gradient',desc:'Sfumature animate',                price:80,  type:'bubble', val:'gradient' },
+  { id:'bub_neon',     cat:'Bolle Chat',       emoji:'🌟', name:'Bolla Neon',    desc:'Bordi luminescenti cyan',          price:150, type:'bubble', val:'neon' },
+  { id:'bub_fire',     cat:'Bolle Chat',       emoji:'🔥', name:'Bolla Fuoco',   desc:'Messaggi in fiamme',               price:180, type:'bubble', val:'fire' },
+  { id:'bub_galaxy',   cat:'Bolle Chat',       emoji:'🌌', name:'Bolla Galassia',desc:'Sfondo spaziale animato',          price:220, type:'bubble', val:'galaxy' },
+  { id:'bub_rainbow',  cat:'Bolle Chat',       emoji:'🎨', name:'Bolla Rainbow', desc:'Tutti i colori scorrevoli',        price:300, type:'bubble', val:'rainbow', rare:true },
+
+  // Suoni entrata
+  { id:'snd_pop',      cat:'Suoni Entrata',    emoji:'🔔', name:'Pop',           desc:'Pop discreto',                     price:40,  type:'enterSound', val:'pop' },
+  { id:'snd_chime',    cat:'Suoni Entrata',    emoji:'🎵', name:'Chime',         desc:'Carillon angelico',                price:60,  type:'enterSound', val:'chime' },
+  { id:'snd_magic',    cat:'Suoni Entrata',    emoji:'✨', name:'Magic',         desc:'Suono magico',                     price:80,  type:'enterSound', val:'magic' },
+  { id:'snd_boom',     cat:'Suoni Entrata',    emoji:'💥', name:'Boom',          desc:'Entrata epica',                    price:120, type:'enterSound', val:'boom' },
+
+  // Effetti messaggi (particelle)
+  { id:'fx_sparkle',   cat:'Effetti Messaggio',emoji:'✨', name:'Scintille',     desc:'Particelle al messaggio',          price:100, type:'msgFx', val:'sparkle' },
+  { id:'fx_heart',     cat:'Effetti Messaggio',emoji:'💖', name:'Cuori',         desc:'Cuori volanti',                    price:120, type:'msgFx', val:'heart' },
+  { id:'fx_fire',      cat:'Effetti Messaggio',emoji:'🔥', name:'Fuoco',         desc:'Fiamme che salgono',               price:150, type:'msgFx', val:'fire' },
+  { id:'fx_star',      cat:'Effetti Messaggio',emoji:'⭐', name:'Stelle',        desc:'Stelle cadenti',                   price:160, type:'msgFx', val:'star' },
+
+  // Temi stanza (cosmetici tutte le tue stanze)
+  { id:'theme_dark',   cat:'Temi Stanza',      emoji:'🌑', name:'Dark Velvet',   desc:'Tema scuro profondo',              price:100, type:'roomTheme', val:'dark' },
+  { id:'theme_purple', cat:'Temi Stanza',      emoji:'💜', name:'Royal Purple',  desc:'Sfumature reali',                  price:130, type:'roomTheme', val:'purple' },
+  { id:'theme_cyber',  cat:'Temi Stanza',      emoji:'🤖', name:'Cyberpunk',     desc:'Neon e griglia',                   price:200, type:'roomTheme', val:'cyber' },
+];
+
+function getShopOwned(){
+  return new Set(user.shopItems || []);
+}
+
+function openShop(){
+  closeContinua();
+  let modal = document.getElementById('shopModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'shopModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+
+  const owned = getShopOwned();
+  const cats = [...new Set(SHOP_ITEMS.map(i => i.cat))];
+  const grid = cats.map(cat => {
+    const items = SHOP_ITEMS.filter(i => i.cat === cat);
+    return `
+      <div class="shop-cat-title">${cat}</div>
+      <div class="shop-grid">
+        ${items.map(it => {
+          const isOwned = owned.has(it.id);
+          const isActive = user['active_' + it.type] === it.val;
+          return `
+            <div class="shop-item ${it.rare?'rare':''} ${isOwned?'owned':''} ${isActive?'active':''}" onclick="shopBuy('${it.id}')">
+              ${it.rare ? '<div class="rare-tag">⭐ RARO</div>' : ''}
+              ${isActive ? '<div class="active-tag">✓ ATTIVO</div>' : ''}
+              <div class="shop-emoji">${it.emoji}</div>
+              <div class="shop-name">${it.name}</div>
+              <div class="shop-desc">${it.desc}</div>
+              <div class="shop-price ${isOwned?'owned':''}">${isOwned ? (isActive ? 'Attivato' : 'Tocca per attivare') : '🪙 ' + it.price}</div>
+            </div>`;
+        }).join('')}
+      </div>
+    `;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-hdr">
+        <div class="modal-title">🛍️ Shop Premium</div>
+        <button class="modal-close" onclick="document.getElementById('shopModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div class="shop-coins-bar">
+          <span style="font-size:14px;font-weight:800;color:#fbbf24">🪙 ${user.coins||0}</span>
+          <span style="font-size:11px;color:#9ca3af">Le tue monete</span>
+        </div>
+        ${grid}
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function shopBuy(itemId){
+  const it = SHOP_ITEMS.find(x => x.id === itemId);
+  if (!it) return;
+  const owned = getShopOwned();
+  if (owned.has(itemId)) {
+    // Toggle attiva/disattiva
+    const key = 'active_' + it.type;
+    if (user[key] === it.val) {
+      user[key] = null;
+      showToast('❌ ' + it.name + ' disattivato');
+    } else {
+      user[key] = it.val;
+      showToast('✅ ' + it.name + ' attivato!');
+    }
+    saveUser();
+    openShop();
+    return;
+  }
+  // Acquista
+  if ((user.coins||0) < it.price) {
+    showToast('⚠️ Servono ' + it.price + ' 🪙 (hai ' + (user.coins||0) + '). Chatta per guadagnare!');
+    return;
+  }
+  if (!confirm('Acquistare ' + it.emoji + ' ' + it.name + ' per ' + it.price + ' 🪙?')) return;
+  user.coins -= it.price;
+  user.shopItems = [...(user.shopItems||[]), itemId];
+  user['active_' + it.type] = it.val;
+  saveUser();
+  updateCoinBar();
+  showToast('🎉 Acquistato e attivato: ' + it.name);
+  openShop();
+}
+
+// ══════════════════════════════════════════
+// MATCH ANONIMO INTELLIGENTE
+// ══════════════════════════════════════════
+var MATCH_MODES = [
+  { id:'random',     emoji:'🎲', name:'Random',        desc:'Conosci chiunque, dovunque',  color:'#a855f7' },
+  { id:'night',      emoji:'🌙', name:'Modalità Notte',desc:'Solo utenti online di notte',  color:'#1e1b4b' },
+  { id:'flirt',      emoji:'💘', name:'Flirt',         desc:'Cerca anime gemelle',          color:'#ec4899' },
+  { id:'gaming',     emoji:'🎮', name:'Gaming',        desc:'Trova compagni di gioco',     color:'#10b981' },
+  { id:'confess',    emoji:'🕯️', name:'Confessioni',   desc:'Sfogo anonimo profondo',      color:'#8b5cf6' },
+  { id:'mystery',    emoji:'🎭', name:'Misterioso',    desc:'Tutto avvolto nel mistero',   color:'#6b21a8' },
+  { id:'fast',       emoji:'⚡', name:'Velocissima',   desc:'Chat lampo 60 secondi',       color:'#f59e0b' },
+];
+
+function openMatchAnonimo(){
+  closeContinua();
+  let modal = document.getElementById('matchModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'matchModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-hdr">
+        <div class="modal-title">🎲 Match Anonimo</div>
+        <button class="modal-close" onclick="document.getElementById('matchModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="text-align:center;margin-bottom:14px">
+          <div style="font-size:13px;color:#cbd5e1;line-height:1.5">Trova persone simili a te in base alla modalità</div>
+        </div>
+        <div class="match-modes">
+          ${MATCH_MODES.map(m => `
+            <button class="match-mode-btn" onclick="startMatch('${m.id}')" style="--mc:${m.color}">
+              <div class="mm-emoji">${m.emoji}</div>
+              <div class="mm-info">
+                <div class="mm-name">${m.name}</div>
+                <div class="mm-desc">${m.desc}</div>
+              </div>
+              <div class="mm-arrow">→</div>
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function startMatch(modeId){
+  const mode = MATCH_MODES.find(m => m.id === modeId);
+  if (!mode) return;
+  document.getElementById('matchModal').classList.remove('show');
+
+  // Cerca utenti reali online + ROOMS
+  const publicRooms = (typeof ROOMS !== 'undefined') ? ROOMS.filter(r => r.tier === 'public') : [];
+  if (publicRooms.length === 0) {
+    showToast('⚠️ Nessuna stanza disponibile');
+    return;
+  }
+
+  // Loading dramatico
+  showMatchLoading(mode, () => {
+    const room = publicRooms[Math.floor(Math.random() * publicRooms.length)];
+    if (typeof enterRoom === 'function') {
+      showToast('🎯 ' + mode.emoji + ' Match trovato in ' + room.name + '!');
+      enterRoom(room.id);
+    }
+  });
+}
+
+function showMatchLoading(mode, onComplete){
+  let modal = document.getElementById('matchLoadingModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'matchLoadingModal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:380px;background:linear-gradient(135deg,${mode.color}33,${mode.color}11)">
+      <div class="modal-body" style="text-align:center;padding:40px 24px">
+        <div style="font-size:80px;margin-bottom:20px;animation:matchSpin 1.5s linear infinite">${mode.emoji}</div>
+        <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:6px">Ricerca in corso...</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:20px">Modalità: ${mode.name}</div>
+        <div class="match-progress-bar"><div class="match-progress-fill"></div></div>
+        <div id="matchSearchText" style="font-size:11px;color:#a855f7;margin-top:14px;font-weight:600">Connessione...</div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+
+  const searchSteps = [
+    '🔍 Connessione al server...',
+    '🌐 Cercando utenti compatibili...',
+    '🎯 Analizzando interessi...',
+    '✨ Match trovato!'
+  ];
+  let stepIdx = 0;
+  const stepTimer = setInterval(() => {
+    stepIdx++;
+    const el = document.getElementById('matchSearchText');
+    if (el && searchSteps[stepIdx]) el.textContent = searchSteps[stepIdx];
+    if (stepIdx >= searchSteps.length - 1) clearInterval(stepTimer);
+  }, 700);
+
+  setTimeout(() => {
+    modal.classList.remove('show');
+    if (onComplete) onComplete();
+  }, 2800);
+}
+
+// ══════════════════════════════════════════
+// LOOT BOX (Casse premio)
+// ══════════════════════════════════════════
+var LOOT_BOX_PRICE = 50;
+var LOOT_REWARDS = [
+  { type:'coins', amount:30, label:'30 monete', emoji:'🪙', rarity:'common' },
+  { type:'coins', amount:100, label:'100 monete', emoji:'🪙', rarity:'rare' },
+  { type:'coins', amount:300, label:'300 monete', emoji:'🪙', rarity:'epic' },
+  { type:'xp', amount:50, label:'50 XP', emoji:'⭐', rarity:'common' },
+  { type:'xp', amount:200, label:'200 XP', emoji:'⭐', rarity:'rare' },
+  { type:'badge', id:'wheel_winner', label:'Badge Ruota Fortuna', emoji:'🎰', rarity:'rare' },
+  { type:'frame', id:'silver', label:'Cornice Silver', emoji:'🥈', rarity:'common' },
+  { type:'frame', id:'gold', label:'Cornice Gold', emoji:'🥇', rarity:'epic' },
+  { type:'frame', id:'diamond', label:'Cornice Diamond', emoji:'💎', rarity:'legendary' },
+  { type:'frame', id:'rainbow', label:'Cornice Arcobaleno', emoji:'🌈', rarity:'legendary' },
+  { type:'shop', id:'nick_glow', label:'Effetto Nick Glow', emoji:'✨', rarity:'rare' },
+  { type:'shop', id:'bub_gradient', label:'Bolla Gradient', emoji:'💬', rarity:'rare' },
+];
+
+function openLootBox(){
+  closeContinua();
+  let modal = document.getElementById('lootModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'lootModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:420px">
+      <div class="modal-hdr">
+        <div class="modal-title">🎁 Cassa Premio</div>
+        <button class="modal-close" onclick="document.getElementById('lootModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;padding:30px 20px">
+        <div class="loot-box-img">🎁</div>
+        <div style="font-size:14px;color:#cbd5e1;margin-bottom:16px;line-height:1.5">
+          Apri una cassa misteriosa per <strong>${LOOT_BOX_PRICE} 🪙</strong>!<br>
+          <span style="font-size:11px;color:#9ca3af">Puoi vincere monete, badge, cornici o effetti shop</span>
+        </div>
+        <div style="display:flex;justify-content:space-around;margin-bottom:18px;font-size:10px;color:#9ca3af">
+          <span>🟢 60% Comune</span><span>🔵 25% Raro</span><span>🟣 12% Epico</span><span>🟡 3% Leggendario</span>
+        </div>
+        <div style="background:rgba(251,191,36,0.1);border:1px solid #fbbf24;border-radius:10px;padding:10px;margin-bottom:14px">
+          <span style="font-size:13px;color:#fbbf24;font-weight:700">🪙 Hai ${user.coins||0} monete</span>
+        </div>
+        <button class="modal-btn modal-btn-primary" style="width:100%;padding:14px;font-size:14px;background:linear-gradient(135deg,#ec4899,#a855f7)" onclick="rollLootBox()">🎁 Apri Cassa (${LOOT_BOX_PRICE} 🪙)</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function rollLootBox(){
+  if ((user.coins||0) < LOOT_BOX_PRICE) {
+    showToast('⚠️ Servono ' + LOOT_BOX_PRICE + ' 🪙 (hai ' + (user.coins||0) + ')');
+    return;
+  }
+  user.coins -= LOOT_BOX_PRICE;
+
+  // Rarity probabilities
+  const roll = Math.random();
+  let rarity = 'common';
+  if (roll < 0.03) rarity = 'legendary';
+  else if (roll < 0.15) rarity = 'epic';
+  else if (roll < 0.40) rarity = 'rare';
+
+  const pool = LOOT_REWARDS.filter(r => r.rarity === rarity);
+  const reward = pool[Math.floor(Math.random() * pool.length)];
+
+  // Applica reward
+  if (reward.type === 'coins') user.coins += reward.amount;
+  else if (reward.type === 'xp') user.xp = (user.xp||0) + reward.amount;
+  else if (reward.type === 'badge') {
+    user.badges = [...new Set([...(user.badges||[]), reward.id])];
+  } else if (reward.type === 'frame') {
+    user.ownedFrames = [...new Set([...(user.ownedFrames||[]), reward.id])];
+  } else if (reward.type === 'shop') {
+    user.shopItems = [...new Set([...(user.shopItems||[]), reward.id])];
+  }
+
+  saveUser();
+  updateCoinBar();
+
+  // Show reward dramatically
+  showLootReward(reward, rarity);
+}
+
+function showLootReward(reward, rarity){
+  const modal = document.getElementById('lootModal');
+  if (!modal) return;
+  const rarityColor = { common:'#94a3b8', rare:'#3b82f6', epic:'#a855f7', legendary:'#fbbf24' }[rarity];
+  const rarityLabel = { common:'COMUNE', rare:'RARO', epic:'EPICO', legendary:'LEGGENDARIO' }[rarity];
+  modal.querySelector('.modal-box').innerHTML = `
+    <div class="modal-hdr">
+      <div class="modal-title">🎁 Premio Vinto!</div>
+      <button class="modal-close" onclick="document.getElementById('lootModal').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:36px 24px;background:linear-gradient(135deg,${rarityColor}22,${rarityColor}11)">
+      <div class="loot-reward-emoji" style="font-size:96px;animation:lootReveal 1s ease-out;text-shadow:0 0 40px ${rarityColor}">${reward.emoji}</div>
+      <div style="font-size:11px;font-weight:900;color:${rarityColor};letter-spacing:2px;margin:14px 0 4px">${rarityLabel}</div>
+      <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:20px">${reward.label}</div>
+      <button class="modal-btn modal-btn-primary" style="width:100%;padding:12px" onclick="openLootBox()">🎁 Apri un'altra (${LOOT_BOX_PRICE} 🪙)</button>
+      <button onclick="document.getElementById('lootModal').classList.remove('show')" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;margin-top:10px;text-decoration:underline">Chiudi</button>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════
+// ACHIEVEMENTS & MISSIONI
+// ══════════════════════════════════════════
+function openAchievements(){
+  closeContinua();
+  const m = getDailyProgress ? getDailyProgress() : { progress:{}, claimed:{} };
+
+  let modal = document.getElementById('achievementsModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'achievementsModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+
+  const missionsHtml = (typeof DAILY_MISSIONS !== 'undefined' ? DAILY_MISSIONS : []).map(ms => {
+    const prog = m.progress[ms.id] || 0;
+    const claimed = m.claimed[ms.id];
+    const done = prog >= ms.target;
+    const pct = Math.min(100, (prog/ms.target)*100);
+    return `
+      <div class="mission-row ${done?'done':''} ${claimed?'claimed':''}">
+        <div class="mission-icon">${ms.icon}</div>
+        <div class="mission-info">
+          <div class="mission-label">${ms.label}</div>
+          <div class="mission-progress-bar"><div class="mission-progress-fill" style="width:${pct}%"></div></div>
+          <div class="mission-subline">${prog}/${ms.target} · +${ms.reward} 🪙</div>
+        </div>
+        ${claimed ? '<div class="mission-status">✅</div>' :
+          done ? '<button class="mission-claim" onclick="claimMission(\''+ms.id+'\')">Riscatta</button>' :
+          '<div class="mission-status">⏳</div>'}
+      </div>
+    `;
+  }).join('');
+
+  const allBadges = (typeof BADGES !== 'undefined') ? BADGES : [];
+  const userBadges = new Set(user.badges || []);
+  const badgesHtml = allBadges.map(b => {
+    const unlocked = userBadges.has(b.id);
+    return `
+      <div class="ach-badge ${unlocked?'unlocked':'locked'}" title="${b.desc||''}">
+        <div class="ach-badge-emoji">${b.emoji}</div>
+        <div class="ach-badge-name">${b.name}</div>
+        ${!unlocked ? '<div class="ach-badge-lock">🔒</div>' : ''}
+      </div>
+    `;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:500px">
+      <div class="modal-hdr">
+        <div class="modal-title">🏆 Achievements & Missioni</div>
+        <button class="modal-close" onclick="document.getElementById('achievementsModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+        <div class="ach-section-title">🎯 Missioni Giornaliere</div>
+        ${missionsHtml || '<div style="color:#9ca3af;text-align:center;padding:14px;font-size:12px">Nessuna missione attiva</div>'}
+
+        <div class="ach-section-title" style="margin-top:20px">🏆 Badge (${userBadges.size}/${allBadges.length})</div>
+        <div class="ach-badges-grid">${badgesHtml}</div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function claimMission(id){
+  const m = getDailyProgress();
+  const ms = DAILY_MISSIONS.find(x => x.id === id);
+  if (!ms) return;
+  if (m.claimed[id]) return;
+  if ((m.progress[id]||0) < ms.target) return;
+  m.claimed[id] = true;
+  user.coins = (user.coins || 0) + ms.reward;
+  saveUser();
+  updateCoinBar();
+  showToast('🎉 Missione completata! +' + ms.reward + ' 🪙');
+  openAchievements();
+}
+
+// ══════════════════════════════════════════
 // PROFILO: banner, stato, bio
 // ══════════════════════════════════════════
 var PROFILE_BANNERS = ['default','b-galaxy','b-sunset','b-ocean','b-forest','b-fire','b-neon'];
@@ -2864,8 +3433,35 @@ function roomCard(r){
   // Nome stanza pulito: rimuovo l'emoji/bandiera dal nome se già presente (es. "🇮🇹 Italia" → "Italia")
   const cleanName=r.name.replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name;
 
+  // FOMO indicators (basati su utenti REALI)
+  const MAX_CAPACITY = 30;
+  const pctFull = (cnt / MAX_CAPACITY) * 100;
+  let fomoIndicator = '';
+  if (pctFull >= 80 && cnt > 0) {
+    fomoIndicator = '<div class="fomo-tag almost-full">⚡ QUASI PIENA</div>';
+  } else if (cnt >= 15) {
+    fomoIndicator = '<div class="fomo-tag trending">🔥 TRENDING</div>';
+  } else if (cnt >= 5) {
+    fomoIndicator = '<div class="fomo-tag live">🔴 LIVE</div>';
+  }
+
+  // Live preview: mostra ultimo messaggio (se disponibile)
+  const preview = (typeof roomPreviews === 'object' && roomPreviews[r.id]) ? roomPreviews[r.id] : [];
+  const lastMsg = preview[preview.length - 1];
+  const previewHtml = lastMsg && lastMsg.text ? `
+    <div class="rc-preview">
+      <div class="rc-preview-dot"></div>
+      <span class="rc-preview-name" style="color:${lastMsg.color||'#a855f7'}">${esc((lastMsg.name||'?').substring(0,10))}:</span>
+      <span class="rc-preview-text">${esc(lastMsg.text.substring(0,40))}</span>
+    </div>
+  ` : '';
+
+  // Animazione "live-room" se più di 5 utenti
+  const liveCls = cnt >= 5 ? ' live-room' : '';
+
   return `
-  <div class="room-card" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
+  <div class="room-card${liveCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
+    ${fomoIndicator}
 
     <!-- Badge row in alto -->
     <div class="rc-badges">
@@ -2881,6 +3477,8 @@ function roomCard(r){
       <div class="rc-emoji-big">${r.emoji}</div>
       <div class="rc-tile-name">${esc(cleanName)}</div>
     </div>
+
+    ${previewHtml}
 
     <!-- Footer: tap-to-enter -->
     <div class="rc-foot">
@@ -2985,6 +3583,11 @@ function appendMsg(msg){
   // Cornice attiva mittente: per me uso user.activeFrame, per altri msg.activeFrame
   const senderFrame = isSelf ? (user.activeFrame || 'none') : (msg.activeFrame || 'none');
   const frameClass = (senderFrame && senderFrame !== 'none') ? ' frame-' + senderFrame : '';
+  // Effetti shop: nickFx + bubbleFx
+  const senderNickFx = isSelf ? user.active_nickFx : msg.active_nickFx;
+  const nickFxClass = senderNickFx ? ' nick-fx-' + senderNickFx : '';
+  const senderBubbleFx = isSelf ? user.active_bubble : msg.active_bubble;
+  const bubbleFxClass = senderBubbleFx ? ' bubble-' + senderBubbleFx : '';
 
   if(isSelf){
     // Bubble viola a destra + avatar del MIO utente
@@ -2998,8 +3601,8 @@ function appendMsg(msg){
         ${myFace}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
-        ${!consec?`<div style="font-size:11px;color:${myCol};font-weight:700;margin-bottom:3px;text-align:right">${esc(user.name)} <span style="color:#9ca3af;font-weight:600">lvl ${myLvl}</span></div>`:''}
-        <div class="mbubble-self">${esc(msg.text)}</div>
+        ${!consec?`<div style="font-size:11px;color:${myCol};font-weight:700;margin-bottom:3px;text-align:right"><span class="${(nickFxClass||'').trim()}" style="color:${myCol}">${esc(user.name)}</span> <span style="color:#9ca3af;font-weight:600">lvl ${myLvl}</span></div>`:''}
+        <div class="mbubble-self${bubbleFxClass}">${esc(msg.text)}</div>
         <div class="mtime">${time}</div>
       </div>`;
   } else {
@@ -3020,7 +3623,7 @@ function appendMsg(msg){
       </div>
       <div class="mbody">
         <div class="mline">
-          ${!consec?`<span class="mname" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
+          ${!consec?`<span class="mname${nickFxClass}" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
           <span class="mtext">${esc(msg.text)}</span>
         </div>
         ${!consec?`<div class="mtime">${time}</div>`:''}
@@ -3059,6 +3662,7 @@ function sendMsg(){
   } : {
     userId:user.id, name:user.name, color:user.color,
     face:user.face, frame:user.activeFrame, activeFrame:user.activeFrame,
+    active_nickFx:user.active_nickFx, active_bubble:user.active_bubble,
     isPremium:isPrem(),
     text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount
   };

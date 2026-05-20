@@ -1013,7 +1013,9 @@ app.post('/api/kv/sync', verifyToken, (req, res) => {
         'ownedFrames', 'activeFrame', 'coins', 'streak',
         'lastLogin', 'lastSpin', 'tempFrames', 'boostUntil',
         'confessUsedOn', 'favorites', 'blocked', 'xp', 'level',
-        'bio', 'statusEmoji', 'statusText', 'banner', 'dailyMissions'
+        'bio', 'statusEmoji', 'statusText', 'banner', 'dailyMissions',
+        'shopItems', 'active_nickFx', 'active_bubble', 'active_enterSound',
+        'active_msgFx', 'active_roomTheme'
     ];
 
     // Costruisci dati safe
@@ -3494,6 +3496,8 @@ io.on('connection', (socket) => {
             face:      String(msg.face   || '🎭').slice(0, 4),
             mask:      String(msg.mask   || '🎭').slice(0, 4),
             activeFrame: /^[a-z]{1,20}$/i.test(msg.activeFrame || '') ? msg.activeFrame : 'none',
+            active_nickFx: /^[a-z_]{1,20}$/i.test(msg.active_nickFx || '') ? msg.active_nickFx : null,
+            active_bubble: /^[a-z_]{1,20}$/i.test(msg.active_bubble || '') ? msg.active_bubble : null,
             isPremium: !!msg.isPremium,
             msgCount:  Math.max(0, Math.min(99999, parseInt(msg.msgCount) || 0)),
             text:      String(msg.text).slice(0, 800),
