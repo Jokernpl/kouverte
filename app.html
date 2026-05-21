@@ -2036,23 +2036,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   window.hapticOk = () => { try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch(e){} };
 
-  // ───── PWA: registra Service Worker per update automatici + install ─────
+  // ───── PWA: Service Worker DISATTIVATO ─────
+  // SW rimosso perché causava problemi di cache (HTML/JS vecchi serviti dopo deploy).
+  // sw.js attuale è un "killer" che disinstalla eventuali SW residui dei browser
+  // che li avevano installati dalle versioni precedenti, poi NON si re-registra.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      console.log('[PWA] Service Worker registrato');
-      // Check update ogni 30 sec quando l'app è aperta
-      setInterval(() => reg.update(), 30000);
-      reg.addEventListener('updatefound', () => {
-        const nw = reg.installing;
-        if (nw) nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-            // Update disponibile → reload silenzioso
-            console.log('[PWA] Update disponibile, ricarico...');
-            window.location.reload();
-          }
-        });
-      });
-    }).catch(e => console.warn('[PWA] SW register fallito:', e));
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      // Trigger update sui SW esistenti (così scaricano il killer-sw e si suicidano)
+      regs.forEach(r => { try { r.update(); } catch(e) {} });
+    }).catch(()=>{});
   }
   // PWA install: rileva se non già installato e mostra banner
   let _installPrompt = null;
