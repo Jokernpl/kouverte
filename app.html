@@ -2948,7 +2948,8 @@ function setupPeerConnection(userId) {
     theirVideo.oncanplay = tryPlay;
 
     // Click per attivare audio (richiesto da autoplay policy quando audio non-muted)
-    theirVideo.onclick = () => {
+    theirVideo.onclick = (e) => {
+      e.stopPropagation();
       theirVideo.muted = !theirVideo.muted;
       console.log('[WebRTC] theirVideo muted:', theirVideo.muted);
     };
