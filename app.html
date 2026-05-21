@@ -3523,6 +3523,10 @@ var MATCH_MODES = [
 
 function openMatchAnonimo(){
   closeContinua();
+  if (!MATCH_MODES || !Array.isArray(MATCH_MODES) || MATCH_MODES.length === 0) {
+    showToast('⚠️ Modalità match non disponibili');
+    return;
+  }
   let modal = document.getElementById('matchModal');
   if (!modal) {
     modal = document.createElement('div');
