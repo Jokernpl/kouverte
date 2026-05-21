@@ -449,7 +449,8 @@ body{position:relative}
 .prof-avatar-hero.frame-rainbow{border:4px solid transparent;background:linear-gradient(#1a0f2e,#1a0f2e) padding-box,linear-gradient(45deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f) border-box;animation:rainbow-spin 3s linear infinite}
 .prof-avatar-hero.frame-galaxy{border-color:#8b5cf6;box-shadow:0 0 28px #8b5cf6,inset 0 0 15px rgba(139,92,246,0.5);background:radial-gradient(circle,#4c1d95,#1a0f2e)}
 .prof-avatar-hero.frame-royal{border:4px double #fbbf24;box-shadow:0 0 24px #fbbf24,inset 0 0 8px rgba(251,191,36,0.4)}
-.prof-avatar-hero.frame-skull{border-color:#1f2937;box-shadow:0 0 14px #1f2937,inset 0 0 8px rgba(239,68,68,0.5)}
+.prof-avatar-hero.frame-skull{border-color:#9ca3af;box-shadow:0 0 18px rgba(239,68,68,0.8),inset 0 0 12px rgba(239,68,68,0.4);position:relative}
+.prof-avatar-hero.frame-skull::after{content:'💀';position:absolute;top:-12px;right:-8px;font-size:22px;text-shadow:0 0 8px rgba(239,68,68,0.9);animation:flame-pulse 2s ease-in-out infinite;pointer-events:none}
 @keyframes flame-pulse{0%,100%{box-shadow:0 0 22px #f97316}50%{box-shadow:0 0 35px #ef4444,0 0 50px #f97316}}
 @keyframes diamond-shimmer{0%,100%{box-shadow:0 0 24px #38bdf8}50%{box-shadow:0 0 40px #38bdf8,0 0 60px #60a5fa}}
 @keyframes rainbow-spin{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
@@ -466,7 +467,7 @@ body{position:relative}
 .mavatar.frame-rainbow{border:2px solid transparent;background:linear-gradient(#7c3aed,#7c3aed) padding-box,linear-gradient(45deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f) border-box}
 .mavatar.frame-galaxy{box-shadow:0 0 14px #8b5cf6;border:2px solid #8b5cf6}
 .mavatar.frame-royal{border:2px double #fbbf24;box-shadow:0 0 12px #fbbf24}
-.mavatar.frame-skull{border:2px solid #1f2937;box-shadow:0 0 8px rgba(239,68,68,0.5)}
+.mavatar.frame-skull{border:2px solid #9ca3af;box-shadow:0 0 10px rgba(239,68,68,0.8)}
 
 /* Anche user-chip */
 .user-chip-avatar.frame-silver{border:2px solid #94a3b8;box-shadow:0 0 6px #94a3b8}
@@ -476,6 +477,17 @@ body{position:relative}
 .user-chip-avatar.frame-diamond{border:2px solid #38bdf8;box-shadow:0 0 12px #38bdf8}
 .user-chip-avatar.frame-neon{border:2px solid #00ffff;box-shadow:0 0 12px #00ffff}
 .prof-name{font-size:22px;font-weight:900;animation:logo-glow 3s ease-in-out infinite}
+.prof-username{font-size:12px;color:#a78bfa;margin-top:2px;font-weight:600;letter-spacing:0.3px}
+.prof-avatar-edit-hint{position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#ec4899);display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid #12082a;box-shadow:0 2px 8px rgba(0,0,0,0.4);pointer-events:none}
+.avatar-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:600;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px)}
+.avatar-menu-overlay.show{display:flex}
+.avatar-menu-sheet{background:linear-gradient(180deg,#1e1040,#150c30);border:1px solid rgba(139,92,246,.3);border-radius:24px 24px 0 0;padding:18px;width:100%;max-width:480px;max-height:80vh;overflow-y:auto}
+.avatar-menu-title{font-size:17px;font-weight:900;text-align:center;background:linear-gradient(135deg,#c084fc,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:14px}
+.avatar-menu-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.avatar-emoji-opt{width:46px;height:46px;border-radius:50%;background:rgba(168,85,247,0.1);border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;transition:all 0.2s}
+.avatar-emoji-opt:hover,.avatar-emoji-opt:active{transform:scale(1.1);background:rgba(168,85,247,0.3)}
+.avatar-emoji-opt.selected{border-color:#a855f7;background:linear-gradient(135deg,#7c3aed,#ec4899);box-shadow:0 0 16px rgba(168,85,247,0.6)}
+.avatar-menu-section-title{font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin:14px 0 8px}
 .prof-anon{font-size:11px;color:#6b7280;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px}
 .prem-badge{display:inline-flex;align-items:center;gap:4px;margin-top:8px;
   background:linear-gradient(135deg,#78350f,#f97316);border-radius:20px;
@@ -1499,10 +1511,12 @@ html[data-theme="light"] body {
   </div>
 
   <div class="prof-hero">
-    <div id="profAvatarHero" class="prof-avatar-hero" onclick="openFrameSelector()" title="Cambia cornice">
+    <div id="profAvatarHero" class="prof-avatar-hero" onclick="openAvatarMenu()" title="Cambia avatar e cornice">
       <div id="profAvatarFace" class="prof-avatar-face">🎭</div>
+      <div class="prof-avatar-edit-hint">✏️</div>
     </div>
     <div class="prof-name" id="profName" style="color:#fff">Anonimo</div>
+    <div class="prof-username" id="profUsername" style="display:none">@username</div>
 
     <!-- Stato personalizzato -->
     <div class="prof-status-row">
@@ -1593,15 +1607,51 @@ html[data-theme="light"] body {
     <div class="mpill"></div>
     <div class="micon">🎭✨</div>
     <div class="mtitle">100 messaggi usati!</div>
-    <div class="mdesc">Continua con KOUVERTE Premium.<br><strong style="color:#c084fc">Solo 5€/mese in Bitcoin</strong> — 30 giorni illimitati.</div>
-    <div class="mperks">
-      <div class="prow"><div class="picon">💬</div><div><div class="ptxt">Messaggi illimitati</div><div class="psub">Chatta senza limiti per 30 giorni</div></div></div>
-      <div class="prow"><div class="picon">🖼️</div><div><div class="ptxt">Cornici Gold 🥇 · Fiamma 🔥 · Diamond 💎</div><div class="psub">Tutte sbloccate automaticamente</div></div></div>
-      <div class="prow"><div class="picon">⭐</div><div><div class="ptxt">Nome brillante in chat</div><div class="psub">Gli altri vedono che sei Premium</div></div></div>
-      <div class="prow"><div class="picon">₿</div><div><div class="ptxt">Pagamento Bitcoin diretto</div><div class="psub">Nessun intermediario, nessun rinnovo automatico</div></div></div>
+    <div class="mdesc">Continua a chattare con uno dei pacchetti.<br><span style="color:#10b981;font-weight:700">Scegli quello che preferisci 👇</span></div>
+
+    <!-- TIER 1: MICRO PACK 1€ -->
+    <div style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(34,197,94,0.1));border:1.5px solid #10b981;border-radius:14px;padding:14px;margin-bottom:10px;position:relative">
+      <div style="position:absolute;top:-8px;right:10px;background:#10b981;color:#fff;font-size:9px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:0.5px">PIÙ SCELTO</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="font-size:24px">💬</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:15px;color:#fff">Pacchetto Continua</div>
+          <div style="font-size:11px;color:#9ca3af">+200 messaggi · una tantum</div>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:#10b981">1€</div>
+      </div>
+      <button class="btn-p" style="background:linear-gradient(135deg,#059669,#10b981);width:100%;margin-top:6px" onclick="startBtcPayment('mini')">⚡ Sblocca per 1€</button>
     </div>
-    <button class="btn-p" onclick="startBtcPayment()">₿ Paga in Bitcoin — 5€</button>
-    <button class="btn-s" onclick="closePaywall()">Non adesso</button>
+
+    <!-- TIER 2: PREMIUM MENSILE 3€ -->
+    <div style="background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(236,72,153,0.1));border:1.5px solid #a855f7;border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="font-size:24px">⭐</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:15px;color:#fff">Premium 30 giorni</div>
+          <div style="font-size:11px;color:#9ca3af">Illimitato + cornici Gold/Diamond + nome brillante</div>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:#c084fc">3€</div>
+      </div>
+      <button class="btn-p" style="width:100%;margin-top:6px" onclick="startBtcPayment('monthly')">⭐ Premium 30 giorni — 3€</button>
+    </div>
+
+    <!-- TIER 3: PREMIUM ANNUALE 19€ - BEST VALUE -->
+    <div style="background:linear-gradient(135deg,rgba(251,191,36,0.15),rgba(249,115,22,0.1));border:1.5px solid #fbbf24;border-radius:14px;padding:14px;margin-bottom:10px;position:relative">
+      <div style="position:absolute;top:-8px;right:10px;background:linear-gradient(90deg,#f59e0b,#fbbf24);color:#000;font-size:9px;font-weight:900;padding:2px 8px;border-radius:6px;letter-spacing:0.5px">RISPARMI 47%</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        <div style="font-size:24px">👑</div>
+        <div style="flex:1">
+          <div style="font-weight:900;font-size:15px;color:#fff">VIP 1 anno</div>
+          <div style="font-size:11px;color:#9ca3af">Tutto premium + badge VIP + cornice Royal</div>
+        </div>
+        <div style="font-size:20px;font-weight:900;color:#fbbf24">19€</div>
+      </div>
+      <button class="btn-p" style="background:linear-gradient(135deg,#d97706,#fbbf24);color:#000;width:100%;margin-top:6px" onclick="startBtcPayment('yearly')">👑 VIP 1 anno — 19€</button>
+    </div>
+
+    <div style="font-size:10px;color:#6b7280;text-align:center;margin:8px 0">₿ Pagamento Bitcoin · 🌟 Telegram Stars · No rinnovo automatico</div>
+    <button class="btn-s" onclick="closePaywall()" style="width:100%">Non adesso</button>
   </div>
 </div>
 
@@ -1836,7 +1886,14 @@ const NEON = [
 ];
 
 // Avatar faccine stile screenshot
-const FACE_EMOJIS = ['😈','👻','🤖','👾','🦊','🐺','🦁','🐯','🦋','🐸','🦄','🐙','🦅','🐲','🦂','🎭'];
+const FACE_EMOJIS = [
+  // Animali
+  '🦊','🐺','🦁','🐯','🐱','🐶','🐼','🐨','🐸','🐙','🦅','🦋','🐲','🦂','🦄','🐉','🐅','🐊','🦈','🦚','🦜','🐝','🐞','🦓',
+  // Fantasy / Misteriosi
+  '😈','👻','💀','👹','👺','🤖','👾','👽','🧙','🧛','🧚','🧜','🧝',
+  // Espressioni
+  '😎','🤩','🥷','🎭','🦹','🦸','🤡','👑','💎'
+];
 
 // ── Generatore nickname procedurali stile "Ghost", "NightTalker", "ShadowFox" ──
 const NICK_PREFIX = ['Ghost','Night','Shadow','Neon','Phantom','Cyber','Velvet','Dark','Silent','Wild','Mystic','Echo','Lone','Crimson','Frost','Midnight','Stellar','Lunar','Ember','Onyx'];
@@ -2385,6 +2442,16 @@ function getRank(mc){
 
 function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
+  // Mostra @username se l'utente e' registrato
+  const uEl = document.getElementById('profUsername');
+  if (uEl) {
+    if (user.username) {
+      uEl.textContent = '@' + user.username;
+      uEl.style.display = 'block';
+    } else {
+      uEl.style.display = 'none';
+    }
+  }
   document.getElementById('stMsgs').textContent=user.msgCount||0;
   document.getElementById('stRooms').textContent=sessionRooms.size||(user.roomsVisited||[]).length||0;
   document.getElementById('stBadges').textContent=(user.badges||[]).length;
@@ -4330,13 +4397,16 @@ function copyText(t){
   navigator.clipboard?.writeText(t).then(()=>showToast('📋 Copiato!')).catch(()=>{});
 }
 
-async function startBtcPayment(){
+async function startBtcPayment(tier){
+  // tier: 'mini' (1€/+200msg), 'monthly' (3€/30g premium), 'yearly' (19€/365g VIP)
+  tier = tier || 'monthly';
+  window.__btcTier = tier;
   closePaywall();
   document.getElementById('btcStatus').textContent='⏳ Creo invoice...';
   document.getElementById('btcOv').classList.add('open');
   try{
     const r=await fetch(BACKEND+'/api/btc/quote-premium',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:user.id})});
+      body:JSON.stringify({userId:user.id, tier:tier})});
     if(!r.ok) throw new Error('quote failed');
     const d=await r.json();
     window.__btcInvoiceId=d.id;
@@ -4401,6 +4471,49 @@ function activatePremium(){
 }
 
 // ══ FRAMES ══
+// ── AVATAR MENU: scegli emoji + apri selettore cornici ──
+function openAvatarMenu(){
+  let overlay = document.getElementById('avatarMenuOv');
+  if (!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'avatarMenuOv';
+    overlay.className = 'avatar-menu-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove('show'); };
+    document.body.appendChild(overlay);
+  }
+  const grouped = {
+    'Animali': FACE_EMOJIS.filter(e => '🦊🐺🦁🐯🐱🐶🐼🐨🐸🐙🦅🦋🐲🦂🦄🐉🐅🐊🦈🦚🦜🐝🐞🦓'.includes(e)),
+    'Fantasy': FACE_EMOJIS.filter(e => '😈👻💀👹👺🤖👾👽🧙🧛🧚🧜🧝'.includes(e)),
+    'Stile': FACE_EMOJIS.filter(e => '😎🤩🥷🎭🦹🦸🤡👑💎'.includes(e))
+  };
+  let html = '<div class="avatar-menu-sheet"><div class="avatar-menu-title">🎨 Personalizza Avatar</div>';
+  for (const [sec, emojis] of Object.entries(grouped)){
+    html += `<div class="avatar-menu-section-title">${sec}</div><div class="avatar-menu-grid">`;
+    emojis.forEach(e => {
+      const sel = (user.face === e) ? 'selected' : '';
+      html += `<div class="avatar-emoji-opt ${sel}" data-emoji="${e}" onclick="selectAvatarEmoji('${e}')">${e}</div>`;
+    });
+    html += '</div>';
+  }
+  html += '<div class="avatar-menu-section-title">Cornici</div>';
+  html += '<button class="btn-p" style="width:100%;margin-bottom:8px" onclick="document.getElementById(\'avatarMenuOv\').classList.remove(\'show\');openFrameSelector()">🖼️ Scegli cornice</button>';
+  html += '<button class="btn-s" style="width:100%" onclick="document.getElementById(\'avatarMenuOv\').classList.remove(\'show\')">Chiudi</button>';
+  html += '</div>';
+  overlay.innerHTML = html;
+  overlay.classList.add('show');
+}
+function selectAvatarEmoji(emoji){
+  user.face = emoji;
+  saveUser();
+  if(typeof syncUserDataToServer === 'function' && isLoggedIn) syncUserDataToServer();
+  updateProfileUI();
+  document.querySelectorAll('.avatar-emoji-opt').forEach(el => el.classList.remove('selected'));
+  document.querySelector(`.avatar-emoji-opt[data-emoji="${emoji}"]`)?.classList.add('selected');
+  if (window.hapticOk) window.hapticOk();
+  showToast('✨ Avatar aggiornato!');
+  setTimeout(() => document.getElementById('avatarMenuOv')?.classList.remove('show'), 600);
+}
+
 function openFrameSelector(){
   showScreen('profile', document.querySelector('[data-sc="profile"]'));
   setTimeout(() => {

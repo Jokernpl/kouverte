@@ -243,7 +243,7 @@ Benvenuto, *${firstName}*!
 🌍 Mondo · 🕯️ Confessionale
 
 🔒 *100% Anonimo* — solo una maschera emoji
-🎁 *100 messaggi gratuiti* poi 5€/mese in BTC
+🎁 *100 messaggi gratuiti* poi da 1€ (BTC o Stars)
 🏆 Badge & cornici da sbloccare
 🎤 *Toggle Mic & Camera* in ogni chat
 
@@ -264,7 +264,7 @@ Tocca il bottone qui sotto 👇`;
       ],
       [
         { text:'🔗 Invita & guadagna', callback_data:'invite' },
-        { text:'⭐ Premium 5€/mese',   callback_data:'premium' }
+        { text:'⭐ Pacchetti da 1€',   callback_data:'premium' }
       ],
       [{ text:'🌐 Apri sul sito', url: SITE_URL }]
     ]
@@ -353,7 +353,7 @@ function sendFrames(chatId){
 
 ${lines}${reward}
 
-_Le cornici premium si sbloccano abbonandosi a Premium (5€/mese in BTC) o invitando amici._`, {
+_Le cornici premium si sbloccano abbonandosi a Premium (da 1€ (BTC o Stars)) o invitando amici._`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
@@ -416,7 +416,7 @@ function sendRooms(chatId){
 
 ${lines}
 
-Tutte anonime. 100 messaggi gratuiti, poi Premium 5€/mese in BTC.
+Tutte anonime. 100 messaggi gratuiti, poi Premium da 1€ (BTC o Stars).
 
 📹 *In ogni stanza:* video chat P2P + audio anonimo`, {
     parse_mode:'Markdown',
@@ -671,28 +671,41 @@ Premium attivo fino al ${new Date(u.premiumExpiry).toLocaleDateString('it-IT')}.
   }
 
   bot.sendMessage(chatId,
-`⭐ *KOUVERTE Premium*
+`⭐ *KOUVERTE — Pacchetti*
 
-*5€/mese pagati in Bitcoin* ₿
+I primi *100 messaggi sono gratis*. Dopo scegli un pacchetto:
 
-✅ *Messaggi illimitati* per 30 giorni
-✅ *Cornici premium*: Gold 🥇 · Fiamma 🔥 · Diamond 💎
-✅ *Nome brillante* in chat
-✅ Pagamento diretto, nessun intermediario
+━━━━━━━━━━━━━━━━━━
+💬 *Pacchetto Continua — 1€*
++200 messaggi una tantum.
+Per chi vuole continuare ogni tanto.
+
+━━━━━━━━━━━━━━━━━━
+⭐ *Premium 30 giorni — 3€*
+✅ Messaggi *illimitati* per 1 mese
+✅ Cornici Gold 🥇 · Fiamma 🔥 · Diamond 💎
+✅ Nome brillante in chat
 ✅ Nessun rinnovo automatico
 
-*Come funziona:*
-1. Apri l'app → tap "Premium"
-2. Ricevi indirizzo + importo esatto in BTC
-3. Paga dal tuo wallet (Phoenix, Muun, BlueWallet...)
-4. Dopo 4 conferme on-chain → Premium attivo
+━━━━━━━━━━━━━━━━━━
+👑 *VIP 1 anno — 19€* (risparmi 47%)
+✅ Tutto Premium per 365 giorni
+✅ Badge VIP esclusivo
+✅ Cornice Royal 👑
 
-_Niente Telegram Stars: ogni euro va direttamente sul wallet KOUVERTE._`, {
+━━━━━━━━━━━━━━━━━━
+*Come pagare:*
+₿ Bitcoin (anonimo, diretto sul wallet KOUVERTE)
+🌟 Telegram Stars (paghi con Telegram)
+
+Tap qui sotto per aprire l'app e scegliere il pacchetto:`, {
     parse_mode:'Markdown',
     reply_markup: {
       inline_keyboard: [
-        [{ text:'₿ Apri pagamento BTC', web_app:{ url: fresh('#paywall') } }],
-        [{ text:'📬 Vedi indirizzo BTC', callback_data:'btc_info' }]
+        [{ text:'💬 1€ · +200 messaggi', web_app:{ url: fresh('#tier=mini') } }],
+        [{ text:'⭐ 3€ · Premium 30gg', web_app:{ url: fresh('#tier=monthly') } }],
+        [{ text:'👑 19€ · VIP 1 anno', web_app:{ url: fresh('#tier=yearly') } }],
+        [{ text:'📬 Indirizzo BTC', callback_data:'btc_info' }]
       ]
     }
   }).catch(()=>{});
@@ -862,7 +875,7 @@ function sendHelp(chatId){
 💬 /stanze — Lista delle stanze
 🖼️ /cornici — Catalogo cornici
 🔗 /invita — Link referral
-⭐ /premium — Abbonamento 5€/mese (BTC)
+⭐ /premium — Pacchetti da 1€ (BTC/Stars)
 ₿ /bitcoin — Info pagamento BTC
 ❓ /aiuto — Questa lista
 

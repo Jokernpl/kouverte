@@ -1442,14 +1442,23 @@ app.post('/api/bitcoin/verify', verifyToken, async (req, res) => {
 // KOUVERTE BTC PAYMENTS (anonymous app — no JWT)
 // Premium €5/mese = 30gg unlimited + tutte cornici premium
 // ============================================================
-const KV_PREMIUM_PRICE_EUR = 5;
+// Tier pricing (marketing: micro-pack + mensile + annuale)
+const KV_TIERS = {
+    mini:    { eur: 1,  label: 'Pacchetto Continua', durationDays: 0,   extraMessages: 200 },
+    monthly: { eur: 3,  label: 'Premium 30 giorni',  durationDays: 30,  extraMessages: 0 },
+    yearly:  { eur: 19, label: 'VIP 1 anno',         durationDays: 365, extraMessages: 0 }
+};
+// Backward compat
+const KV_PREMIUM_PRICE_EUR = KV_TIERS.monthly.eur;
 
 app.post('/api/btc/quote-premium', async (req, res) => {
-    const { userId } = req.body || {};
+    const { userId, tier: tierIn } = req.body || {};
     if (!userId || typeof userId !== 'string') return res.status(400).json({ error: 'userId required' });
+    const tier = (tierIn && KV_TIERS[tierIn]) ? tierIn : 'monthly';
+    const tierCfg = KV_TIERS[tier];
 
     const rate = await getBtcRateEur();
-    const baseSats = Math.ceil((KV_PREMIUM_PRICE_EUR / rate) * 1e8);
+    const baseSats = Math.ceil((tierCfg.eur / rate) * 1e8);
     const uniqueSats = baseSats + Math.floor(Math.random() * 500); // 0-499 sats per uniqueness
     const id = 'kv_btc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
     const expiresAt = Date.now() + 60 * 60 * 1000; // 1h
@@ -1458,17 +1467,20 @@ app.post('/api/btc/quote-premium', async (req, res) => {
     // Pulisci invoice scaduti (>24h)
     DB.kv_btc_invoices = DB.kv_btc_invoices.filter(i => Date.now() - i.createdAt < 24 * 60 * 60 * 1000);
     DB.kv_btc_invoices.push({
-        id, userId, kind: 'premium', sats: uniqueSats, eur: KV_PREMIUM_PRICE_EUR,
+        id, userId, kind: 'premium', tier, sats: uniqueSats, eur: tierCfg.eur,
+        durationDays: tierCfg.durationDays, extraMessages: tierCfg.extraMessages,
         status: 'pending', createdAt: Date.now(), expiresAt
     });
     markDirty();
 
     res.json({
         id,
+        tier,
+        tierLabel: tierCfg.label,
         address: BITCOIN_ADDRESS,
         sats: uniqueSats,
         btc: (uniqueSats / 1e8).toFixed(8),
-        eur: KV_PREMIUM_PRICE_EUR,
+        eur: tierCfg.eur,
         expiresAt,
         requiredConfirmations: BITCOIN_MIN_CONFIRMATIONS
     });
