@@ -3390,8 +3390,10 @@ function setupChatModesHooks(){
     _originalAppendMsg = appendMsg;
     window.appendMsg = function(msg){
       _originalAppendMsg(msg);
-      lastChatActivity = Date.now();
-      if (chatModes.ephemeral) {
+      if (typeof lastChatActivity !== 'undefined') {
+        lastChatActivity = Date.now();
+      }
+      if (chatModes && chatModes.ephemeral) {
         const c = document.getElementById('chatMsgs');
         const last = c?.lastElementChild;
         if (last && !last.classList.contains('msys') && !last.classList.contains('bot-msg')) {
@@ -3555,6 +3557,10 @@ var MATCH_MODES = [
 
 function openMatchAnonimo(){
   closeContinua();
+  if (!MATCH_MODES || !Array.isArray(MATCH_MODES) || MATCH_MODES.length === 0) {
+    showToast('⚠️ Modalità match non disponibili');
+    return;
+  }
   let modal = document.getElementById('matchModal');
   if (!modal) {
     modal = document.createElement('div');
@@ -3709,6 +3715,10 @@ function openLootBox(){
 }
 
 function rollLootBox(){
+  if (!LOOT_REWARDS || !Array.isArray(LOOT_REWARDS) || LOOT_REWARDS.length === 0) {
+    showToast('⚠️ Errore: ricompense non disponibili');
+    return;
+  }
   if ((user.coins||0) < LOOT_BOX_PRICE) {
     showToast('⚠️ Servono ' + LOOT_BOX_PRICE + ' 🪙 (hai ' + (user.coins||0) + ')');
     return;
@@ -3722,8 +3732,18 @@ function rollLootBox(){
   else if (roll < 0.15) rarity = 'epic';
   else if (roll < 0.40) rarity = 'rare';
 
-  const pool = LOOT_REWARDS.filter(r => r.rarity === rarity);
+  const pool = LOOT_REWARDS.filter(r => r && r.rarity === rarity);
+  if (!pool || pool.length === 0) {
+    showToast('⚠️ Nessuna ricompensa disponibile per questa rarità');
+    user.coins += LOOT_BOX_PRICE;
+    return;
+  }
   const reward = pool[Math.floor(Math.random() * pool.length)];
+  if (!reward) {
+    showToast('⚠️ Errore nella selezione della ricompensa');
+    user.coins += LOOT_BOX_PRICE;
+    return;
+  }
 
   // Applica reward
   if (reward.type === 'coins') user.coins += reward.amount;
@@ -4649,15 +4669,17 @@ function renderBadges(){
 }
 
 // ══ NAV ══
+var _showScreenTimer = null;
 function showScreen(name,btn){
+  clearTimeout(_showScreenTimer);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(name)?.classList.add('active');
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
-  // Nascondi bottom nav in chat: copriva l'input dei messaggi
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
+  _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
 }
 
 // ══ UTILS ══
@@ -7052,6 +7074,21 @@ function confirmLogout(){
 // ══════════════════════════════════════════
 // LOGO & AVATAR SETTINGS
 // ══════════════════════════════════════════
+const FRAME_STYLES = [
+  { id: 'none', name: 'Nessuna', emoji: '✨', color: '#64748b' },
+  { id: 'silver', name: 'Silver', emoji: '⭐', color: '#94a3b8' },
+  { id: 'purple', name: 'Purple', emoji: '💜', color: '#a855f7' },
+  { id: 'gold', name: 'Gold', emoji: '✨', color: '#fbbf24' },
+  { id: 'flame', name: 'Flame', emoji: '🔥', color: '#f97316' },
+  { id: 'diamond', name: 'Diamond', emoji: '💎', color: '#38bdf8' },
+  { id: 'neon', name: 'Neon', emoji: '⚡', color: '#00ffff' },
+  { id: 'emerald', name: 'Emerald', emoji: '💚', color: '#10b981' },
+  { id: 'ruby', name: 'Ruby', emoji: '❤️', color: '#ef4444' },
+  { id: 'rainbow', name: 'Rainbow', emoji: '🌈', color: '#ff00ff' },
+  { id: 'galaxy', name: 'Galaxy', emoji: '🪐', color: '#8b5cf6' },
+  { id: 'royal', name: 'Royal', emoji: '👑', color: '#fbbf24' },
+  { id: 'skull', name: 'Skull', emoji: '💀', color: '#9ca3af' }
+];
 
 function openLogoSettings(){
   closeContinua();
