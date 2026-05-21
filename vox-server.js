@@ -67,6 +67,13 @@ fs.mkdirSync(AVATAR_DIR, { recursive: true });
 
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '1d', fallthrough: true }));
 
+// Favicon: redirige /favicon.ico al nostro SVG (per crawler Google/Bing vecchi)
+app.get('/favicon.ico', (req, res) => {
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.set('Content-Type', 'image/svg+xml');
+    res.sendFile(path.join(__dirname, 'icon.svg'));
+});
+
 // NO-CACHE per HTML/JS/CSS principali: gli update arrivano subito al refresh
 app.use((req, res, next) => {
     const p = req.path;
