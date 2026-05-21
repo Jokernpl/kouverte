@@ -67,6 +67,12 @@ fs.mkdirSync(AVATAR_DIR, { recursive: true });
 
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '1d', fallthrough: true }));
 
+// Version endpoint per verificare quale build e' in esecuzione
+const BUILD_VERSION = 'webrtc-routing-v2-' + Date.now();
+app.get('/_version', (req, res) => {
+    res.json({ version: BUILD_VERSION, startedAt: new Date().toISOString() });
+});
+
 // Favicon: redirige /favicon.ico al nostro SVG (per crawler Google/Bing vecchi)
 app.get('/favicon.ico', (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
@@ -3357,6 +3363,7 @@ io.on('connection', (socket) => {
         const { to, from, roomId, roomSlug, offer } = data;
         const room = roomId || roomSlug;
         const targetSid = findSocketByUserId(room, to);
+        console.log(`[VOICE-OFFER] from=${from} to=${to} room=${room} targetSid=${targetSid || 'NOT-FOUND'}`);
         if (targetSid) {
             io.to(targetSid).emit('voice-offer', { from, to, offer });
         } else {
