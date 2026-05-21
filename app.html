@@ -1459,7 +1459,7 @@ html[data-theme="light"] body {
     </div>
 
     <div class="video-wrapper">
-      <video id="theirVideo" autoplay playsinline></video>
+      <video id="theirVideo" autoplay playsinline muted></video>
       <div class="video-label" id="theirVideoLabel">Seleziona utente</div>
       <div class="video-controls">
         <div class="video-cam-indicator">🎥</div>
@@ -2921,12 +2921,35 @@ function setupPeerConnection(userId) {
   pc._pendingIce = [];
 
   pc.ontrack = (event) => {
-    console.log('[WebRTC] Traccia remota ricevuta:', event.track.kind);
+    console.log('[WebRTC] Traccia remota ricevuta:', event.track.kind, 'streams:', event.streams.length);
     const theirVideo = document.getElementById('theirVideo');
-    if (theirVideo && event.streams[0]) {
+    if (!theirVideo || !event.streams[0]) return;
+
+    // Riusa lo stream remoto: tutte le tracce arrivano nello stesso MediaStream
+    if (theirVideo.srcObject !== event.streams[0]) {
       theirVideo.srcObject = event.streams[0];
-      theirVideo.onloadedmetadata = () => theirVideo.play().catch(()=>{});
+      console.log('[WebRTC] srcObject settato, tracks:', event.streams[0].getTracks().map(t => t.kind).join(','));
     }
+
+    // muted=true per superare l'autoplay policy. Un click sul video unmuta.
+    theirVideo.muted = true;
+
+    const tryPlay = () => {
+      theirVideo.play().then(() => {
+        console.log('[WebRTC] theirVideo.play() OK');
+      }).catch(err => {
+        console.warn('[WebRTC] theirVideo.play() failed:', err.message);
+      });
+    };
+    tryPlay();
+    theirVideo.onloadedmetadata = tryPlay;
+    theirVideo.oncanplay = tryPlay;
+
+    // Click per attivare audio (richiesto da autoplay policy quando audio non-muted)
+    theirVideo.onclick = () => {
+      theirVideo.muted = !theirVideo.muted;
+      console.log('[WebRTC] theirVideo muted:', theirVideo.muted);
+    };
   };
 
   pc.onicecandidate = (event) => {
