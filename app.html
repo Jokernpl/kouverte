@@ -33,11 +33,11 @@
 <link rel="icon" sizes="16x16" href="/icon.svg">
 <link rel="shortcut icon" href="/icon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="/icon.svg">
-<link rel="mask-icon" href="/icon.svg" color="#7c3aed">
+<link rel="mask-icon" href="/icon.svg" color="#00d4ff">
 
 <!-- PWA: installabile come app, update automatici -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#12082a">
+<meta name="theme-color" content="#0f1117">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kouverte">
@@ -70,7 +70,7 @@ body{position:relative}
 /* ═══════════════════════════════
    SPLASH
 ═══════════════════════════════ */
-#splash{background:radial-gradient(ellipse at 50% 30%,#1e0d40 0%,#0a0418 70%);
+#splash{background:radial-gradient(ellipse at 50% 30%,#1a1f3a 0%,#0f1117 70%);
   align-items:center;justify-content:center;overflow:hidden}
 
 /* ═══════════════════════════════
@@ -146,7 +146,7 @@ body{position:relative}
 .kv-logo-wrap{text-align:center;position:relative;z-index:2}
 
 /* Sfondo splash animato */
-#splash{background:linear-gradient(-45deg,#0a0418,#1a0535,#0d001f,#1e0d40,#0a0418);
+#splash{background:linear-gradient(-45deg,#0f1117,#1a1f3a,#16182a,#1a1f3a,#0f1117);
   background-size:400% 400%;animation:bg-shift 8s ease infinite;}
 
 /* Omino con cappuccio — fluttua e pulsa */
@@ -2027,7 +2027,7 @@ var chatRoomUsers={};
 document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
   if(tg){
-    tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');
+    tg.ready();tg.expand();tg.setHeaderColor('#0f1117');tg.setBackgroundColor('#0f1117');
     // NON usare disableVerticalSwipes: su alcune versioni Android blocca lo scroll interno
   }
   // Haptic feedback helper (Telegram Mini App)
@@ -4119,9 +4119,9 @@ function renderRooms(){
 
 // ── Temperatura stanza in base agli online ──
 function tempBadge(cnt){
-  if(cnt>=10) return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#dc2626,#f97316,#fbbf24);animation:hot-pulse 1.2s ease-in-out infinite"><span>🔥</span><span>BOLLENTE</span></div>`;
-  if(cnt>=5)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ef4444,#f97316)"><span>🔥</span><span>HOT</span></div>`;
-  if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#a855f7,#ec4899)"><span>✨</span><span>ATTIVA</span></div>`;
+  if(cnt>=10) return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ff6b9d,#ff6b9d);animation:hot-pulse 1.2s ease-in-out infinite"><span>🔥</span><span>BOLLENTE</span></div>`;
+  if(cnt>=5)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ff6b9d,#00d4ff);color:#0f1117"><span>🔥</span><span>HOT</span></div>`;
+  if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#00e5b8,#00d4ff);color:#0f1117"><span>✨</span><span>ATTIVA</span></div>`;
   if(cnt>=1)  return `<div class="rc-flag-pill"><span>💬</span><span>LIVE</span></div>`;
   return `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>😴</span><span>SILENZIOSA</span></div>`;
 }
