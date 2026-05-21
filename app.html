@@ -1778,6 +1778,10 @@ html[data-theme="light"] body {
         <span class="menu-icon">🎭</span>
         <span class="menu-text">Profilo</span>
       </div>
+      <div class="menu-item" onclick="openLogoSettings()" style="background:linear-gradient(135deg,#fbbf2415,#f9731615)">
+        <span class="menu-icon">🎨</span>
+        <span class="menu-text">Logo & Avatar</span>
+      </div>
       <div class="menu-item" onclick="openFriendsModal()" style="background:linear-gradient(135deg,#10b98115,#06b6d415)">
         <span class="menu-icon">👥</span>
         <span class="menu-text">Amici & Ricerca Utenti</span>
@@ -2461,7 +2465,16 @@ function updateProfileUI(){
   const av = document.getElementById('profAvatarHero');
   const face = document.getElementById('profAvatarFace');
   if (av && face) {
-    face.textContent = user.face || '🎭';
+    // Se c'è un avatar personalizzato, mostralo come background image
+    if (user.customAvatar) {
+      face.style.backgroundImage = 'url(' + user.customAvatar + ')';
+      face.style.backgroundSize = 'cover';
+      face.style.backgroundPosition = 'center';
+      face.textContent = '';
+    } else {
+      face.style.backgroundImage = 'none';
+      face.textContent = user.face || '🎭';
+    }
     // Rimuovi vecchie classi frame-*
     av.className = 'prof-avatar-hero';
     const activeFrame = user.activeFrame || 'none';
@@ -7032,6 +7045,164 @@ function confirmLogout(){
 
   showToast('👋 Disconnesso! Per rientrare fai login con email e password.');
   setTimeout(() => location.reload(), 1200);
+}
+
+// ══════════════════════════════════════════
+// LOGO & AVATAR SETTINGS
+// ══════════════════════════════════════════
+const FRAME_STYLES = [
+  { id: 'none', name: 'Nessuna', emoji: '✨', color: '#64748b' },
+  { id: 'silver', name: 'Silver', emoji: '⭐', color: '#94a3b8' },
+  { id: 'purple', name: 'Purple', emoji: '💜', color: '#a855f7' },
+  { id: 'gold', name: 'Gold', emoji: '✨', color: '#fbbf24' },
+  { id: 'flame', name: 'Flame', emoji: '🔥', color: '#f97316' },
+  { id: 'diamond', name: 'Diamond', emoji: '💎', color: '#38bdf8' },
+  { id: 'neon', name: 'Neon', emoji: '⚡', color: '#00ffff' },
+  { id: 'emerald', name: 'Emerald', emoji: '💚', color: '#10b981' },
+  { id: 'ruby', name: 'Ruby', emoji: '❤️', color: '#ef4444' },
+  { id: 'rainbow', name: 'Rainbow', emoji: '🌈', color: '#ff00ff' },
+  { id: 'galaxy', name: 'Galaxy', emoji: '🪐', color: '#8b5cf6' },
+  { id: 'royal', name: 'Royal', emoji: '👑', color: '#fbbf24' },
+  { id: 'skull', name: 'Skull', emoji: '💀', color: '#9ca3af' }
+];
+
+function openLogoSettings(){
+  closeContinua();
+  let modal = document.getElementById('logoSettingsModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'logoSettingsModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+
+  const frameHTML = FRAME_STYLES.map(f => `
+    <button class="frame-selector-btn" onclick="changeFrame('${f.id}')" style="--fc:${f.color}${user.activeFrame === f.id ? ';border:3px solid #fff;transform:scale(1.1)' : ''}">
+      <div style="font-size:28px;margin-bottom:4px">${f.emoji}</div>
+      <div style="font-size:11px;white-space:nowrap">${f.name}</div>
+    </button>
+  `).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-hdr">
+        <div class="modal-title">🎨 Logo & Avatar</div>
+        <button class="modal-close" onclick="document.getElementById('logoSettingsModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom:24px">
+          <div style="font-size:13px;color:#a0aec0;margin-bottom:12px;font-weight:600">📌 CORNICE PROFILO</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:8px">
+            ${frameHTML}
+          </div>
+        </div>
+
+        <div style="border-top:1px solid #5b21b6;padding-top:16px;margin-bottom:24px">
+          <div style="font-size:13px;color:#a0aec0;margin-bottom:12px;font-weight:600">😊 AVATAR PERSONALIZZATO</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(this)">
+            <button class="btn" onclick="document.getElementById('avatarInput').click()" style="flex:1">📸 Carica Foto</button>
+            <button class="btn" onclick="resetAvatar()" style="background:#5b21b6">🔄 Ripristina</button>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:8px;line-height:1.4">💡 Puoi caricare una foto personalizzata come avatar. Verrà visualizzata al posto dell'emoji.</div>
+        </div>
+
+        <div style="border-top:1px solid #5b21b6;padding-top:16px">
+          <div style="font-size:13px;color:#a0aec0;margin-bottom:12px;font-weight:600">🎭 CAMBIA EMOJI</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="customEmoji" placeholder="Inserisci una emoji" maxlength="2" style="flex:1;background:#1a0f2e;border:1px solid #5b21b6;color:#fff;padding:8px;border-radius:6px;font-size:14px">
+            <button class="btn" onclick="changeEmoji()" style="background:#7c3aed">Salva Emoji</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+function changeFrame(frameId){
+  user.activeFrame = frameId;
+  saveUser();
+  updateProfileUI();
+  showToast('🎨 Cornice cambiata a: ' + FRAME_STYLES.find(f => f.id === frameId)?.name);
+  openLogoSettings(); // Riapri per mostrare la selezione aggiornata
+}
+
+function changeEmoji(){
+  const input = document.getElementById('customEmoji');
+  if (!input.value.trim()) {
+    showToast('⚠️ Inserisci un\'emoji');
+    return;
+  }
+  user.face = input.value.trim();
+  saveUser();
+  updateProfileUI();
+  showToast('😊 Emoji cambiata!');
+  openLogoSettings();
+}
+
+function handleAvatarUpload(input){
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+
+  // Limita la dimensione a 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('⚠️ La foto è troppo grande (max 2MB)');
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    user.customAvatar = e.target.result; // Salva come data URL
+    saveUser();
+    updateProfileUI();
+    showToast('📸 Avatar caricato!');
+    openLogoSettings();
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetAvatar(){
+  if (!user.customAvatar) {
+    showToast('⚠️ Nessun avatar personalizzato');
+    return;
+  }
+  user.customAvatar = null;
+  saveUser();
+  updateProfileUI();
+  showToast('🔄 Avatar ripristinato');
+  openLogoSettings();
+}
+
+// CSS per il modale logo settings
+if (!document.getElementById('logoSettingsCss')) {
+  const style = document.createElement('style');
+  style.id = 'logoSettingsCss';
+  style.textContent = `
+    .frame-selector-btn {
+      background:#1a0f2e;
+      border:2px solid;
+      border-color:var(--fc);
+      border-radius:12px;
+      padding:12px 8px;
+      cursor:pointer;
+      transition:all 0.2s;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      color:#fff;
+      font-weight:500;
+      font-size:12px;
+    }
+    .frame-selector-btn:hover {
+      background:rgba(124,58,247,0.2);
+      transform:scale(1.05);
+    }
+  `;
+  document.head.appendChild(style);
 }
 </script>
 </body>
