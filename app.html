@@ -4614,15 +4614,17 @@ function renderBadges(){
 }
 
 // ══ NAV ══
+var _showScreenTimer = null;
 function showScreen(name,btn){
+  clearTimeout(_showScreenTimer);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(name)?.classList.add('active');
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
-  // Nascondi bottom nav in chat: copriva l'input dei messaggi
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
+  _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
 }
 
 // ══ UTILS ══
