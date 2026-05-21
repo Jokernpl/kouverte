@@ -26,6 +26,23 @@ bot.deleteWebHook({ drop_pending_updates: false })
    .then(() => console.log('   Webhook: cleared (polling mode)'))
    .catch(()=>{});
 
+// Registra comandi ufficiali del bot (compare il menù "/" in Telegram)
+bot.setMyCommands([
+  { command: 'start',    description: '🚀 Avvia KOUVERTE' },
+  { command: 'menu',     description: '⌨️ Menu rapido' },
+  { command: 'installa', description: '📲 Installa app sul telefono' },
+  { command: 'stanze',   description: '🌍 Vedi le stanze attive' },
+  { command: 'crea',     description: '🔐 Crea stanza privata' },
+  { command: 'entra',    description: '🔑 Entra con codice' },
+  { command: 'video',    description: '📹 Info video chat' },
+  { command: 'profilo',  description: '🎭 Il tuo profilo' },
+  { command: 'cornici',  description: '🖼️ Le tue cornici' },
+  { command: 'invita',   description: '🔗 Invita amici' },
+  { command: 'premium',  description: '⭐ Premium VIP' },
+  { command: 'sito',     description: '🌐 Apri sito web' },
+  { command: 'aiuto',    description: '❓ Aiuto e supporto' }
+]).catch(()=>{});
+
 // ============================================================
 // CATALOGO CORNICI — allineato 1:1 con app.html
 // Pagamenti SOLO in Telegram Stars (★)
@@ -268,7 +285,8 @@ function showMenu(chatId){
         [{ text:'🔐 Crea Stanza' },      { text:'🔑 Entra con Codice' }],
         [{ text:'🎭 Profilo' },          { text:'🖼️ Cornici' }],
         [{ text:'🔗 Invita & guadagna' }, { text:'⭐ Premium' }],
-        [{ text:'🌐 Sito' },             { text:'❓ Aiuto' }]
+        [{ text:'📲 Installa App' },     { text:'🌐 Sito' }],
+        [{ text:'❓ Aiuto' }]
       ],
       resize_keyboard: true,
       persistent: true
@@ -551,6 +569,52 @@ _Salvalo nei segnalibri per accesso veloce!_`, {
   }).catch(()=>{});
 }
 bot.onText(/^\/sito$/i, m => sendSiteLink(m.chat.id));
+
+// ============================================================
+// /installa — Installa KOUVERTE come APP
+// ============================================================
+function sendInstall(chatId){
+  bot.sendMessage(chatId,
+`📲 *Installa KOUVERTE come APP*
+
+Con un solo tap installi KOUVERTE sul tuo telefono come una *vera app*: icona sulla home, fullscreen, niente browser, update automatici.
+
+━━━━━━━━━━━━━━━━━━
+📱 *ANDROID (Chrome)*
+1️⃣  Tap su "Apri in Chrome" qui sotto
+2️⃣  Aspetta 5 secondi → appare il banner viola *"Installa Kouverte"*
+3️⃣  Tap "Installa" → fatto ✅
+
+Oppure: menu Chrome (⋮) → *"Installa app"* / *"Aggiungi a schermata Home"*
+
+━━━━━━━━━━━━━━━━━━
+🍎 *iPhone (Safari)*
+1️⃣  Apri il link in *Safari* (non Chrome)
+2️⃣  Tap sull'icona Condividi (↑)
+3️⃣  Scorri e tap *"Aggiungi a Home"*
+4️⃣  Conferma → icona KOUVERTE sulla home ✅
+
+━━━━━━━━━━━━━━━━━━
+💻 *PC (Chrome/Edge)*
+Icona ⊕ nella barra indirizzi → *"Installa"*
+
+━━━━━━━━━━━━━━━━━━
+🔄 *Update automatici*
+Quando facciamo miglioramenti, l'app si aggiorna da sola al prossimo avvio. Niente da fare.
+
+✨ *Funziona anche offline* per le funzioni base.`, {
+    parse_mode:'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text:'📲 Apri in Chrome per installare', url: SITE_URL }],
+        [{ text:'🚀 Apri WebApp (no install)', web_app:{ url: fresh() } }]
+      ]
+    }
+  }).catch(()=>{});
+}
+bot.onText(/^\/installa$/i, m => sendInstall(m.chat.id));
+bot.onText(/^\/install$/i, m => sendInstall(m.chat.id));
+bot.onText(/^\/app$/i, m => sendInstall(m.chat.id));
 
 // ============================================================
 // /condividi <codice> — Condividi codice stanza
@@ -900,6 +964,7 @@ Vuoi entrare nella stanza con questo codice?`, {
     '🔗 Invita & guadagna':    () => sendInvite(chatId),
     '⭐ Premium':              () => sendPremium(chatId),
     '🌐 Sito':                 () => sendSiteLink(chatId),
+    '📲 Installa App':         () => sendInstall(chatId),
     '❓ Aiuto':                () => sendHelp(chatId),
   };
   if(actions[t]) return actions[t]();
@@ -917,6 +982,7 @@ Vuoi entrare nella stanza con questo codice?`, {
   if(/crea/i.test(t))              return sendCreateRoom(chatId);
   if(/entra|codice/i.test(t))      return sendJoinRoom(chatId);
   if(/sito|web|link/i.test(t))     return sendSiteLink(chatId);
+  if(/install|scarica|download|app(?!le)/i.test(t)) return sendInstall(chatId);
 
   bot.sendMessage(chatId, '🤔 Non ho capito. Usa /menu per i comandi.\n\n💡 *Suggerimento:* Se hai un codice stanza, scrivilo direttamente!', { parse_mode:'Markdown' }).catch(()=>{});
 });

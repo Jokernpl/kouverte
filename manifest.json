@@ -1,0 +1,21 @@
+{
+  "name": "Kouverte - Chat Anonima",
+  "short_name": "Kouverte",
+  "description": "Chat mondiale anonima con video, stanze a codice e amici",
+  "start_url": "/app.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0418",
+  "theme_color": "#12082a",
+  "lang": "it",
+  "categories": ["social", "communication"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

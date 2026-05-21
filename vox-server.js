@@ -67,9 +67,21 @@ fs.mkdirSync(AVATAR_DIR, { recursive: true });
 
 app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '1d', fallthrough: true }));
 
+// NO-CACHE per HTML/JS/CSS principali: gli update arrivano subito al refresh
+app.use((req, res, next) => {
+    const p = req.path;
+    if (p === '/app.html' || p === '/' || p === '/index.html' || p === '/sw.js' || p === '/manifest.json') {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+    }
+    next();
+});
 app.use(express.static(__dirname, {
     dotfiles: 'deny',
-    index: ['index.html']
+    index: ['index.html'],
+    etag: true,
+    lastModified: true
 }));
 
 const server = http.createServer(app);

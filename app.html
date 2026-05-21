@@ -4,15 +4,38 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>KOUVERTE</title>
+<!-- PWA: installabile come app, update automatici -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#12082a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kouverte">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:#12082a;color:#fff}
-.screen{position:fixed;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s}
+html.tab-hidden *{animation-play-state:paused !important}
+/* Tutte le luci/decorazioni NON devono intercettare touch/scroll */
+.pulse-dot,.pulse-dot::before,.fomo-tag,.rare-tag,.active-tag,.ach-badge-lock,
+.nnotif,.anon-badge-big,.kv-particles,.kv-particle,.sparkles,.sp,
+.mascot::after,.mavatar.aura-prem::before,.room-card::before,.room-card::after,
+.live-stats-bar::before,.lf-dot,.rc-online-dot,.chat-hdr-dot,.chat-hdr-dot2,
+.rdot,.opd,.video-cam-off-overlay,.tdot,.fx-rain-drop,.fx-glitch,.fx-storm-bolt,
+.chat-effects-layer,.rc-flag-pill,.hot-badge,.rc-online-pill,
+.user-chip-online-dot,.user-chip-cam-indicator{pointer-events:none}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important}
+}
+html,body{height:100%;width:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:#12082a;color:#fff;overscroll-behavior:none}
+body{position:relative}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s;overflow:hidden}
 .screen.active{opacity:1;pointer-events:all}
-::-webkit-scrollbar{width:3px}::-webkit-scrollbar-thumb{background:#5b21b6;border-radius:4px}
+::-webkit-scrollbar{width:0;height:0}::-webkit-scrollbar-thumb{background:transparent}
+#home::-webkit-scrollbar,#profile::-webkit-scrollbar{width:0;height:0;display:none}
+#home,#profile{scrollbar-width:none;-ms-overflow-style:none}
 
 /* ═══════════════════════════════
    SPLASH
@@ -138,7 +161,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ═══════════════════════════════
    HOME
 ═══════════════════════════════ */
-#home{background:#12082a;overflow-y:auto}
+#home{background:#0a0418;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
 
 /* Home header con logo */
 .home-hdr{
@@ -182,21 +205,16 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   background:linear-gradient(145deg,#1e1040,#2a1458);
   border:1px solid rgba(139,92,246,.3);
   border-radius:20px;padding:14px 12px;
-  cursor:pointer;transition:transform .2s,box-shadow .2s;
+  cursor:pointer;
   position:relative;overflow:hidden;
   display:flex;flex-direction:column;justify-content:space-between;
-  animation:card-glow 4s ease-in-out infinite
+  touch-action:manipulation
 }
 .room-card:active{transform:scale(.95);opacity:.9}
-.room-card::before{
-  content:'';position:absolute;inset:0;border-radius:20px;
-  background:radial-gradient(circle at 50% 0%,var(--rc-glow,rgba(168,85,247,.18)),transparent 70%);
-  pointer-events:none
-}
+.room-card::before{content:'';display:none}
 .room-card::after{
-  content:'';position:absolute;top:0;left:-40%;width:60%;height:100%;
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
-  animation:shimmer 5s ease-in-out infinite;pointer-events:none
+  content:'';position:absolute;top:0;left:0;width:0;height:0;
+  pointer-events:none
 }
 
 /* Badge row in alto */
@@ -219,7 +237,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 
 /* Centro tile: emoji grande + nome */
 .rc-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;z-index:1;position:relative}
-.rc-emoji-big{font-size:46px;line-height:1;filter:drop-shadow(0 0 12px var(--rc-color,#a855f7))}
+.rc-emoji-big{font-size:46px;line-height:1}
 .rc-tile-name{
   font-size:16px;font-weight:900;color:#fff;text-align:center;letter-spacing:-.3px;
   text-shadow:0 2px 8px rgba(0,0,0,.5);
@@ -259,7 +277,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 .chat-hdr-dot2{width:7px;height:7px;border-radius:50%;animation:rdot 2s ease-in-out infinite}
 
 /* Messages */
-.chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+.chat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:3px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
 /* Message row — stile screenshot */
 .mrow{display:flex;align-items:flex-start;gap:8px;padding:2px 0;animation:min .2s ease-out}
@@ -373,7 +391,7 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
 /* ═══════════════════════════════
    PROFILE
 ═══════════════════════════════ */
-#profile{background:#12082a;overflow-y:auto;padding-bottom:80px}
+#profile{background:#12082a;overflow-y:scroll;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
 .prof-hero{padding:28px 20px 16px;text-align:center;position:relative;
   background:radial-gradient(ellipse at 50% 0%,#1e0d40,transparent 70%)}
 .prof-mascot{width:80px;height:80px;margin:0 auto 10px;position:relative;
@@ -559,9 +577,11 @@ html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFo
   display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);
   backdrop-filter:blur(20px)
 }
-.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0;
-  cursor:pointer;border:none;background:none;color:#6b7280;transition:color .2s;position:relative}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;min-height:52px;justify-content:center;
+  cursor:pointer;border:none;background:none;color:#6b7280;transition:color .2s,transform .15s;position:relative}
+.nbtn:active{transform:scale(0.92)}
 .nbtn.active{color:#a855f7}
+.nbtn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;background:linear-gradient(90deg,#a855f7,#ec4899);border-radius:0 0 2px 2px;box-shadow:0 0 8px #a855f7}
 .nicon{font-size:20px;line-height:1}
 .nlbl{font-size:9px;margin-top:2px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
 .nnotif{position:absolute;top:5px;right:50%;transform:translateX(11px);
@@ -810,7 +830,7 @@ html[data-theme="light"] body {
 /* ═══════════════════════════════
    FOMO INDICATORS + ROOM CARD PREVIEW
 ═══════════════════════════════ */
-.fomo-tag{position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:0.5px;z-index:3;animation:fomoBounce 2s ease-in-out infinite}
+.fomo-tag{position:absolute;top:8px;right:8px;font-size:9px;font-weight:900;padding:3px 8px;border-radius:8px;letter-spacing:0.5px;z-index:3;animation:fomoBounce 2s ease-in-out infinite;pointer-events:none}
 .fomo-tag.almost-full{background:linear-gradient(135deg,#dc2626,#f59e0b);color:#fff;box-shadow:0 0 12px rgba(220,38,38,0.6)}
 .fomo-tag.trending{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;box-shadow:0 0 10px rgba(249,115,22,0.5)}
 .fomo-tag.live{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 0 10px rgba(16,185,129,0.5)}
@@ -961,11 +981,11 @@ html[data-theme="light"] body {
    LIVE STATS BAR - sensazione mondo vivo
 ═══════════════════════════════ */
 .live-stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,rgba(168,85,247,0.15),rgba(59,130,246,0.1),rgba(236,72,153,0.1));border:1px solid rgba(168,85,247,0.3);border-radius:16px;position:relative;overflow:hidden}
-.live-stats-bar::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(168,85,247,0.1),transparent);animation:shimmer 4s linear infinite;pointer-events:none}
+.live-stats-bar::before{content:'';position:absolute;inset:0;pointer-events:none;display:none}
 .live-stat{display:flex;align-items:center;gap:8px;justify-content:center;position:relative}
 .live-stat-icon{font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:32px;height:32px}
 .pulse-dot{width:14px;height:14px;background:#10b981;border-radius:50%;position:relative;box-shadow:0 0 12px #10b981}
-.pulse-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:#10b981;animation:ping 2s ease-out infinite;opacity:0.6}
+.pulse-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:#10b981;animation:ping 2s ease-out infinite;opacity:0.6;pointer-events:none}
 @keyframes ping{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}
 .live-stat-text{display:flex;flex-direction:column;align-items:flex-start}
 .live-stat-num{font-size:18px;font-weight:900;color:#fff;line-height:1;background:linear-gradient(135deg,#fff,#a855f7);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -992,14 +1012,7 @@ html[data-theme="light"] body {
 /* ═══════════════════════════════
    SFONDO HOME ANIMATO - particelle e glow
 ═══════════════════════════════ */
-#home{position:relative;background:#0a0418}
-#home::before{content:'';position:absolute;inset:0;background:
-  radial-gradient(circle at 20% 30%,rgba(168,85,247,0.15) 0%,transparent 40%),
-  radial-gradient(circle at 80% 70%,rgba(236,72,153,0.12) 0%,transparent 40%),
-  radial-gradient(circle at 50% 50%,rgba(59,130,246,0.08) 0%,transparent 50%);
-  pointer-events:none;z-index:0;animation:bgOrbs 12s ease-in-out infinite}
-@keyframes bgOrbs{0%,100%{transform:scale(1) rotate(0deg)}50%{transform:scale(1.1) rotate(180deg)}}
-#home > *{position:relative;z-index:1}
+/* sfondo glow applicato direttamente, senza ::before che blocca scroll */
 /* Particelle */
 .kv-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
 .kv-particle{position:absolute;width:3px;height:3px;border-radius:50%;background:#a855f7;box-shadow:0 0 6px #a855f7;animation:floatParticle 15s linear infinite;opacity:0.6}
@@ -1011,12 +1024,9 @@ html[data-theme="light"] body {
 /* ═══════════════════════════════
    ROOM CARDS - glow potenziato + hover
 ═══════════════════════════════ */
-.room-card{position:relative;overflow:hidden;transition:all 0.3s cubic-bezier(0.4,0,0.2,1)}
-.room-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 30%,var(--rc-glow,rgba(168,85,247,0.2)) 50%,transparent 70%);background-size:200% 200%;background-position:200% 0%;transition:background-position 0.6s ease-out;pointer-events:none;opacity:0}
-.room-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 16px 40px var(--rc-glow,rgba(168,85,247,0.4))}
-.room-card:hover::after{background-position:-200% 0%;opacity:1}
-.room-card.live-room{animation:roomLivePulse 3s ease-in-out infinite}
-@keyframes roomLivePulse{0%,100%{box-shadow:0 0 0 rgba(168,85,247,0.4)}50%{box-shadow:0 0 30px rgba(168,85,247,0.6)}}
+/* Effetti hover/animazioni rimossi: causavano scroll-jump su mobile */
+.room-card{position:relative;overflow:hidden;transition:opacity .15s}
+.room-card:active{opacity:.85}
 
 /* ═══════════════════════════════
    TELEGRAM BANNER - HOME
@@ -1408,15 +1418,8 @@ html[data-theme="light"] body {
     </div>
   </div>
 
-  <!-- Toolbar chat: modalita speciali -->
-  <div class="chat-modes-bar" id="chatModesBar">
-    <button class="chat-mode-btn" id="modeEphemeral" onclick="toggleEphemeralChat()" title="Messaggi temporanei">⏱️</button>
-    <button class="chat-mode-btn" id="modeEffects" onclick="toggleChatEffects()" title="Effetti evento">🌧️</button>
-    <button class="chat-mode-btn" id="modeMusic" onclick="toggleRoomMusic()" title="Musica ambient">🎵</button>
-    <button class="chat-mode-btn" id="modeVoice" onclick="toggleVoiceMode()" title="Modalita vocale">🎙️</button>
-    <button class="chat-mode-btn" id="modeBot" onclick="toggleBotAssist()" title="Bot anti-silenzio">🤖</button>
-    <button class="chat-mode-btn" id="modeRadar" onclick="openRadarMode()" title="Utenti vicini">📍</button>
-  </div>
+  <!-- Toolbar chat: modalita speciali (RIMOSSE: non funzionavano) -->
+
 
   <div class="chat-msgs" id="chatMsgs"></div>
 
@@ -1435,13 +1438,8 @@ html[data-theme="light"] body {
 
   <div class="chat-bar">
     <div class="chat-bar-row">
-      <button class="sticker-btn" onclick="toggleStickerPicker()" title="Sticker">😀</button>
       <textarea class="cinput" id="msgInput" placeholder="Type anonymously..." rows="1"></textarea>
       <button class="csend" onclick="sendMsg()">➤</button>
-    </div>
-    <!-- Sticker picker (toggle) -->
-    <div class="sticker-picker" id="stickerPicker">
-      <div class="sticker-grid" id="stickerGrid"></div>
     </div>
   </div>
 </div>
@@ -1629,21 +1627,13 @@ html[data-theme="light"] body {
     <div class="mpill"></div>
     <div class="mtitle" id="fmTitle" style="font-size:17px;margin-bottom:8px"></div>
     <div class="mdesc" id="fmDesc"></div>
-    <button class="btn-p" id="fmBtn" style="margin-top:12px" onclick="buyFrame()"></button>
+    <button class="btn-p" id="fmBtn" style="margin-top:12px;display:none"></button>
     <button class="btn-s" onclick="closeFrameM()" style="margin-top:4px">Annulla</button>
   </div>
 </div>
 
-<!-- Music widget (lo-fi player) -->
-<div class="music-widget" id="musicWidget">
-  <button class="music-close" onclick="closeMusicWidget()">✕</button>
-  <div class="music-widget-title">
-    <div class="pulse-dot"></div>
-    <span>🎵 Musica Stanza</span>
-  </div>
-  <div class="music-selector" id="musicStations"></div>
-  <div style="font-size:9px;color:#6b7280;text-align:center;margin-top:4px">Audio solo per te (privato)</div>
-</div>
+<!-- Music widget RIMOSSO -->
+
 
 <!-- ░░ CONTINUA MENU MODAL ░░ -->
 <div class="overlay" id="continuaOv">
@@ -1831,8 +1821,34 @@ const ROOMS = [
   { id:'italia',        name:'🇮🇹 Italia',   emoji:'🇮🇹', desc:'Chat generale per tutti gli italiani',  tier:'public',     color:'#10b981', dot1:'#10b981',dot2:'#34d399',dot3:'#6ee7b7' },
   { id:'roma',          name:'Roma',        emoji:'🏛️', desc:'Capitale eterna, chat capitolina',      tier:'public',     color:'#f59e0b', dot1:'#f59e0b',dot2:'#fbbf24',dot3:'#fcd34d' },
   { id:'milano',        name:'Milano',      emoji:'🏙️', desc:'Il cuore pulsante del Nord',            tier:'public',     color:'#60a5fa', dot1:'#60a5fa',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'napoli',        name:'Napoli',      emoji:'⚓', desc:'O sole mio, la città del sud',          tier:'public',     color:'#06b6d4', dot1:'#06b6d4',dot2:'#22d3ee',dot3:'#67e8f9' },
+  { id:'torino',        name:'Torino',      emoji:'🏔️', desc:'Eleganza sabauda',                       tier:'public',     color:'#94a3b8', dot1:'#94a3b8',dot2:'#cbd5e1',dot3:'#e2e8f0' },
+  { id:'firenze',       name:'Firenze',     emoji:'🎨', desc:'Culla del Rinascimento',                 tier:'public',     color:'#dc2626', dot1:'#dc2626',dot2:'#ef4444',dot3:'#f87171' },
+  { id:'venezia',       name:'Venezia',     emoji:'🚤', desc:'La Serenissima, gondole e canali',      tier:'public',     color:'#0ea5e9', dot1:'#0ea5e9',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'bologna',       name:'Bologna',     emoji:'🍝', desc:'La dotta, la grassa, la rossa',         tier:'public',     color:'#b91c1c', dot1:'#b91c1c',dot2:'#dc2626',dot3:'#ef4444' },
+  { id:'palermo',       name:'Palermo',     emoji:'☀️', desc:'Cuore caldo della Sicilia',             tier:'public',     color:'#f97316', dot1:'#f97316',dot2:'#fb923c',dot3:'#fbbf24' },
+  { id:'genova',        name:'Genova',      emoji:'⚓', desc:'La superba sul mare',                   tier:'public',     color:'#1e40af', dot1:'#1e40af',dot2:'#3b82f6',dot3:'#60a5fa' },
+  { id:'verona',        name:'Verona',      emoji:'💕', desc:'Città di Romeo e Giulietta',            tier:'public',     color:'#ec4899', dot1:'#ec4899',dot2:'#f472b6',dot3:'#fbcfe8' },
+  { id:'bari',          name:'Bari',        emoji:'🌊', desc:'Puglia e dintorni',                     tier:'public',     color:'#0d9488', dot1:'#0d9488',dot2:'#14b8a6',dot3:'#5eead4' },
+  { id:'cagliari',      name:'Cagliari',    emoji:'🏖️', desc:'Sardegna e mare cristallino',            tier:'public',     color:'#0891b2', dot1:'#0891b2',dot2:'#06b6d4',dot3:'#22d3ee' },
   { id:'campania',      name:'Campania',    emoji:'🌋', desc:'Napoli, Salerno, costiere e dintorni',  tier:'public',     color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
+  { id:'sicilia',       name:'Sicilia',     emoji:'🏝️', desc:'Trinacria, mare e tradizione',           tier:'public',     color:'#eab308', dot1:'#eab308',dot2:'#facc15',dot3:'#fde047' },
+  { id:'sardegna',      name:'Sardegna',    emoji:'🐚', desc:'Costa Smeralda e Barbagia',             tier:'public',     color:'#0ea5e9', dot1:'#0ea5e9',dot2:'#38bdf8',dot3:'#7dd3fc' },
+  { id:'toscana',       name:'Toscana',     emoji:'🍷', desc:'Colline, vino e bellezza',              tier:'public',     color:'#a16207', dot1:'#a16207',dot2:'#ca8a04',dot3:'#eab308' },
+  { id:'lombardia',     name:'Lombardia',   emoji:'🌆', desc:'Da Como a Mantova',                     tier:'public',     color:'#475569', dot1:'#475569',dot2:'#64748b',dot3:'#94a3b8' },
+  { id:'veneto',        name:'Veneto',      emoji:'🏰', desc:'Dalle Dolomiti alla laguna',            tier:'public',     color:'#7c3aed', dot1:'#7c3aed',dot2:'#a855f7',dot3:'#c084fc' },
+  { id:'puglia',        name:'Puglia',      emoji:'🌻', desc:'Trulli, ulivi e Salento',               tier:'public',     color:'#65a30d', dot1:'#65a30d',dot2:'#84cc16',dot3:'#a3e635' },
   { id:'calabria',      name:'Calabria',    emoji:'🌅', desc:'Mare, sole e chiacchiere',              tier:'public',     color:'#fb923c', dot1:'#fb923c',dot2:'#f97316',dot3:'#fbbf24' },
+  { id:'lazio',         name:'Lazio',       emoji:'🐺', desc:'Roma e provincia',                      tier:'public',     color:'#b45309', dot1:'#b45309',dot2:'#d97706',dot3:'#f59e0b' },
+  { id:'piemonte',      name:'Piemonte',    emoji:'⛰️', desc:'Alpi e nocciole',                        tier:'public',     color:'#78716c', dot1:'#78716c',dot2:'#a8a29e',dot3:'#d6d3d1' },
+  { id:'liguria',       name:'Liguria',     emoji:'🌊', desc:'Cinque Terre e Riviera',                tier:'public',     color:'#0d9488', dot1:'#0d9488',dot2:'#14b8a6',dot3:'#5eead4' },
+  { id:'emilia',        name:'Emilia-Romagna', emoji:'🍕', desc:'Cibo, motori e divertimento',         tier:'public',     color:'#991b1b', dot1:'#991b1b',dot2:'#b91c1c',dot3:'#dc2626' },
+  { id:'love',          name:'Amore',       emoji:'💕', desc:'Cuori soli cercano cuori',              tier:'public',     color:'#ec4899', dot1:'#ec4899',dot2:'#f472b6',dot3:'#fbcfe8' },
+  { id:'musica',        name:'Musica',      emoji:'🎵', desc:'Condividi i tuoi gusti musicali',       tier:'public',     color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
+  { id:'sport',         name:'Sport',       emoji:'⚽', desc:'Calcio, F1, tennis e altro',            tier:'public',     color:'#16a34a', dot1:'#16a34a',dot2:'#22c55e',dot3:'#4ade80' },
+  { id:'gaming',        name:'Gaming',      emoji:'🎮', desc:'Console, PC e mobile',                  tier:'public',     color:'#9333ea', dot1:'#9333ea',dot2:'#a855f7',dot3:'#c084fc' },
+  { id:'cinema',        name:'Cinema',      emoji:'🎬', desc:'Film, serie TV, attori',                tier:'public',     color:'#7c2d12', dot1:'#7c2d12',dot2:'#9a3412',dot3:'#c2410c' },
+  { id:'notte',         name:'Notte',       emoji:'🌙', desc:'Chat dei nottambuli',                   tier:'public',     color:'#1e3a8a', dot1:'#1e3a8a',dot2:'#1d4ed8',dot3:'#3b82f6' },
   { id:'confessionale', name:'Confessionale', emoji:'🕯️', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
 ];
 
@@ -1898,7 +1914,110 @@ var chatRoomUsers={};
 // ══ INIT ══
 document.addEventListener('DOMContentLoaded',()=>{
   const tg=window.Telegram?.WebApp;
-  if(tg){tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');}
+  if(tg){
+    tg.ready();tg.expand();tg.setHeaderColor('#12082a');tg.setBackgroundColor('#12082a');
+    // NON usare disableVerticalSwipes: su alcune versioni Android blocca lo scroll interno
+  }
+  // Haptic feedback helper (Telegram Mini App)
+  window.haptic = (type='light') => {
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(type); } catch(e){}
+  };
+  window.hapticOk = () => { try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch(e){} };
+
+  // ───── PWA: registra Service Worker per update automatici + install ─────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(reg => {
+      console.log('[PWA] Service Worker registrato');
+      // Check update ogni 30 sec quando l'app è aperta
+      setInterval(() => reg.update(), 30000);
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (nw) nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            // Update disponibile → reload silenzioso
+            console.log('[PWA] Update disponibile, ricarico...');
+            window.location.reload();
+          }
+        });
+      });
+    }).catch(e => console.warn('[PWA] SW register fallito:', e));
+  }
+  // Listener per "Installa app" prompt (Android Chrome)
+  let _installPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    _installPrompt = e;
+    // Mostra un toast invitante dopo 5 sec
+    setTimeout(() => {
+      if (_installPrompt && !sessionStorage.getItem('kv_install_shown')) {
+        sessionStorage.setItem('kv_install_shown', '1');
+        showInstallBanner();
+      }
+    }, 5000);
+  });
+  window.showInstallBanner = () => {
+    const b = document.createElement('div');
+    b.style.cssText = 'position:fixed;bottom:80px;left:14px;right:14px;background:linear-gradient(135deg,#7c3aed,#ec4899);border-radius:14px;padding:14px;z-index:600;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(168,85,247,0.5);animation:slideUpFade 0.4s ease-out';
+    b.innerHTML = '<div style="font-size:28px">📱</div><div style="flex:1;color:#fff"><div style="font-weight:900;font-size:14px">Installa Kouverte</div><div style="font-size:11px;opacity:.85">Come una vera app, niente browser</div></div><button id="kvInst" style="background:#fff;color:#7c3aed;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer">Installa</button><button id="kvInstX" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer">✕</button>';
+    document.body.appendChild(b);
+    document.getElementById('kvInst').onclick = async () => {
+      if (_installPrompt) { _installPrompt.prompt(); await _installPrompt.userChoice; _installPrompt = null; }
+      b.remove();
+    };
+    document.getElementById('kvInstX').onclick = () => b.remove();
+  };
+  // Tap leggero su tutti i bottoni principali
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('.nbtn,.room-card,.code-room-btn,.btn-p,.csend,.chat-back,.cat-btn,.user-chip,.frame-c,.modal-btn,.wheel-btn,.coin-widget');
+    if (t) window.haptic('light');
+  }, true);
+  // Pausa animazioni quando tab nascosto (risparmio batteria)
+  document.addEventListener('visibilitychange', () => {
+    document.documentElement.classList.toggle('tab-hidden', document.hidden);
+  });
+
+  // ───── TOUCH SCROLL FALLBACK (Telegram WebApp Android fix) ─────
+  // Se il browser non gestisce lo scroll touch nativamente, lo gestiamo noi via JS.
+  // Funziona su qualsiasi WebView, anche bug-gato.
+  function attachTouchScroll(el) {
+    if (!el || el.__tsAttached) return;
+    el.__tsAttached = true;
+    let startY = 0, startScroll = 0, lastY = 0, lastT = 0, velocity = 0, raf = 0;
+    el.addEventListener('touchstart', (e) => {
+      if (raf) cancelAnimationFrame(raf);
+      startY = e.touches[0].clientY;
+      lastY = startY;
+      lastT = performance.now();
+      startScroll = el.scrollTop;
+      velocity = 0;
+    }, { passive: true });
+    el.addEventListener('touchmove', (e) => {
+      const y = e.touches[0].clientY;
+      const dy = startY - y;
+      el.scrollTop = startScroll + dy;
+      const now = performance.now();
+      const dt = now - lastT;
+      if (dt > 0) velocity = (lastY - y) / dt;
+      lastY = y;
+      lastT = now;
+    }, { passive: true });
+    el.addEventListener('touchend', () => {
+      // Inerzia
+      const decay = 0.95;
+      let v = velocity * 16;
+      function step() {
+        if (Math.abs(v) < 0.5) return;
+        el.scrollTop += v;
+        v *= decay;
+        raf = requestAnimationFrame(step);
+      }
+      if (Math.abs(v) > 0.5) raf = requestAnimationFrame(step);
+    }, { passive: true });
+  }
+  // Attiva su tutti i container scrollabili (anche futuri)
+  setTimeout(() => {
+    ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
+  }, 100);
   initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
@@ -3696,9 +3815,12 @@ function incrementDailyMission(id, amount){
 // PARTICELLE + FEED LIVE + STATS - mondo vivo
 // ══════════════════════════════════════════
 function initParticles(){
+  // DISABILITATO: particelle causavano problemi di scroll/movimento su mobile
+  return;
   const wrap = document.getElementById('kvParticles');
   if (!wrap || wrap.childElementCount > 0) return;
-  for (let i = 0; i < 25; i++) {
+  const N = 0;
+  for (let i = 0; i < N; i++) {
     const p = document.createElement('div');
     const cls = ['','p2','p3','p4'][Math.floor(Math.random()*4)];
     p.className = 'kv-particle ' + cls;
@@ -3825,7 +3947,7 @@ function updateLiveStats(){
 
 function startLiveStats(){
   updateLiveStats();
-  setInterval(updateLiveStats, 5000); // ogni 5 sec
+  setInterval(updateLiveStats, 20000); // ogni 20 sec (perf)
 }
 
 function renderRooms(){
@@ -3967,10 +4089,19 @@ function enterRoom(roomId){
   setTimeout(scrollBot,150);
 }
 function leaveRoom(){
-  // NEW: Stop WebRTC before leaving room
-  stopAllWebRTC();
-  
-  if(room){socket.emit('leave-chat-room',{roomId:room.id});room=null;}
+  // Chiudi solo le peer connections (NON fermare la webcam, evita re-prompt permessi)
+  Object.keys(peerConnections).forEach(uid => closePeerConnection(uid));
+  selectedUserId = null;
+  const tv = document.getElementById('theirVideo'); if (tv) tv.srcObject = null;
+  const tl = document.getElementById('theirVideoLabel'); if (tl) tl.textContent = 'Seleziona utente';
+
+  if(room){
+    socket.emit('leave-chat-room',{roomId:room.id});
+    // Cleanup memory: rimuovi i dati di questa stanza
+    if (chatRoomUsers[room.id]) delete chatRoomUsers[room.id];
+    if (typingUsers) typingUsers = {};
+    room=null;
+  }
   showScreen('home',document.querySelector('[data-sc="home"]'));
 }
 
@@ -4331,7 +4462,19 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
-function saveUser(){setLS('kv4_user',user);}
+var _saveUserTimer = null;
+function saveUser(){
+  // Debounce: scrivi al massimo ogni 300ms (localStorage è sincrono e bloccante)
+  if (_saveUserTimer) clearTimeout(_saveUserTimer);
+  _saveUserTimer = setTimeout(() => { setLS('kv4_user', user); _saveUserTimer = null; }, 300);
+}
+// Forza scrittura immediata (es. prima di unload)
+function saveUserNow(){
+  if (_saveUserTimer) { clearTimeout(_saveUserTimer); _saveUserTimer = null; }
+  setLS('kv4_user', user);
+}
+window.addEventListener('pagehide', saveUserNow);
+window.addEventListener('beforeunload', saveUserNow);
 
 // ══════════════════════════════════════════
 // LOGIN / REGISTRAZIONE + SYNC DATI
@@ -4389,9 +4532,12 @@ async function tryAutoLogin(){
       if (json.user.kvData && json.user.kvData._syncedAt) {
         const localUpdated = user._localUpdated || 0;
         if (json.user.kvData._syncedAt > localUpdated) {
-          // Merge dati server con locali
+          // Merge dati server con locali MA NON sovrascrivere name
+          const preserveName = user.name;
           Object.assign(user, json.user.kvData);
           delete user._syncedAt;
+          // name = username se loggato, altrimenti preserva quello che c'era
+          user.name = json.user.username || preserveName;
         }
       }
       // Forza name = username (l'utente vuole vedere sempre il suo username)
@@ -4531,6 +4677,8 @@ function startAutoSync(){
 async function syncUserDataToServer(){
   if (!isLoggedIn || !authToken) return false;
   try {
+    // Forza name = username prima di salvare sul server
+    if (user.username) user.name = user.username;
     user._localUpdated = Date.now();
     const res = await fetch('/api/kv/sync', {
       method: 'POST',
@@ -4568,10 +4716,10 @@ function showLoginWall(){
   div.className = 'modal-overlay show';
   div.style.zIndex = '99999';
   div.style.backdropFilter = 'blur(8px)';
-  div.onclick = (e) => { if (e.target === div) closeLoginWall(); };
+  // No backdrop close: l'utente DEVE scegliere (Accedi / Registrati / Ospite)
+  div.onclick = (e) => { e.stopPropagation(); };
   div.innerHTML = `
     <div class="modal-box" style="max-width:440px;position:relative">
-      <button onclick="closeLoginWall()" style="position:absolute;top:12px;right:12px;background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;z-index:5">✕</button>
       <div class="modal-body" style="text-align:center;padding:30px 24px">
         <div style="font-size:64px;margin-bottom:12px">🎭</div>
         <div style="font-size:22px;font-weight:900;color:#fff;margin-bottom:6px">Benvenuto su KOUVERTE</div>
@@ -4636,7 +4784,7 @@ function createAuthModal(){
     <div class="modal-box">
       <div class="modal-hdr">
         <div class="modal-title" id="authTitle">🔑 Accedi al tuo account</div>
-        <button class="modal-close" onclick="document.getElementById('authModal').classList.remove('show')">✕</button>
+        <button class="modal-close" onclick="closeAuthModalSafe()">✕</button>
       </div>
       <form class="modal-body" onsubmit="event.preventDefault();doAuth();return false" autocomplete="on">
         <input type="hidden" id="authMode" value="login">
@@ -4682,14 +4830,25 @@ function createAuthModal(){
         </div>
       </form>
       <div class="modal-footer">
-        <button type="button" class="modal-btn modal-btn-secondary" onclick="document.getElementById('authModal').classList.remove('show')">Annulla</button>
+        <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAuthModalSafe()">Annulla</button>
         <button type="submit" class="modal-btn modal-btn-primary" id="authSubmitBtn" onclick="doAuth()">🔑 Accedi</button>
       </div>
     </div>
   `;
-  div.onclick = (e) => { if (e.target === div) div.classList.remove('show'); };
+  // Click sul backdrop: NON chiude (era bypass del login). Solo X/Annulla esplicito.
+  div.onclick = (e) => { if (e.target === div) closeAuthModalSafe(); };
   document.body.appendChild(div);
   return div;
+}
+// Chiusura sicura: se NON loggato, riapre LoginWall così l'utente non finisce "dentro" senza scelta esplicita
+function closeAuthModalSafe(){
+  const m = document.getElementById('authModal');
+  if (m) m.classList.remove('show');
+  if (!isLoggedIn) {
+    window._authPromptShown = false;
+    sessionStorage.removeItem('kv_welcome_shown');
+    setTimeout(() => showLoginWall(), 200);
+  }
 }
 
 function switchAuthMode(mode){
@@ -4863,8 +5022,10 @@ async function doAuth(){
         if (serverData && serverData._syncedAt) {
           const localUpdated = user._localUpdated || 0;
           if (serverData._syncedAt > localUpdated) {
-            // Server piu recente: ripristina
+            // Server piu recente: ripristina MA NON sovrascrivere name
+            const preserveName = json.user.username || user.name;
             Object.assign(user, serverData);
+            user.name = preserveName;
             console.log('[Auth] ✅ Dati server ripristinati (server piu recente)');
             showToast('💾 Dati ripristinati: ' + (user.coins || 0) + ' 🪙, lvl ' + (user.level || 1));
           } else {
@@ -5283,7 +5444,9 @@ document.addEventListener('visibilitychange', () => {
       if (json.data && json.data._syncedAt) {
         const localUpdated = user._localUpdated || 0;
         if (json.data._syncedAt > localUpdated + 5000) { // 5s di tolleranza
+          const keepName = user.username || user.name;
           Object.assign(user, json.data);
+          user.name = keepName;
           setLS('kv4_user', user);
           updateProfileUI();
           updateCoinBar();
