@@ -3356,8 +3356,10 @@ function setupChatModesHooks(){
     _originalAppendMsg = appendMsg;
     window.appendMsg = function(msg){
       _originalAppendMsg(msg);
-      lastChatActivity = Date.now();
-      if (chatModes.ephemeral) {
+      if (typeof lastChatActivity !== 'undefined') {
+        lastChatActivity = Date.now();
+      }
+      if (chatModes && chatModes.ephemeral) {
         const c = document.getElementById('chatMsgs');
         const last = c?.lastElementChild;
         if (last && !last.classList.contains('msys') && !last.classList.contains('bot-msg')) {
