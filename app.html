@@ -2605,6 +2605,8 @@ function connectSocket(){
   if(typeof io==='undefined'){ showToast('⚠️ Impossibile caricare socket.io'); setTimeout(connectSocket,3000); return; }
   setConnState('connecting');
   socket=io(BACKEND,{transports:['websocket','polling'],reconnection:true,reconnectionDelay:1000,reconnectionAttempts:Infinity});
+  // Registra subito i WebRTC handlers (devono essere sul socket NUOVO, non su un socket precedente)
+  if (typeof registerWebRTCHandlers === 'function') registerWebRTCHandlers(socket);
   socket.on('connect',()=>{
     setConnState('online');
     if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
@@ -3024,8 +3026,12 @@ async function flushPendingIce(pc, userId) {
   }
 }
 
-// Socket.io handlers per WebRTC
-socket.on('voice-offer', async (data) => {
+// Socket.io handlers per WebRTC — wrappati in funzione per essere ri-registrati
+// se socket viene ricreato (es. su reconnect). Chiamata da connectSocket().
+function registerWebRTCHandlers(sock) {
+  console.log('[WebRTC] Registering socket handlers su socket', sock.id || '(not-connected-yet)');
+
+  sock.on('voice-offer', async (data) => {
   try {
     const { from, offer } = data;
     console.log(`[WebRTC] Ricevuto offer da ${from}`);
@@ -3053,7 +3059,7 @@ socket.on('voice-offer', async (data) => {
   }
 });
 
-socket.on('voice-answer', async (data) => {
+  sock.on('voice-answer', async (data) => {
   try {
     const { from, answer } = data;
     console.log(`[WebRTC] Ricevuto answer da ${from}`);
@@ -3071,7 +3077,7 @@ socket.on('voice-answer', async (data) => {
   }
 });
 
-socket.on('voice-ice', async (data) => {
+  sock.on('voice-ice', async (data) => {
   try {
     const { from, candidate } = data;
     const pc = peerConnections[from];
@@ -3090,6 +3096,13 @@ socket.on('voice-ice', async (data) => {
     console.error('[WebRTC] Errore aggiungendo ICE:', err);
   }
 });
+
+} // fine registerWebRTCHandlers
+
+// Se socket esiste gia' al momento del parsing (script-load tardivo), registra subito
+if (typeof socket !== 'undefined' && socket) {
+  try { registerWebRTCHandlers(socket); } catch(e) { console.warn('[WebRTC] post-load register failed:', e); }
+}
 
 function stopAllWebRTC() {
   if (localStream) {
