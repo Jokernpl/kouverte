@@ -34,18 +34,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML / JS / CSS / app: NETWORK FIRST (fallback cache)
+  // HTML / JS / CSS / app: SEMPRE network, MAI cache (evita problemi di update)
   if (req.destination === 'document' ||
       req.destination === 'script' ||
       req.destination === 'style' ||
-      url.pathname.endsWith('.html')) {
+      url.pathname.endsWith('.html') ||
+      url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css')) {
     event.respondWith(
-      fetch(req).then((res) => {
-        // metti in cache la copia fresca
-        const copy = res.clone();
-        caches.open(STATIC_CACHE).then((c) => c.put(req, copy));
-        return res;
-      }).catch(() => caches.match(req))
+      fetch(req, { cache: 'no-store' }).catch(() => caches.match(req))
     );
     return;
   }
