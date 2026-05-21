@@ -3336,19 +3336,55 @@ io.on('connection', (socket) => {
     });
 
     // WebRTC for voice rooms (multi-user)
+    // Helper: trova il socketId del destinatario `to` (userId) nella chat room
+    function findSocketByUserId(roomId, userId) {
+        // Cerca prima nella chat room specificata
+        if (roomId && chatRoomUsers[roomId]) {
+            for (const [sid, u] of chatRoomUsers[roomId].entries()) {
+                if (u.id === userId) return sid;
+            }
+        }
+        // Fallback: cerca in tutte le chat room
+        for (const users of Object.values(chatRoomUsers)) {
+            for (const [sid, u] of users.entries()) {
+                if (u.id === userId) return sid;
+            }
+        }
+        return null;
+    }
+
     socket.on('voice-offer', (data) => {
-        const { roomSlug, to, from, offer } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, to, offer });
+        const { to, from, roomId, roomSlug, offer } = data;
+        const room = roomId || roomSlug;
+        const targetSid = findSocketByUserId(room, to);
+        if (targetSid) {
+            io.to(targetSid).emit('voice-offer', { from, to, offer });
+        } else {
+            // Fallback legacy: broadcast a chi e' iscritto a 'voice-room-X'
+            if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, to, offer });
+        }
     });
 
     socket.on('voice-answer', (data) => {
-        const { roomSlug, to, from, answer } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, to, answer });
+        const { to, from, roomId, roomSlug, answer } = data;
+        const room = roomId || roomSlug;
+        const targetSid = findSocketByUserId(room, to);
+        if (targetSid) {
+            io.to(targetSid).emit('voice-answer', { from, to, answer });
+        } else {
+            if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, to, answer });
+        }
     });
 
     socket.on('voice-ice', (data) => {
-        const { roomSlug, to, from, candidate } = data;
-        socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, to, candidate });
+        const { to, from, roomId, roomSlug, candidate } = data;
+        const room = roomId || roomSlug;
+        const targetSid = findSocketByUserId(room, to);
+        if (targetSid) {
+            io.to(targetSid).emit('voice-ice', { from, to, candidate });
+        } else {
+            if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, to, candidate });
+        }
     });
 
     // Direct call (after match)
