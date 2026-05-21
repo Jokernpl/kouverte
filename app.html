@@ -1032,6 +1032,12 @@ html[data-theme="light"] body {
    TELEGRAM BANNER - HOME
 ═══════════════════════════════ */
 .telegram-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#0088cc,#229ed9);cursor:pointer;margin-bottom:14px;transition:all 0.3s;box-shadow:0 4px 12px rgba(0,136,204,0.3)}
+.install-banner{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#7c3aed,#ec4899);cursor:pointer;margin-bottom:14px;transition:all 0.3s;box-shadow:0 4px 12px rgba(168,85,247,0.4);color:#fff}
+.install-banner:active{transform:scale(0.98);opacity:.9}
+.install-banner .tg-text{flex:1}
+.install-banner .tg-title{font-weight:900;font-size:14px;color:#fff}
+.install-banner .tg-sub{font-size:11px;color:rgba(255,255,255,.85);margin-top:1px}
+.install-banner .tg-arrow{font-size:18px;color:#fff;font-weight:900}
 .telegram-banner:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,136,204,0.5)}
 .tg-icon{font-size:28px;flex-shrink:0;width:48px;height:48px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center}
 .tg-text{flex:1;min-width:0;color:#fff}
@@ -1243,6 +1249,16 @@ html[data-theme="light"] body {
   </div>
 
   <div class="home-body">
+    <!-- Banner Installa app PWA -->
+    <div id="installBanner" class="install-banner" onclick="triggerInstall()" style="display:none">
+      <div class="tg-icon" style="background:linear-gradient(135deg,#a855f7,#ec4899)">📲</div>
+      <div class="tg-text">
+        <div class="tg-title">Installa l'app</div>
+        <div class="tg-sub">Icona sulla home, fullscreen, update auto</div>
+      </div>
+      <div class="tg-arrow">→</div>
+    </div>
+
     <!-- NEW: Telegram Bot quick access -->
     <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener noreferrer" class="telegram-banner" style="text-decoration:none;color:inherit">
       <div class="tg-icon">✈️</div>
@@ -1942,30 +1958,53 @@ document.addEventListener('DOMContentLoaded',()=>{
       });
     }).catch(e => console.warn('[PWA] SW register fallito:', e));
   }
-  // Listener per "Installa app" prompt (Android Chrome)
+  // PWA install: rileva se non già installato e mostra banner
   let _installPrompt = null;
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const isTelegram = !!window.Telegram?.WebApp?.initDataUnsafe?.user || /Telegram/i.test(navigator.userAgent);
+  // Mostra banner nella home: SEMPRE se non sei già nella PWA o in Telegram
+  function maybeShowInstallBanner() {
+    const banner = document.getElementById('installBanner');
+    if (!banner) return;
+    if (isPWA || isTelegram) { banner.style.display = 'none'; return; }
+    banner.style.display = 'flex';
+  }
+  setTimeout(maybeShowInstallBanner, 500);
+
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     _installPrompt = e;
-    // Mostra un toast invitante dopo 5 sec
-    setTimeout(() => {
-      if (_installPrompt && !sessionStorage.getItem('kv_install_shown')) {
-        sessionStorage.setItem('kv_install_shown', '1');
-        showInstallBanner();
-      }
-    }, 5000);
+    maybeShowInstallBanner();
   });
-  window.showInstallBanner = () => {
-    const b = document.createElement('div');
-    b.style.cssText = 'position:fixed;bottom:80px;left:14px;right:14px;background:linear-gradient(135deg,#7c3aed,#ec4899);border-radius:14px;padding:14px;z-index:600;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(168,85,247,0.5);animation:slideUpFade 0.4s ease-out';
-    b.innerHTML = '<div style="font-size:28px">📱</div><div style="flex:1;color:#fff"><div style="font-weight:900;font-size:14px">Installa Kouverte</div><div style="font-size:11px;opacity:.85">Come una vera app, niente browser</div></div><button id="kvInst" style="background:#fff;color:#7c3aed;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer">Installa</button><button id="kvInstX" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer">✕</button>';
-    document.body.appendChild(b);
-    document.getElementById('kvInst').onclick = async () => {
-      if (_installPrompt) { _installPrompt.prompt(); await _installPrompt.userChoice; _installPrompt = null; }
-      b.remove();
-    };
-    document.getElementById('kvInstX').onclick = () => b.remove();
+
+  // Click sul banner: prompt nativo se disponibile, altrimenti istruzioni manuali
+  window.triggerInstall = async () => {
+    if (_installPrompt) {
+      _installPrompt.prompt();
+      const { outcome } = await _installPrompt.userChoice;
+      _installPrompt = null;
+      if (outcome === 'accepted') document.getElementById('installBanner').style.display = 'none';
+      return;
+    }
+    // Fallback: istruzioni manuali per browser senza beforeinstallprompt (iOS Safari, Firefox)
+    const ua = navigator.userAgent;
+    let msg = '';
+    if (/iPhone|iPad|iPod/i.test(ua)) {
+      msg = '📲 Per installare su iPhone:\n\n1. Apri questo sito in SAFARI\n2. Tocca l\'icona Condividi (↑) in basso\n3. Scorri e tocca "Aggiungi a Home"\n4. Conferma\n\n✅ Icona Kouverte sulla tua home!';
+    } else if (/Android/i.test(ua)) {
+      msg = '📲 Per installare su Android:\n\n1. Apri il menu di Chrome (i 3 puntini in alto a destra)\n2. Tocca "Installa app" oppure "Aggiungi a schermata Home"\n3. Conferma\n\n✅ Icona Kouverte sulla tua home!';
+    } else {
+      msg = '📲 Per installare l\'app:\n\nApri questo sito in Chrome o Edge.\nNella barra indirizzi, tocca l\'icona ⊕ (Installa).\n\n✅ Diventa un\'app desktop!';
+    }
+    alert(msg);
   };
+  // Quando l'app viene installata: nascondi banner
+  window.addEventListener('appinstalled', () => {
+    const b = document.getElementById('installBanner');
+    if (b) b.style.display = 'none';
+    showToast('🎉 App installata!');
+  });
+  // Vecchio showInstallBanner rimosso — ora c'è il banner permanente nella home (.install-banner)
   // Tap leggero su tutti i bottoni principali
   document.addEventListener('click', (e) => {
     const t = e.target.closest('.nbtn,.room-card,.code-room-btn,.btn-p,.csend,.chat-back,.cat-btn,.user-chip,.frame-c,.modal-btn,.wheel-btn,.coin-widget');
