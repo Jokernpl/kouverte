@@ -1034,7 +1034,8 @@ app.post('/api/kv/sync', verifyToken, (req, res) => {
         'confessUsedOn', 'favorites', 'blocked', 'xp', 'level',
         'bio', 'statusEmoji', 'statusText', 'banner', 'dailyMissions',
         'shopItems', 'active_nickFx', 'active_bubble', 'active_enterSound',
-        'active_msgFx', 'active_roomTheme'
+        'active_msgFx', 'active_roomTheme',
+        'welcomePackReceived', 'welcomePackAt' // anti-abuso bonus benvenuto
     ];
 
     // Costruisci dati safe
@@ -1045,6 +1046,15 @@ app.post('/api/kv/sync', verifyToken, (req, res) => {
         }
     }
     safeData._syncedAt = now();
+
+    // ANTI-ABUSO welcome pack: se il server ha gia' welcomePackReceived=true
+    // l'utente NON puo' "resettare" il flag a false per re-ricevere il bonus.
+    // welcomePackReceived e' write-once true (NON puo' tornare a false dal client).
+    const prevKv = user.kvData || {};
+    if (prevKv.welcomePackReceived === true) {
+        safeData.welcomePackReceived = true;
+        if (prevKv.welcomePackAt) safeData.welcomePackAt = prevKv.welcomePackAt;
+    }
 
     user.kvData = safeData;
     markDirty();
