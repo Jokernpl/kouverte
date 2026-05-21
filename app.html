@@ -93,7 +93,7 @@ body{position:relative}
 /* ═══════════════════════════════
    CHAT USERS SECTION
 ═══════════════════════════════ */
-.chat-users-section{flex-shrink:0;padding:8px;border-top:1px solid #00d4ff;background:linear-gradient(180deg,#0f1117,#1a1f3a);max-height:80px;overflow:hidden}
+.chat-users-section{flex-shrink:0;padding:8px;border-top:1px solid #00d4ff;background:linear-gradient(180deg,#0f1117,#1a1f3a);min-height:90px;overflow:hidden}
 .users-scroll{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
 .users-scroll::-webkit-scrollbar{height:4px}
 .users-scroll::-webkit-scrollbar-thumb{background:#00d4ff;border-radius:2px}
@@ -1175,7 +1175,7 @@ html[data-theme="light"] body {
     right:2px;
   }
   .chat-users-section{
-    max-height:60px;
+    min-height:84px;
     padding:6px;
   }
 }
@@ -1197,7 +1197,7 @@ html[data-theme="light"] body {
     font-size:10px;
   }
   .chat-users-section{
-    max-height:50px;
+    min-height:78px;
     padding:4px;
   }
   .user-chip{
@@ -2897,59 +2897,83 @@ function deselectUser() {
   console.log('[WebRTC] Utente deselezionato');
 }
 
-async function createPeerConnection(userId) {
-  try {
-    console.log(`[WebRTC] Creando RTCPeerConnection per ${userId}`);
-    
-    const pc = new RTCPeerConnection(RTC_CONFIG);
-    peerConnections[userId] = pc;
-    
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
+// Crea solo il RTCPeerConnection con listeners e tracks locali (senza creare offer).
+// Usata sia dal caller (initiator) che dal callee (receiver).
+function setupPeerConnection(userId) {
+  console.log(`[WebRTC] setupPeerConnection per ${userId}`);
+
+  // Cleanup eventuale connessione esistente per evitare stati inconsistenti
+  if (peerConnections[userId]) {
+    try { peerConnections[userId].close(); } catch(e) {}
+    delete peerConnections[userId];
+  }
+
+  const pc = new RTCPeerConnection(RTC_CONFIG);
+  peerConnections[userId] = pc;
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => {
+      pc.addTrack(track, localStream);
+    });
+  }
+
+  // Buffer ICE candidates ricevuti prima che remoteDescription sia settata
+  pc._pendingIce = [];
+
+  pc.ontrack = (event) => {
+    console.log('[WebRTC] Traccia remota ricevuta:', event.track.kind);
+    const theirVideo = document.getElementById('theirVideo');
+    if (theirVideo && event.streams[0]) {
+      theirVideo.srcObject = event.streams[0];
+      theirVideo.onloadedmetadata = () => theirVideo.play().catch(()=>{});
+    }
+  };
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit('voice-ice', {
+        to: userId,
+        from: user.id,
+        roomId: room.id,
+        candidate: event.candidate
       });
     }
-    
-    pc.ontrack = (event) => {
-      console.log('[WebRTC] Traccia remota ricevuta:', event.track.kind);
-      const theirVideo = document.getElementById('theirVideo');
-      if (theirVideo && event.streams[0]) {
-        theirVideo.srcObject = event.streams[0];
-        theirVideo.onloadedmetadata = () => theirVideo.play();
-      }
-    };
-    
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        console.log('[WebRTC] Inviando ICE candidate');
-        socket.emit('voice-ice', {
-          to: userId,
-          from: user.id,
-          roomId: room.id,
-          candidate: event.candidate
-        });
-      }
-    };
-    
-    pc.onconnectionstatechange = () => {
-      console.log(`[WebRTC] Connection state (${userId}):`, pc.connectionState);
-      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        closePeerConnection(userId);
-      }
-    };
-    
-    const offer = await pc.createOffer();
+  };
+
+  pc.onconnectionstatechange = () => {
+    console.log(`[WebRTC] Connection state (${userId}):`, pc.connectionState);
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') {
+      closePeerConnection(userId);
+    }
+  };
+
+  return pc;
+}
+
+// Usata dall'INITIATOR per avviare la connessione (crea offer e lo invia)
+async function createPeerConnection(userId) {
+  try {
+    // Glare prevention: se entrambi i lati provano a iniziare contemporaneamente,
+    // solo l'utente con id "minore" (lex) inizia. L'altro aspetta l'offer.
+    if (String(user.id) > String(userId)) {
+      console.log(`[WebRTC] Glare prevention: aspetto offer da ${userId} (id maggiore)`);
+      return;
+    }
+
+    const pc = setupPeerConnection(userId);
+
+    const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await pc.setLocalDescription(offer);
-    
+
     socket.emit('voice-offer', {
       to: userId,
       from: user.id,
       roomId: room.id,
       offer: pc.localDescription
     });
-    
+
     console.log(`[WebRTC] Offer inviato a ${userId}`);
-    
+
   } catch (err) {
     console.error('[WebRTC] Errore createPeerConnection:', err);
   }
@@ -2964,29 +2988,42 @@ function closePeerConnection(userId) {
   }
 }
 
+// Helper: applica ICE candidates buffered dopo che setRemoteDescription è andata a buon fine
+async function flushPendingIce(pc, userId) {
+  if (!pc._pendingIce || !pc._pendingIce.length) return;
+  const pending = pc._pendingIce.splice(0);
+  for (const c of pending) {
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(c));
+    } catch (e) {
+      console.warn(`[WebRTC] addIceCandidate (buffered) fallito per ${userId}:`, e.message);
+    }
+  }
+}
+
 // Socket.io handlers per WebRTC
 socket.on('voice-offer', async (data) => {
   try {
     const { from, offer } = data;
     console.log(`[WebRTC] Ricevuto offer da ${from}`);
-    
-    if (!peerConnections[from]) {
-      await createPeerConnection(from);
-    }
-    
-    const pc = peerConnections[from];
+
+    // CALLEE path: crea il pc SENZA generare offer (era il bug: createPeerConnection
+    // creava un offer concorrente causando glare e setRemoteDescription falliva).
+    const pc = setupPeerConnection(from);
+
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
-    
+    await flushPendingIce(pc, from);
+
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-    
+
     socket.emit('voice-answer', {
       to: from,
       from: user.id,
       roomId: room.id,
       answer: pc.localDescription
     });
-    
+
     console.log(`[WebRTC] Answer inviato a ${from}`);
   } catch (err) {
     console.error('[WebRTC] Errore processing offer:', err);
@@ -2997,11 +3034,14 @@ socket.on('voice-answer', async (data) => {
   try {
     const { from, answer } = data;
     console.log(`[WebRTC] Ricevuto answer da ${from}`);
-    
+
     const pc = peerConnections[from];
     if (pc && pc.signalingState === 'have-local-offer') {
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
+      await flushPendingIce(pc, from);
       console.log(`[WebRTC] Remote description settata da ${from}`);
+    } else if (pc) {
+      console.warn(`[WebRTC] Answer ignorato, signalingState=${pc.signalingState}`);
     }
   } catch (err) {
     console.error('[WebRTC] Errore processing answer:', err);
@@ -3012,11 +3052,17 @@ socket.on('voice-ice', async (data) => {
   try {
     const { from, candidate } = data;
     const pc = peerConnections[from];
-    
-    if (pc && candidate) {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      console.log(`[WebRTC] ICE candidate aggiunto da ${from}`);
+
+    if (!pc || !candidate) return;
+
+    // Se remoteDescription non è ancora settata, bufferizza il candidate
+    if (!pc.remoteDescription || !pc.remoteDescription.type) {
+      pc._pendingIce = pc._pendingIce || [];
+      pc._pendingIce.push(candidate);
+      return;
     }
+
+    await pc.addIceCandidate(new RTCIceCandidate(candidate));
   } catch (err) {
     console.error('[WebRTC] Errore aggiungendo ICE:', err);
   }
