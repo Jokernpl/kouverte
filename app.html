@@ -3677,6 +3677,10 @@ function openLootBox(){
 }
 
 function rollLootBox(){
+  if (!LOOT_REWARDS || !Array.isArray(LOOT_REWARDS) || LOOT_REWARDS.length === 0) {
+    showToast('⚠️ Errore: ricompense non disponibili');
+    return;
+  }
   if ((user.coins||0) < LOOT_BOX_PRICE) {
     showToast('⚠️ Servono ' + LOOT_BOX_PRICE + ' 🪙 (hai ' + (user.coins||0) + ')');
     return;
@@ -3690,8 +3694,18 @@ function rollLootBox(){
   else if (roll < 0.15) rarity = 'epic';
   else if (roll < 0.40) rarity = 'rare';
 
-  const pool = LOOT_REWARDS.filter(r => r.rarity === rarity);
+  const pool = LOOT_REWARDS.filter(r => r && r.rarity === rarity);
+  if (!pool || pool.length === 0) {
+    showToast('⚠️ Nessuna ricompensa disponibile per questa rarità');
+    user.coins += LOOT_BOX_PRICE;
+    return;
+  }
   const reward = pool[Math.floor(Math.random() * pool.length)];
+  if (!reward) {
+    showToast('⚠️ Errore nella selezione della ricompensa');
+    user.coins += LOOT_BOX_PRICE;
+    return;
+  }
 
   // Applica reward
   if (reward.type === 'coins') user.coins += reward.amount;
