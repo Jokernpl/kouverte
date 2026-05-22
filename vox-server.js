@@ -3344,18 +3344,36 @@ io.on('connection', (socket) => {
     // WebRTC for voice rooms (multi-user)
     // Helper: trova il socketId del destinatario `to` (userId) nella chat room
     function findSocketByUserId(roomId, userId) {
+        // DEBUG logging
+        console.log(`[findSocketByUserId] Cercando userId=${userId} in roomId=${roomId}`);
+        
         // Cerca prima nella chat room specificata
         if (roomId && chatRoomUsers[roomId]) {
-            for (const [sid, u] of chatRoomUsers[roomId].entries()) {
-                if (u.id === userId) return sid;
+            const usersInRoom = Array.from(chatRoomUsers[roomId].entries());
+            console.log(`[findSocketByUserId] Room ${roomId} contiene ${usersInRoom.length} utenti:`, usersInRoom.map(([sid, u]) => `${u.id}(${sid.substr(0,8)}...)`).join(', '));
+            
+            for (const [sid, u] of usersInRoom) {
+                if (u.id === userId) {
+                    console.log(`[findSocketByUserId] ✅ Trovato! userId=${userId} è socketId=${sid}`);
+                    return sid;
+                }
             }
+            console.log(`[findSocketByUserId] ❌ userId=${userId} NON trovato in room=${roomId}`);
+        } else {
+            console.log(`[findSocketByUserId] ❌ Room ${roomId} non esiste o è undefined`);
         }
+        
         // Fallback: cerca in tutte le chat room
-        for (const users of Object.values(chatRoomUsers)) {
+        console.log(`[findSocketByUserId] Fallback: cercando in tutte le chat room...`);
+        for (const [rid, users] of Object.entries(chatRoomUsers)) {
             for (const [sid, u] of users.entries()) {
-                if (u.id === userId) return sid;
+                if (u.id === userId) {
+                    console.log(`[findSocketByUserId] ✅ Trovato in fallback! userId=${userId} è socketId=${sid} in room=${rid}`);
+                    return sid;
+                }
             }
         }
+        console.log(`[findSocketByUserId] ❌ userId=${userId} NON trovato in nessuna room`);
         return null;
     }
 
