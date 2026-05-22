@@ -1850,7 +1850,7 @@ html[data-theme="light"] body {
 
   <div class="chat-bar">
     <div class="chat-bar-row">
-      <textarea class="cinput" id="msgInput" placeholder="Type anonymously..." rows="1"></textarea>
+      <textarea class="cinput" id="msgInput" placeholder="Scrivi a tutti... 👋" rows="1"></textarea>
       <button class="cgift" onclick="openGiftPicker()" title="Invia un regalo">🎁</button>
       <button class="csend" onclick="sendMsg()">➤</button>
     </div>
@@ -3598,7 +3598,13 @@ function connectSocket(){
     });
     
     (messages||[]).forEach(m=>appendMsg(m));
-    addSys('Benvenuto in '+room.name+' 👋  Sei anonimo.');
+    // Se la stanza ha messaggi reali → mostra solo il sys-msg classico
+    // Se è vuota → mostra il welcome card (più accogliente per nuovi utenti)
+    if((messages||[]).length > 0){
+      addSys('Benvenuto in '+room.name+' 👋  Sei anonimo.');
+    } else {
+      injectWelcomeMessages(roomId);
+    }
     renderUsersPanel();
     scrollBot();
   });
@@ -5501,9 +5507,9 @@ function enterRoom(roomId){
   // Mostra modal privacy webcam (solo prima volta), poi entra
   showCamPrivacyIfNeeded(()=>{
     showScreen('chat');
-    setTimeout(()=>{ injectWelcomeMessages(roomId); scrollBot(); }, 200);
+    setTimeout(scrollBot, 150);
   });
-  // Se il modal non c'è o era già stato visto, showCamPrivacyIfNeeded esegue subito il callback
+  // Welcome messages iniettati dentro chat-history (quando sappiamo se la stanza è vuota o no)
 }
 function leaveRoom(){
   // Chiudi solo le peer connections (NON fermare la webcam, evita re-prompt permessi)
