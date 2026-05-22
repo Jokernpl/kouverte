@@ -3027,7 +3027,7 @@ function sendGift(){
 }
 
 function renderGiftMessage({ gift, from, face, self }){
-  const msgs=document.getElementById('messages');
+  const msgs=document.getElementById('chatMsgs');
   if(!msgs) return;
   const div=document.createElement('div');
   div.style.display='flex';
