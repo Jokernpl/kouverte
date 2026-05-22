@@ -3013,9 +3013,9 @@ function sendGift(){
   renderGiftMessage({ gift:g, from:user.name||'Tu', face:user.face||'🎭', self:true });
 
   // Invia via socket se connessi
-  if(window.socket && window.socket.connected && window.currentRoom){
+  if(window.socket && window.socket.connected && room?.id){
     window.socket.emit('gift', {
-      roomId: window.currentRoom,
+      roomId: room.id,
       giftId: g.id,
       giftIcon: g.icon,
       giftName: g.name,
@@ -3065,18 +3065,11 @@ function spawnGiftParticles(icon){
 if(!document.getElementById('giftParticleStyle')){
   const s=document.createElement('style');
   s.id='giftParticleStyle';
-  s.textContent=`@keyframes giftParticle{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-200px) scale(0) rotate(${Math.random()>0.5?'':'- '}180deg);opacity:0}}`;
+  s.textContent=`@keyframes giftParticle{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-200px) scale(0) rotate(${Math.random()>0.5?'':'-'}180deg);opacity:0}}`;
   document.head.appendChild(s);
 }
 
-// Ricezione regalo via socket
-if(window.socket){
-  socket.on('gift', data=>{
-    if(!data||!data.giftId) return;
-    const g=GIFTS.find(x=>x.id===data.giftId)||{icon:data.giftIcon||'🎁',name:data.giftName||'Regalo'};
-    renderGiftMessage({ gift:g, from:data.from||'Qualcuno', face:data.face||'🎭', self:false });
-  });
-}
+// Ricezione regalo via socket — registrato in connectSocket() per evitare race condition
 
 // ═══════════════════════════════════════════
 // REAL-TIME VIDEO FILTERS
@@ -3415,6 +3408,15 @@ function connectSocket(){
     if (typeof registerDmListener === 'function' && !window._dmListenerRegistered) {
       registerDmListener();
       window._dmListenerRegistered = true;
+    }
+    // Registra gift listener una volta sola
+    if (!window._giftListenerRegistered) {
+      socket.on('gift', data=>{
+        if(!data||!data.giftId) return;
+        const g=GIFTS.find(x=>x.id===data.giftId)||{icon:data.giftIcon||'🎁',name:data.giftName||'Regalo'};
+        renderGiftMessage({ gift:g, from:data.from||'Qualcuno', face:data.face||'🎭', self:false });
+      });
+      window._giftListenerRegistered = true;
     }
   });
   socket.on('disconnect',()=>setConnState('offline'));
