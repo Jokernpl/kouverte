@@ -724,6 +724,62 @@ body{position:relative}
   background:none;color:#6b7280;font-size:12px;cursor:pointer}
 
 /* ═══════════════════════════════
+   ONBOARDING STRIP (home)
+═══════════════════════════════ */
+.onboarding-strip{
+  background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(255,107,157,.08));
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:14px;padding:14px 16px;margin-bottom:14px;
+  display:flex;flex-direction:column;gap:10px
+}
+.obs-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.obs-steps{display:flex;gap:0;flex-direction:column;gap:6px}
+.obs-step{display:flex;align-items:center;gap:10px;font-size:12px;color:#b4bcc8}
+.obs-step-num{width:20px;height:20px;border-radius:50%;background:#00d4ff;color:#0f1117;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.obs-dismiss{font-size:10px;color:#6e747d;text-align:right;cursor:pointer;padding-top:2px}
+.obs-dismiss:hover{color:#9ca3af}
+
+/* ═══════════════════════════════
+   MODAL PRIVACY WEBCAM
+═══════════════════════════════ */
+#modalCamPrivacy{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.7);
+  display:flex;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(4px)
+}
+.cam-privacy-sheet{
+  background:#1a1f3a;border-radius:20px 20px 0 0;
+  padding:24px 20px 36px;max-width:480px;width:100%;
+  border-top:1px solid rgba(0,212,255,.25);
+  animation:slideUp .3s ease
+}
+.cps-handle{width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:4px;margin:0 auto 20px}
+.cps-icon{font-size:40px;text-align:center;margin-bottom:12px}
+.cps-title{font-size:20px;font-weight:700;color:#fff;text-align:center;margin-bottom:8px;letter-spacing:-.3px}
+.cps-desc{font-size:13px;color:#b4bcc8;text-align:center;line-height:1.6;margin-bottom:20px}
+.cps-points{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.cps-point{display:flex;align-items:center;gap:10px;font-size:12px;color:#9ca3af}
+.cps-point-icon{font-size:16px;flex-shrink:0}
+.cps-btn{width:100%;padding:14px;background:#00d4ff;border:none;border-radius:12px;
+  color:#0f1117;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.cps-btn:hover{opacity:.9}
+
+/* ═══════════════════════════════
+   MESSAGGIO BENVENUTO IN STANZA
+═══════════════════════════════ */
+.msg-welcome{
+  display:flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(255,107,157,.05));
+  border:1px solid rgba(0,212,255,.15);
+  border-radius:12px;padding:12px 14px;margin:8px 0;
+}
+.msg-welcome-icon{font-size:22px;flex-shrink:0}
+.msg-welcome-body{flex:1}
+.msg-welcome-title{font-size:12px;font-weight:700;color:#fff;margin-bottom:2px}
+.msg-welcome-sub{font-size:11px;color:#6e747d;line-height:1.4}
+
+/* ═══════════════════════════════
    BOTTOM NAV
 ═══════════════════════════════ */
 .bnav{
@@ -1490,36 +1546,18 @@ html[data-theme="light"] body {
       <div class="tg-arrow">→</div>
     </div>
 
-    <!-- NEW: Telegram Bot quick access -->
-    <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener noreferrer" class="telegram-banner" style="text-decoration:none;color:inherit">
-      <div class="tg-icon">✈️</div>
-      <div class="tg-text">
-        <div class="tg-title">Apri il bot Telegram</div>
-        <div class="tg-sub">@Kouverte_bot · Comandi, invita amici e altro</div>
+    <!-- ONBOARDING STRIP (solo nuovi utenti) -->
+    <div class="onboarding-strip" id="onboardingStrip">
+      <div class="obs-title">Come funziona Kouverte 👋</div>
+      <div class="obs-steps">
+        <div class="obs-step"><div class="obs-step-num">1</div>Scegli una stanza — gratis, niente registrazione</div>
+        <div class="obs-step"><div class="obs-step-num">2</div>Chatta in anonimo con persone reali</div>
+        <div class="obs-step"><div class="obs-step-num">3</div>Attiva la webcam solo se vuoi — sempre facoltativa</div>
       </div>
-      <div class="tg-arrow">→</div>
-    </a>
-
-    <!-- NEW: Stanze private a codice -->
-    <div class="sec-label">🔐 Stanze Private con Codice</div>
-    <div class="code-rooms-section">
-      <button class="code-room-btn create" onclick="openCreateCodeRoom()">
-        <div class="crb-icon">➕</div>
-        <div class="crb-text">
-          <div class="crb-title">Crea Stanza</div>
-          <div class="crb-sub">Invita i tuoi amici con un codice</div>
-        </div>
-      </button>
-      <button class="code-room-btn join" onclick="openJoinCodeRoom()">
-        <div class="crb-icon">🔑</div>
-        <div class="crb-text">
-          <div class="crb-title">Entra con Codice</div>
-          <div class="crb-sub">Hai ricevuto un codice da un amico?</div>
-        </div>
-      </button>
+      <div class="obs-dismiss" onclick="dismissOnboarding()">Ho capito, non mostrare più ✕</div>
     </div>
 
-    <!-- NEW: Stats Live - sensazione mondo vivo -->
+    <!-- Stats Live -->
     <div class="live-stats-bar">
       <div class="live-stat">
         <div class="live-stat-icon pulse-dot"></div>
@@ -1558,10 +1596,11 @@ html[data-theme="light"] body {
       <div class="dsb-claim" id="dailyClaimBtn">Ritira</div>
     </div>
 
+    <!-- STANZE PUBBLICHE — contenuto principale -->
     <div class="sec-label">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
 
-    <!-- NEW: Feed Live - attività in tempo reale -->
+    <!-- Feed Live -->
     <div class="sec-label" style="margin-top:20px">📡 Feed Live</div>
     <div id="liveFeed" class="live-feed">
       <div class="live-feed-item">
@@ -1570,6 +1609,51 @@ html[data-theme="light"] body {
         <div class="lf-time">ora</div>
       </div>
     </div>
+
+    <!-- Telegram Bot (in fondo — per utenti avanzati) -->
+    <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener noreferrer" class="telegram-banner" style="text-decoration:none;color:inherit;margin-top:8px;display:flex">
+      <div class="tg-icon">✈️</div>
+      <div class="tg-text">
+        <div class="tg-title">Apri il bot Telegram</div>
+        <div class="tg-sub">@Kouverte_bot · Comandi, invita amici e altro</div>
+      </div>
+      <div class="tg-arrow">→</div>
+    </a>
+
+    <!-- Stanze private (in fondo) -->
+    <div class="sec-label" style="margin-top:4px">🔐 Stanze Private con Codice</div>
+    <div class="code-rooms-section">
+      <button class="code-room-btn create" onclick="openCreateCodeRoom()">
+        <div class="crb-icon">➕</div>
+        <div class="crb-text">
+          <div class="crb-title">Crea Stanza</div>
+          <div class="crb-sub">Invita i tuoi amici con un codice</div>
+        </div>
+      </button>
+      <button class="code-room-btn join" onclick="openJoinCodeRoom()">
+        <div class="crb-icon">🔑</div>
+        <div class="crb-text">
+          <div class="crb-title">Entra con Codice</div>
+          <div class="crb-sub">Hai ricevuto un codice da un amico?</div>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ MODAL PRIVACY WEBCAM (mostrato 1 sola volta) ░░ -->
+<div id="modalCamPrivacy" style="display:none" onclick="if(event.target===this)closeCamPrivacy()">
+  <div class="cam-privacy-sheet">
+    <div class="cps-handle"></div>
+    <div class="cps-icon">📷</div>
+    <div class="cps-title">La webcam è facoltativa</div>
+    <div class="cps-desc">Puoi chattare normalmente senza attivare la fotocamera. Solo tu decidi se mostrarti.</div>
+    <div class="cps-points">
+      <div class="cps-point"><div class="cps-point-icon">🔒</div>Il video non viene registrato né salvato</div>
+      <div class="cps-point"><div class="cps-point-icon">👁️</div>Lo vedono solo gli utenti nella stessa stanza</div>
+      <div class="cps-point"><div class="cps-point-icon">⚡</div>Puoi attivarlo e disattivarlo in qualsiasi momento</div>
+    </div>
+    <button class="cps-btn" onclick="closeCamPrivacy()">Capito, entra nella stanza →</button>
   </div>
 </div>
 
@@ -2422,7 +2506,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -5413,8 +5497,13 @@ function enterRoom(roomId){
   renderUsersPanel();
 
   updateFreeBar();
-  showScreen('chat');
-  setTimeout(scrollBot,150);
+
+  // Mostra modal privacy webcam (solo prima volta), poi entra
+  showCamPrivacyIfNeeded(()=>{
+    showScreen('chat');
+    setTimeout(()=>{ injectWelcomeMessages(roomId); scrollBot(); }, 200);
+  });
+  // Se il modal non c'è o era già stato visto, showCamPrivacyIfNeeded esegue subito il callback
 }
 function leaveRoom(){
   // Chiudi solo le peer connections (NON fermare la webcam, evita re-prompt permessi)
@@ -5899,6 +5988,74 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 function getLS(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}}
 function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+
+// ══ ONBOARDING STRIP ══
+function initOnboardingStrip(){
+  const strip = document.getElementById('onboardingStrip');
+  if(!strip) return;
+  if(getLS('kv_obs_dismissed')){
+    strip.style.display = 'none';
+  }
+}
+function dismissOnboarding(){
+  setLS('kv_obs_dismissed', true);
+  const strip = document.getElementById('onboardingStrip');
+  if(strip){ strip.style.maxHeight = strip.scrollHeight+'px'; strip.style.transition='max-height .4s ease,opacity .4s ease,margin .4s ease'; strip.style.overflow='hidden'; requestAnimationFrame(()=>{ strip.style.maxHeight='0'; strip.style.opacity='0'; strip.style.marginBottom='0'; strip.style.padding='0'; }); setTimeout(()=>strip.style.display='none',420); }
+}
+
+// ══ MODAL PRIVACY WEBCAM ══
+function showCamPrivacyIfNeeded(cb){
+  if(getLS('kv_cam_privacy_seen')){
+    if(cb) cb();
+    return;
+  }
+  const modal = document.getElementById('modalCamPrivacy');
+  if(!modal){ if(cb) cb(); return; }
+  modal.style.display = 'flex';
+  modal._cb = cb;
+}
+function closeCamPrivacy(){
+  setLS('kv_cam_privacy_seen', true);
+  const modal = document.getElementById('modalCamPrivacy');
+  if(!modal) return;
+  modal.style.display = 'none';
+  if(modal._cb){ modal._cb(); modal._cb = null; }
+}
+
+// ══ MESSAGGI BENVENUTO IN STANZA ══
+const ROOM_WELCOME = {
+  'it-napoli': ["Benvenuto a Napoli! 🌊 La stanza più calda d'Italia ti aspetta.", "Ciao! Scrivi qualcosa e vedrai che qualcuno risponde 😊"],
+  'it-roma': ["Benvenuto nella Capitale! 🏛️ La chat di Roma è attiva.", "Dai un saluto, ci sono persone pronte a chattare!"],
+  'it-milano': ["Benvenuto a Milano! 🏙️ La chat business più attiva d'Italia.", "Scrivi pure, qui si parla di tutto da moda a calcio ⚽"],
+  'it-palermo': ["Benvenuto a Palermo! 🌺 La Sicilia ti accoglie.", "Ciao! Non essere timido, scrivi qualcosa 😄"],
+  'it-sicilia': ["Benvenuto in Sicilia! 🍊 Il sole e il mare in parole.", "La stanza è rilassata, chatta liberamente 🌊"],
+  'it-campania': ["Benvenuto in Campania! 🍕 Terra di sole e buona cucina.", "Ciao! Presenta te stesso o chatta di qualsiasi cosa 😊"],
+  'it-italia': ["Benvenuto nella stanza Italia! 🇮🇹 Persone da tutta la penisola.", "Qui si chatta di tutto — calcio, politica, vita quotidiana 😄"],
+  'confessionale': ["🕯️ Sei nel Confessionale. Qui puoi scrivere in anonimato assoluto.", "Ciò che scrivi qui resta qui. Nessun giudizio."]
+};
+function injectWelcomeMessages(roomId){
+  const msgs = ROOM_WELCOME[roomId] || ["Benvenuto in questa stanza! 👋 Scrivi qualcosa per iniziare a chattare.", "La webcam è facoltativa — chatta pure solo in testo 😊"];
+  const c = document.getElementById('chatMsgs');
+  if(!c) return;
+  // Messaggio benvenuto strutturato
+  const welcome = document.createElement('div');
+  welcome.className = 'msg-welcome';
+  welcome.innerHTML = `<div class="msg-welcome-icon">👋</div><div class="msg-welcome-body"><div class="msg-welcome-title">Benvenuto nella stanza!</div><div class="msg-welcome-sub">${msgs[0]}</div></div>`;
+  c.appendChild(welcome);
+  // Secondo messaggio dopo 2 secondi
+  if(msgs[1]){
+    setTimeout(()=>{
+      const c2 = document.getElementById('chatMsgs');
+      if(!c2) return;
+      const sysEl = document.createElement('div');
+      sysEl.className = 'msys';
+      sysEl.textContent = msgs[1];
+      c2.appendChild(sysEl);
+      scrollBot();
+    }, 2200);
+  }
+  scrollBot();
+}
 var _saveUserTimer = null;
 function saveUser(){
   // Debounce: scrivi al massimo ogni 300ms (localStorage è sincrono e bloccante)
