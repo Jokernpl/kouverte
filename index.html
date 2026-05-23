@@ -5,351 +5,480 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kouverte — Chat Anonima Italiana con Video | Gratis, Niente Registrazione</title>
 <meta name="description" content="Kouverte è la chat anonima italiana con video HD. Entra in stanze per città, chatta senza registrazione, attiva la webcam solo quando vuoi. 100% gratis e anonimo.">
-<meta name="keywords" content="chat anonima italiana, chat italiana gratis, video chat anonima, chat napoli, chat roma, chat milano, kouverte, conoscere persone online, chat senza registrazione">
-<meta name="author" content="Kouverte">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://www.kouverte.com/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Kouverte">
-<meta property="og:title" content="Kouverte — Chat Anonima Italiana con Video Gratis">
-<meta property="og:description" content="Entra in stanze per città, chatta senza registrazione, video HD facoltativa. 100% anonimo e gratis.">
+<meta property="og:title" content="Kouverte — Chat Anonima Italiana">
+<meta property="og:description" content="Chat anonima con video HD. Stanze per città. Gratis.">
 <meta property="og:url" content="https://www.kouverte.com/">
 <meta property="og:image" content="https://www.kouverte.com/og-image.png">
 <meta property="og:locale" content="it_IT">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Kouverte — Chat Anonima Italiana con Video">
-<meta name="twitter:description" content="Stanze per città, video HD facoltativa. Gratis, niente registrazione.">
 <meta name="twitter:image" content="https://www.kouverte.com/og-image.png">
-<!-- Google Analytics 4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-KR50WJ2TKY', { page_title: 'Landing Page', send_page_view: true });
-</script>
-<!-- Hotjar: aggiungi il tuo Site ID da hotjar.com quando disponibile -->
-<!-- <script>...hjid:YOUR_SITE_ID...</script> -->
-<!-- ContentSquare -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-KR50WJ2TKY',{page_title:'Landing Page',send_page_view:true});</script>
 <script src="https://t.contentsquare.net/uxa/7e4574ca0b822.js" async></script>
-<!-- Favicon + PWA -->
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="icon" type="image/svg+xml" href="/icon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#00d4ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Kouverte">
-<meta name="mobile-web-app-capable" content="yes">
-<script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebApplication","name":"Kouverte","url":"https://www.kouverte.com","description":"Chat anonima italiana con video HD.","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Web, Android, iOS","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"1200"}}
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- SVG noise filter -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <filter id="noise"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter>
+</svg>
+
 <style>
+:root{
+  --cyan:#00d4ff;
+  --rose:#ff6b9d;
+  --mint:#00e5b8;
+  --bg:#030507;
+  --card:rgba(255,255,255,.03);
+  --border:rgba(255,255,255,.07);
+}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,sans-serif;background:#080b14;color:#fff;overflow-x:hidden}
+body{
+  font-family:'Inter',-apple-system,sans-serif;
+  background:var(--bg);color:#fff;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased
+}
 a{text-decoration:none;color:inherit}
 
-/* ── GRID BACKGROUND ── */
-body::before{
-  content:'';position:fixed;inset:0;
-  background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
-  background-size:48px 48px;pointer-events:none;z-index:0
+/* ── AURORA MESH ── */
+.aurora{
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden
+}
+.aurora-blob{
+  position:absolute;border-radius:50%;filter:blur(120px);opacity:.18;
+  animation:drift 20s ease-in-out infinite alternate
+}
+.aurora-blob:nth-child(1){width:700px;height:700px;top:-200px;left:-100px;background:var(--cyan);animation-duration:22s}
+.aurora-blob:nth-child(2){width:600px;height:600px;top:20%;right:-150px;background:var(--rose);animation-duration:18s;animation-delay:-6s}
+.aurora-blob:nth-child(3){width:500px;height:500px;bottom:-100px;left:30%;background:var(--mint);animation-duration:25s;animation-delay:-12s;opacity:.12}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-30px) scale(1.08)}100%{transform:translate(-20px,20px) scale(.95)}}
+
+/* ── NOISE OVERLAY ── */
+body::after{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px
 }
 
 /* ── NAV ── */
 nav{
-  position:fixed;top:0;left:0;right:0;z-index:100;
-  padding:0 24px;height:60px;
-  display:flex;align-items:center;justify-content:space-between;
-  background:rgba(8,11,20,.85);backdrop-filter:blur(16px);
-  border-bottom:1px solid rgba(255,255,255,.06)
+  position:fixed;top:16px;left:50%;transform:translateX(-50%);
+  z-index:200;width:calc(100% - 48px);max-width:1000px;
+  background:rgba(3,5,7,.7);backdrop-filter:blur(24px) saturate(180%);
+  border:1px solid rgba(255,255,255,.08);border-radius:16px;
+  padding:0 20px;height:52px;
+  display:flex;align-items:center;justify-content:space-between
 }
-.nav-logo{font-size:18px;font-weight:800;letter-spacing:3px;color:#fff}
-.nav-logo span{color:#00d4ff}
-.nav-links{display:flex;align-items:center;gap:28px}
-.nav-links a{font-size:14px;color:#b4bcc8;font-weight:500;transition:color .2s}
+.nav-logo{font-size:15px;font-weight:900;letter-spacing:3px}
+.nav-logo em{color:var(--cyan);font-style:normal}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-links a{font-size:13px;color:rgba(255,255,255,.5);font-weight:500;transition:color .2s}
 .nav-links a:hover{color:#fff}
-.nav-cta{
-  background:#00d4ff;color:#080b14;font-weight:700;font-size:13px;
-  padding:9px 20px;border-radius:8px;transition:opacity .2s,transform .2s
-}
-.nav-cta:hover{opacity:.85;transform:translateY(-1px)}
 @media(max-width:640px){.nav-links{display:none}}
+.nav-cta{
+  font-size:12px;font-weight:700;color:#030507;
+  background:var(--cyan);padding:8px 18px;border-radius:8px;
+  transition:box-shadow .2s,transform .2s;letter-spacing:.3px
+}
+.nav-cta:hover{box-shadow:0 0 24px rgba(0,212,255,.5);transform:translateY(-1px)}
 
 /* ── HERO ── */
 .hero{
   min-height:100vh;display:flex;align-items:center;justify-content:center;
-  padding:100px 24px 60px;position:relative;overflow:hidden
-}
-.hero-glow-1{
-  position:absolute;top:-200px;left:50%;transform:translateX(-50%);
-  width:800px;height:800px;border-radius:50%;
-  background:radial-gradient(circle,rgba(0,212,255,.1) 0%,transparent 65%);
-  pointer-events:none
-}
-.hero-glow-2{
-  position:absolute;bottom:-100px;right:-100px;
-  width:500px;height:500px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,107,157,.07) 0%,transparent 65%);
-  pointer-events:none
+  padding:120px 24px 80px;position:relative;z-index:2
 }
 .hero-inner{
-  max-width:1100px;width:100%;
-  display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;
-  position:relative;z-index:1
+  max-width:1080px;width:100%;
+  display:grid;grid-template-columns:1fr 440px;gap:80px;align-items:center
 }
-@media(max-width:900px){.hero-inner{grid-template-columns:1fr;text-align:center}}
+@media(max-width:960px){.hero-inner{grid-template-columns:1fr;text-align:center;gap:48px}}
 
-.hero-badge{
+.hero-label{
   display:inline-flex;align-items:center;gap:8px;
-  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);
-  color:#00d4ff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;
-  margin-bottom:20px
+  font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:20px
 }
-.hero-badge-dot{width:7px;height:7px;background:#00e5b8;border-radius:50%;animation:blink 1.8s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.hero-label-line{width:24px;height:1px;background:var(--cyan);opacity:.6}
 
 .hero-title{
-  font-size:clamp(38px,6vw,68px);font-weight:900;
-  line-height:1.05;letter-spacing:-2px;margin-bottom:20px
+  font-size:clamp(52px,8vw,88px);
+  font-weight:900;line-height:.95;letter-spacing:-4px;
+  margin-bottom:24px
 }
-.hero-title .t-cyan{color:#00d4ff}
-.hero-title .t-rose{
-  background:linear-gradient(90deg,#ff6b9d,#ff8c42);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+.hero-title .word-1{display:block;color:#fff}
+.hero-title .word-2{
+  display:block;
+  background:linear-gradient(135deg,var(--cyan) 0%,var(--mint) 50%,var(--cyan) 100%);
+  background-size:200%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:shimmer 4s linear infinite
 }
-.hero-sub{font-size:17px;color:#8891a4;line-height:1.7;margin-bottom:32px;max-width:480px}
-@media(max-width:900px){.hero-sub{margin:0 auto 32px}}
+.hero-title .word-3{display:block;color:rgba(255,255,255,.18)}
+@keyframes shimmer{0%{background-position:0%}100%{background-position:200%}}
 
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:40px}
-@media(max-width:900px){.hero-btns{justify-content:center}}
+.hero-desc{font-size:16px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:36px;max-width:440px;font-weight:400}
+@media(max-width:960px){.hero-desc{margin:0 auto 36px}}
 
-.btn-primary{
-  background:#00d4ff;color:#080b14;font-weight:700;font-size:15px;
-  padding:14px 32px;border-radius:10px;display:inline-flex;align-items:center;gap:8px;
-  transition:transform .2s,box-shadow .2s
-}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,212,255,.3)}
-.btn-secondary{
-  background:rgba(255,255,255,.06);color:#fff;font-weight:600;font-size:15px;
-  padding:14px 24px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
-  display:inline-flex;align-items:center;gap:8px;transition:background .2s
-}
-.btn-secondary:hover{background:rgba(255,255,255,.1)}
+.hero-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:44px}
+@media(max-width:960px){.hero-actions{justify-content:center}}
 
-.hero-trust{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-@media(max-width:900px){.hero-trust{justify-content:center}}
-.trust-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:12px;color:#6e747d;font-weight:500
+.btn-hero{
+  position:relative;font-size:14px;font-weight:700;
+  padding:14px 32px;border-radius:10px;overflow:hidden;
+  transition:transform .2s
 }
-.trust-dot{width:6px;height:6px;border-radius:50%;background:#00e5b8;flex-shrink:0}
+.btn-hero:hover{transform:translateY(-2px)}
+.btn-hero-primary{
+  background:var(--cyan);color:#030507;
+  box-shadow:0 0 0 1px rgba(0,212,255,.3),0 8px 32px rgba(0,212,255,.25)
+}
+.btn-hero-primary:hover{box-shadow:0 0 0 1px rgba(0,212,255,.5),0 16px 48px rgba(0,212,255,.4)}
+.btn-hero-ghost{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.7)
+}
+.btn-hero-ghost:hover{background:rgba(255,255,255,.08);color:#fff}
 
-/* ── PHONE MOCKUP ── */
-.phone-wrap{position:relative;display:flex;justify-content:center}
-@media(max-width:900px){.phone-wrap{display:none}}
-.phone{
-  width:280px;height:560px;background:#0f1117;border-radius:36px;
-  border:2px solid rgba(255,255,255,.1);
-  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
-  overflow:hidden;position:relative;flex-shrink:0
-}
-.phone-notch{
-  width:100px;height:28px;background:#080b14;border-radius:0 0 18px 18px;
-  margin:0 auto;position:relative;z-index:2
-}
-.phone-screen{padding:0;height:100%}
-.p-header{
-  padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);
-  display:flex;align-items:center;gap:10px;margin-top:-28px;padding-top:36px
-}
-.p-room-dot{width:8px;height:8px;border-radius:50%;background:#00e5b8;flex-shrink:0}
-.p-room-name{font-size:13px;font-weight:700;color:#fff}
-.p-online{font-size:10px;color:#6e747d;margin-left:auto}
-.p-msgs{padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
-.p-msg{display:flex;gap:8px;align-items:flex-start}
-.p-msg.self{flex-direction:row-reverse}
-.p-avatar{
-  width:28px;height:28px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;font-size:13px
-}
-.p-bubble{
-  background:rgba(26,31,58,.9);border-radius:12px;padding:7px 10px;
-  font-size:11px;color:#e5e7eb;line-height:1.4;max-width:160px
-}
-.p-msg.self .p-bubble{background:rgba(0,212,255,.15);color:#fff}
-.p-name{font-size:9px;color:#6e747d;font-weight:600;margin-bottom:3px}
-.p-bar{
-  position:absolute;bottom:0;left:0;right:0;
-  background:rgba(8,11,20,.95);border-top:1px solid rgba(255,255,255,.06);
-  padding:10px 12px;display:flex;gap:8px;align-items:center
-}
-.p-input{
-  flex:1;background:rgba(255,255,255,.06);border-radius:20px;
-  padding:7px 12px;font-size:11px;color:#6e747d
-}
-.p-send{
-  width:32px;height:32px;border-radius:50%;background:#00d4ff;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0
-}
+.hero-proof{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+@media(max-width:960px){.hero-proof{justify-content:center}}
+.proof-item{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,.35);font-weight:500}
+.proof-dot{width:4px;height:4px;border-radius:50%;background:var(--mint);flex-shrink:0}
 
-/* ── STATS BAR ── */
-.stats-bar{
-  background:rgba(26,31,58,.5);border-top:1px solid rgba(255,255,255,.05);
+/* ── PHONE CARD ── */
+.phone-card{
+  position:relative;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:28px;overflow:hidden;
+  backdrop-filter:blur(20px);
+  box-shadow:0 40px 100px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06)
+}
+@media(max-width:960px){.phone-card{max-width:360px;margin:0 auto}}
+.phone-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.06),transparent 60%);
+  pointer-events:none
+}
+.pc-top{
+  padding:16px 20px 14px;
   border-bottom:1px solid rgba(255,255,255,.05);
-  padding:24px;display:flex;justify-content:center;gap:64px;flex-wrap:wrap;
-  position:relative;z-index:1
+  display:flex;align-items:center;gap:10px
 }
-.stat-item{text-align:center}
-.stat-num{font-size:28px;font-weight:800;color:#00d4ff;display:block;letter-spacing:-1px}
-.stat-label{font-size:12px;color:#6e747d;margin-top:2px;display:block}
-.live-badge{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:11px;font-weight:700;color:#00e5b8;letter-spacing:1px;text-transform:uppercase;
-  background:rgba(0,229,184,.08);border:1px solid rgba(0,229,184,.2);
-  padding:4px 10px;border-radius:999px;position:absolute;top:-14px;left:50%;transform:translateX(-50%)
+.pc-dots{display:flex;gap:5px}
+.pc-dot{width:9px;height:9px;border-radius:50%}
+.pc-dot:nth-child(1){background:rgba(255,95,87,.7)}
+.pc-dot:nth-child(2){background:rgba(255,189,46,.7)}
+.pc-dot:nth-child(3){background:rgba(39,201,63,.7)}
+.pc-room{
+  flex:1;text-align:center;font-size:11px;font-weight:600;
+  color:rgba(255,255,255,.4);letter-spacing:.5px
+}
+.pc-live{
+  display:flex;align-items:center;gap:4px;font-size:10px;
+  font-weight:700;color:var(--mint)
+}
+.pc-live-dot{width:5px;height:5px;background:var(--mint);border-radius:50%;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.pc-msgs{padding:16px;display:flex;flex-direction:column;gap:12px}
+.pc-msg{display:flex;gap:8px;animation:fadeup .4s ease-out both}
+@keyframes fadeup{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pc-msg.self{flex-direction:row-reverse}
+.pc-msg:nth-child(1){animation-delay:.1s}
+.pc-msg:nth-child(2){animation-delay:.3s}
+.pc-msg:nth-child(3){animation-delay:.5s}
+.pc-msg:nth-child(4){animation-delay:.7s}
+.pc-msg:nth-child(5){animation-delay:.9s}
+.pc-av{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px
+}
+.pc-bub{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;padding:8px 12px;font-size:12px;
+  color:rgba(255,255,255,.8);line-height:1.5;max-width:200px
+}
+.pc-msg.self .pc-bub{
+  background:rgba(0,212,255,.15);border-color:rgba(0,212,255,.2);color:#fff
+}
+.pc-nick{font-size:9px;color:rgba(255,255,255,.3);font-weight:600;margin-bottom:3px}
+.pc-bar{
+  padding:12px 16px;border-top:1px solid rgba(255,255,255,.05);
+  display:flex;gap:8px;align-items:center
+}
+.pc-input{
+  flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;padding:8px 14px;font-size:11px;color:rgba(255,255,255,.3)
+}
+.pc-send{
+  width:34px;height:34px;background:var(--cyan);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  box-shadow:0 0 16px rgba(0,212,255,.4)
 }
 
-/* ── CITY CARDS ── */
-.cities-section{padding:80px 24px;position:relative;z-index:1;max-width:1100px;margin:0 auto}
-.section-eyebrow{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00d4ff;margin-bottom:10px}
-.section-heading{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
-.section-sub{font-size:15px;color:#8891a4;margin-bottom:40px}
-.cities-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-@media(max-width:900px){.cities-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:500px){.cities-grid{grid-template-columns:1fr 1fr}}
-.city-card{
-  position:relative;border-radius:16px;overflow:hidden;
-  aspect-ratio:3/4;cursor:pointer;
-  transition:transform .3s,box-shadow .3s
+/* ── STATS STRIP ── */
+.stats-strip{
+  position:relative;z-index:2;
+  border-top:1px solid rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.04);
+  padding:28px 24px;
+  display:flex;justify-content:center;gap:0;
+  overflow:hidden
 }
-.city-card:hover{transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,.5)}
-.city-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
-.city-card:hover img{transform:scale(1.05)}
+.stats-strip::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.03),transparent);
+  pointer-events:none
+}
+.ss-item{
+  flex:1;max-width:200px;text-align:center;padding:0 24px;
+  position:relative
+}
+.ss-item:not(:last-child)::after{
+  content:'';position:absolute;right:0;top:10%;bottom:10%;
+  width:1px;background:rgba(255,255,255,.05)
+}
+.ss-num{
+  font-size:36px;font-weight:900;letter-spacing:-2px;
+  color:var(--cyan);display:block;line-height:1;font-variant-numeric:tabular-nums
+}
+.ss-label{font-size:11px;color:rgba(255,255,255,.3);margin-top:6px;display:block;font-weight:500}
+.live-tag{
+  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:800;letter-spacing:2px;text-transform:uppercase;
+  color:var(--mint);background:rgba(3,5,7,.9);border:1px solid rgba(0,229,184,.2);
+  padding:4px 12px;border-radius:999px
+}
+
+/* ── BENTO FEATURES ── */
+.bento-section{
+  position:relative;z-index:2;
+  padding:80px 24px;max-width:1080px;margin:0 auto
+}
+.section-eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:12px
+}
+.section-title{
+  font-size:clamp(32px,5vw,52px);font-weight:900;letter-spacing:-2px;
+  line-height:1.05;margin-bottom:48px
+}
+.section-title span{color:rgba(255,255,255,.2)}
+
+.bento{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto;gap:2px}
+@media(max-width:768px){.bento{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.bento{grid-template-columns:1fr}}
+
+.bento-cell{
+  background:rgba(255,255,255,.025);
+  padding:32px 28px;
+  transition:background .25s
+}
+.bento-cell:hover{background:rgba(255,255,255,.045)}
+.bento-cell:first-child{border-radius:20px 0 0 0}
+.bento-cell:nth-child(3){border-radius:0 20px 0 0}
+.bento-cell:nth-child(4){border-radius:0 0 0 20px}
+.bento-cell:last-child{border-radius:0 0 20px 0}
+@media(max-width:768px){
+  .bento-cell:first-child{border-radius:20px 0 0 0}
+  .bento-cell:nth-child(2){border-radius:0 20px 0 0}
+  .bento-cell:nth-child(3){border-radius:0}
+  .bento-cell:nth-child(4){border-radius:0}
+  .bento-cell:nth-child(5){border-radius:0 0 0 20px}
+  .bento-cell:last-child{border-radius:0 0 20px 0}
+}
+.bento-cell.featured{
+  grid-column:span 2;
+  background:rgba(0,212,255,.04);
+  border:1px solid rgba(0,212,255,.08)
+}
+@media(max-width:768px){.bento-cell.featured{grid-column:span 2}}
+@media(max-width:480px){.bento-cell.featured{grid-column:span 1}}
+
+.bento-icon{
+  width:40px;height:40px;margin-bottom:20px;
+  display:flex;align-items:center;justify-content:center
+}
+.bento-icon svg{width:24px;height:24px;stroke:var(--cyan);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.bento-cell.featured .bento-icon svg{width:28px;height:28px}
+
+.bento-title{font-size:17px;font-weight:700;margin-bottom:8px;letter-spacing:-.3px}
+.bento-cell.featured .bento-title{font-size:22px;letter-spacing:-.5px}
+.bento-desc{font-size:13px;color:rgba(255,255,255,.38);line-height:1.7}
+.bento-cell.featured .bento-desc{font-size:14px}
+
+/* ── CITY SECTION ── */
+.city-section{
+  position:relative;z-index:2;padding:0 24px 80px;max-width:1080px;margin:0 auto
+}
+.city-mosaic{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:260px 220px;gap:3px;border-radius:20px;overflow:hidden}
+@media(max-width:768px){grid-template-columns:1fr 1fr;grid-template-rows:200px 180px 180px}
+@media(max-width:480px){.city-mosaic{grid-template-columns:1fr;grid-template-rows:repeat(5,180px)}}
+.city-tile{position:relative;cursor:pointer;overflow:hidden;background:#0a0d14}
+.city-tile img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform .6s ease,filter .4s ease;filter:brightness(.7) saturate(.9)
+}
+.city-tile:hover img{transform:scale(1.06);filter:brightness(.85) saturate(1.1)}
+.city-tile.big{grid-row:span 2}
 .city-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 30%,rgba(8,11,20,.9) 100%)
+  background:linear-gradient(180deg,transparent 40%,rgba(3,5,7,.85) 100%)
 }
-.city-info{position:absolute;bottom:0;left:0;right:0;padding:16px 14px}
-.city-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
-.city-online{
-  display:inline-flex;align-items:center;gap:5px;
-  font-size:11px;color:#00e5b8;font-weight:600;
-  background:rgba(0,229,184,.12);border:1px solid rgba(0,229,184,.2);
-  padding:3px 8px;border-radius:999px
+.city-label{
+  position:absolute;bottom:0;left:0;right:0;padding:16px 18px;
+  display:flex;align-items:flex-end;justify-content:space-between
 }
-.city-dot{width:5px;height:5px;background:#00e5b8;border-radius:50%}
-.city-card.wide{grid-column:span 2}
-
-/* ── FEATURES ── */
-.features-section{padding:80px 24px;position:relative;z-index:1;max-width:1100px;margin:0 auto}
-.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.05);border-radius:20px;overflow:hidden}
-@media(max-width:768px){.features-grid{grid-template-columns:1fr}}
-.feat{
-  padding:32px;background:#0c101c;
-  transition:background .2s
+.city-name{font-size:15px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.city-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:700;color:var(--mint);
+  background:rgba(0,229,184,.1);border:1px solid rgba(0,229,184,.2);
+  padding:3px 9px;border-radius:999px
 }
-.feat:hover{background:#111728}
-.feat-icon{
-  width:44px;height:44px;border-radius:12px;
-  background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);
-  display:flex;align-items:center;justify-content:center;margin-bottom:16px
+.city-private{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.08);
+  cursor:pointer;transition:background .2s
 }
-.feat-icon svg{width:22px;height:22px;stroke:#00d4ff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.feat-title{font-size:16px;font-weight:700;margin-bottom:8px}
-.feat-desc{font-size:13px;color:#8891a4;line-height:1.65}
+.city-private:hover{background:rgba(0,212,255,.04)}
+.city-private-icon{font-size:28px;margin-bottom:8px}
+.city-private-text{font-size:13px;font-weight:700;color:var(--cyan)}
+.city-private-sub{font-size:11px;color:rgba(255,255,255,.3);margin-top:3px}
 
 /* ── HOW ── */
 .how-section{
-  padding:80px 24px;position:relative;z-index:1;
-  background:rgba(26,31,58,.3);border-top:1px solid rgba(255,255,255,.04);
-  border-bottom:1px solid rgba(255,255,255,.04)
+  position:relative;z-index:2;padding:0 24px 80px;max-width:1080px;margin:0 auto
 }
-.how-inner{max-width:1100px;margin:0 auto}
-.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:48px}
-@media(max-width:700px){.steps-grid{grid-template-columns:1fr;gap:32px}}
-.step-item{position:relative}
-.step-num{
-  font-size:48px;font-weight:900;color:rgba(0,212,255,.12);
-  line-height:1;margin-bottom:8px;letter-spacing:-2px
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:48px;background:rgba(255,255,255,.04);border-radius:20px;overflow:hidden}
+@media(max-width:700px){.how-grid{grid-template-columns:1fr}}
+.how-cell{padding:36px 32px;background:var(--bg)}
+.how-num{
+  font-size:64px;font-weight:900;letter-spacing:-4px;
+  background:linear-gradient(180deg,rgba(255,255,255,.12) 0%,rgba(255,255,255,.04) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:.85;margin-bottom:20px;display:block
 }
-.step-title{font-size:17px;font-weight:700;margin-bottom:8px}
-.step-desc{font-size:14px;color:#8891a4;line-height:1.7}
+.how-title{font-size:16px;font-weight:700;margin-bottom:10px;letter-spacing:-.2px}
+.how-desc{font-size:13px;color:rgba(255,255,255,.35);line-height:1.75}
 
 /* ── FAQ ── */
-.faq-section{padding:80px 24px;position:relative;z-index:1;max-width:760px;margin:0 auto}
-.faq-list{margin-top:40px;display:flex;flex-direction:column;gap:2px}
-.faq-item{background:#0c101c;border-radius:0;overflow:hidden}
-.faq-item:first-child{border-radius:12px 12px 0 0}
-.faq-item:last-child{border-radius:0 0 12px 12px}
-.faq-q{
-  padding:20px 24px;font-size:15px;font-weight:600;
-  display:flex;justify-content:space-between;align-items:center;
-  cursor:pointer;user-select:none;transition:background .2s
+.faq-section{position:relative;z-index:2;padding:0 24px 80px;max-width:640px;margin:0 auto}
+.faq-list{margin-top:48px}
+.faq-item{
+  border-bottom:1px solid rgba(255,255,255,.05);
+  overflow:hidden
 }
-.faq-q:hover{background:rgba(255,255,255,.03)}
-.faq-chevron{width:18px;height:18px;stroke:#00d4ff;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .25s}
+.faq-q{
+  padding:22px 0;display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;font-size:15px;font-weight:600;letter-spacing:-.2px;
+  color:rgba(255,255,255,.75);user-select:none;gap:16px;
+  transition:color .2s
+}
+.faq-q:hover{color:#fff}
+.faq-item.open .faq-q{color:#fff}
+.faq-chevron{
+  width:16px;height:16px;stroke:var(--cyan);fill:none;
+  stroke-width:2;stroke-linecap:round;flex-shrink:0;
+  transition:transform .3s ease
+}
 .faq-item.open .faq-chevron{transform:rotate(180deg)}
 .faq-a{
-  padding:0 24px;max-height:0;overflow:hidden;
-  font-size:14px;color:#8891a4;line-height:1.7;
-  transition:max-height .3s ease,padding .3s ease
+  max-height:0;overflow:hidden;
+  font-size:14px;color:rgba(255,255,255,.35);line-height:1.8;
+  transition:max-height .35s ease,padding .3s ease
 }
-.faq-item.open .faq-a{max-height:200px;padding:0 24px 20px}
+.faq-item.open .faq-a{max-height:200px;padding-bottom:22px}
 
-/* ── CTA ── */
+/* ── FINAL CTA ── */
 .cta-section{
-  padding:100px 24px;position:relative;z-index:1;text-align:center;overflow:hidden
+  position:relative;z-index:2;
+  padding:0 24px 120px;max-width:1080px;margin:0 auto
 }
-.cta-glow{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  width:600px;height:300px;
-  background:radial-gradient(ellipse,rgba(0,212,255,.1),transparent 70%);
+.cta-card{
+  position:relative;overflow:hidden;border-radius:28px;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.06);
+  padding:80px 48px;text-align:center
+}
+@media(max-width:600px){.cta-card{padding:60px 28px}}
+.cta-card::before{
+  content:'';position:absolute;top:-150px;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse,rgba(0,212,255,.12),transparent 70%);
   pointer-events:none
 }
-.cta-box{
-  max-width:640px;margin:0 auto;
-  background:rgba(26,31,58,.6);border:1px solid rgba(0,212,255,.12);
-  border-radius:24px;padding:56px 40px;position:relative;backdrop-filter:blur(8px)
+.cta-card::after{
+  content:'';position:absolute;inset:-1px;border-radius:28px;
+  background:linear-gradient(135deg,rgba(0,212,255,.15),transparent 40%,transparent 60%,rgba(255,107,157,.1));
+  pointer-events:none;z-index:0
 }
-@media(max-width:500px){.cta-box{padding:40px 24px}}
-.cta-title{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-1.5px;margin-bottom:12px}
-.cta-sub{font-size:16px;color:#8891a4;margin-bottom:32px}
+.cta-inner{position:relative;z-index:1}
+.cta-eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:16px
+}
+.cta-title{
+  font-size:clamp(36px,6vw,64px);font-weight:900;letter-spacing:-3px;
+  line-height:1;margin-bottom:16px
+}
+.cta-sub{font-size:16px;color:rgba(255,255,255,.35);margin-bottom:40px;max-width:420px;margin-left:auto;margin-right:auto}
 .cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
 /* ── FOOTER ── */
 footer{
-  padding:40px 24px 32px;border-top:1px solid rgba(255,255,255,.05);
-  max-width:1100px;margin:0 auto;position:relative;z-index:1
+  position:relative;z-index:2;
+  border-top:1px solid rgba(255,255,255,.05);
+  padding:48px 24px 32px;max-width:1080px;margin:0 auto
 }
-.footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap;margin-bottom:32px}
-.footer-logo{font-size:16px;font-weight:800;letter-spacing:3px}
-.footer-logo span{color:#00d4ff}
-.footer-tagline{font-size:12px;color:#6e747d;margin-top:6px}
-.footer-links-group{display:flex;gap:40px;flex-wrap:wrap}
-.footer-links-col h4{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#6e747d;margin-bottom:12px}
-.footer-links-col a{display:block;font-size:13px;color:#8891a4;margin-bottom:8px;transition:color .2s}
-.footer-links-col a:hover{color:#fff}
+.footer-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;margin-bottom:40px}
+.footer-logo{font-size:14px;font-weight:900;letter-spacing:3px;color:rgba(255,255,255,.8)}
+.footer-logo em{color:var(--cyan);font-style:normal}
+.footer-tagline{font-size:12px;color:rgba(255,255,255,.2);margin-top:8px;line-height:1.6;max-width:220px}
+.footer-cols{display:flex;gap:48px;flex-wrap:wrap}
+.footer-col h4{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.25);margin-bottom:14px}
+.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,.35);margin-bottom:10px;transition:color .2s}
+.footer-col a:hover{color:#fff}
 .footer-bottom{
-  border-top:1px solid rgba(255,255,255,.05);padding-top:24px;
-  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px
+  border-top:1px solid rgba(255,255,255,.04);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:12px
 }
-.footer-copy{font-size:12px;color:#6e747d}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.2)}
 .footer-badges{display:flex;gap:8px;flex-wrap:wrap}
 .footer-badge{
   font-size:10px;font-weight:600;padding:4px 10px;border-radius:999px;
-  background:rgba(255,255,255,.05);color:#6e747d;border:1px solid rgba(255,255,255,.07)
+  border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.25)
 }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,.2);border-radius:2px}
 </style>
 </head>
 <body>
 
+<!-- Aurora mesh -->
+<div class="aurora">
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+  <div class="aurora-blob"></div>
+</div>
+
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="/">KOU<span>VERTE</span></a>
+  <div class="nav-logo">KOU<em>VERTE</em></div>
   <div class="nav-links">
     <a href="#features">Funzioni</a>
     <a href="#stanze">Stanze</a>
@@ -360,237 +489,197 @@ footer{
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-glow-1"></div>
-  <div class="hero-glow-2"></div>
   <div class="hero-inner">
     <div>
-      <div class="hero-badge">
-        <span class="hero-badge-dot"></span>
-        <span id="heroOnline">247</span> persone online ora
+      <div class="hero-label">
+        <span class="hero-label-line"></span>
+        Chat italiana anonima
       </div>
       <h1 class="hero-title">
-        La chat italiana<br>
-        <span class="t-cyan">anonima</span> con<br>
-        <span class="t-rose">video HD</span>
+        <span class="word-1">Conosci</span>
+        <span class="word-2">persone</span>
+        <span class="word-3">davvero.</span>
       </h1>
-      <p class="hero-sub">Entra in stanze per città, conosci persone reali, attiva la webcam solo quando vuoi. Niente registrazione, niente giudizi.</p>
-      <div class="hero-btns">
-        <a class="btn-primary" href="/app.html">Entra subito — è gratis</a>
-        <a class="btn-secondary" href="#stanze">Vedi le stanze</a>
+      <p class="hero-desc">Stanze per città. Video HD facoltativa. Niente email, niente algoritmi, niente giudizi. Solo persone reali — gratis, per sempre.</p>
+      <div class="hero-actions">
+        <a class="btn-hero btn-hero-primary" href="/app.html">Entra ora — è gratis</a>
+        <a class="btn-hero btn-hero-ghost" href="#stanze">Vedi le stanze</a>
       </div>
-      <div class="hero-trust">
-        <span class="trust-pill"><span class="trust-dot"></span>Nessuna email richiesta</span>
-        <span class="trust-pill"><span class="trust-dot"></span>100% anonimo</span>
-        <span class="trust-pill"><span class="trust-dot"></span>GDPR compliant</span>
+      <div class="hero-proof">
+        <span class="proof-item"><span class="proof-dot"></span>Nessuna email</span>
+        <span class="proof-item"><span class="proof-dot"></span>100% anonimo</span>
+        <span class="proof-item"><span class="proof-dot"></span>GDPR compliant</span>
       </div>
     </div>
 
-    <!-- Phone mockup -->
-    <div class="phone-wrap">
-      <div class="phone">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="p-header">
-            <span class="p-room-dot"></span>
-            <span class="p-room-name">Napoli 🏛️</span>
-            <span class="p-online" id="mockOnline">12 online</span>
-          </div>
-          <div class="p-msgs">
-            <div class="p-msg">
-              <div class="p-avatar" style="background:rgba(0,212,255,.15)">🐬</div>
-              <div>
-                <div class="p-name">Onda87</div>
-                <div class="p-bubble">Ciao a tutti! Prima volta qui 👋</div>
-              </div>
-            </div>
-            <div class="p-msg">
-              <div class="p-avatar" style="background:rgba(255,107,157,.15)">🦋</div>
-              <div>
-                <div class="p-name">Sofy_na</div>
-                <div class="p-bubble">Benvenuto! Sei di Napoli?</div>
-              </div>
-            </div>
-            <div class="p-msg self">
-              <div class="p-avatar" style="background:rgba(0,229,184,.15)">🐉</div>
-              <div>
-                <div class="p-bubble">Sì, zona Vomero 🙌</div>
-              </div>
-            </div>
-            <div class="p-msg">
-              <div class="p-avatar" style="background:rgba(255,180,0,.15)">⚡</div>
-              <div>
-                <div class="p-name">Zap99</div>
-                <div class="p-bubble">Anche io! Niente di meglio che chattare con gente della zona 🔥</div>
-              </div>
-            </div>
-            <div class="p-msg">
-              <div class="p-avatar" style="background:rgba(0,212,255,.15)">🐬</div>
-              <div>
-                <div class="p-name">Onda87</div>
-                <div class="p-bubble">Attivo la cam? 📹</div>
-              </div>
-            </div>
-          </div>
-          <div class="p-bar">
-            <div class="p-input">Scrivi un messaggio...</div>
-            <div class="p-send">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#080b14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </div>
-          </div>
+    <!-- Phone card -->
+    <div class="phone-card">
+      <div class="pc-top">
+        <div class="pc-dots">
+          <div class="pc-dot"></div><div class="pc-dot"></div><div class="pc-dot"></div>
+        </div>
+        <div class="pc-room">Napoli 🏛️</div>
+        <div class="pc-live"><span class="pc-live-dot"></span><span id="mockOnline">14 online</span></div>
+      </div>
+      <div class="pc-msgs">
+        <div class="pc-msg">
+          <div class="pc-av" style="background:rgba(0,212,255,.1)">🐬</div>
+          <div><div class="pc-nick">Onda87</div><div class="pc-bub">ciao a tutti, prima volta qui 👋</div></div>
+        </div>
+        <div class="pc-msg">
+          <div class="pc-av" style="background:rgba(255,107,157,.1)">🦋</div>
+          <div><div class="pc-nick">Sofy_na</div><div class="pc-bub">benvenuto! sei di napoli?</div></div>
+        </div>
+        <div class="pc-msg self">
+          <div class="pc-av" style="background:rgba(0,229,184,.1)">🐉</div>
+          <div><div class="pc-bub">sì, zona vomero 🙌</div></div>
+        </div>
+        <div class="pc-msg">
+          <div class="pc-av" style="background:rgba(255,180,0,.1)">⚡</div>
+          <div><div class="pc-nick">Zap99</div><div class="pc-bub">anche io! attivo la cam? 📹</div></div>
+        </div>
+        <div class="pc-msg self">
+          <div class="pc-av" style="background:rgba(0,229,184,.1)">🐉</div>
+          <div><div class="pc-bub">certo! aspetta un sec 😄</div></div>
+        </div>
+      </div>
+      <div class="pc-bar">
+        <div class="pc-input">Scrivi un messaggio...</div>
+        <div class="pc-send">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#030507" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- STATS BAR -->
-<div class="stats-bar">
-  <div class="live-badge">
-    <span style="width:6px;height:6px;background:#00e5b8;border-radius:50%;display:inline-block;animation:blink 1.8s infinite"></span>
-    Live
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="live-tag"><span style="width:5px;height:5px;background:var(--mint);border-radius:50%;display:inline-block;animation:blink 1.6s infinite"></span>LIVE</div>
+  <div class="ss-item">
+    <span class="ss-num" id="statOnline">240+</span>
+    <span class="ss-label">Utenti online</span>
   </div>
-  <div class="stat-item">
-    <span class="stat-num" id="statOnline">—</span>
-    <span class="stat-label">Utenti online</span>
+  <div class="ss-item">
+    <span class="ss-num" id="statRooms">8</span>
+    <span class="ss-label">Stanze attive</span>
   </div>
-  <div class="stat-item">
-    <span class="stat-num" id="statRooms">—</span>
-    <span class="stat-label">Stanze attive</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" id="statMessages">—</span>
-    <span class="stat-label">Messaggi oggi</span>
+  <div class="ss-item">
+    <span class="ss-num" id="statMessages">1.2k+</span>
+    <span class="ss-label">Messaggi oggi</span>
   </div>
 </div>
 
-<!-- STANZE CON FOTO -->
-<section class="cities-section" id="stanze">
-  <div class="section-eyebrow">Stanze disponibili</div>
-  <h2 class="section-heading">Trova la tua città</h2>
-  <p class="section-sub">Ogni stanza è una community. Entra, chatta, connettiti con persone vicine a te.</p>
-  <div class="cities-grid">
-    <div class="city-card wide" onclick="location.href='/app.html'">
-      <img src="https://images.unsplash.com/photo-1534308143481-c55f00be8bd7?w=800&h=600&fit=crop&auto=format" alt="Napoli" loading="lazy">
-      <div class="city-overlay"></div>
-      <div class="city-info">
-        <div class="city-name">🏛️ Napoli</div>
-        <span class="city-online"><span class="city-dot"></span><span id="napoliOnline">in diretta</span></span>
+<!-- BENTO FEATURES -->
+<section class="bento-section" id="features">
+  <div class="section-eyebrow">Perché Kouverte</div>
+  <h2 class="section-title">Tutto quello che vuoi.<br><span>Niente di quello che non vuoi.</span></h2>
+  <div class="bento">
+    <div class="bento-cell featured">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
+      <div class="bento-title">100% Anonimo, sempre</div>
+      <div class="bento-desc">Nessun numero di telefono, nessuna email, nessuna registrazione obbligatoria. Scegli un nickname e sei dentro — i tuoi dati restano tuoi per sempre. Nessun algoritmo che ti profila.</div>
     </div>
-    <div class="city-card" onclick="location.href='/app.html'">
-      <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=800&fit=crop&auto=format" alt="Roma" loading="lazy">
-      <div class="city-overlay"></div>
-      <div class="city-info">
-        <div class="city-name">🏟️ Roma</div>
-        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+    <div class="bento-cell">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
       </div>
+      <div class="bento-title">Video HD Facoltativa</div>
+      <div class="bento-desc">La cam si accende solo quando vuoi. Testo, audio o video — scegli tu.</div>
     </div>
-    <div class="city-card" onclick="location.href='/app.html'">
-      <img src="https://images.unsplash.com/photo-1610016302534-6f67f1c968d8?w=600&h=800&fit=crop&auto=format" alt="Milano" loading="lazy">
-      <div class="city-overlay"></div>
-      <div class="city-info">
-        <div class="city-name">🏙️ Milano</div>
-        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+    <div class="bento-cell">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       </div>
+      <div class="bento-title">Stanze per Città</div>
+      <div class="bento-desc">Napoli, Roma, Milano, Palermo, Sicilia. Persone della tua zona.</div>
     </div>
-    <div class="city-card" onclick="location.href='/app.html'">
-      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=800&fit=crop&auto=format" alt="Palermo" loading="lazy">
-      <div class="city-overlay"></div>
-      <div class="city-info">
-        <div class="city-name">🌺 Palermo</div>
-        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+    <div class="bento-cell">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24" style="stroke:var(--rose)"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       </div>
+      <div class="bento-title">WebRTC Real-Time</div>
+      <div class="bento-desc">Peer-to-peer, latenza minima, qualità massima. Nel browser.</div>
     </div>
-    <div class="city-card" onclick="location.href='/app.html'">
-      <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&h=800&fit=crop&auto=format" alt="Sicilia" loading="lazy">
-      <div class="city-overlay"></div>
-      <div class="city-info">
-        <div class="city-name">🌋 Sicilia</div>
-        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+    <div class="bento-cell">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24" style="stroke:var(--mint)"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
       </div>
+      <div class="bento-title">Stanze Private</div>
+      <div class="bento-desc">Codice segreto. Solo chi inviti. Perfetto per i tuoi gruppi.</div>
     </div>
-    <div class="city-card" onclick="location.href='/app.html'" style="background:#0c101c;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(0,212,255,.2)">
-      <div style="text-align:center;padding:20px">
-        <div style="font-size:32px;margin-bottom:8px">🔑</div>
-        <div style="font-size:14px;font-weight:600;color:#00d4ff">Stanza privata</div>
-        <div style="font-size:12px;color:#6e747d;margin-top:4px">Crea con codice</div>
+    <div class="bento-cell">
+      <div class="bento-icon">
+        <svg viewBox="0 0 24 24" style="stroke:#ffb400"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
       </div>
+      <div class="bento-title">Gratis per Sempre</div>
+      <div class="bento-desc">Zero abbonamenti. Zero paywall. Le funzioni base non si pagano mai.</div>
     </div>
   </div>
 </section>
 
-<!-- FEATURES -->
-<section class="features-section" id="features">
-  <div class="section-eyebrow">Perché Kouverte</div>
-  <h2 class="section-heading">Costruita per la privacy,<br>pensata per le persone</h2>
-  <p class="section-sub">Niente algoritmi che decidono chi vedi. Niente dati venduti. Solo conversazioni reali.</p>
-  <div class="features-grid">
-    <div class="feat">
-      <div class="feat-icon">
-        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+<!-- CITY MOSAIC -->
+<section class="city-section" id="stanze">
+  <div class="section-eyebrow">Stanze disponibili</div>
+  <h2 class="section-title">Dove vuoi<br><span>chattare oggi?</span></h2>
+  <div class="city-mosaic">
+    <div class="city-tile big" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1534308143481-c55f00be8bd7?w=900&h=1000&fit=crop&auto=format&q=80" alt="Napoli" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-label">
+        <div class="city-name">🏛️ Napoli</div>
+        <span class="city-pill"><span style="width:4px;height:4px;background:var(--mint);border-radius:50%;display:inline-block"></span>Live</span>
       </div>
-      <div class="feat-title">100% Anonimo</div>
-      <div class="feat-desc">Nessun numero di telefono, nessuna email. Un nickname e sei dentro. I tuoi dati restano tuoi, sempre.</div>
     </div>
-    <div class="feat">
-      <div class="feat-icon">
-        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-      </div>
-      <div class="feat-title">Video HD Facoltativa</div>
-      <div class="feat-desc">La webcam si attiva solo quando vuoi. Testo, audio o video: la scelta è sempre tua, in qualsiasi momento.</div>
+    <div class="city-tile" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=500&fit=crop&auto=format&q=80" alt="Roma" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-label"><div class="city-name">🏟️ Roma</div></div>
     </div>
-    <div class="feat">
-      <div class="feat-icon">
-        <svg viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      </div>
-      <div class="feat-title">Stanze per Città</div>
-      <div class="feat-desc">Napoli, Roma, Milano, Palermo, Sicilia e oltre. Conosci persone della tua zona in community dedicate.</div>
+    <div class="city-tile" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1610016302534-6f67f1c968d8?w=600&h=500&fit=crop&auto=format&q=80" alt="Milano" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-label"><div class="city-name">🏙️ Milano</div></div>
     </div>
-    <div class="feat">
-      <div class="feat-icon" style="background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.2)">
-        <svg viewBox="0 0 24 24" style="stroke:#ff6b9d"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-      </div>
-      <div class="feat-title">Stanze Private</div>
-      <div class="feat-desc">Crea una stanza con codice segreto e invita solo chi vuoi. Perfetto per gruppi di amici o incontri riservati.</div>
+    <div class="city-tile" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=500&fit=crop&auto=format&q=80" alt="Palermo" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-label"><div class="city-name">🌺 Palermo</div></div>
     </div>
-    <div class="feat">
-      <div class="feat-icon" style="background:rgba(0,229,184,.1);border-color:rgba(0,229,184,.2)">
-        <svg viewBox="0 0 24 24" style="stroke:#00e5b8"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-      </div>
-      <div class="feat-title">WebRTC Istantaneo</div>
-      <div class="feat-desc">Tecnologia peer-to-peer per video e voce in tempo reale. Latenza minima, qualità massima, direttamente nel browser.</div>
+    <div class="city-tile" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&h=500&fit=crop&auto=format&q=80" alt="Sicilia" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-label"><div class="city-name">🌋 Sicilia</div></div>
     </div>
-    <div class="feat">
-      <div class="feat-icon" style="background:rgba(255,180,0,.08);border-color:rgba(255,180,0,.2)">
-        <svg viewBox="0 0 24 24" style="stroke:#ffb400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </div>
-      <div class="feat-title">Gratis per Sempre</div>
-      <div class="feat-desc">Nessun abbonamento, nessuna carta di credito. Le funzioni principali di Kouverte resteranno sempre gratuite.</div>
+    <div class="city-private" onclick="location.href='/app.html'">
+      <div class="city-private-icon">🔑</div>
+      <div class="city-private-text">Stanza privata</div>
+      <div class="city-private-sub">Entra con codice</div>
     </div>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
 <section class="how-section">
-  <div class="how-inner">
-    <div class="section-eyebrow">Come funziona</div>
-    <h2 class="section-heading">Sei dentro in 10 secondi</h2>
-    <div class="steps-grid">
-      <div class="step-item">
-        <div class="step-num">01</div>
-        <div class="step-title">Scegli un nickname</div>
-        <div class="step-desc">Niente email, niente password. Scegli un nome o entra come ospite con un click — nessun dato richiesto.</div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">02</div>
-        <div class="step-title">Entra in una stanza</div>
-        <div class="step-desc">Scegli la tua città o una stanza tematica. Vedi chi è online e inizia a chattare subito, in tempo reale.</div>
-      </div>
-      <div class="step-item">
-        <div class="step-num">03</div>
-        <div class="step-title">Connettiti come vuoi</div>
-        <div class="step-desc">Testo, audio o video — attivi la webcam solo quando sei pronto. La pressione non esiste qui.</div>
-      </div>
+  <div class="section-eyebrow">Come funziona</div>
+  <h2 class="section-title">Dentro in<br><span>10 secondi.</span></h2>
+  <div class="how-grid">
+    <div class="how-cell">
+      <span class="how-num">01</span>
+      <div class="how-title">Scegli un nickname</div>
+      <div class="how-desc">Niente email, niente password. Un nome, un click — o entra come ospite anonimo. Zero frizioni.</div>
+    </div>
+    <div class="how-cell">
+      <span class="how-num">02</span>
+      <div class="how-title">Entra in una stanza</div>
+      <div class="how-desc">Scegli la tua città o una stanza tematica. Vedi chi è online, inizia a chattare subito.</div>
+    </div>
+    <div class="how-cell">
+      <span class="how-num">03</span>
+      <div class="how-title">Connettiti come vuoi</div>
+      <div class="how-desc">Testo, audio o video. La webcam si attiva solo quando sei pronto. La pressione non esiste.</div>
     </div>
   </div>
 </section>
@@ -598,55 +687,42 @@ footer{
 <!-- FAQ -->
 <section class="faq-section">
   <div class="section-eyebrow">FAQ</div>
-  <h2 class="section-heading">Domande frequenti</h2>
+  <h2 class="section-title">Domande<br><span>frequenti.</span></h2>
   <div class="faq-list">
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">
-        Kouverte è veramente gratis?
-        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">Sì, completamente gratis. Niente abbonamenti nascosti, niente limite di messaggi, niente paywall. Le funzioni principali resteranno sempre gratuite.</div>
+      <div class="faq-q">Kouverte è veramente gratis?<svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="faq-a">Sì, completamente gratis. Niente abbonamenti nascosti, niente limite di messaggi. Le funzioni principali resteranno sempre gratuite.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">
-        Devo registrarmi?
-        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">No. Puoi entrare come ospite con un click. La registrazione è facoltativa e ti dà accesso a badge, streak e profilo persistente.</div>
+      <div class="faq-q">Devo registrarmi?<svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="faq-a">No. Puoi entrare come ospite con un click. La registrazione è facoltativa e ti dà badge, streak e profilo persistente.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">
-        Chi può vedere le mie conversazioni?
-        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">I messaggi nelle stanze pubbliche sono visibili a tutti i presenti in quella stanza. Non vengono registrati sul server dopo la sessione. Nessun dato viene venduto a terzi.</div>
+      <div class="faq-q">Chi vede le mie conversazioni?<svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="faq-a">Solo chi è nella stanza in quel momento. I messaggi non vengono conservati dopo la sessione. Nessun dato venduto a terzi.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">
-        La webcam è obbligatoria?
-        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">Assolutamente no. La webcam è sempre e solo facoltativa. Puoi attivarla e disattivarla quando vuoi durante la chat.</div>
+      <div class="faq-q">La webcam è obbligatoria?<svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="faq-a">Assolutamente no. La webcam è sempre e solo facoltativa. Puoi attivarla e disattivarla quando vuoi.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">
-        Funziona su iPhone e Android?
-        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-      </div>
-      <div class="faq-a">Sì, Kouverte funziona perfettamente su qualsiasi dispositivo dal browser. Puoi anche installarla come app PWA — niente App Store o Play Store richiesti.</div>
+      <div class="faq-q">Funziona su iPhone e Android?<svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg></div>
+      <div class="faq-a">Sì, su qualsiasi browser. Puoi installarla come app PWA dalla barra del browser — niente App Store richiesto.</div>
     </div>
   </div>
 </section>
 
 <!-- CTA -->
 <section class="cta-section">
-  <div class="cta-glow"></div>
-  <div class="cta-box">
-    <h2 class="cta-title">Pronto a conoscerti<br>davvero?</h2>
-    <p class="cta-sub">Niente algoritmi. Niente profilazione. Solo persone autentiche.</p>
-    <div class="cta-btns">
-      <a class="btn-primary" href="/app.html" style="font-size:16px;padding:16px 36px">Entra gratis ora</a>
-      <a class="btn-secondary" href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Bot Telegram</a>
+  <div class="cta-card">
+    <div class="cta-inner">
+      <div class="cta-eyebrow">Inizia ora · Gratis · Anonimo</div>
+      <h2 class="cta-title">Pronto a<br>connetter<wbr>ti?</h2>
+      <p class="cta-sub">Niente profili. Niente algoritmi. Solo persone autentiche che vogliono parlare davvero.</p>
+      <div class="cta-btns">
+        <a class="btn-hero btn-hero-primary" href="/app.html" style="font-size:15px;padding:16px 40px">Entra gratis ora</a>
+        <a class="btn-hero btn-hero-ghost" href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Bot Telegram</a>
+      </div>
     </div>
   </div>
 </section>
@@ -655,22 +731,22 @@ footer{
 <footer>
   <div class="footer-top">
     <div>
-      <div class="footer-logo">KOU<span>VERTE</span></div>
-      <div class="footer-tagline">Meet in the dark — connessioni autentiche</div>
+      <div class="footer-logo">KOU<em>VERTE</em></div>
+      <div class="footer-tagline">Meet in the dark.<br>Connessioni autentiche, dal 2026.</div>
     </div>
-    <div class="footer-links-group">
-      <div class="footer-links-col">
+    <div class="footer-cols">
+      <div class="footer-col">
         <h4>Prodotto</h4>
-        <a href="/app.html">Entra nella chat</a>
+        <a href="/app.html">Chat</a>
         <a href="/about.html">Chi siamo</a>
-        <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Bot Telegram</a>
+        <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Telegram</a>
       </div>
-      <div class="footer-links-col">
+      <div class="footer-col">
         <h4>Legale</h4>
-        <a href="/privacy.html">Privacy Policy</a>
-        <a href="/terms.html">Termini di Servizio</a>
+        <a href="/privacy.html">Privacy</a>
+        <a href="/terms.html">Termini</a>
       </div>
-      <div class="footer-links-col">
+      <div class="footer-col">
         <h4>Contatti</h4>
         <a href="mailto:info@kouverte.com">info@kouverte.com</a>
         <a href="mailto:legal@kouverte.com">legal@kouverte.com</a>
@@ -681,7 +757,7 @@ footer{
     <div class="footer-copy">© 2026 Kouverte. Tutti i diritti riservati.</div>
     <div class="footer-badges">
       <span class="footer-badge">🇮🇹 Made in Italy</span>
-      <span class="footer-badge">GDPR Compliant</span>
+      <span class="footer-badge">GDPR</span>
       <span class="footer-badge">Free Forever</span>
     </div>
   </div>
@@ -689,36 +765,32 @@ footer{
 
 <script>
 function toggleFaq(el){
-  const isOpen = el.classList.contains('open');
-  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
-  if(!isOpen) el.classList.add('open');
+  const open = el.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+  if(!open) el.classList.add('open');
 }
 
 async function loadStats(){
-  try {
-    const res = await fetch('/api/stats/public');
-    if(!res.ok) throw new Error();
-    const d = await res.json();
-    const online = d.online||d.usersOnline||0;
-    const rooms = d.activeRooms||d.rooms||0;
-    const msgs = d.messagesToday||d.messages||0;
-    document.getElementById('statOnline').textContent = online.toLocaleString('it');
-    document.getElementById('statRooms').textContent = rooms.toLocaleString('it');
-    document.getElementById('statMessages').textContent = msgs>999?Math.round(msgs/1000)+'k+':msgs.toLocaleString('it');
-    document.getElementById('heroOnline').textContent = online.toLocaleString('it');
-    document.getElementById('mockOnline').textContent = Math.max(3,Math.round(online*0.08))+' online';
-  } catch {
-    document.getElementById('statOnline').textContent = '240+';
-    document.getElementById('statRooms').textContent = '8';
-    document.getElementById('statMessages').textContent = '1.2k+';
-    document.getElementById('heroOnline').textContent = '240+';
+  try{
+    const r = await fetch('/api/stats/public');
+    if(!r.ok) throw 0;
+    const d = await r.json();
+    const o = d.online||d.usersOnline||0;
+    const rm = d.activeRooms||d.rooms||0;
+    const m = d.messagesToday||d.messages||0;
+    document.getElementById('statOnline').textContent = o.toLocaleString('it');
+    document.getElementById('statRooms').textContent = rm.toLocaleString('it');
+    document.getElementById('statMessages').textContent = m>999?Math.round(m/1000)+'k+':m.toLocaleString('it');
+    document.getElementById('mockOnline').textContent = Math.max(3,Math.round(o*.08))+' online';
+  }catch{
+    document.getElementById('statOnline').textContent='240+';
+    document.getElementById('statRooms').textContent='8';
+    document.getElementById('statMessages').textContent='1.2k+';
   }
 }
-loadStats();
-setInterval(loadStats,30000);
+loadStats();setInterval(loadStats,30000);
 
-const urlParams = new URLSearchParams(window.location.search);
-const ref = urlParams.get('ref');
+const ref=new URLSearchParams(location.search).get('ref');
 if(ref) sessionStorage.setItem('kouverte_ref',ref);
 </script>
 </body>
