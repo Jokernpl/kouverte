@@ -621,6 +621,43 @@ app.get('/api/me/referral', verifyToken, (req, res) => {
     });
 });
 
+// ============ PUBLIC STATS (landing page) ============
+app.get('/api/stats/public', (req, res) => {
+    try {
+        // Online users: socket.io connected clients
+        const onlineUsers = io.engine ? io.engine.clientsCount : 0;
+
+        // Active voice rooms: rooms with at least 1 participant
+        const activeRooms = DB.voice_rooms
+            ? Object.values(DB.voice_rooms).filter(r => r && r.participants && r.participants.length > 0).length
+            : 0;
+
+        // Messages today: sum messages in all text rooms sent in last 24h
+        const since = Date.now() - 24 * 60 * 60 * 1000;
+        let msgsToday = 0;
+        if (DB.rooms) {
+            Object.values(DB.rooms).forEach(msgs => {
+                if (Array.isArray(msgs)) {
+                    msgsToday += msgs.filter(m => m && m.created_at && m.created_at > since).length;
+                }
+            });
+        }
+
+        // Total registered users
+        const totalUsers = DB.users ? DB.users.length : 0;
+
+        res.json({
+            ok: true,
+            online_users: onlineUsers,
+            active_rooms: activeRooms,
+            messages_today: msgsToday,
+            total_users: totalUsers
+        });
+    } catch (e) {
+        res.json({ ok: false, online_users: 0, active_rooms: 0, messages_today: 0, total_users: 0 });
+    }
+});
+
 app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (req, res) => {
     const emailIn = sanitizeEmail(req.body?.email);
     const usernameIn = sanitizeUsername(req.body?.username);

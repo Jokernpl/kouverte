@@ -15,17 +15,23 @@
 <meta property="og:title" content="KOUVERTE — Chat Mondiale Anonima">
 <meta property="og:description" content="Chat anonima con video HD, stanze a codice e amici. 100% anonimo.">
 <meta property="og:url" content="https://www.kouverte.com/app.html">
-<meta property="og:image" content="https://www.kouverte.com/icon.svg">
-<meta property="og:image:type" content="image/svg+xml">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
+<meta property="og:image" content="https://www.kouverte.com/og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:locale" content="it_IT">
+<link rel="canonical" href="https://www.kouverte.com/app.html">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KOUVERTE — Chat Mondiale Anonima">
 <meta name="twitter:description" content="Chat anonima con video HD, stanze a codice. 100% anonimo.">
-<meta name="twitter:image" content="https://www.kouverte.com/icon.svg">
+<meta name="twitter:image" content="https://www.kouverte.com/og-image.png">
+
+<!-- JSON-LD Structured Data -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Kouverte","url":"https://www.kouverte.com","description":"Chat anonima italiana con video HD. Stanze per città, senza registrazione, 100% gratuita.","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Web, Android, iOS","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"publisher":{"@type":"Organization","name":"Kouverte","url":"https://www.kouverte.com","logo":{"@type":"ImageObject","url":"https://www.kouverte.com/icon.svg"}}}
+</script>
 
 <!-- FAVICON (multi-formato per Google, browser, mobile) -->
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
@@ -438,6 +444,52 @@ body{position:relative}
 .dsb-claim{background:linear-gradient(135deg,#00d4ff,#00e5b8);border-radius:10px;padding:6px 14px;text-align:center;flex-shrink:0;
   font-size:12px;font-weight:700;color:#0f1117;box-shadow:0 0 12px rgba(0,212,255,.4)}
 .dsb-claim.claimed{background:rgba(255,255,255,.1);color:#6b7280;box-shadow:none}
+
+/* ── Referral Banner ── */
+.referral-banner{margin:0 0 4px;border-radius:14px;background:linear-gradient(135deg,rgba(0,229,184,.1),rgba(0,212,255,.08));
+  border:1px solid rgba(0,229,184,.3);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.referral-banner:active{transform:scale(.98)}
+.referral-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,229,184,.06),transparent);
+  animation:shimmer 3s infinite}
+.ref-icon{font-size:28px;flex-shrink:0}
+.ref-info{flex:1}
+.ref-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.ref-sub{font-size:11px;color:#b4bcc8}
+.ref-sub b{color:#00e5b8}
+.ref-arrow{color:#00e5b8;font-size:20px;font-weight:700;flex-shrink:0}
+
+/* ── Referral Modal ── */
+.ref-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.ref-modal-overlay.open{opacity:1;pointer-events:all}
+.ref-modal{background:#16182a;border-radius:24px 24px 0 0;padding:24px 20px 36px;width:100%;max-width:480px;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+.ref-modal-overlay.open .ref-modal{transform:translateY(0)}
+.ref-modal-handle{width:40px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 20px}
+.ref-modal-title{font-size:20px;font-weight:800;margin-bottom:4px;text-align:center}
+.ref-modal-sub{font-size:13px;color:#b4bcc8;text-align:center;margin-bottom:20px}
+.ref-link-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:14px 16px;
+  display:flex;align-items:center;gap:10px;margin-bottom:16px;word-break:break-all}
+.ref-link-text{font-size:13px;color:#00d4ff;flex:1;font-family:monospace}
+.ref-copy-btn{background:#00d4ff;color:#0f1117;font-weight:700;font-size:13px;padding:8px 16px;border-radius:8px;
+  border:none;cursor:pointer;flex-shrink:0;transition:opacity .2s}
+.ref-copy-btn:hover{opacity:.85}
+.ref-copy-btn.copied{background:#00e5b8}
+.ref-stats-row{display:flex;gap:12px;margin-bottom:20px}
+.ref-stat-box{flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:12px;
+  padding:14px;text-align:center}
+.ref-stat-num{font-size:24px;font-weight:800;color:#00d4ff}
+.ref-stat-lbl{font-size:11px;color:#6e747d;margin-top:4px}
+.ref-badge-box{background:linear-gradient(135deg,rgba(0,229,184,.12),rgba(0,212,255,.08));
+  border:1px solid rgba(0,229,184,.3);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.ref-badge-icon{font-size:36px}
+.ref-badge-info-title{font-size:14px;font-weight:700;color:#00e5b8}
+.ref-badge-info-desc{font-size:12px;color:#b4bcc8;margin-top:3px}
+.ref-share-row{display:flex;gap:10px}
+.ref-share-btn{flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;
+  padding:12px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;transition:background .2s}
+.ref-share-btn:hover{background:rgba(255,255,255,.12)}
 
 /* ── Daily Reward Modal ── */
 .daily-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center;
@@ -1594,6 +1646,16 @@ html[data-theme="light"] body {
         <div class="dsb-streak-lbl">giorni</div>
       </div>
       <div class="dsb-claim" id="dailyClaimBtn">Ritira</div>
+    </div>
+
+    <!-- REFERRAL BANNER -->
+    <div class="referral-banner" id="referralBanner" onclick="openReferralModal()">
+      <div class="ref-icon">🎁</div>
+      <div class="ref-info">
+        <div class="ref-title">Invita un amico</div>
+        <div class="ref-sub">Ottieni il badge esclusivo <b>Ambasciatore</b></div>
+      </div>
+      <div class="ref-arrow">→</div>
     </div>
 
     <!-- STANZE PUBBLICHE — contenuto principale -->
@@ -8602,6 +8664,153 @@ if (!document.getElementById('logoSettingsCss')) {
   `;
   document.head.appendChild(style);
 }
+</script>
+
+<!-- ═══ REFERRAL MODAL ═══ -->
+<div class="ref-modal-overlay" id="refModalOverlay" onclick="closeReferralModal(event)">
+  <div class="ref-modal" onclick="event.stopPropagation()">
+    <div class="ref-modal-handle"></div>
+    <div class="ref-modal-title">🎁 Invita un amico</div>
+    <div class="ref-modal-sub">Condividi il tuo link — per ogni amico che si iscrive ottieni il badge <b style="color:#00e5b8">Ambasciatore</b></div>
+
+    <div class="ref-link-box">
+      <span class="ref-link-text" id="refLinkText">Caricamento...</span>
+      <button class="ref-copy-btn" id="refCopyBtn" onclick="copyRefLink()">Copia</button>
+    </div>
+
+    <div class="ref-stats-row">
+      <div class="ref-stat-box">
+        <div class="ref-stat-num" id="refInvitedCount">0</div>
+        <div class="ref-stat-lbl">Amici invitati</div>
+      </div>
+      <div class="ref-stat-box">
+        <div class="ref-stat-num" id="refEarnedFrames">0</div>
+        <div class="ref-stat-lbl">Frame guadagnati</div>
+      </div>
+    </div>
+
+    <div class="ref-badge-box">
+      <div class="ref-badge-icon">🏅</div>
+      <div>
+        <div class="ref-badge-info-title">Badge Ambasciatore</div>
+        <div class="ref-badge-info-desc">Invita 1+ amici per sbloccare il badge esclusivo sul profilo. Visibile a tutti.</div>
+      </div>
+    </div>
+
+    <div class="ref-share-row">
+      <div class="ref-share-btn" onclick="shareRefWhatsApp()">📱 WhatsApp</div>
+      <div class="ref-share-btn" onclick="shareRefTelegram()">✈️ Telegram</div>
+      <div class="ref-share-btn" onclick="shareRefNative()">↗️ Condividi</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══ REFERRAL SYSTEM ═══
+let _refLink = '';
+let _refCode = '';
+
+async function openReferralModal() {
+  document.getElementById('refModalOverlay').classList.add('open');
+  await loadReferralData();
+}
+
+function closeReferralModal(e) {
+  if (e.target === document.getElementById('refModalOverlay')) {
+    document.getElementById('refModalOverlay').classList.remove('open');
+  }
+}
+
+async function loadReferralData() {
+  try {
+    const token = localStorage.getItem('kv_token');
+    const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+    const res = await fetch('/api/me/referral', { headers });
+    if (!res.ok) throw new Error('no auth');
+    const d = await res.json();
+    _refLink = d.link;
+    _refCode = d.code;
+    document.getElementById('refLinkText').textContent = d.link;
+    document.getElementById('refInvitedCount').textContent = d.invited_count || 0;
+    document.getElementById('refEarnedFrames').textContent = d.invited_count || 0;
+
+    // Show ambassador badge if has invites
+    if (d.invited_count > 0) {
+      unlockAmbassadorBadge();
+    }
+  } catch {
+    // Guest: generate a simple shareable link
+    const guestCode = 'guest_' + Math.random().toString(36).slice(2,8);
+    _refLink = (window.location.origin || 'https://www.kouverte.com') + '/app.html?ref=' + guestCode;
+    document.getElementById('refLinkText').textContent = _refLink;
+    document.getElementById('refInvitedCount').textContent = '0';
+    document.getElementById('refEarnedFrames').textContent = '0';
+  }
+}
+
+function copyRefLink() {
+  if (!_refLink) return;
+  navigator.clipboard.writeText(_refLink).then(() => {
+    const btn = document.getElementById('refCopyBtn');
+    btn.textContent = '✓ Copiato!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copia'; btn.classList.remove('copied'); }, 2000);
+    showToast('🔗 Link copiato negli appunti!');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = _refLink;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('🔗 Link copiato!');
+  });
+}
+
+function shareRefWhatsApp() {
+  const text = encodeURIComponent('🌊 Kouverte — chat anonima italiana con video HD. Entra gratis: ' + _refLink);
+  window.open('https://wa.me/?text=' + text, '_blank');
+}
+
+function shareRefTelegram() {
+  const text = encodeURIComponent('🌊 Kouverte — chat anonima gratis. Entra ora: ' + _refLink);
+  window.open('https://t.me/share/url?url=' + encodeURIComponent(_refLink) + '&text=' + text, '_blank');
+}
+
+function shareRefNative() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Kouverte — Chat Anonima Italiana',
+      text: '🌊 Entra in Kouverte — chat anonima gratis con video HD!',
+      url: _refLink
+    });
+  } else {
+    copyRefLink();
+  }
+}
+
+function unlockAmbassadorBadge() {
+  // Add badge to user profile if not already there
+  try {
+    const profileData = JSON.parse(localStorage.getItem('kv_profile') || '{}');
+    if (!profileData.badges) profileData.badges = [];
+    if (!profileData.badges.includes('ambassador')) {
+      profileData.badges.push('ambassador');
+      localStorage.setItem('kv_profile', JSON.stringify(profileData));
+    }
+  } catch {}
+}
+
+// Handle incoming referral on app load
+(function handleIncomingRef() {
+  const ref = new URLSearchParams(window.location.search).get('ref') ||
+              sessionStorage.getItem('kouverte_ref');
+  if (ref) {
+    sessionStorage.setItem('kouverte_ref', ref);
+    // Will be sent on next registration/login
+  }
+})();
 </script>
 </body>
 </html>
