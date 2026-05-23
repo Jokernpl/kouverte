@@ -239,21 +239,28 @@ body{position:relative}
 
 /* Home header con logo */
 .home-hdr{
-  padding:14px 16px 0;
-  background:linear-gradient(180deg,#1a1f3a 0%,transparent 100%);
-  position:sticky;top:0;z-index:20;backdrop-filter:blur(16px)
+  padding:12px 16px 8px;
+  background:rgba(8,11,20,.92);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  position:sticky;top:0;z-index:20;backdrop-filter:blur(20px)
 }
 .home-logo-row{display:flex;align-items:center;gap:10px}
-.home-mascot{width:38px;height:38px;flex-shrink:0;animation:float 3s ease-in-out infinite}
-.home-mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
+.home-mascot{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,212,255,.1);border-radius:10px;border:1px solid rgba(0,212,255,.2)}
+.home-mascot svg{width:18px;height:18px;display:none}
+.home-mascot::after{content:'K';font-size:15px;font-weight:900;color:#00d4ff;letter-spacing:-0.5px}
 .home-title{
-  font-size:24px;font-weight:600;letter-spacing:-1px;
+  font-size:18px;font-weight:800;letter-spacing:2px;
   color:#fff
 }
-.home-sub{font-size:10px;color:#10b981;font-weight:600;letter-spacing:0px;text-transform:uppercase;margin-top:0}
-.home-anon{background:#10b981;border-radius:12px;
-  padding:3px 8px;font-size:9px;font-weight:600;color:#fff;margin-left:auto;flex-shrink:0;
-  box-shadow:none}
+.home-title span{color:#00d4ff}
+.home-sub{font-size:10px;color:#6e747d;font-weight:500;letter-spacing:0px;margin-top:1px}
+.home-anon{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(0,229,184,.08);border:1px solid rgba(0,229,184,.2);
+  border-radius:999px;padding:3px 10px;font-size:10px;font-weight:600;color:#00e5b8;
+  margin-left:auto;flex-shrink:0
+}
 
 /* Category filter */
 .cat-row{display:flex;gap:6px;padding:10px 0 8px;overflow-x:auto;scrollbar-width:none}
@@ -873,19 +880,32 @@ body{position:relative}
 ═══════════════════════════════ */
 .bnav{
   position:fixed;bottom:0;left:0;right:0;
-  background:rgba(15,17,23,.97);border-top:1px solid rgba(0,212,255,.15);
+  background:rgba(8,11,20,.96);
+  border-top:1px solid rgba(255,255,255,.06);
   display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom);
-  backdrop-filter:blur(20px)
+  backdrop-filter:blur(24px)
 }
-.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0;min-height:52px;justify-content:center;
-  cursor:pointer;border:none;background:none;color:#6b7280;transition:color .2s,transform .15s;position:relative}
-.nbtn:active{transform:scale(0.92)}
+.nbtn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:8px 0 6px;min-height:54px;justify-content:center;
+  cursor:pointer;border:none;background:none;color:#4b5563;
+  transition:color .2s,transform .15s;position:relative
+}
+.nbtn:active{transform:scale(0.90)}
 .nbtn.active{color:#00d4ff}
-.nbtn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2px;background:linear-gradient(90deg,#00d4ff,#ff6b9d);border-radius:0 0 2px 2px;box-shadow:0 0 8px #00d4ff}
-.nicon{font-size:20px;line-height:1}
-.nlbl{font-size:9px;margin-top:2px;text-transform:uppercase;letter-spacing:0px;font-weight:600}
-.nnotif{position:absolute;top:5px;right:50%;transform:translateX(11px);
-  width:7px;height:7px;background:#ff6b9d;border-radius:50%;border:2px solid #0f1117}
+.nbtn.active .nlbl{color:#00d4ff}
+.nbtn.active::after{
+  content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);
+  width:20px;height:3px;background:#00d4ff;border-radius:999px;
+  box-shadow:0 0 8px rgba(0,212,255,.5)
+}
+.nicon{font-size:22px;line-height:1}
+.nlbl{font-size:9px;margin-top:3px;font-weight:600;color:#4b5563;transition:color .2s;letter-spacing:0.3px}
+.nnotif{
+  position:absolute;top:6px;right:50%;transform:translateX(14px);
+  width:8px;height:8px;background:#ff6b9d;border-radius:50%;
+  border:2px solid #080b14;box-shadow:0 0 6px rgba(255,107,157,.5)
+}
 
 /* Online pill */
 .opill{position:fixed;top:10px;right:12px;z-index:300;background:rgba(15,17,23,.9);
@@ -1363,16 +1383,39 @@ html[data-theme="light"] body {
 /* ═══════════════════════════════
    LIVE STATS BAR - sensazione mondo vivo
 ═══════════════════════════════ */
-.live-stats-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:18px;padding:14px;background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(59,130,246,0.1),rgba(255,107,157,0.1));border:1px solid rgba(0,212,255,0.3);border-radius:16px;position:relative;overflow:hidden}
-.live-stats-bar::before{content:'';position:absolute;inset:0;pointer-events:none;display:none}
-.live-stat{display:flex;align-items:center;gap:8px;justify-content:center;position:relative}
-.live-stat-icon{font-size:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center;width:32px;height:32px}
-.pulse-dot{width:14px;height:14px;background:#10b981;border-radius:50%;position:relative;box-shadow:0 0 12px #10b981}
-.pulse-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:#10b981;animation:ping 2s ease-out infinite;opacity:0.6;pointer-events:none}
-@keyframes ping{0%{transform:scale(1);opacity:0.6}100%{transform:scale(2.5);opacity:0}}
-.live-stat-text{display:flex;flex-direction:column;align-items:flex-start}
-.live-stat-num{font-size:18px;font-weight:600;color:#fff;line-height:1;background:linear-gradient(135deg,#fff,#00d4ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.live-stat-label{font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.live-stats-bar{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+  margin-bottom:16px;
+  background:rgba(15,17,23,.8);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;overflow:hidden;position:relative
+}
+.live-stats-bar::before{display:none}
+.live-stat{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;padding:12px 8px;position:relative
+}
+.live-stat:not(:last-child)::after{
+  content:'';position:absolute;right:0;top:20%;bottom:20%;
+  width:1px;background:rgba(255,255,255,.06)
+}
+.live-stat-icon{
+  font-size:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  width:24px;height:24px
+}
+.pulse-dot{
+  width:8px;height:8px;background:#00e5b8;border-radius:50%;
+  box-shadow:0 0 8px #00e5b8;position:relative
+}
+.pulse-dot::before{
+  content:'';position:absolute;inset:-3px;border-radius:50%;
+  background:#00e5b8;animation:ping 2s ease-out infinite;opacity:0.5;pointer-events:none
+}
+@keyframes ping{0%{transform:scale(1);opacity:0.5}100%{transform:scale(2.5);opacity:0}}
+.live-stat-text{display:flex;flex-direction:column;align-items:center}
+.live-stat-num{font-size:20px;font-weight:800;color:#fff;line-height:1;letter-spacing:-0.5px}
+.live-stat-label{font-size:9px;color:#6e747d;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-top:2px}
 
 /* ═══════════════════════════════
    LIVE FEED - utenti che entrano, stanze create
@@ -1605,28 +1648,16 @@ html[data-theme="light"] body {
   <div class="kv-particles" id="kvParticles"></div>
   <div class="home-hdr">
     <div class="home-logo-row">
-      <!-- Mini mascot -->
-      <div class="home-mascot">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
-          <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
-          <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
-          <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
-          <circle cx="43" cy="46" r="5" fill="#fff"/>
-          <circle cx="57" cy="46" r="5" fill="#fff"/>
-          <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
-          <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
-          <circle cx="45" cy="45" r="1" fill="#fff"/>
-          <circle cx="59" cy="45" r="1" fill="#fff"/>
-        </svg>
-      </div>
+      <div class="home-mascot"></div>
       <div>
-        <div class="home-title">KOUVERTE</div>
-        <div class="home-sub">Chat Mondiale Anonima</div>
+        <div class="home-title">KOU<span>VERTE</span></div>
+        <div class="home-sub">Chat Anonima Italiana</div>
       </div>
-      <div class="home-anon">🔒 100% Anonimo</div>
+      <div class="home-anon">
+        <span style="width:6px;height:6px;background:#00e5b8;border-radius:50%;display:inline-block"></span>
+        Live
+      </div>
     </div>
-
   </div>
 
   <div class="home-body">
