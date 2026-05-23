@@ -365,9 +365,9 @@ body{position:relative}
 .mrow.self{flex-direction:row-reverse}
 
 .mavatar{
-  width:26px;height:26px;border-radius:50%;
+  width:36px;height:36px;border-radius:50%;
   display:flex;align-items:center;justify-content:center;
-  font-size:13px;flex-shrink:0;margin-top:1px
+  font-size:18px;flex-shrink:0;margin-top:1px
 }
 .mavatar.hidden{visibility:hidden}
 
@@ -4621,7 +4621,7 @@ function injectBotMessage(){
   row.className = 'mrow bot-msg';
   row.style.position = 'relative';
   row.innerHTML = `
-    <div class="mavatar" style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">🤖</div>
+    <div class="mavatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px">🤖</div>
     <div class="mbody">
       <div class="mline">
         <span class="mname">KouvBot</span><span style="color:#06b6d4;margin-right:5px">:</span>
@@ -5725,7 +5725,7 @@ function appendMsg(msg){
     const myAuraClass=(isPrem()||myLvl>=10)?'aura-prem':'';
     const myAuraStyle=(isPrem()||myLvl>=10)?`color:${myCol};`:'';
     row.innerHTML=`
-      <div class="mavatar${frameClass} ${myAuraClass} ${consec?'hidden':''}" style="${myAuraStyle}background:${myCol}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px">
+      <div class="mavatar${frameClass} ${myAuraClass} ${consec?'hidden':''}" style="${myAuraStyle}background:${myCol}22;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px">
         ${myFace}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
@@ -5746,7 +5746,7 @@ function appendMsg(msg){
     // Click sull'avatar/nome → menu utente
     const clickData = `data-uid="${esc(msg.userId||'')}" data-uname="${esc(name)}" data-uface="${esc(face)}" data-ucolor="${col}" data-uframe="${esc(msg.activeFrame||'none')}" onclick="openUserMenu(this)" style="cursor:pointer"`;
     row.innerHTML=`
-      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" ${clickData} style="${auraStyle}background:${col}22;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px;cursor:pointer" title="Tocca per profilo">
+      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" ${clickData} style="${auraStyle}background:${col}22;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px;cursor:pointer" title="Tocca per profilo">
         ${face}
       </div>
       <div class="mbody">
