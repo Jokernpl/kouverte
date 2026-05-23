@@ -276,18 +276,20 @@ body{position:relative}
 .sec-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ─── GRID di TILE (rettangoli stile cavou) ─── */
-#roomsList{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#roomsList{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 
 .room-card{
-  aspect-ratio:16/13;
+  height:108px;
   background:linear-gradient(145deg,#1a1f3a,#16182a);
-  border:1px solid rgba(0,212,255,.2);
+  border:1px solid rgba(255,255,255,.06);
   border-radius:12px;padding:8px 10px;
   cursor:pointer;
   position:relative;overflow:hidden;
   display:flex;flex-direction:column;justify-content:space-between;
-  touch-action:manipulation
+  touch-action:manipulation;
+  transition:border-color .2s,transform .15s
 }
+.room-card:hover{border-color:rgba(0,212,255,.3);transform:translateY(-2px)}
 .room-card:active{transform:scale(.95);opacity:.9}
 .room-card::before{content:'';display:none}
 .room-card::after{
@@ -316,8 +318,8 @@ body{position:relative}
 .rc-center{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-end;gap:0;flex:1;z-index:1;position:relative;background-size:cover!important;background-position:center!important}
 .rc-emoji-big{font-size:46px;line-height:1;display:none}
 .rc-tile-name{
-  font-size:14px;font-weight:600;color:#fff;text-align:center;letter-spacing:-.3px;
-  text-shadow:0 2px 8px rgba(0,0,0,.5);
+  font-size:12px;font-weight:700;color:#fff;text-align:center;letter-spacing:-.2px;
+  text-shadow:0 2px 8px rgba(0,0,0,.8);
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
 
@@ -452,23 +454,24 @@ body{position:relative}
   font-weight:600;font-size:13px;text-shadow:0 1px 2px rgba(0,0,0,.6);pointer-events:none}
 
 /* ── Daily Reward Streak Banner (home screen) ── */
-.daily-streak-banner{margin:0 0 4px;border-radius:14px;background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(255,107,157,.1));
-  border:1px solid rgba(0,212,255,.25);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;
-  transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
-.daily-streak-banner:active{transform:scale(.98)}
-.daily-streak-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,212,255,.06),transparent);
-  animation:shimmer 2.5s infinite}
-@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
-.dsb-fire{font-size:32px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(249,115,22,.6))}
-.dsb-info{flex:1}
-.dsb-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
-.dsb-sub{font-size:11px;color:#b4bcc8}
-.dsb-streak{background:linear-gradient(135deg,#f97316,#ef4444);border-radius:10px;padding:6px 12px;text-align:center;flex-shrink:0}
-.dsb-streak-num{font-size:20px;font-weight:800;color:#fff;line-height:1}
-.dsb-streak-lbl{font-size:9px;color:rgba(255,255,255,.8);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-.dsb-claim{background:linear-gradient(135deg,#00d4ff,#00e5b8);border-radius:10px;padding:6px 14px;text-align:center;flex-shrink:0;
-  font-size:12px;font-weight:700;color:#0f1117;box-shadow:0 0 12px rgba(0,212,255,.4)}
-.dsb-claim.claimed{background:rgba(255,255,255,.1);color:#6b7280;box-shadow:none}
+.daily-streak-banner{
+  margin:0 0 8px;border-radius:10px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  padding:8px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;
+  transition:background .2s;position:relative;overflow:hidden
+}
+.daily-streak-banner:hover{background:rgba(255,255,255,.05)}
+.daily-streak-banner::before{display:none}
+.dsb-fire{font-size:18px;flex-shrink:0}
+.dsb-info{flex:1;min-width:0}
+.dsb-title{font-size:12px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dsb-sub{font-size:10px;color:#6e747d;margin-top:0}
+.dsb-streak{background:rgba(249,115,22,.15);border:1px solid rgba(249,115,22,.3);border-radius:8px;padding:3px 8px;text-align:center;flex-shrink:0}
+.dsb-streak-num{font-size:14px;font-weight:800;color:#f97316;line-height:1}
+.dsb-streak-lbl{font-size:8px;color:rgba(249,115,22,.7);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.dsb-claim{background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);border-radius:8px;padding:4px 10px;text-align:center;flex-shrink:0;font-size:11px;font-weight:700;color:#00d4ff}
+.dsb-claim.claimed{background:rgba(255,255,255,.05);color:#6b7280;border-color:rgba(255,255,255,.06)}
 
 /* ── PWA Install Banner ── */
 .pwa-install-banner{display:none;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(0,229,184,.08));
