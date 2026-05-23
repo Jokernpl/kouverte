@@ -86,6 +86,15 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'icon.svg'));
 });
 
+// Landing page esplicita alla root — garantisce che index.html sia servita
+// anche se l'ordine dei middleware cambia
+app.get('/', (req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // NO-CACHE per HTML/JS/CSS principali: gli update arrivano subito al refresh
 app.use((req, res, next) => {
     const p = req.path;

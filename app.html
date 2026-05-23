@@ -280,20 +280,30 @@ body{position:relative}
 
 .room-card{
   height:108px;
-  background:linear-gradient(145deg,#1a1f3a,#16182a);
-  border:1px solid rgba(255,255,255,.06);
-  border-radius:12px;padding:8px 10px;
+  background:linear-gradient(160deg,rgba(26,31,58,.95),rgba(15,17,23,.98));
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:8px 10px;
   cursor:pointer;
   position:relative;overflow:hidden;
   display:flex;flex-direction:column;justify-content:space-between;
   touch-action:manipulation;
-  transition:border-color .2s,transform .15s
+  transition:border-color .25s,transform .2s,box-shadow .25s
 }
-.room-card:hover{border-color:rgba(0,212,255,.3);transform:translateY(-2px)}
-.room-card:active{transform:scale(.95);opacity:.9}
-.room-card::before{content:'';display:none}
+.room-card::before{
+  content:'';position:absolute;inset:0;border-radius:14px;
+  background:linear-gradient(160deg,rgba(var(--rc-rgb,0,212,255),.06),transparent 60%);
+  pointer-events:none;opacity:0;transition:opacity .25s
+}
+.room-card:hover{
+  border-color:rgba(0,212,255,.25);
+  transform:translateY(-3px);
+  box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(0,212,255,.08)
+}
+.room-card:hover::before{opacity:1}
+.room-card:active{transform:scale(.96);opacity:.9}
 .room-card::after{
-  content:'';position:absolute;top:0;left:0;width:0;height:0;
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
   pointer-events:none
 }
 
@@ -301,10 +311,11 @@ body{position:relative}
 .rc-badges{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;z-index:1;position:relative}
 .rc-online-pill{
   display:flex;align-items:center;gap:3px;
-  background:rgba(0,0,0,.4);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:14px;padding:2px 6px;
-  font-size:10px;color:#fff;font-weight:700
+  background:rgba(0,0,0,.5);backdrop-filter:blur(12px) saturate(180%);
+  -webkit-backdrop-filter:blur(12px) saturate(180%);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:20px;padding:3px 7px;
+  font-size:9px;color:#fff;font-weight:700;letter-spacing:.3px
 }
 .rc-online-dot{width:6px;height:6px;border-radius:50%;background:#10b981}
 .rc-flag-pill{
@@ -325,7 +336,13 @@ body{position:relative}
 
 /* Image overlay for room backgrounds */
 .rc-image-overlay{
-  position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(0,0,0,0.2),rgba(0,0,0,0.5));z-index:1
+  position:absolute;top:0;left:0;right:0;bottom:0;
+  background:linear-gradient(180deg,
+    rgba(0,0,0,.15) 0%,
+    rgba(0,0,0,.3) 40%,
+    rgba(5,8,18,.75) 100%
+  );
+  z-index:1
 }
 
 .rc-tile-name-overlay{
@@ -425,18 +442,19 @@ body{position:relative}
 .coin-widget .coin-amount{min-width:14px;text-align:right}
 
 /* Coin widget in profile */
-.coin-big{display:flex;align-items:center;justify-content:center;gap:8px;
-  background:linear-gradient(135deg,#78350f,#f59e0b);border:1px solid #fbbf24;
-  border-radius:14px;padding:14px;margin:12px 16px 0;
-  font-size:22px;font-weight:600;color:#fff;
-  box-shadow:0 0 20px rgba(251,191,36,.3)}
-.coin-big-icon{font-size:28px}
+.coin-big{display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,rgba(120,53,15,.6),rgba(245,158,11,.25));
+  border:1px solid rgba(251,191,36,.25);
+  border-radius:16px;padding:16px;margin:14px 16px 0;
+  font-size:20px;font-weight:700;color:#fff;
+  box-shadow:0 4px 20px rgba(251,191,36,.1),inset 0 1px 0 rgba(255,255,255,.05)}
+.coin-big-icon{font-size:30px;filter:drop-shadow(0 2px 8px rgba(251,191,36,.4))}
 
 /* Daily wheel button */
-.wheel-btn{margin:8px 16px 0;display:flex;align-items:center;justify-content:space-between;
-  background:#00d4ff;border:none;border-radius:12px;
-  padding:14px 18px;color:#0f1117;font-size:14px;font-weight:600;cursor:pointer;
-  width:calc(100% - 32px);box-shadow:0 0 16px rgba(0,212,255,.3)}
+.wheel-btn{margin:10px 16px 0;display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,#00d4ff,#00b8dd);border:none;border-radius:14px;
+  padding:14px 18px;color:#0f1117;font-size:14px;font-weight:700;cursor:pointer;
+  width:calc(100% - 32px);box-shadow:0 4px 20px rgba(0,212,255,.25)}
 .wheel-btn.disabled{opacity:.5;cursor:default;box-shadow:none}
 .wheel-btn-icon{font-size:22px;animation:wheel-spin 4s linear infinite}
 @keyframes wheel-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -634,8 +652,8 @@ body{position:relative}
    PROFILE
 ═══════════════════════════════ */
 #profile{background:#0f1117;overflow-y:scroll;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
-.prof-hero{padding:28px 20px 16px;text-align:center;position:relative;
-  background:radial-gradient(ellipse at 50% 0%,#1a1f3a,transparent 70%)}
+.prof-hero{padding:20px 20px 16px;text-align:center;position:relative;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.07),transparent 70%)}
 .prof-mascot{width:80px;height:80px;margin:0 auto 10px;position:relative;
   animation:float 3s ease-in-out infinite}
 .prof-mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
@@ -706,33 +724,52 @@ body{position:relative}
   padding:4px 12px;font-size:11px;font-weight:700;animation:badge-pop 2s ease-in-out infinite}
 
 /* Rank / Level */
-.rank-wrap{margin:14px 16px 0;background:linear-gradient(145deg,#1a1f3a,#16182a);
-  border:1px solid rgba(0,212,255,.15);border-radius:16px;padding:14px}
-.rank-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.rank-icon{font-size:26px;line-height:1}
+.rank-wrap{margin:14px 16px 0;
+  background:rgba(26,31,58,.7);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:16px;
+  position:relative;overflow:hidden}
+.rank-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),transparent)}
+.rank-row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.rank-icon{font-size:28px;line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))}
 .rank-info{flex:1}
-.rank-title{font-size:14px;font-weight:600;background:#00d4ff;
+.rank-title{font-size:14px;font-weight:700;background:linear-gradient(90deg,#00d4ff,#00e5b8);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.rank-sub{font-size:10px;color:#6e747d;margin-top:1px}
-.rank-xp{font-size:11px;color:#b4bcc8;font-weight:600}
-.rank-bar-track{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.rank-sub{font-size:10px;color:#6e747d;margin-top:2px}
+.rank-xp{font-size:12px;color:#b4bcc8;font-weight:700;
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);
+  border-radius:8px;padding:3px 8px;white-space:nowrap}
+.rank-bar-track{height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
 .rank-bar-fill{height:100%;border-radius:3px;
-  background:linear-gradient(90deg,#00d4ff,#ff6b9d,#00e5b8);
+  background:linear-gradient(90deg,#00d4ff,#00e5b8);
   animation:rank-fill .8s ease-out forwards;width:0}
 
-.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 16px;margin-top:12px}
-.stat-b{background:linear-gradient(145deg,#1a1f3a,#16182a);border:1px solid rgba(0,212,255,.15);
-  border-radius:12px;padding:12px;text-align:center;transition:box-shadow .2s}
-.stat-b:active{box-shadow:0 0 16px rgba(0,212,255,.2)}
-.stat-n{font-size:22px;font-weight:600;background:#00d4ff;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.stat-l{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:0px;margin-top:2px}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;margin-top:14px}
+.stat-b{
+  background:rgba(26,31,58,.8);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;padding:14px 10px;text-align:center;
+  transition:box-shadow .2s,border-color .2s;
+  position:relative;overflow:hidden
+}
+.stat-b::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(160deg,rgba(0,212,255,.04),transparent 60%);
+  pointer-events:none
+}
+.stat-b:active{box-shadow:0 0 20px rgba(0,212,255,.15);border-color:rgba(0,212,255,.2)}
+.stat-n{font-size:22px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#00e5b8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.stat-l{font-size:9px;color:#6e747d;letter-spacing:.5px;text-transform:uppercase;margin-top:4px;font-weight:500}
 
 /* Referral */
-.ref-sec{margin:12px 16px 0;background:linear-gradient(145deg,#1a1f3a,#16182a);
-  border:1px solid rgba(0,212,255,.15);border-radius:16px;padding:14px}
-.ref-title{font-size:12px;font-weight:600;color:#00d4ff;margin-bottom:6px;display:flex;align-items:center;gap:6px}
-.ref-box{background:rgba(0,0,0,.3);border-radius:10px;padding:8px 12px;
+.ref-sec{margin:12px 16px 0;
+  background:rgba(26,31,58,.6);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;padding:16px}
+.ref-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ref-box{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;
   font-size:11px;color:#b4bcc8;font-family:monospace;word-break:break-all;margin-bottom:8px}
 .ref-copy{width:100%;padding:9px;border-radius:10px;border:1px solid rgba(0,212,255,.3);
   background:rgba(0,212,255,.1);color:#00d4ff;font-size:12px;font-weight:600;cursor:pointer}
@@ -837,6 +874,82 @@ body{position:relative}
 .obs-step-num{width:20px;height:20px;border-radius:50%;background:#00d4ff;color:#0f1117;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .obs-dismiss{font-size:10px;color:#6e747d;text-align:right;cursor:pointer;padding-top:2px}
 .obs-dismiss:hover{color:#9ca3af}
+
+/* ═══════════════════════════════
+   ONBOARDING WIZARD (prima visita)
+═══════════════════════════════ */
+#onboardingWizard{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.7);backdrop-filter:blur(12px);
+  padding:0;
+}
+.owiz-sheet{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,#1a1f3a,#0f1117);
+  border:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(0,212,255,.2);
+  border-radius:24px 24px 0 0;
+  padding:24px 24px 40px;
+  animation:slideUp .35s cubic-bezier(.32,1.28,.32,1)
+}
+.owiz-handle{width:40px;height:4px;background:rgba(255,255,255,.12);
+  border-radius:4px;margin:0 auto 22px}
+.owiz-step{display:none;flex-direction:column;align-items:center;text-align:center}
+.owiz-step.active{display:flex}
+.owiz-icon{font-size:52px;margin-bottom:14px;
+  filter:drop-shadow(0 4px 16px rgba(0,212,255,.3))}
+.owiz-title{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
+.owiz-sub{font-size:14px;color:#b4bcc8;line-height:1.6;max-width:340px}
+.owiz-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0}
+.owiz-pill{
+  background:rgba(0,212,255,.08);
+  border:1px solid rgba(0,212,255,.18);
+  border-radius:20px;padding:6px 16px;
+  font-size:13px;color:#b4bcc8;cursor:pointer;
+  transition:all .2s;font-weight:500
+}
+.owiz-pill:hover,.owiz-pill.sel{
+  background:rgba(0,212,255,.2);
+  border-color:#00d4ff;color:#fff
+}
+.owiz-input{
+  width:100%;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:14px 16px;
+  font-size:16px;color:#fff;text-align:center;
+  margin:16px 0;outline:none;font-family:inherit;font-weight:600
+}
+.owiz-input:focus{border-color:rgba(0,212,255,.5);background:rgba(0,212,255,.05)}
+.owiz-input::placeholder{color:#4b5563;font-weight:400}
+.owiz-cta{
+  width:100%;padding:16px;
+  background:#00d4ff;border:none;border-radius:14px;
+  color:#0f1117;font-size:16px;font-weight:800;
+  cursor:pointer;margin-top:8px;
+  transition:opacity .2s,transform .1s;letter-spacing:-.3px
+}
+.owiz-cta:hover{opacity:.9}
+.owiz-cta:active{transform:scale(.98)}
+.owiz-skip{font-size:11px;color:#6e747d;cursor:pointer;margin-top:12px;text-align:center}
+.owiz-skip:hover{color:#9ca3af}
+.owiz-dots{display:flex;gap:6px;justify-content:center;margin-bottom:20px}
+.owiz-dot{width:6px;height:6px;border-radius:3px;background:rgba(255,255,255,.15);
+  transition:all .3s}
+.owiz-dot.active{width:20px;background:#00d4ff}
+.owiz-rooms-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0;width:100%}
+.owiz-room-btn{
+  background:rgba(26,31,58,.8);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:10px 6px;
+  font-size:11px;font-weight:600;color:#b4bcc8;cursor:pointer;
+  text-align:center;transition:all .2s;display:flex;flex-direction:column;
+  align-items:center;gap:4px;line-height:1.2
+}
+.owiz-room-btn .room-em{font-size:22px}
+.owiz-room-btn:hover,.owiz-room-btn.sel{
+  background:rgba(0,212,255,.12);
+  border-color:rgba(0,212,255,.3);color:#fff
+}
 
 /* ═══════════════════════════════
    MODAL PRIVACY WEBCAM
@@ -1356,9 +1469,9 @@ html[data-theme="light"] body {
 /* ═══════════════════════════════
    PROFILO - banner, status, bio
 ═══════════════════════════════ */
-.prof-banner{height:120px;flex-shrink:0;background:linear-gradient(135deg,#00d4ff,#ff6b9d,#f97316);background-size:300% 300%;animation:bannerShift 8s ease infinite;position:relative;cursor:pointer;overflow:hidden;border-bottom:3px solid #00d4ff}
-.prof-banner-overlay{position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,transparent,#12082a 100%);pointer-events:none}
-.prof-banner-edit{position:absolute;top:10px;right:14px;background:rgba(0,0,0,0.4);color:#fff;font-size:11px;padding:5px 10px;border-radius:14px;font-weight:700;backdrop-filter:blur(4px)}
+.prof-banner{height:150px;flex-shrink:0;background:linear-gradient(135deg,#00d4ff,#ff6b9d,#f97316);background-size:300% 300%;animation:bannerShift 8s ease infinite;position:relative;cursor:pointer;overflow:hidden;border-bottom:1px solid rgba(0,212,255,.2)}
+.prof-banner-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(8,11,20,.6) 100%);pointer-events:none}
+.prof-banner-edit{position:absolute;top:12px;right:14px;background:rgba(0,0,0,.45);color:#fff;font-size:10px;padding:5px 12px;border-radius:20px;font-weight:600;backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);letter-spacing:.3px}
 @keyframes bannerShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 .prof-banner.b-galaxy{background:radial-gradient(ellipse at 30% 50%,#8b5cf6,#1e0d40 60%,#0a0418 100%)}
 .prof-banner.b-sunset{background:linear-gradient(135deg,#f97316,#ff6b9d,#00d4ff)}
@@ -1368,7 +1481,7 @@ html[data-theme="light"] body {
 .prof-banner.b-neon{background:linear-gradient(135deg,#00ffff,#ff6b9d,#8b5cf6)}
 
 /* Hero profilo posizionato sopra il banner */
-.prof-hero{margin-top:-50px;position:relative;z-index:2}
+.prof-hero{margin-top:-55px;position:relative;z-index:2}
 .prof-avatar-hero{box-shadow:0 4px 20px rgba(0,0,0,0.4)}
 
 /* Stato personalizzato */
@@ -2139,6 +2252,61 @@ html[data-theme="light"] body {
   </div>
 </div>
 
+<!-- ░░ ONBOARDING WIZARD ░░ -->
+<div id="onboardingWizard" style="display:none">
+  <div class="owiz-sheet">
+    <div class="owiz-handle"></div>
+    <!-- Dots -->
+    <div class="owiz-dots">
+      <div class="owiz-dot active" id="owDot0"></div>
+      <div class="owiz-dot" id="owDot1"></div>
+      <div class="owiz-dot" id="owDot2"></div>
+    </div>
+
+    <!-- Step 1: Benvenuto -->
+    <div class="owiz-step active" id="owStep0">
+      <div class="owiz-icon">👋</div>
+      <div class="owiz-title">Benvenuto su Kouverte</div>
+      <div class="owiz-sub">La chat italiana anonima.<br>Niente registrazione, niente foto obbligatoria.</div>
+      <div class="owiz-pills">
+        <div class="owiz-pill">🎭 100% Anonimo</div>
+        <div class="owiz-pill">📍 Stanze per città</div>
+        <div class="owiz-pill">📹 Video facoltativo</div>
+        <div class="owiz-pill">💸 Gratis</div>
+      </div>
+      <button class="owiz-cta" onclick="owizNext(1)">Inizia →</button>
+      <div class="owiz-skip" onclick="owizDone()">Salta il tutorial</div>
+    </div>
+
+    <!-- Step 2: Scegli nickname -->
+    <div class="owiz-step" id="owStep1">
+      <div class="owiz-icon">✏️</div>
+      <div class="owiz-title">Scegli il tuo nome</div>
+      <div class="owiz-sub">Il tuo nickname nella chat. Puoi cambiarlo quando vuoi.</div>
+      <input class="owiz-input" id="owizNickInput" type="text" maxlength="20"
+        placeholder="Es. LunaRossa, NotteMilanese…"
+        oninput="owizSyncNick()"
+        onkeydown="if(event.key==='Enter')owizNext(2)">
+      <button class="owiz-cta" id="owizNickBtn" onclick="owizApplyNick()" style="opacity:.5;pointer-events:none">
+        Conferma nome →
+      </button>
+      <div class="owiz-skip" onclick="owizNext(2)">Usa nome casuale</div>
+    </div>
+
+    <!-- Step 3: Prima stanza -->
+    <div class="owiz-step" id="owStep2">
+      <div class="owiz-icon">🏙️</div>
+      <div class="owiz-title">Dove vuoi entrare?</div>
+      <div class="owiz-sub">Scegli la tua prima stanza. Puoi cambiarla in qualsiasi momento.</div>
+      <div class="owiz-rooms-grid" id="owizRoomsGrid"></div>
+      <button class="owiz-cta" id="owizEnterBtn" onclick="owizEnterRoom()" style="opacity:.5;pointer-events:none">
+        Entra nella chat →
+      </button>
+      <div class="owiz-skip" onclick="owizDone()">Sceglierò dopo</div>
+    </div>
+  </div>
+</div>
+
 <!-- ░░ PAYWALL MODAL ░░ -->
 <div class="overlay" id="paywallOv">
   <div class="modal-sheet">
@@ -2677,7 +2845,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -6196,7 +6364,7 @@ function setLS(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
 function initOnboardingStrip(){
   const strip = document.getElementById('onboardingStrip');
   if(!strip) return;
-  if(getLS('kv_obs_dismissed')){
+  if(getLS('kv_obs_dismissed')||getLS('kv_wizard_done')){
     strip.style.display = 'none';
   }
 }
@@ -6204,6 +6372,89 @@ function dismissOnboarding(){
   setLS('kv_obs_dismissed', true);
   const strip = document.getElementById('onboardingStrip');
   if(strip){ strip.style.maxHeight = strip.scrollHeight+'px'; strip.style.transition='max-height .4s ease,opacity .4s ease,margin .4s ease'; strip.style.overflow='hidden'; requestAnimationFrame(()=>{ strip.style.maxHeight='0'; strip.style.opacity='0'; strip.style.marginBottom='0'; strip.style.padding='0'; }); setTimeout(()=>strip.style.display='none',420); }
+}
+
+// ══ ONBOARDING WIZARD (prima visita) ══
+let _owizSelectedRoom = null;
+
+function initOnboardingWizard(){
+  // Mostra solo se mai completato prima
+  if(getLS('kv_wizard_done') || getLS('kv_obs_dismissed')) return;
+  // Popola griglia stanze nel wizard
+  const grid = document.getElementById('owizRoomsGrid');
+  if(grid && typeof ROOMS !== 'undefined'){
+    const toShow = ROOMS.slice(0,9);
+    grid.innerHTML = toShow.map(r=>`
+      <div class="owiz-room-btn" onclick="owizSelectRoom('${r.id}',this)" data-rid="${r.id}">
+        <span class="room-em">${r.emoji||'🌍'}</span>
+        <span>${(r.name||'').replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name}</span>
+      </div>`).join('');
+  }
+  // Mostra dopo breve delay (non interrompere il caricamento)
+  setTimeout(()=>{
+    const wiz = document.getElementById('onboardingWizard');
+    if(wiz) wiz.style.display='flex';
+  }, 800);
+}
+
+function owizNext(step){
+  // Valida step 1 nickname se presente
+  document.querySelectorAll('.owiz-step').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('owStep'+step);
+  if(el) el.classList.add('active');
+  // aggiorna dots
+  document.querySelectorAll('.owiz-dot').forEach((d,i)=>{
+    d.classList.toggle('active', i===step);
+  });
+  // focus input nickname
+  if(step===1){ setTimeout(()=>{const i=document.getElementById('owizNickInput');if(i)i.focus();},200); }
+  if(step===2){ _owizSelectedRoom=null; }
+}
+
+function owizSyncNick(){
+  const v=(document.getElementById('owizNickInput')||{}).value||'';
+  const btn=document.getElementById('owizNickBtn');
+  if(!btn) return;
+  const ok=v.trim().length>=2;
+  btn.style.opacity=ok?'1':'0.5';
+  btn.style.pointerEvents=ok?'auto':'none';
+}
+
+function owizApplyNick(){
+  const raw=(document.getElementById('owizNickInput')||{}).value||'';
+  const nick=raw.trim().replace(/[<>"'&]/g,'').substring(0,20);
+  if(nick.length<2) return;
+  // Applica nickname al user object
+  if(typeof user !== 'undefined' && user){ user.name=nick; if(typeof saveUser==='function') saveUser(); }
+  owizNext(2);
+}
+
+function owizSelectRoom(rid, el){
+  _owizSelectedRoom = rid;
+  document.querySelectorAll('.owiz-room-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');
+  const btn=document.getElementById('owizEnterBtn');
+  if(btn){ btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+}
+
+function owizEnterRoom(){
+  if(!_owizSelectedRoom) return;
+  owizDone();
+  // breve delay per chiusura animazione
+  setTimeout(()=>{ if(typeof enterRoom==='function') enterRoom(_owizSelectedRoom); },300);
+}
+
+function owizDone(){
+  setLS('kv_wizard_done', true);
+  setLS('kv_obs_dismissed', true);
+  const wiz = document.getElementById('onboardingWizard');
+  if(!wiz) return;
+  wiz.style.transition='opacity .3s';
+  wiz.style.opacity='0';
+  setTimeout(()=>{ wiz.style.display='none'; wiz.style.opacity=''; }, 320);
+  // Nascondi anche strip
+  const strip = document.getElementById('onboardingStrip');
+  if(strip) strip.style.display='none';
 }
 
 // ══ MODAL PRIVACY WEBCAM ══
