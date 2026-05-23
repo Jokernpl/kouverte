@@ -9,24 +9,17 @@
 <meta name="author" content="Kouverte">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <link rel="canonical" href="https://www.kouverte.com/">
-
-<!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Kouverte">
 <meta property="og:title" content="Kouverte — Chat Anonima Italiana con Video Gratis">
 <meta property="og:description" content="Entra in stanze per città, chatta senza registrazione, video HD facoltativa. 100% anonimo e gratis.">
 <meta property="og:url" content="https://www.kouverte.com/">
 <meta property="og:image" content="https://www.kouverte.com/og-image.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
 <meta property="og:locale" content="it_IT">
-
-<!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Kouverte — Chat Anonima Italiana con Video">
 <meta name="twitter:description" content="Stanze per città, video HD facoltativa. Gratis, niente registrazione.">
 <meta name="twitter:image" content="https://www.kouverte.com/og-image.png">
-
 <!-- Google Analytics 4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY"></script>
 <script>
@@ -48,166 +41,307 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Kouverte">
 <meta name="mobile-web-app-capable" content="yes">
-
-<!-- JSON-LD Structured Data -->
 <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Kouverte",
-  "url": "https://www.kouverte.com",
-  "description": "Chat anonima italiana con video HD. Stanze per città, senza registrazione, 100% gratuita.",
-  "applicationCategory": "SocialNetworkingApplication",
-  "operatingSystem": "Web, Android, iOS",
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "EUR"
-  },
-  "aggregateRating": {
-    "@type": "AggregateRating",
-    "ratingValue": "4.8",
-    "ratingCount": "1200"
-  },
-  "publisher": {
-    "@type": "Organization",
-    "name": "Kouverte",
-    "url": "https://www.kouverte.com",
-    "logo": {
-      "@type": "ImageObject",
-      "url": "https://www.kouverte.com/icon.svg"
-    }
-  },
-  "featureList": [
-    "Chat anonima senza registrazione",
-    "Video chat HD facoltativa",
-    "Stanze per città italiana",
-    "Stanze private a codice",
-    "100% gratuito"
-  ]
-}
+{"@context":"https://schema.org","@type":"WebApplication","name":"Kouverte","url":"https://www.kouverte.com","description":"Chat anonima italiana con video HD.","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Web, Android, iOS","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"aggregateRating":{"@type":"AggregateRating","ratingValue":"4.8","ratingCount":"1200"}}
 </script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {
-      "@type": "Question",
-      "name": "Kouverte è gratis?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sì, Kouverte è completamente gratis. Niente abbonamenti, niente registrazione obbligatoria." }
-    },
-    {
-      "@type": "Question",
-      "name": "È veramente anonimo?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sì. Nessun numero di telefono, nessuna email richiesta. Entri con un nickname scelto da te." }
-    },
-    {
-      "@type": "Question",
-      "name": "La webcam è obbligatoria?",
-      "acceptedAnswer": { "@type": "Answer", "text": "No. La webcam è sempre facoltativa. Puoi attivare il video solo quando vuoi." }
-    },
-    {
-      "@type": "Question",
-      "name": "Ci sono stanze per la mia città?",
-      "acceptedAnswer": { "@type": "Answer", "text": "Sì! Ci sono stanze dedicate a Napoli, Roma, Milano, Palermo, Sicilia, Campania e tutta Italia." }
-    }
-  ]
-}
-</script>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,sans-serif;background:#0f1117;color:#fff;overflow-x:hidden}
+body{font-family:'Inter',-apple-system,sans-serif;background:#080b14;color:#fff;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
 
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(15,17,23,0.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.06)}
-.nav-logo{font-size:20px;font-weight:800;letter-spacing:2px;color:#fff;text-decoration:none}
+/* ── GRID BACKGROUND ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+  background-size:48px 48px;pointer-events:none;z-index:0
+}
+
+/* ── NAV ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 24px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(8,11,20,.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid rgba(255,255,255,.06)
+}
+.nav-logo{font-size:18px;font-weight:800;letter-spacing:3px;color:#fff}
 .nav-logo span{color:#00d4ff}
-.nav-cta{background:#00d4ff;color:#0f1117;font-weight:700;font-size:14px;padding:10px 20px;border-radius:10px;text-decoration:none;transition:opacity .2s}
-.nav-cta:hover{opacity:.85}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-links a{font-size:14px;color:#b4bcc8;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{
+  background:#00d4ff;color:#080b14;font-weight:700;font-size:13px;
+  padding:9px 20px;border-radius:8px;transition:opacity .2s,transform .2s
+}
+.nav-cta:hover{opacity:.85;transform:translateY(-1px)}
+@media(max-width:640px){.nav-links{display:none}}
 
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 24px 60px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(ellipse at 50% 20%,rgba(0,212,255,.12) 0%,transparent 65%),radial-gradient(ellipse at 80% 80%,rgba(255,107,157,.08) 0%,transparent 50%);pointer-events:none}
-.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);color:#00d4ff;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;margin-bottom:24px}
-.hero-badge-dot{width:8px;height:8px;background:#00d4ff;border-radius:50%;animation:pulse-hero 2s infinite}
-@keyframes pulse-hero{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
-h1{font-size:clamp(36px,7vw,72px);font-weight:900;line-height:1.1;letter-spacing:-1.5px;margin-bottom:20px}
-h1 .accent{color:#00d4ff}
-h1 .accent2{color:#ff6b9d}
-.hero-sub{font-size:clamp(16px,2.5vw,20px);color:#b4bcc8;max-width:560px;line-height:1.6;margin-bottom:36px}
-.hero-btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:48px}
-.btn-primary{background:#00d4ff;color:#0f1117;font-weight:700;font-size:17px;padding:16px 36px;border-radius:12px;text-decoration:none;transition:transform .2s,opacity .2s;display:inline-flex;align-items:center;gap:8px}
-.btn-primary:hover{transform:translateY(-2px);opacity:.9}
-.btn-secondary{background:rgba(255,255,255,.07);color:#fff;font-weight:600;font-size:17px;padding:16px 28px;border-radius:12px;text-decoration:none;border:1px solid rgba(255,255,255,.12);transition:background .2s}
-.btn-secondary:hover{background:rgba(255,255,255,.12)}
+/* ── HERO ── */
+.hero{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:100px 24px 60px;position:relative;overflow:hidden
+}
+.hero-glow-1{
+  position:absolute;top:-200px;left:50%;transform:translateX(-50%);
+  width:800px;height:800px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.1) 0%,transparent 65%);
+  pointer-events:none
+}
+.hero-glow-2{
+  position:absolute;bottom:-100px;right:-100px;
+  width:500px;height:500px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,107,157,.07) 0%,transparent 65%);
+  pointer-events:none
+}
+.hero-inner{
+  max-width:1100px;width:100%;
+  display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;
+  position:relative;z-index:1
+}
+@media(max-width:900px){.hero-inner{grid-template-columns:1fr;text-align:center}}
 
-/* STATS LIVE */
-.live-stats{display:flex;gap:32px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
-.live-stat-item{text-align:center}
-.live-stat-num{font-size:32px;font-weight:800;color:#00d4ff;display:block;font-variant-numeric:tabular-nums}
-.live-stat-label{font-size:13px;color:#6e747d;margin-top:2px;display:block}
-.live-indicator{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#00e5b8;font-weight:600;margin-bottom:8px}
-.live-dot{width:7px;height:7px;background:#00e5b8;border-radius:50%;animation:pulse-hero 1.5s infinite}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);
+  color:#00d4ff;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;
+  margin-bottom:20px
+}
+.hero-badge-dot{width:7px;height:7px;background:#00e5b8;border-radius:50%;animation:blink 1.8s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* FEATURES */
-.section{padding:80px 24px;max-width:1100px;margin:0 auto}
-.section-label{font-size:13px;font-weight:700;color:#00d4ff;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
-.section-title{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-1px;margin-bottom:16px}
-.section-sub{font-size:17px;color:#b4bcc8;max-width:480px;line-height:1.6;margin-bottom:48px}
-.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.feature-card{background:rgba(26,31,58,.6);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:28px;transition:border-color .2s,transform .2s}
-.feature-card:hover{border-color:rgba(0,212,255,.3);transform:translateY(-4px)}
-.feature-icon{font-size:32px;margin-bottom:16px}
-.feature-title{font-size:18px;font-weight:700;margin-bottom:8px}
-.feature-desc{font-size:14px;color:#b4bcc8;line-height:1.6}
+.hero-title{
+  font-size:clamp(38px,6vw,68px);font-weight:900;
+  line-height:1.05;letter-spacing:-2px;margin-bottom:20px
+}
+.hero-title .t-cyan{color:#00d4ff}
+.hero-title .t-rose{
+  background:linear-gradient(90deg,#ff6b9d,#ff8c42);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text
+}
+.hero-sub{font-size:17px;color:#8891a4;line-height:1.7;margin-bottom:32px;max-width:480px}
+@media(max-width:900px){.hero-sub{margin:0 auto 32px}}
 
-/* ROOMS */
-.rooms-section{padding:60px 24px;background:rgba(26,31,58,.4)}
-.rooms-grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:900px;margin:0 auto;margin-top:40px}
-.room-pill{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:10px 20px;font-size:14px;font-weight:600;color:#fff;text-decoration:none;transition:all .2s;display:flex;align-items:center;gap:8px}
-.room-pill:hover{background:rgba(0,212,255,.15);border-color:rgba(0,212,255,.4);color:#00d4ff}
-.room-pill-dot{width:8px;height:8px;background:#00e5b8;border-radius:50%}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:40px}
+@media(max-width:900px){.hero-btns{justify-content:center}}
 
-/* HOW IT WORKS */
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;margin-top:48px}
-.step{text-align:center}
-.step-num{width:48px;height:48px;border-radius:50%;background:rgba(0,212,255,.15);border:2px solid rgba(0,212,255,.3);color:#00d4ff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+.btn-primary{
+  background:#00d4ff;color:#080b14;font-weight:700;font-size:15px;
+  padding:14px 32px;border-radius:10px;display:inline-flex;align-items:center;gap:8px;
+  transition:transform .2s,box-shadow .2s
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,212,255,.3)}
+.btn-secondary{
+  background:rgba(255,255,255,.06);color:#fff;font-weight:600;font-size:15px;
+  padding:14px 24px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+  display:inline-flex;align-items:center;gap:8px;transition:background .2s
+}
+.btn-secondary:hover{background:rgba(255,255,255,.1)}
+
+.hero-trust{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+@media(max-width:900px){.hero-trust{justify-content:center}}
+.trust-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;color:#6e747d;font-weight:500
+}
+.trust-dot{width:6px;height:6px;border-radius:50%;background:#00e5b8;flex-shrink:0}
+
+/* ── PHONE MOCKUP ── */
+.phone-wrap{position:relative;display:flex;justify-content:center}
+@media(max-width:900px){.phone-wrap{display:none}}
+.phone{
+  width:280px;height:560px;background:#0f1117;border-radius:36px;
+  border:2px solid rgba(255,255,255,.1);
+  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
+  overflow:hidden;position:relative;flex-shrink:0
+}
+.phone-notch{
+  width:100px;height:28px;background:#080b14;border-radius:0 0 18px 18px;
+  margin:0 auto;position:relative;z-index:2
+}
+.phone-screen{padding:0;height:100%}
+.p-header{
+  padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:10px;margin-top:-28px;padding-top:36px
+}
+.p-room-dot{width:8px;height:8px;border-radius:50%;background:#00e5b8;flex-shrink:0}
+.p-room-name{font-size:13px;font-weight:700;color:#fff}
+.p-online{font-size:10px;color:#6e747d;margin-left:auto}
+.p-msgs{padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.p-msg{display:flex;gap:8px;align-items:flex-start}
+.p-msg.self{flex-direction:row-reverse}
+.p-avatar{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px
+}
+.p-bubble{
+  background:rgba(26,31,58,.9);border-radius:12px;padding:7px 10px;
+  font-size:11px;color:#e5e7eb;line-height:1.4;max-width:160px
+}
+.p-msg.self .p-bubble{background:rgba(0,212,255,.15);color:#fff}
+.p-name{font-size:9px;color:#6e747d;font-weight:600;margin-bottom:3px}
+.p-bar{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(8,11,20,.95);border-top:1px solid rgba(255,255,255,.06);
+  padding:10px 12px;display:flex;gap:8px;align-items:center
+}
+.p-input{
+  flex:1;background:rgba(255,255,255,.06);border-radius:20px;
+  padding:7px 12px;font-size:11px;color:#6e747d
+}
+.p-send{
+  width:32px;height:32px;border-radius:50%;background:#00d4ff;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+
+/* ── STATS BAR ── */
+.stats-bar{
+  background:rgba(26,31,58,.5);border-top:1px solid rgba(255,255,255,.05);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  padding:24px;display:flex;justify-content:center;gap:64px;flex-wrap:wrap;
+  position:relative;z-index:1
+}
+.stat-item{text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:#00d4ff;display:block;letter-spacing:-1px}
+.stat-label{font-size:12px;color:#6e747d;margin-top:2px;display:block}
+.live-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:700;color:#00e5b8;letter-spacing:1px;text-transform:uppercase;
+  background:rgba(0,229,184,.08);border:1px solid rgba(0,229,184,.2);
+  padding:4px 10px;border-radius:999px;position:absolute;top:-14px;left:50%;transform:translateX(-50%)
+}
+
+/* ── CITY CARDS ── */
+.cities-section{padding:80px 24px;position:relative;z-index:1;max-width:1100px;margin:0 auto}
+.section-eyebrow{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#00d4ff;margin-bottom:10px}
+.section-heading{font-size:clamp(26px,4vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.section-sub{font-size:15px;color:#8891a4;margin-bottom:40px}
+.cities-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:900px){.cities-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.cities-grid{grid-template-columns:1fr 1fr}}
+.city-card{
+  position:relative;border-radius:16px;overflow:hidden;
+  aspect-ratio:3/4;cursor:pointer;
+  transition:transform .3s,box-shadow .3s
+}
+.city-card:hover{transform:translateY(-4px);box-shadow:0 20px 48px rgba(0,0,0,.5)}
+.city-card img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.city-card:hover img{transform:scale(1.05)}
+.city-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,transparent 30%,rgba(8,11,20,.9) 100%)
+}
+.city-info{position:absolute;bottom:0;left:0;right:0;padding:16px 14px}
+.city-name{font-size:16px;font-weight:700;color:#fff;margin-bottom:4px}
+.city-online{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;color:#00e5b8;font-weight:600;
+  background:rgba(0,229,184,.12);border:1px solid rgba(0,229,184,.2);
+  padding:3px 8px;border-radius:999px
+}
+.city-dot{width:5px;height:5px;background:#00e5b8;border-radius:50%}
+.city-card.wide{grid-column:span 2}
+
+/* ── FEATURES ── */
+.features-section{padding:80px 24px;position:relative;z-index:1;max-width:1100px;margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,.05);border-radius:20px;overflow:hidden}
+@media(max-width:768px){.features-grid{grid-template-columns:1fr}}
+.feat{
+  padding:32px;background:#0c101c;
+  transition:background .2s
+}
+.feat:hover{background:#111728}
+.feat-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);
+  display:flex;align-items:center;justify-content:center;margin-bottom:16px
+}
+.feat-icon svg{width:22px;height:22px;stroke:#00d4ff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.feat-title{font-size:16px;font-weight:700;margin-bottom:8px}
+.feat-desc{font-size:13px;color:#8891a4;line-height:1.65}
+
+/* ── HOW ── */
+.how-section{
+  padding:80px 24px;position:relative;z-index:1;
+  background:rgba(26,31,58,.3);border-top:1px solid rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.04)
+}
+.how-inner{max-width:1100px;margin:0 auto}
+.steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;margin-top:48px}
+@media(max-width:700px){.steps-grid{grid-template-columns:1fr;gap:32px}}
+.step-item{position:relative}
+.step-num{
+  font-size:48px;font-weight:900;color:rgba(0,212,255,.12);
+  line-height:1;margin-bottom:8px;letter-spacing:-2px
+}
 .step-title{font-size:17px;font-weight:700;margin-bottom:8px}
-.step-desc{font-size:14px;color:#b4bcc8;line-height:1.6}
+.step-desc{font-size:14px;color:#8891a4;line-height:1.7}
 
-/* FAQ */
-.faq-list{display:flex;flex-direction:column;gap:12px;margin-top:40px}
-.faq-item{background:rgba(26,31,58,.6);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:24px;cursor:pointer}
-.faq-q{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
-.faq-a{font-size:14px;color:#b4bcc8;line-height:1.7;margin-top:12px;display:none}
-.faq-item.open .faq-a{display:block}
-.faq-arrow{color:#00d4ff;transition:transform .2s;flex-shrink:0;margin-left:12px}
-.faq-item.open .faq-arrow{transform:rotate(180deg)}
+/* ── FAQ ── */
+.faq-section{padding:80px 24px;position:relative;z-index:1;max-width:760px;margin:0 auto}
+.faq-list{margin-top:40px;display:flex;flex-direction:column;gap:2px}
+.faq-item{background:#0c101c;border-radius:0;overflow:hidden}
+.faq-item:first-child{border-radius:12px 12px 0 0}
+.faq-item:last-child{border-radius:0 0 12px 12px}
+.faq-q{
+  padding:20px 24px;font-size:15px;font-weight:600;
+  display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;user-select:none;transition:background .2s
+}
+.faq-q:hover{background:rgba(255,255,255,.03)}
+.faq-chevron{width:18px;height:18px;stroke:#00d4ff;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .25s}
+.faq-item.open .faq-chevron{transform:rotate(180deg)}
+.faq-a{
+  padding:0 24px;max-height:0;overflow:hidden;
+  font-size:14px;color:#8891a4;line-height:1.7;
+  transition:max-height .3s ease,padding .3s ease
+}
+.faq-item.open .faq-a{max-height:200px;padding:0 24px 20px}
 
-/* CTA SECTION */
-.cta-section{padding:80px 24px;text-align:center;background:radial-gradient(ellipse at 50% 50%,rgba(0,212,255,.08) 0%,transparent 70%)}
-.cta-title{font-size:clamp(28px,5vw,52px);font-weight:900;letter-spacing:-1px;margin-bottom:16px}
-.cta-sub{font-size:17px;color:#b4bcc8;margin-bottom:36px}
+/* ── CTA ── */
+.cta-section{
+  padding:100px 24px;position:relative;z-index:1;text-align:center;overflow:hidden
+}
+.cta-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:300px;
+  background:radial-gradient(ellipse,rgba(0,212,255,.1),transparent 70%);
+  pointer-events:none
+}
+.cta-box{
+  max-width:640px;margin:0 auto;
+  background:rgba(26,31,58,.6);border:1px solid rgba(0,212,255,.12);
+  border-radius:24px;padding:56px 40px;position:relative;backdrop-filter:blur(8px)
+}
+@media(max-width:500px){.cta-box{padding:40px 24px}}
+.cta-title{font-size:clamp(28px,5vw,44px);font-weight:900;letter-spacing:-1.5px;margin-bottom:12px}
+.cta-sub{font-size:16px;color:#8891a4;margin-bottom:32px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
-/* FOOTER */
-footer{padding:40px 24px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto}
-.footer-logo{font-size:18px;font-weight:800;letter-spacing:2px}
-.footer-links{display:flex;gap:24px;flex-wrap:wrap}
-.footer-links a{color:#6e747d;font-size:14px;text-decoration:none;transition:color .2s}
-.footer-links a:hover{color:#fff}
-.footer-copy{color:#6e747d;font-size:13px;width:100%}
-
-@media(max-width:600px){
-  .live-stats{gap:20px}
-  .hero-btns{flex-direction:column;align-items:center}
-  .btn-primary,.btn-secondary{width:100%;text-align:center;justify-content:center}
-  footer{flex-direction:column;gap:20px}
+/* ── FOOTER ── */
+footer{
+  padding:40px 24px 32px;border-top:1px solid rgba(255,255,255,.05);
+  max-width:1100px;margin:0 auto;position:relative;z-index:1
+}
+.footer-top{display:flex;justify-content:space-between;align-items:flex-start;gap:32px;flex-wrap:wrap;margin-bottom:32px}
+.footer-logo{font-size:16px;font-weight:800;letter-spacing:3px}
+.footer-logo span{color:#00d4ff}
+.footer-tagline{font-size:12px;color:#6e747d;margin-top:6px}
+.footer-links-group{display:flex;gap:40px;flex-wrap:wrap}
+.footer-links-col h4{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#6e747d;margin-bottom:12px}
+.footer-links-col a{display:block;font-size:13px;color:#8891a4;margin-bottom:8px;transition:color .2s}
+.footer-links-col a:hover{color:#fff}
+.footer-bottom{
+  border-top:1px solid rgba(255,255,255,.05);padding-top:24px;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px
+}
+.footer-copy{font-size:12px;color:#6e747d}
+.footer-badges{display:flex;gap:8px;flex-wrap:wrap}
+.footer-badge{
+  font-size:10px;font-weight:600;padding:4px 10px;border-radius:999px;
+  background:rgba(255,255,255,.05);color:#6e747d;border:1px solid rgba(255,255,255,.07)
 }
 </style>
 </head>
@@ -216,209 +350,376 @@ footer{padding:40px 24px;border-top:1px solid rgba(255,255,255,.06);display:flex
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="/">KOU<span>VERTE</span></a>
+  <div class="nav-links">
+    <a href="#features">Funzioni</a>
+    <a href="#stanze">Stanze</a>
+    <a href="/about.html">Chi siamo</a>
+  </div>
   <a class="nav-cta" href="/app.html">Entra gratis →</a>
 </nav>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">
-    <span class="hero-badge-dot"></span>
-    <span id="heroOnline">Caricamento...</span> persone online ora
-  </div>
-  <h1>Chat anonima italiana<br><span class="accent">senza limiti</span>, <span class="accent2">senza giudizi</span></h1>
-  <p class="hero-sub">Entra in stanze per città, chatta con persone reali, attiva la webcam solo quando vuoi. Gratis, niente registrazione.</p>
-  <div class="hero-btns">
-    <a class="btn-primary" href="/app.html">🚀 Entra subito — è gratis</a>
-    <a class="btn-secondary" href="#come-funziona">Come funziona →</a>
-  </div>
+  <div class="hero-glow-1"></div>
+  <div class="hero-glow-2"></div>
+  <div class="hero-inner">
+    <div>
+      <div class="hero-badge">
+        <span class="hero-badge-dot"></span>
+        <span id="heroOnline">247</span> persone online ora
+      </div>
+      <h1 class="hero-title">
+        La chat italiana<br>
+        <span class="t-cyan">anonima</span> con<br>
+        <span class="t-rose">video HD</span>
+      </h1>
+      <p class="hero-sub">Entra in stanze per città, conosci persone reali, attiva la webcam solo quando vuoi. Niente registrazione, niente giudizi.</p>
+      <div class="hero-btns">
+        <a class="btn-primary" href="/app.html">Entra subito — è gratis</a>
+        <a class="btn-secondary" href="#stanze">Vedi le stanze</a>
+      </div>
+      <div class="hero-trust">
+        <span class="trust-pill"><span class="trust-dot"></span>Nessuna email richiesta</span>
+        <span class="trust-pill"><span class="trust-dot"></span>100% anonimo</span>
+        <span class="trust-pill"><span class="trust-dot"></span>GDPR compliant</span>
+      </div>
+    </div>
 
-  <div class="live-indicator">
-    <span class="live-dot"></span>
-    Live stats aggiornate in tempo reale
+    <!-- Phone mockup -->
+    <div class="phone-wrap">
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="p-header">
+            <span class="p-room-dot"></span>
+            <span class="p-room-name">Napoli 🏛️</span>
+            <span class="p-online" id="mockOnline">12 online</span>
+          </div>
+          <div class="p-msgs">
+            <div class="p-msg">
+              <div class="p-avatar" style="background:rgba(0,212,255,.15)">🐬</div>
+              <div>
+                <div class="p-name">Onda87</div>
+                <div class="p-bubble">Ciao a tutti! Prima volta qui 👋</div>
+              </div>
+            </div>
+            <div class="p-msg">
+              <div class="p-avatar" style="background:rgba(255,107,157,.15)">🦋</div>
+              <div>
+                <div class="p-name">Sofy_na</div>
+                <div class="p-bubble">Benvenuto! Sei di Napoli?</div>
+              </div>
+            </div>
+            <div class="p-msg self">
+              <div class="p-avatar" style="background:rgba(0,229,184,.15)">🐉</div>
+              <div>
+                <div class="p-bubble">Sì, zona Vomero 🙌</div>
+              </div>
+            </div>
+            <div class="p-msg">
+              <div class="p-avatar" style="background:rgba(255,180,0,.15)">⚡</div>
+              <div>
+                <div class="p-name">Zap99</div>
+                <div class="p-bubble">Anche io! Niente di meglio che chattare con gente della zona 🔥</div>
+              </div>
+            </div>
+            <div class="p-msg">
+              <div class="p-avatar" style="background:rgba(0,212,255,.15)">🐬</div>
+              <div>
+                <div class="p-name">Onda87</div>
+                <div class="p-bubble">Attivo la cam? 📹</div>
+              </div>
+            </div>
+          </div>
+          <div class="p-bar">
+            <div class="p-input">Scrivi un messaggio...</div>
+            <div class="p-send">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#080b14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-  <div class="live-stats">
-    <div class="live-stat-item">
-      <span class="live-stat-num" id="statOnline">—</span>
-      <span class="live-stat-label">👥 Utenti online</span>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="live-badge">
+    <span style="width:6px;height:6px;background:#00e5b8;border-radius:50%;display:inline-block;animation:blink 1.8s infinite"></span>
+    Live
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="statOnline">—</span>
+    <span class="stat-label">Utenti online</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="statRooms">—</span>
+    <span class="stat-label">Stanze attive</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="statMessages">—</span>
+    <span class="stat-label">Messaggi oggi</span>
+  </div>
+</div>
+
+<!-- STANZE CON FOTO -->
+<section class="cities-section" id="stanze">
+  <div class="section-eyebrow">Stanze disponibili</div>
+  <h2 class="section-heading">Trova la tua città</h2>
+  <p class="section-sub">Ogni stanza è una community. Entra, chatta, connettiti con persone vicine a te.</p>
+  <div class="cities-grid">
+    <div class="city-card wide" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1534308143481-c55f00be8bd7?w=800&h=600&fit=crop&auto=format" alt="Napoli" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-info">
+        <div class="city-name">🏛️ Napoli</div>
+        <span class="city-online"><span class="city-dot"></span><span id="napoliOnline">in diretta</span></span>
+      </div>
     </div>
-    <div class="live-stat-item">
-      <span class="live-stat-num" id="statRooms">—</span>
-      <span class="live-stat-label">🏠 Stanze attive</span>
+    <div class="city-card" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=600&h=800&fit=crop&auto=format" alt="Roma" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-info">
+        <div class="city-name">🏟️ Roma</div>
+        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+      </div>
     </div>
-    <div class="live-stat-item">
-      <span class="live-stat-num" id="statMessages">—</span>
-      <span class="live-stat-label">💬 Messaggi oggi</span>
+    <div class="city-card" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1610016302534-6f67f1c968d8?w=600&h=800&fit=crop&auto=format" alt="Milano" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-info">
+        <div class="city-name">🏙️ Milano</div>
+        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+      </div>
+    </div>
+    <div class="city-card" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=800&fit=crop&auto=format" alt="Palermo" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-info">
+        <div class="city-name">🌺 Palermo</div>
+        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+      </div>
+    </div>
+    <div class="city-card" onclick="location.href='/app.html'">
+      <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&h=800&fit=crop&auto=format" alt="Sicilia" loading="lazy">
+      <div class="city-overlay"></div>
+      <div class="city-info">
+        <div class="city-name">🌋 Sicilia</div>
+        <span class="city-online"><span class="city-dot"></span>in diretta</span>
+      </div>
+    </div>
+    <div class="city-card" onclick="location.href='/app.html'" style="background:#0c101c;display:flex;align-items:center;justify-content:center;border:1px dashed rgba(0,212,255,.2)">
+      <div style="text-align:center;padding:20px">
+        <div style="font-size:32px;margin-bottom:8px">🔑</div>
+        <div style="font-size:14px;font-weight:600;color:#00d4ff">Stanza privata</div>
+        <div style="font-size:12px;color:#6e747d;margin-top:4px">Crea con codice</div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- FEATURES -->
-<section class="section">
-  <div class="section-label">Perché Kouverte</div>
-  <h2 class="section-title">Tutto quello che una <br>chat dovrebbe essere</h2>
-  <p class="section-sub">Niente algoritmi che decidono chi vedi. Niente dati venduti. Solo persone reali.</p>
+<section class="features-section" id="features">
+  <div class="section-eyebrow">Perché Kouverte</div>
+  <h2 class="section-heading">Costruita per la privacy,<br>pensata per le persone</h2>
+  <p class="section-sub">Niente algoritmi che decidono chi vedi. Niente dati venduti. Solo conversazioni reali.</p>
   <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">🔒</div>
-      <div class="feature-title">100% Anonimo</div>
-      <div class="feature-desc">Nessun numero di telefono, nessuna email. Entri con un nickname e sei già dentro. I tuoi dati restano tuoi.</div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="feat-title">100% Anonimo</div>
+      <div class="feat-desc">Nessun numero di telefono, nessuna email. Un nickname e sei dentro. I tuoi dati restano tuoi, sempre.</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">📹</div>
-      <div class="feature-title">Video HD Facoltativa</div>
-      <div class="feature-desc">La webcam si attiva solo se lo vuoi. Puoi chattare in testo, audio o video — scegli tu ogni volta.</div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+      </div>
+      <div class="feat-title">Video HD Facoltativa</div>
+      <div class="feat-desc">La webcam si attiva solo quando vuoi. Testo, audio o video: la scelta è sempre tua, in qualsiasi momento.</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🏙️</div>
-      <div class="feature-title">Stanze per Città</div>
-      <div class="feature-desc">Stanze dedicate a Napoli, Roma, Milano, Palermo, Sicilia, Campania. Conosci persone della tua zona.</div>
+    <div class="feat">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </div>
+      <div class="feat-title">Stanze per Città</div>
+      <div class="feat-desc">Napoli, Roma, Milano, Palermo, Sicilia e oltre. Conosci persone della tua zona in community dedicate.</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔑</div>
-      <div class="feature-title">Stanze Private</div>
-      <div class="feature-desc">Crea una stanza con codice segreto e invita solo chi vuoi. Perfetto per gruppi di amici.</div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(255,107,157,.1);border-color:rgba(255,107,157,.2)">
+        <svg viewBox="0 0 24 24" style="stroke:#ff6b9d"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      </div>
+      <div class="feat-title">Stanze Private</div>
+      <div class="feat-desc">Crea una stanza con codice segreto e invita solo chi vuoi. Perfetto per gruppi di amici o incontri riservati.</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">✨</div>
-      <div class="feature-title">Gratis per Sempre</div>
-      <div class="feature-desc">Nessun abbonamento, nessuna carta di credito. Kouverte è e resterà gratuita.</div>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(0,229,184,.1);border-color:rgba(0,229,184,.2)">
+        <svg viewBox="0 0 24 24" style="stroke:#00e5b8"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </div>
+      <div class="feat-title">WebRTC Istantaneo</div>
+      <div class="feat-desc">Tecnologia peer-to-peer per video e voce in tempo reale. Latenza minima, qualità massima, direttamente nel browser.</div>
     </div>
-    <div class="feature-card">
-      <div class="feature-icon">📱</div>
-      <div class="feature-title">Installabile come App</div>
-      <div class="feature-desc">Funziona come una vera app. Installala sul telefono dalla barra del browser — niente App Store.</div>
-    </div>
-  </div>
-</section>
-
-<!-- ROOMS -->
-<section class="rooms-section">
-  <div style="max-width:1100px;margin:0 auto">
-    <div class="section-label" style="text-align:center">Stanze disponibili</div>
-    <h2 class="section-title" style="text-align:center">Trova la tua città</h2>
-    <div class="rooms-grid">
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🏛️ Napoli</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🏟️ Roma</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🏙️ Milano</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🌊 Palermo</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>☀️ Sicilia</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>⛰️ Campania</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🇮🇹 Italia</a>
-      <a class="room-pill" href="/app.html"><span class="room-pill-dot"></span>🕯️ Confessionale</a>
-      <a class="room-pill" href="/app.html" style="border-color:rgba(0,212,255,.3);color:#00d4ff">+ Crea stanza privata</a>
+    <div class="feat">
+      <div class="feat-icon" style="background:rgba(255,180,0,.08);border-color:rgba(255,180,0,.2)">
+        <svg viewBox="0 0 24 24" style="stroke:#ffb400"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <div class="feat-title">Gratis per Sempre</div>
+      <div class="feat-desc">Nessun abbonamento, nessuna carta di credito. Le funzioni principali di Kouverte resteranno sempre gratuite.</div>
     </div>
   </div>
 </section>
 
 <!-- HOW IT WORKS -->
-<section class="section" id="come-funziona">
-  <div class="section-label">Come funziona</div>
-  <h2 class="section-title">Sei dentro in 10 secondi</h2>
-  <div class="steps">
-    <div class="step">
-      <div class="step-num">1</div>
-      <div class="step-title">Scegli un nickname</div>
-      <div class="step-desc">Niente email, niente password. Un nickname e sei dentro — oppure accedi come ospite con un click.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">2</div>
-      <div class="step-title">Entra in una stanza</div>
-      <div class="step-desc">Scegli la tua città o una stanza tematica. Vedi chi è online e inizia a chattare subito.</div>
-    </div>
-    <div class="step">
-      <div class="step-num">3</div>
-      <div class="step-title">Video solo se vuoi</div>
-      <div class="step-desc">Attiva la webcam in qualsiasi momento o resta in testo. La scelta è sempre tua, nessuna pressione.</div>
+<section class="how-section">
+  <div class="how-inner">
+    <div class="section-eyebrow">Come funziona</div>
+    <h2 class="section-heading">Sei dentro in 10 secondi</h2>
+    <div class="steps-grid">
+      <div class="step-item">
+        <div class="step-num">01</div>
+        <div class="step-title">Scegli un nickname</div>
+        <div class="step-desc">Niente email, niente password. Scegli un nome o entra come ospite con un click — nessun dato richiesto.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">02</div>
+        <div class="step-title">Entra in una stanza</div>
+        <div class="step-desc">Scegli la tua città o una stanza tematica. Vedi chi è online e inizia a chattare subito, in tempo reale.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-num">03</div>
+        <div class="step-title">Connettiti come vuoi</div>
+        <div class="step-desc">Testo, audio o video — attivi la webcam solo quando sei pronto. La pressione non esiste qui.</div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- FAQ -->
-<section class="section">
-  <div class="section-label">FAQ</div>
-  <h2 class="section-title">Domande frequenti</h2>
+<section class="faq-section">
+  <div class="section-eyebrow">FAQ</div>
+  <h2 class="section-heading">Domande frequenti</h2>
   <div class="faq-list">
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">Kouverte è veramente gratis? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Sì, completamente gratis. Niente abbonamenti nascosti, niente limite di messaggi, niente paywall. Kouverte vive di donazioni volontarie.</div>
+      <div class="faq-q">
+        Kouverte è veramente gratis?
+        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Sì, completamente gratis. Niente abbonamenti nascosti, niente limite di messaggi, niente paywall. Le funzioni principali resteranno sempre gratuite.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">Devo registrarmi? <span class="faq-arrow">▼</span></div>
+      <div class="faq-q">
+        Devo registrarmi?
+        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
       <div class="faq-a">No. Puoi entrare come ospite con un click. La registrazione è facoltativa e ti dà accesso a badge, streak e profilo persistente.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">Chi può vedere le mie conversazioni? <span class="faq-arrow">▼</span></div>
+      <div class="faq-q">
+        Chi può vedere le mie conversazioni?
+        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
       <div class="faq-a">I messaggi nelle stanze pubbliche sono visibili a tutti i presenti in quella stanza. Non vengono registrati sul server dopo la sessione. Nessun dato viene venduto a terzi.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">La webcam è obbligatoria? <span class="faq-arrow">▼</span></div>
+      <div class="faq-q">
+        La webcam è obbligatoria?
+        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
       <div class="faq-a">Assolutamente no. La webcam è sempre e solo facoltativa. Puoi attivarla e disattivarla quando vuoi durante la chat.</div>
     </div>
     <div class="faq-item" onclick="toggleFaq(this)">
-      <div class="faq-q">Funziona su iPhone e Android? <span class="faq-arrow">▼</span></div>
-      <div class="faq-a">Sì, Kouverte funziona perfettamente su qualsiasi dispositivo dal browser. Puoi anche installarla come app PWA dalla barra del browser — niente App Store o Play Store richiesti.</div>
+      <div class="faq-q">
+        Funziona su iPhone e Android?
+        <svg class="faq-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="faq-a">Sì, Kouverte funziona perfettamente su qualsiasi dispositivo dal browser. Puoi anche installarla come app PWA — niente App Store o Play Store richiesti.</div>
     </div>
   </div>
 </section>
 
-<!-- CTA FINALE -->
+<!-- CTA -->
 <section class="cta-section">
-  <h2 class="cta-title">Pronto a conoscere<br>persone reali?</h2>
-  <p class="cta-sub">Niente algoritmi. Niente profilazione. Solo persone autentiche.</p>
-  <a class="btn-primary" href="/app.html" style="font-size:18px;padding:18px 48px">🚀 Entra gratis ora</a>
+  <div class="cta-glow"></div>
+  <div class="cta-box">
+    <h2 class="cta-title">Pronto a conoscerti<br>davvero?</h2>
+    <p class="cta-sub">Niente algoritmi. Niente profilazione. Solo persone autentiche.</p>
+    <div class="cta-btns">
+      <a class="btn-primary" href="/app.html" style="font-size:16px;padding:16px 36px">Entra gratis ora</a>
+      <a class="btn-secondary" href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Bot Telegram</a>
+    </div>
+  </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">KOUVERTE</div>
-  <div class="footer-links">
-    <a href="/app.html">App</a>
-    <a href="/about.html">Chi siamo</a>
-    <a href="/privacy.html">Privacy</a>
-    <a href="/terms.html">Termini</a>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">KOU<span>VERTE</span></div>
+      <div class="footer-tagline">Meet in the dark — connessioni autentiche</div>
+    </div>
+    <div class="footer-links-group">
+      <div class="footer-links-col">
+        <h4>Prodotto</h4>
+        <a href="/app.html">Entra nella chat</a>
+        <a href="/about.html">Chi siamo</a>
+        <a href="https://t.me/Kouverte_bot" target="_blank" rel="noopener">Bot Telegram</a>
+      </div>
+      <div class="footer-links-col">
+        <h4>Legale</h4>
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="/terms.html">Termini di Servizio</a>
+      </div>
+      <div class="footer-links-col">
+        <h4>Contatti</h4>
+        <a href="mailto:info@kouverte.com">info@kouverte.com</a>
+        <a href="mailto:legal@kouverte.com">legal@kouverte.com</a>
+      </div>
+    </div>
   </div>
-  <div class="footer-copy">© 2026 Kouverte — Meet in the dark, connessioni autentiche 🌊</div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Kouverte. Tutti i diritti riservati.</div>
+    <div class="footer-badges">
+      <span class="footer-badge">🇮🇹 Made in Italy</span>
+      <span class="footer-badge">GDPR Compliant</span>
+      <span class="footer-badge">Free Forever</span>
+    </div>
+  </div>
 </footer>
 
 <script>
-// FAQ toggle
-function toggleFaq(el) {
-  el.classList.toggle('open');
+function toggleFaq(el){
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+  if(!isOpen) el.classList.add('open');
 }
 
-// Load live stats
-async function loadStats() {
+async function loadStats(){
   try {
     const res = await fetch('/api/stats/public');
-    if (!res.ok) throw new Error();
+    if(!res.ok) throw new Error();
     const d = await res.json();
-    const online = d.online || d.usersOnline || 0;
-    const rooms = d.activeRooms || d.rooms || 0;
-    const msgs = d.messagesToday || d.messages || 0;
-
+    const online = d.online||d.usersOnline||0;
+    const rooms = d.activeRooms||d.rooms||0;
+    const msgs = d.messagesToday||d.messages||0;
     document.getElementById('statOnline').textContent = online.toLocaleString('it');
     document.getElementById('statRooms').textContent = rooms.toLocaleString('it');
-    document.getElementById('statMessages').textContent = msgs > 999 ? Math.round(msgs/1000)+'k+' : msgs.toLocaleString('it');
+    document.getElementById('statMessages').textContent = msgs>999?Math.round(msgs/1000)+'k+':msgs.toLocaleString('it');
     document.getElementById('heroOnline').textContent = online.toLocaleString('it');
+    document.getElementById('mockOnline').textContent = Math.max(3,Math.round(online*0.08))+' online';
   } catch {
-    // Fallback stats if server unreachable
     document.getElementById('statOnline').textContent = '240+';
     document.getElementById('statRooms').textContent = '8';
     document.getElementById('statMessages').textContent = '1.2k+';
     document.getElementById('heroOnline').textContent = '240+';
   }
 }
-
 loadStats();
-setInterval(loadStats, 30000);
+setInterval(loadStats,30000);
 
-// Referral tracking
 const urlParams = new URLSearchParams(window.location.search);
 const ref = urlParams.get('ref');
-if (ref) {
-  sessionStorage.setItem('kouverte_ref', ref);
-  // Pass ref to app
-}
+if(ref) sessionStorage.setItem('kouverte_ref',ref);
 </script>
 </body>
 </html>
