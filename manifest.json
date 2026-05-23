@@ -1,21 +1,69 @@
 {
-  "name": "Kouverte - Chat Anonima",
+  "name": "Kouverte - Chat Anonima Italiana",
   "short_name": "Kouverte",
-  "description": "Chat mondiale anonima con video, stanze a codice e amici",
-  "start_url": "/app.html",
+  "description": "Chat anonima italiana con video e voce gratis. Connettiti con italiani in tempo reale.",
+  "start_url": "/app.html?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0a0418",
-  "theme_color": "#12082a",
+  "background_color": "#0f1117",
+  "theme_color": "#00d4ff",
   "lang": "it",
-  "categories": ["social", "communication"],
+  "dir": "ltr",
+  "categories": ["social", "communication", "entertainment"],
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Entra nella Chat",
+      "short_name": "Chat",
+      "description": "Vai direttamente alla chat anonima",
+      "url": "/app.html?tab=rooms&source=shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Kouverte - Chat Anonima Italiana"
+    }
+  ],
+  "prefer_related_applications": false
 }

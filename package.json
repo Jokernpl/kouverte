@@ -15,7 +15,8 @@
     "jsonwebtoken": "^9.0.0",
     "node-telegram-bot-api": "^0.66.0",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "web-push": "^3.6.7"
   },
   "overrides": {
     "form-data": "^4.0.5",

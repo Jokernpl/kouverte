@@ -33,21 +33,21 @@
 {"@context":"https://schema.org","@type":"WebApplication","name":"Kouverte","url":"https://www.kouverte.com","description":"Chat anonima italiana con video HD. Stanze per città, senza registrazione, 100% gratuita.","applicationCategory":"SocialNetworkingApplication","operatingSystem":"Web, Android, iOS","offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"publisher":{"@type":"Organization","name":"Kouverte","url":"https://www.kouverte.com","logo":{"@type":"ImageObject","url":"https://www.kouverte.com/icon.svg"}}}
 </script>
 
-<!-- FAVICON (multi-formato per Google, browser, mobile) -->
+<!-- FAVICON -->
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="icon" type="image/svg+xml" href="/icon.svg">
-<link rel="icon" sizes="32x32" href="/icon.svg">
-<link rel="icon" sizes="16x16" href="/icon.svg">
-<link rel="shortcut icon" href="/icon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/icon.svg">
+<link rel="shortcut icon" href="/favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 <link rel="mask-icon" href="/icon.svg" color="#00d4ff">
 
-<!-- PWA: installabile come app, update automatici -->
+<!-- PWA: installabile come app su Android e iPhone -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#0f1117">
+<meta name="theme-color" content="#00d4ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Kouverte">
 <meta name="application-name" content="Kouverte">
+<meta name="mobile-web-app-capable" content="yes">
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -444,6 +444,25 @@ body{position:relative}
 .dsb-claim{background:linear-gradient(135deg,#00d4ff,#00e5b8);border-radius:10px;padding:6px 14px;text-align:center;flex-shrink:0;
   font-size:12px;font-weight:700;color:#0f1117;box-shadow:0 0 12px rgba(0,212,255,.4)}
 .dsb-claim.claimed{background:rgba(255,255,255,.1);color:#6b7280;box-shadow:none}
+
+/* ── PWA Install Banner ── */
+.pwa-install-banner{display:none;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(0,212,255,.12),rgba(0,229,184,.08));
+  border:1px solid rgba(0,212,255,.3);border-radius:14px;padding:12px 14px;margin:0 0 8px;cursor:pointer;position:relative;overflow:hidden}
+.pwa-install-banner.visible{display:flex}
+.pwa-install-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(0,212,255,.06),transparent);
+  animation:shimmer 3s infinite}
+.pwa-install-icon{font-size:28px;flex-shrink:0}
+.pwa-install-info{flex:1;min-width:0}
+.pwa-install-title{font-size:13px;font-weight:700;color:#fff;line-height:1.3}
+.pwa-install-sub{font-size:11px;color:#b4bcc8;margin-top:2px}
+.pwa-install-btn{background:#00d4ff;color:#0f1117;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:7px 12px;flex-shrink:0;cursor:pointer;z-index:1}
+.pwa-install-close{background:none;border:none;color:#6e747d;font-size:16px;cursor:pointer;padding:2px 4px;z-index:1;flex-shrink:0}
+/* ── Push Notification Banner ── */
+.push-notify-banner{display:none;align-items:center;gap:12px;background:linear-gradient(135deg,rgba(255,107,157,.1),rgba(0,212,255,.06));
+  border:1px solid rgba(255,107,157,.25);border-radius:14px;padding:12px 14px;margin:0 0 8px;position:relative;overflow:hidden}
+.push-notify-banner.visible{display:flex}
+.push-notify-btn{background:#ff6b9d;color:#fff;font-weight:700;font-size:12px;border:none;border-radius:8px;padding:7px 12px;flex-shrink:0;cursor:pointer;z-index:1}
+.push-notify-close{background:none;border:none;color:#6e747d;font-size:16px;cursor:pointer;padding:2px 4px;z-index:1;flex-shrink:0}
 
 /* ── Referral Banner ── */
 .referral-banner{margin:0 0 4px;border-radius:14px;background:linear-gradient(135deg,rgba(0,229,184,.1),rgba(0,212,255,.08));
@@ -1646,6 +1665,28 @@ html[data-theme="light"] body {
         <div class="dsb-streak-lbl">giorni</div>
       </div>
       <div class="dsb-claim" id="dailyClaimBtn">Ritira</div>
+    </div>
+
+    <!-- PWA INSTALL BANNER -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+      <div class="pwa-install-icon">📲</div>
+      <div class="pwa-install-info">
+        <div class="pwa-install-title">Aggiungi alla Home</div>
+        <div class="pwa-install-sub">Apri Kouverte come app, senza browser</div>
+      </div>
+      <button class="pwa-install-btn" onclick="triggerPwaInstall()">Installa</button>
+      <button class="pwa-install-close" onclick="dismissPwaInstall()">✕</button>
+    </div>
+
+    <!-- PUSH NOTIFICATION BANNER -->
+    <div class="push-notify-banner" id="pushNotifyBanner">
+      <div class="pwa-install-icon">🔔</div>
+      <div class="pwa-install-info">
+        <div class="pwa-install-title">Attiva le notifiche</div>
+        <div class="pwa-install-sub">Ricevi messaggi anche a schermata chiusa</div>
+      </div>
+      <button class="push-notify-btn" onclick="subscribePushNotifications()">Attiva</button>
+      <button class="push-notify-close" onclick="dismissPushBanner()">✕</button>
     </div>
 
     <!-- REFERRAL BANNER -->
@@ -8811,6 +8852,151 @@ function unlockAmbassadorBadge() {
     // Will be sent on next registration/login
   }
 })();
+
+// ============================================================
+// PWA — Service Worker + Install Prompt + Push Notifications
+// ============================================================
+
+// --- Service Worker registration ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      console.log('[PWA] SW registrato:', reg.scope);
+      window._swRegistration = reg;
+
+      // Notifica update disponibile
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker?.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            console.log('[PWA] Nuovo SW disponibile');
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('[PWA] SW registration failed:', err);
+    }
+  });
+}
+
+// --- A2HS (Add to Home Screen) Install Prompt ---
+let _deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredInstallPrompt = e;
+
+  // Mostra il banner solo se non già installata e non già dismessa
+  const dismissed = localStorage.getItem('pwa_install_dismissed');
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!dismissed && !isStandalone) {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.classList.add('visible');
+  }
+});
+
+// App già installata — nascondi il banner
+window.addEventListener('appinstalled', () => {
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('visible');
+  _deferredInstallPrompt = null;
+  console.log('[PWA] App installata!');
+});
+
+async function triggerPwaInstall() {
+  if (!_deferredInstallPrompt) {
+    // iOS: mostra istruzioni manuali
+    alert('Per installare su iPhone:\n1. Tocca il pulsante di condivisione (□↑)\n2. Seleziona "Aggiungi a schermata Home"');
+    return;
+  }
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('visible');
+  _deferredInstallPrompt.prompt();
+  const { outcome } = await _deferredInstallPrompt.userChoice;
+  console.log('[PWA] Install outcome:', outcome);
+  _deferredInstallPrompt = null;
+}
+
+function dismissPwaInstall() {
+  localStorage.setItem('pwa_install_dismissed', '1');
+  const banner = document.getElementById('pwaInstallBanner');
+  if (banner) banner.classList.remove('visible');
+}
+
+// --- Push Notifications ---
+const VAPID_PUBLIC_KEY = 'BHfw5QpQadjL3KfUbjDUQVdkfWfDi_-zmcufuuRWvDoDJ6gahQ5a5b2aWrwa6QuhhaAyo-5BCHgnOlxT8cxl7nc';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return new Uint8Array([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function subscribePushNotifications() {
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    alert('Il tuo browser non supporta le notifiche push.');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    dismissPushBanner();
+    return;
+  }
+  try {
+    const reg = window._swRegistration || await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+    const token = localStorage.getItem('kv_token');
+    if (token) {
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ subscription })
+      });
+    }
+    localStorage.setItem('push_subscribed', '1');
+    dismissPushBanner();
+    console.log('[PWA] Push subscription salvata');
+  } catch (err) {
+    console.warn('[PWA] Push subscribe error:', err);
+  }
+}
+
+function dismissPushBanner() {
+  localStorage.setItem('push_banner_dismissed', '1');
+  const banner = document.getElementById('pushNotifyBanner');
+  if (banner) banner.classList.remove('visible');
+}
+
+// Mostra banner push dopo 30s se l'utente è loggato e non ha ancora subscribed
+setTimeout(() => {
+  const token = localStorage.getItem('kv_token');
+  const subscribed = localStorage.getItem('push_subscribed');
+  const dismissed = localStorage.getItem('push_banner_dismissed');
+  const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (token && !subscribed && !dismissed && 'Notification' in window && Notification.permission === 'default') {
+    const banner = document.getElementById('pushNotifyBanner');
+    if (banner) banner.classList.add('visible');
+  }
+  // Se già in modalità PWA, mostra subito il banner push (più utile)
+  if (isInstalled && token && !subscribed && !dismissed) {
+    const banner = document.getElementById('pushNotifyBanner');
+    if (banner) banner.classList.add('visible');
+  }
+}, 30000);
+
+// Gestisci messaggi dal SW (es. PUSH_CLICK per navigazione)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data?.type === 'PUSH_CLICK' && event.data?.url) {
+      window.location.href = event.data.url;
+    }
+  });
+}
 </script>
 </body>
 </html>

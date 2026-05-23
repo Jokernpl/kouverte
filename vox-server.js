@@ -13,6 +13,7 @@ const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { checkBlockchainConfirmations } = require('./bitcoin-service');
+const webpush = require('web-push');
 
 const app = express();
 const PORT = process.env.PORT || 8082;
@@ -26,6 +27,11 @@ if (IS_PROD && !process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'kouverte-vox-dev-secret-' + crypto.randomBytes(16).toString('hex');
 const JWT_EXPIRES = '7d';
+
+// Web Push / VAPID Config
+const VAPID_PUBLIC  = process.env.VAPID_PUBLIC  || 'BHfw5QpQadjL3KfUbjDUQVdkfWfDi_-zmcufuuRWvDoDJ6gahQ5a5b2aWrwa6QuhhaAyo-5BCHgnOlxT8cxl7nc';
+const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'TquEMw0x3SDmqbSChx_BgZ0Jx1SwPcdNrFSoEQGKAGM';
+webpush.setVapidDetails('mailto:info@kouverte.com', VAPID_PUBLIC, VAPID_PRIVATE);
 
 // Bitcoin Payment Config
 const BITCOIN_ADDRESS = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
@@ -656,6 +662,59 @@ app.get('/api/stats/public', (req, res) => {
     } catch (e) {
         res.json({ ok: false, online_users: 0, active_rooms: 0, messages_today: 0, total_users: 0 });
     }
+});
+
+// ============ PUSH NOTIFICATIONS ============
+// Ritorna la VAPID public key (usata dal frontend per subscribe)
+app.get('/api/push/vapid-key', (req, res) => {
+    res.json({ ok: true, publicKey: VAPID_PUBLIC });
+});
+
+// Salva subscription push di un utente
+app.post('/api/push/subscribe', verifyToken, (req, res) => {
+    const { subscription } = req.body;
+    if (!subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Subscription non valida' });
+    }
+    DB.push_subscriptions = DB.push_subscriptions || [];
+    const userId = req.user.userId;
+    // Rimuovi vecchie subscription dello stesso utente/endpoint
+    DB.push_subscriptions = DB.push_subscriptions.filter(
+        s => !(s.userId === userId && s.subscription.endpoint === subscription.endpoint)
+    );
+    DB.push_subscriptions.push({ userId, subscription, createdAt: Date.now() });
+    markDirty();
+    res.json({ ok: true });
+});
+
+// Invia push a un utente specifico (uso interno/admin)
+app.post('/api/push/send', verifyToken, async (req, res) => {
+    const { targetUserId, title, body, url } = req.body;
+    if (!targetUserId || !title || !body) {
+        return res.status(400).json({ error: 'Parametri mancanti' });
+    }
+    DB.push_subscriptions = DB.push_subscriptions || [];
+    const subs = DB.push_subscriptions.filter(s => s.userId === targetUserId);
+    if (subs.length === 0) return res.json({ ok: true, sent: 0 });
+
+    const payload = JSON.stringify({ title, body, icon: '/icon-192.png', url: url || '/app.html', tag: 'kouverte-msg' });
+    let sent = 0;
+    const toRemove = [];
+    for (const sub of subs) {
+        try {
+            await webpush.sendNotification(sub.subscription, payload);
+            sent++;
+        } catch (err) {
+            if (err.statusCode === 410 || err.statusCode === 404) {
+                toRemove.push(sub.subscription.endpoint);
+            }
+        }
+    }
+    if (toRemove.length > 0) {
+        DB.push_subscriptions = DB.push_subscriptions.filter(s => !toRemove.includes(s.subscription.endpoint));
+        markDirty();
+    }
+    res.json({ ok: true, sent });
 });
 
 app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (req, res) => {
