@@ -665,6 +665,24 @@ app.get('/api/stats/public', (req, res) => {
 });
 
 // ============ PUSH NOTIFICATIONS ============
+
+// Helper: invia push a uno userId specifico (fire & forget)
+async function pushToUser(userId, { title, body, url, tag }) {
+    DB.push_subscriptions = DB.push_subscriptions || [];
+    const subs = DB.push_subscriptions.filter(s => s.userId === userId);
+    if (!subs.length) return;
+    const payload = JSON.stringify({ title, body, icon: '/icon-192.png', badge: '/favicon-32.png', url: url || '/app.html', tag: tag || 'kouverte' });
+    const toRemove = [];
+    for (const sub of subs) {
+        try { await webpush.sendNotification(sub.subscription, payload); }
+        catch (e) { if (e.statusCode === 410 || e.statusCode === 404) toRemove.push(sub.subscription.endpoint); }
+    }
+    if (toRemove.length) {
+        DB.push_subscriptions = DB.push_subscriptions.filter(s => !toRemove.includes(s.subscription.endpoint));
+        markDirty();
+    }
+}
+
 // Ritorna la VAPID public key (usata dal frontend per subscribe)
 app.get('/api/push/vapid-key', (req, res) => {
     res.json({ ok: true, publicKey: VAPID_PUBLIC });
@@ -1828,6 +1846,8 @@ app.post('/api/users/:id/like', verifyToken, (req, res) => {
         if (!exists) DB.matches.push({ id: genId('match'), u1: fromId, u2: toId, created_at: Date.now() });
         notifyTelegramUser(fromId, `🎉 Match con ${toName}! Apri Kouverte per scrivere.`);
         notifyTelegramUser(toId,   `🎉 Match con ${fromName}! Apri Kouverte per scrivere.`);
+        pushToUser(fromId, { title: '💘 Match!', body: `Hai fatto match con ${toName}! Inizia a chattare.`, url: '/app.html?tab=matches', tag: 'match-new' });
+        pushToUser(toId,   { title: '💘 Match!', body: `${fromName} ha fatto match con te! Scriviti.`, url: '/app.html?tab=matches', tag: 'match-new' });
         // Realtime in-app match event to the OTHER user (the one who liked first earlier)
         const otherSocketId = activeCalls.get(toId);
         if (otherSocketId) io.to(otherSocketId).emit('match:new', { userId: fromId, username: fromName });
@@ -1976,6 +1996,7 @@ app.post('/api/matches/:matchId/messages', verifyToken, (req, res) => {
     const fromUser = DB.users.find(u => u.id === userId);
     const fromName = fromUser?.username || fromUser?.firstName || 'qualcuno';
     notifyTelegramUser(otherId, `💬 ${fromName}: "${msg.text.slice(0, 80)}"`);
+    pushToUser(otherId, { title: `💬 ${fromName}`, body: msg.text.slice(0, 100), url: '/app.html?tab=matches', tag: 'match-msg' });
 
     markDirty();
     res.json({ ok: true, message: msg });
@@ -3577,6 +3598,10 @@ io.on('connection', (socket) => {
         const targetSocketId = global.dmUsers.get(safe.to) || global.dmServerIds.get(safe.to);
         if (targetSocketId) {
             io.to(targetSocketId).emit('dm-receive', safe);
+        } else {
+            // Destinatario offline: invia push
+            const toUser = DB.users ? DB.users.find(u => u.id === safe.to || u.username === safe.to) : null;
+            if (toUser) pushToUser(toUser.id, { title: `💌 ${safe.fromName || 'Messaggio'}`, body: safe.text.slice(0, 100), url: '/app.html', tag: 'dm-msg' });
         }
     });
 

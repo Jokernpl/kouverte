@@ -48,6 +48,22 @@
 <meta name="apple-mobile-web-app-title" content="Kouverte">
 <meta name="application-name" content="Kouverte">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- Google Analytics 4 -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX', {
+    page_title: 'Kouverte App',
+    send_page_view: true,
+    custom_map: { dimension1: 'user_type', dimension2: 'source' }
+  });
+  // Helper per tracciare eventi facilmente
+  window.trackEvent = function(eventName, params) {
+    try { gtag('event', eventName, params || {}); } catch(e) {}
+  };
+</script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1182,6 +1198,11 @@ html[data-theme="light"] body {
 .swipe-btn.like{background:#1a1f3a;border:2px solid #00e5b8;color:#00e5b8}
 .swipe-btn.like:active{background:#00e5b8;color:#0f1117;box-shadow:0 0 20px rgba(0,229,184,.5)}
 .swipe-btn.super{background:#1a1f3a;border:2px solid #00d4ff;color:#00d4ff;width:52px;height:52px;font-size:20px}
+/* City filter pills */
+.swipe-filter-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#b4bcc8;
+  font-size:12px;font-weight:600;border-radius:20px;padding:6px 12px;white-space:nowrap;cursor:pointer;flex-shrink:0;transition:all .2s}
+.swipe-filter-btn.active{background:rgba(0,212,255,.15);border-color:rgba(0,212,255,.4);color:#00d4ff}
+.swipe-filter-btn:active{transform:scale(.95)}
 .swipe-empty{text-align:center;padding:40px 20px;color:#6b7280}
 .swipe-empty-icon{font-size:64px;margin-bottom:12px}
 /* Match overlay */
@@ -1826,6 +1847,15 @@ html[data-theme="light"] body {
     <div class="swipe-topbar-title">💘 Scopri</div>
     <div class="swipe-counter" id="swipeCounter">...</div>
   </div>
+  <!-- City filter -->
+  <div style="display:flex;gap:6px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none;flex-shrink:0">
+    <button class="swipe-filter-btn active" onclick="setSwipeFilter('all',this)">🌍 Tutti</button>
+    <button class="swipe-filter-btn" onclick="setSwipeFilter('Napoli',this)">🌋 Napoli</button>
+    <button class="swipe-filter-btn" onclick="setSwipeFilter('Roma',this)">🏛️ Roma</button>
+    <button class="swipe-filter-btn" onclick="setSwipeFilter('Milano',this)">🏙️ Milano</button>
+    <button class="swipe-filter-btn" onclick="setSwipeFilter('Palermo',this)">🍋 Palermo</button>
+    <button class="swipe-filter-btn" onclick="setSwipeFilter('Sud',this)">☀️ Sud</button>
+  </div>
   <div class="swipe-stage" id="swipeStage">
     <!-- Cards injected by JS -->
   </div>
@@ -1927,6 +1957,8 @@ html[data-theme="light"] body {
         </div>
       </div>
     </div>
+    <!-- Speed dating timer -->
+    <div id="sdTimer" style="display:none;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:#00d4ff;cursor:pointer;flex-shrink:0" title="Speed Dating - tempo rimanente" onclick="sdTimerClick()">⚡ <span id="sdTimerVal">3:00</span></div>
     <div class="coin-widget" title="Le tue monete KOUVERTE">
       <span style="font-size:14px">🪙</span>
       <span class="coin-amount">0</span>
@@ -2954,6 +2986,15 @@ let swipeLiked = new Set();
 let swipeCurrentCard = null;
 let swipeDragState = null;
 let swipeMatchUser = null;
+let swipeCityFilter = 'all'; // city filter
+
+function setSwipeFilter(city, btn) {
+  swipeCityFilter = city;
+  document.querySelectorAll('.swipe-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderSwipeStage();
+  window.trackEvent?.('swipe_filter', { city });
+}
 
 function openSwipeScreen(){
   closeContinua && closeContinua();
@@ -2982,17 +3023,26 @@ function renderSwipeStage(){
   const counter=document.getElementById('swipeCounter');
   if(!stage) return;
 
-  if(swipeQueue.length===0){
-    stage.innerHTML=`<div class="swipe-empty"><div class="swipe-empty-icon">🎉</div><div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:8px">Hai visto tutti!</div><div style="font-size:13px">Torna più tardi per nuovi utenti</div></div>`;
+  // Applica filtro città
+  const filtered = swipeCityFilter === 'all' ? swipeQueue :
+    swipeQueue.filter(u => {
+      const loc = (u.location || u.city || '').toLowerCase();
+      const f = swipeCityFilter.toLowerCase();
+      if (f === 'sud') return ['napoli','palermo','bari','catania','reggio','calabria','puglia','basilicata','campania','sicilia','calabria'].some(c => loc.includes(c));
+      return loc.includes(f);
+    });
+
+  if(filtered.length===0){
+    stage.innerHTML=`<div class="swipe-empty"><div class="swipe-empty-icon">🔍</div><div style="font-size:16px;font-weight:600;color:#fff;margin-bottom:8px">${swipeCityFilter==='all'?'Hai visto tutti!':'Nessuno da '+swipeCityFilter}</div><div style="font-size:13px">${swipeCityFilter==='all'?'Torna più tardi per nuovi utenti':'Prova un altro filtro'}</div></div>`;
     counter.textContent='';
     return;
   }
 
-  counter.textContent=`${swipeQueue.length} utenti`;
+  counter.textContent=`${filtered.length} utenti`;
   stage.innerHTML='';
 
   // Mostra fino a 3 card (profondità)
-  const shown=swipeQueue.slice(0,3);
+  const shown=filtered.slice(0,3);
   shown.reverse().forEach((u,ri)=>{
     const i=2-ri; // 0=front,1=mid,2=back
     const card=document.createElement('div');
@@ -3104,6 +3154,7 @@ function showSwipeMatch(matchedUser){
   document.getElementById('swipeMatchOverlay').classList.add('show');
   addCoins(15,'Match! 💘');
   showToast(`💘 Match con ${matchedUser.name}! +15 🪙`);
+  window.trackEvent?.('match_created', { method: 'swipe' });
 }
 
 function closeMatchOverlay(){
@@ -3852,6 +3903,7 @@ function toggleCamera() {
       camBtn.title = 'Camera ON';
       if (overlay) overlay.classList.remove('show');
       showToast('📹 Camera ON');
+      window.trackEvent?.('camera_on', { method: 'toggle' });
     } else {
       camBtn.classList.add('off');
       camBtn.textContent = '📷';
@@ -5611,10 +5663,13 @@ function enterRoom(roomId){
   showCamPrivacyIfNeeded(()=>{
     showScreen('chat');
     setTimeout(scrollBot, 150);
+    startSpeedDatingTimer(); // avvia countdown 3 min
   });
+  window.trackEvent?.('room_join', { room_id: roomId });
   // Welcome messages iniettati dentro chat-history (quando sappiamo se la stanza è vuota o no)
 }
 function leaveRoom(){
+  stopSpeedDatingTimer();
   // Chiudi solo le peer connections (NON fermare la webcam, evita re-prompt permessi)
   Object.keys(peerConnections).forEach(uid => closePeerConnection(uid));
   selectedUserId = null;
@@ -5783,6 +5838,7 @@ function sendMsg(){
   };
   socket.emit('chat-message',{roomId:room.id,msg});
   appendMsg(msg); scrollBot();
+  window.trackEvent?.('message_sent', { room_id: room.id, room_tier: room.tier || 'standard' });
 
   // Aggiorna preview
   roomPreviews[room.id]=roomPreviews[room.id]||[];
@@ -6089,6 +6145,8 @@ function showScreen(name,btn){
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
   _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
+  // GA4: track screen view
+  window.trackEvent?.('screen_view', { screen_name: name });
 }
 
 // ══ UTILS ══
@@ -8852,6 +8910,67 @@ function unlockAmbassadorBadge() {
     // Will be sent on next registration/login
   }
 })();
+
+// ============================================================
+// SPEED DATING TIMER
+// Conta 3 minuti in stanza, poi suggerisce di cambiare
+// ============================================================
+let _sdInterval = null;
+let _sdSeconds = 0;
+const SD_DURATION = 3 * 60; // 3 minuti
+
+function startSpeedDatingTimer() {
+  clearInterval(_sdInterval);
+  _sdSeconds = SD_DURATION;
+  const el = document.getElementById('sdTimer');
+  const val = document.getElementById('sdTimerVal');
+  if (!el) return;
+  el.style.display = 'flex';
+  el.style.color = '#00d4ff';
+  el.style.borderColor = 'rgba(0,212,255,.3)';
+
+  _sdInterval = setInterval(() => {
+    _sdSeconds--;
+    if (_sdSeconds <= 0) {
+      clearInterval(_sdInterval);
+      if (val) val.textContent = '0:00';
+      el.style.color = '#ff6b9d';
+      el.style.borderColor = 'rgba(255,107,157,.5)';
+      el.style.background = 'rgba(255,107,157,.15)';
+      // Notifica: cambia stanza
+      showToast('⚡ Speed Dating! Prova un\'altra stanza per incontrare nuove persone.');
+      window.trackEvent?.('speed_dating_timeout', { room_id: room?.id });
+      return;
+    }
+    const m = Math.floor(_sdSeconds / 60);
+    const s = _sdSeconds % 60;
+    if (val) val.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+    // Colore rosso negli ultimi 30 secondi
+    if (_sdSeconds <= 30) {
+      el.style.color = '#ff6b9d';
+      el.style.borderColor = 'rgba(255,107,157,.4)';
+    }
+  }, 1000);
+}
+
+function stopSpeedDatingTimer() {
+  clearInterval(_sdInterval);
+  const el = document.getElementById('sdTimer');
+  if (el) el.style.display = 'none';
+}
+
+function sdTimerClick() {
+  if (_sdSeconds <= 0) {
+    // Suggerisci stanza casuale
+    const randomRoom = ROOMS[Math.floor(Math.random() * ROOMS.length)];
+    if (randomRoom && randomRoom.id !== room?.id) {
+      showToast(`🎲 Proviamo ${randomRoom.name}!`);
+      setTimeout(() => enterRoom(randomRoom.id), 800);
+    }
+  } else {
+    showToast(`⚡ Speed Dating: ${Math.floor(_sdSeconds/60)}:${(_sdSeconds%60).toString().padStart(2,'0')} rimasti. Cambia stanza quando vuoi!`);
+  }
+}
 
 // ============================================================
 // PWA — Service Worker + Install Prompt + Push Notifications
