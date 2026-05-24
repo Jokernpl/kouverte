@@ -978,6 +978,133 @@ body{position:relative}
 .cps-btn:hover{opacity:.9}
 
 /* ═══════════════════════════════
+   RESUME LAST ROOM BANNER
+═══════════════════════════════ */
+.resume-banner{
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,rgba(0,212,255,.1),rgba(0,229,184,.08));
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:14px;padding:12px 14px;margin-bottom:10px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden
+}
+.resume-banner::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.4),transparent)
+}
+.resume-banner:active{opacity:.85;transform:scale(.99)}
+.resume-icon{width:36px;height:36px;border-radius:10px;
+  background:rgba(0,212,255,.15);display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0}
+.resume-info{flex:1;min-width:0}
+.resume-label{font-size:10px;color:#6e747d;font-weight:600;letter-spacing:.5px;text-transform:uppercase;margin-bottom:2px}
+.resume-name{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.resume-cta{font-size:12px;font-weight:700;color:#00d4ff;flex-shrink:0;display:flex;align-items:center;gap:4px}
+.resume-dismiss{position:absolute;top:8px;right:10px;font-size:12px;color:#4b5563;
+  cursor:pointer;padding:2px 4px;line-height:1}
+.resume-dismiss:hover{color:#9ca3af}
+
+/* ═══════════════════════════════
+   EMPTY ROOM STATE
+═══════════════════════════════ */
+.empty-room-card{
+  margin:20px 16px;
+  background:linear-gradient(145deg,rgba(26,31,58,.8),rgba(15,17,23,.9));
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;padding:28px 20px;text-align:center;
+  animation:fadeup .4s ease
+}
+.empty-room-icon{font-size:48px;margin-bottom:12px;
+  filter:drop-shadow(0 4px 12px rgba(0,212,255,.2))}
+.empty-room-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
+.empty-room-sub{font-size:13px;color:#6e747d;margin-bottom:20px;line-height:1.5}
+.empty-room-share{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#00d4ff;color:#0f1117;font-weight:700;font-size:14px;
+  padding:12px 24px;border-radius:12px;cursor:pointer;
+  border:none;transition:opacity .2s,transform .1s
+}
+.empty-room-share:hover{opacity:.9}
+.empty-room-share:active{transform:scale(.97)}
+.empty-room-hint{font-size:11px;color:#4b5563;margin-top:12px}
+
+/* ═══════════════════════════════
+   CHAT SHARE BUTTON
+═══════════════════════════════ */
+.chat-share-btn{
+  width:34px;height:34px;border:none;
+  background:rgba(0,212,255,.1);
+  border:1px solid rgba(0,212,255,.2);
+  border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:all .2s;font-size:16px
+}
+.chat-share-btn:hover{background:rgba(0,212,255,.2)}
+.chat-share-btn:active{transform:scale(.92)}
+
+/* Share toast (inline, diverso dal toast globale) */
+.share-copied-toast{
+  position:absolute;top:-36px;left:50%;transform:translateX(-50%);
+  background:rgba(0,229,184,.9);color:#0f1117;
+  font-size:11px;font-weight:700;padding:5px 14px;border-radius:20px;
+  pointer-events:none;animation:fadeup .25s ease;white-space:nowrap
+}
+
+/* ═══════════════════════════════
+   BOOST MODAL
+═══════════════════════════════ */
+#boostModal{position:fixed;inset:0;z-index:9000;display:none;
+  align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(10px)}
+#boostModal.show{display:flex}
+.boost-sheet{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,#1a1f3a,#0f1117);
+  border:1px solid rgba(0,212,255,.15);
+  border-top:1px solid rgba(0,212,255,.25);
+  border-radius:24px 24px 0 0;
+  padding:24px 20px 40px;
+  animation:slideUp .3s ease
+}
+.boost-handle{width:36px;height:4px;background:rgba(255,255,255,.12);
+  border-radius:4px;margin:0 auto 20px}
+.boost-icon-wrap{text-align:center;margin-bottom:14px;position:relative}
+.boost-icon-wrap::before{
+  content:'';position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:80px;height:80px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.2),transparent 70%);
+  pointer-events:none
+}
+.boost-icon{font-size:52px;position:relative;z-index:1;
+  filter:drop-shadow(0 4px 16px rgba(0,212,255,.4))}
+.boost-title{font-size:20px;font-weight:800;color:#fff;text-align:center;
+  letter-spacing:-.5px;margin-bottom:6px}
+.boost-sub{font-size:13px;color:#b4bcc8;text-align:center;line-height:1.6;
+  margin-bottom:20px}
+.boost-perks{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.boost-perk{display:flex;align-items:center;gap:10px;
+  background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.1);
+  border-radius:10px;padding:10px 14px;font-size:13px;color:#b4bcc8}
+.boost-perk-icon{font-size:18px;flex-shrink:0}
+.boost-price-row{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;padding:10px 14px;
+  background:rgba(0,0,0,.3);border-radius:12px;
+  border:1px solid rgba(255,255,255,.07)}
+.boost-price-label{font-size:12px;color:#6e747d}
+.boost-price-val{font-size:18px;font-weight:700;color:#fff;
+  display:flex;align-items:center;gap:6px}
+.boost-btn{width:100%;padding:16px;background:linear-gradient(135deg,#00d4ff,#00b8dd);
+  border:none;border-radius:14px;color:#0f1117;font-size:16px;font-weight:800;
+  cursor:pointer;transition:opacity .2s;letter-spacing:-.3px}
+.boost-btn:hover{opacity:.9}
+.boost-btn:disabled{opacity:.4;cursor:default}
+.boost-cancel{width:100%;padding:11px;margin-top:8px;background:none;
+  border:1px solid rgba(255,255,255,.08);border-radius:12px;
+  color:#6e747d;font-size:14px;cursor:pointer}
+/* Boost active indicator nel nome */
+.boosted-nick::after{content:' ⚡';font-style:normal}
+
+/* ═══════════════════════════════
    MESSAGGIO BENVENUTO IN STANZA
 ═══════════════════════════════ */
 .msg-welcome{
@@ -1787,6 +1914,17 @@ html[data-theme="light"] body {
       <div class="tg-arrow">→</div>
     </div>
 
+    <!-- RESUME LAST ROOM (utenti di ritorno) -->
+    <div class="resume-banner" id="resumeBanner" style="display:none" onclick="resumeLastRoom()">
+      <div class="resume-dismiss" onclick="event.stopPropagation();dismissResume()" title="Chiudi">✕</div>
+      <div class="resume-icon" id="resumeIcon">🌍</div>
+      <div class="resume-info">
+        <div class="resume-label">Ultima stanza</div>
+        <div class="resume-name" id="resumeName">–</div>
+      </div>
+      <div class="resume-cta">Riprendi →</div>
+    </div>
+
     <!-- ONBOARDING STRIP (solo nuovi utenti) -->
     <div class="onboarding-strip" id="onboardingStrip">
       <div class="obs-title">Come funziona Kouverte 👋</div>
@@ -2108,6 +2246,10 @@ html[data-theme="light"] body {
     </div>
     <!-- Speed dating timer -->
     <div id="sdTimer" style="display:none;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:#00d4ff;cursor:pointer;flex-shrink:0" title="Speed Dating - tempo rimanente" onclick="sdTimerClick()">⚡ <span id="sdTimerVal">3:00</span></div>
+    <!-- Boost button -->
+    <button class="chat-share-btn" onclick="openBoostModal()" title="Boost visibilità" id="chatBoostBtn" style="font-size:14px">⚡</button>
+    <!-- Share room button -->
+    <button class="chat-share-btn" onclick="shareRoom()" title="Condividi questa stanza" id="chatShareBtn">↗</button>
     <div class="coin-widget" title="Le tue monete KOUVERTE">
       <span style="font-size:14px">🪙</span>
       <span class="coin-amount">0</span>
@@ -2249,6 +2391,28 @@ html[data-theme="light"] body {
   <div class="badges-sec">
     <div class="sec-lbl">🏆 Badge</div>
     <div class="badges-grid" id="badgesGrid"></div>
+  </div>
+</div>
+
+<!-- ░░ BOOST MODAL ░░ -->
+<div id="boostModal">
+  <div class="boost-sheet">
+    <div class="boost-handle"></div>
+    <div class="boost-icon-wrap"><div class="boost-icon">⚡</div></div>
+    <div class="boost-title">Boost Visibilità</div>
+    <div class="boost-sub">Il tuo nome appare evidenziato con ⚡ per tutti gli utenti in stanza per 1 ora.</div>
+    <div class="boost-perks">
+      <div class="boost-perk"><div class="boost-perk-icon">✨</div>Nome in evidenza nei messaggi</div>
+      <div class="boost-perk"><div class="boost-perk-icon">👥</div>Più visibile nella lista utenti</div>
+      <div class="boost-perk"><div class="boost-perk-icon">⏱️</div>Dura 1 ora dalla conferma</div>
+    </div>
+    <div class="boost-price-row">
+      <div class="boost-price-label">Costo boost</div>
+      <div class="boost-price-val"><span>🪙</span><span id="boostCostDisplay">20</span> Koins</div>
+    </div>
+    <div id="boostBalanceWarn" style="display:none;font-size:12px;color:#ef4444;text-align:center;margin-bottom:10px"></div>
+    <button class="boost-btn" id="boostConfirmBtn" onclick="confirmBoost()">⚡ Attiva Boost — 20 Koins</button>
+    <button class="boost-cancel" onclick="closeBoostModal()">Annulla</button>
   </div>
 </div>
 
@@ -2845,7 +3009,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -3913,6 +4077,8 @@ function connectSocket(){
     if(room?.id===roomId){
       document.getElementById('chatOnline').textContent=count+' online';
       renderUsersPanel();
+      // Aggiorna/rimuovi empty state
+      checkEmptyRoom();
     }
   });
   socket.on('global-online',({count})=>{
@@ -5837,6 +6003,8 @@ function enterRoom(roomId){
   }
 
   room=cfg; lastSender=null; typingUsers={};
+  // Salva ultima stanza per il banner "Riprendi"
+  setLS('kv_last_room', roomId);
 
   const icon=document.getElementById('chatIcon');
   icon.textContent=cfg.emoji;
@@ -5868,6 +6036,11 @@ function enterRoom(roomId){
     showScreen('chat');
     setTimeout(scrollBot, 150);
     startSpeedDatingTimer(); // avvia countdown 3 min
+    // Check empty room dopo 1.5s (tempo di ricevere gli utenti connessi)
+    if(_emptyRoomTimer) clearTimeout(_emptyRoomTimer);
+    _emptyRoomTimer = setTimeout(checkEmptyRoom, 1500);
+    // Sync boost button state
+    syncBoostBtn();
   });
   window.trackEvent?.('room_join', { room_id: roomId });
   // Welcome messages iniettati dentro chat-history (quando sappiamo se la stanza è vuota o no)
@@ -5888,6 +6061,161 @@ function leaveRoom(){
     room=null;
   }
   showScreen('home',document.querySelector('[data-sc="home"]'));
+}
+
+// ══ SHARE ROOM ══
+function shareRoom(){
+  if(!room) return;
+  const url = `https://www.kouverte.com/app.html?room=${room.id}`;
+  const text = `Entra in "${room.name}" su Kouverte — chat anonima italiana 🇮🇹`;
+  if(navigator.share){
+    navigator.share({ title:'Kouverte', text, url }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(url).then(()=>{
+      // mini toast nel header
+      const btn = document.getElementById('chatShareBtn');
+      if(btn){
+        const t = document.createElement('div');
+        t.className = 'share-copied-toast';
+        t.textContent = '✓ Link copiato!';
+        btn.style.position = 'relative';
+        btn.appendChild(t);
+        setTimeout(()=>t.remove(), 1800);
+      }
+    }).catch(()=> showToast('📋 '+url));
+  }
+  window.trackEvent?.('share_room', { room_id: room.id });
+}
+
+// ══ BOOST VISIBILITÀ ══
+const BOOST_COST = 20;
+const BOOST_DURATION_MS = 60 * 60 * 1000; // 1 ora
+let _boostOriginalName = null;
+
+function openBoostModal(){
+  if(!room){ showToast('⚡ Entra in una stanza prima'); return; }
+  const now = Date.now();
+  const active = user.boostUntil && user.boostUntil > now;
+  if(active){
+    const mins = Math.ceil((user.boostUntil - now)/60000);
+    showToast(`⚡ Boost attivo ancora ${mins} min`);
+    return;
+  }
+  const warn = document.getElementById('boostBalanceWarn');
+  const btn  = document.getElementById('boostConfirmBtn');
+  const canAfford = (user.coins||0) >= BOOST_COST;
+  if(warn){ warn.style.display = canAfford?'none':'block'; warn.textContent = `Monete insufficienti — hai ${user.coins||0} Koins (servono ${BOOST_COST})`; }
+  if(btn){ btn.disabled = !canAfford; }
+  document.getElementById('boostModal').classList.add('show');
+}
+function closeBoostModal(){
+  document.getElementById('boostModal').classList.remove('show');
+}
+function confirmBoost(){
+  if((user.coins||0) < BOOST_COST){ showToast('❌ Monete insufficienti'); return; }
+  // Spendi le monete
+  user.coins = (user.coins||0) - BOOST_COST;
+  user.boostUntil = Date.now() + BOOST_DURATION_MS;
+  // Aggiorna nome con ⚡ (visibile a tutti via socket)
+  if(!_boostOriginalName) _boostOriginalName = user.name;
+  if(!user.name.endsWith(' ⚡')) user.name = user.name + ' ⚡';
+  saveUser();
+  updateCoinBar();
+  closeBoostModal();
+  // Aggiorna bottone header
+  syncBoostBtn();
+  showToast('⚡ Boost attivo per 1 ora!');
+  window.trackEvent?.('boost_activated', { room_id: room?.id });
+  // Programma rimozione automatica
+  setTimeout(deactivateBoost, BOOST_DURATION_MS);
+}
+function deactivateBoost(){
+  if(!user.boostUntil || Date.now() < user.boostUntil) return; // non ancora scaduto
+  if(_boostOriginalName){ user.name = _boostOriginalName; _boostOriginalName = null; }
+  user.boostUntil = 0;
+  saveUser();
+  syncBoostBtn();
+}
+function syncBoostBtn(){
+  const btn = document.getElementById('chatBoostBtn');
+  if(!btn) return;
+  const active = user.boostUntil && user.boostUntil > Date.now();
+  btn.style.background = active ? 'rgba(0,212,255,.25)' : 'rgba(0,212,255,.1)';
+  btn.style.borderColor = active ? '#00d4ff' : 'rgba(0,212,255,.2)';
+  btn.title = active ? `⚡ Boost attivo — ${Math.ceil((user.boostUntil-Date.now())/60000)} min` : 'Boost visibilità';
+}
+function initBoost(){
+  const now = Date.now();
+  if(user.boostUntil && user.boostUntil > now){
+    // Boost ancora attivo — ripristina ⚡ nel nome se manca
+    if(!user.name.endsWith(' ⚡')) user.name = user.name + ' ⚡';
+    syncBoostBtn();
+    setTimeout(deactivateBoost, user.boostUntil - now);
+  } else if(user.boostUntil && user.boostUntil <= now){
+    // Scaduto durante l'assenza
+    if(user.name.endsWith(' ⚡')) user.name = user.name.replace(/ ⚡$/, '');
+    user.boostUntil = 0;
+    saveUser();
+  }
+}
+
+// ══ RESUME LAST ROOM ══
+function initResumeBanner(){
+  const lastId = getLS('kv_last_room');
+  if(!lastId) return;
+  const cfg = ROOMS.find(r=>r.id===lastId);
+  if(!cfg) return;
+  const banner = document.getElementById('resumeBanner');
+  const icon   = document.getElementById('resumeIcon');
+  const name   = document.getElementById('resumeName');
+  if(!banner) return;
+  icon.textContent = cfg.emoji||'🌍';
+  name.textContent = cfg.name;
+  banner.style.display = 'flex';
+}
+function resumeLastRoom(){
+  const lastId = getLS('kv_last_room');
+  if(lastId) enterRoom(lastId);
+}
+function dismissResume(){
+  setLS('kv_last_room', null);
+  const b = document.getElementById('resumeBanner');
+  if(b){ b.style.transition='opacity .3s,max-height .3s'; b.style.opacity='0'; setTimeout(()=>b.style.display='none',320); }
+}
+
+// ══ EMPTY ROOM STATE ══
+let _emptyRoomTimer = null;
+function checkEmptyRoom(){
+  if(!room) return;
+  const cnt = roomOnline[room.id]??0;
+  const existing = document.getElementById('emptyRoomCard');
+  if(cnt <= 1){
+    if(!existing){
+      const url = `https://www.kouverte.com/app.html?room=${room.id}`;
+      const card = document.createElement('div');
+      card.id = 'emptyRoomCard';
+      card.className = 'empty-room-card';
+      card.innerHTML = `
+        <div class="empty-room-icon">${room.emoji||'🏙️'}</div>
+        <div class="empty-room-title">Sei il primo qui!</div>
+        <div class="empty-room-sub">Non c'è ancora nessuno in ${room.name}.<br>Invita qualcuno e inizia la conversazione.</div>
+        <button class="empty-room-share" onclick="shareRoomFromEmpty()">
+          ↗&nbsp; Invita in ${room.name}
+        </button>
+        <div class="empty-room-hint">La stanza sarà visibile a tutti quando entrerete</div>`;
+      const msgs = document.getElementById('chatMsgs');
+      if(msgs) msgs.insertBefore(card, msgs.firstChild);
+    }
+  } else {
+    if(existing) existing.remove();
+  }
+}
+function shareRoomFromEmpty(){
+  if(!room) return;
+  const url = `https://www.kouverte.com/app.html?room=${room.id}`;
+  const text = `Entra con me in "${room.name}" su Kouverte! 🇮🇹`;
+  if(navigator.share){ navigator.share({title:'Kouverte',text,url}).catch(()=>{}); }
+  else { navigator.clipboard?.writeText(url).then(()=>showToast('✓ Link copiato!')); }
 }
 
 // ══ MESSAGES (stile screenshot) ══
