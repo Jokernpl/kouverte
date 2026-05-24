@@ -5,6 +5,7 @@
   "main": "vox-server.js",
   "scripts": {
     "start": "node vox-server.js",
+    "dev": "nodemon --watch vox-server.js --watch app.js --watch app.css --watch app.html --ext js,css,html vox-server.js",
     "bot": "node tg-bot.js"
   },
   "dependencies": {
@@ -28,6 +29,9 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   },
   "author": "Broker",
   "license": "PROPRIETARY",

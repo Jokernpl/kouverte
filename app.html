@@ -1188,5 +1188,39 @@
 
 
 <script src="/app.js?v=20260524"></script>
+
+<!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
+<script>
+(function(){
+  var h = location.hostname;
+  if (h !== 'localhost' && h !== '127.0.0.1') return;
+  var toast, pollTimer;
+  function showToast(msg) {
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#000;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,.4)';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+  }
+  function connect() {
+    var sse = new EventSource('/live-reload');
+    sse.onopen = function() { if (toast) { toast.remove(); toast = null; } };
+    sse.onerror = function() {
+      sse.close();
+      showToast('🔄 Riavvio server...');
+      clearInterval(pollTimer);
+      pollTimer = setInterval(function() {
+        fetch('/').then(function() {
+          clearInterval(pollTimer);
+          showToast('✅ Ricarico...');
+          setTimeout(function(){ location.reload(); }, 200);
+        }).catch(function(){});
+      }, 400);
+    };
+  }
+  connect();
+})();
+</script>
 </body>
 </html>

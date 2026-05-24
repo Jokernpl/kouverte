@@ -244,8 +244,32 @@ app.use(express.static(__dirname, {
     dotfiles: 'deny',
     index: ['index.html'],
     etag: true,
-    lastModified: true
+    lastModified: true,
+    setHeaders: (res, filePath) => {
+        const ext = path.extname(filePath).toLowerCase();
+        if (['.html', '.js', '.css'].includes(ext)) {
+            // Mai cache su HTML/JS/CSS — browser verifica sempre col server (ETag)
+            res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+        }
+    }
 }));
+
+// ── Live Reload SSE (solo in dev) ─────────────────────────────────────────────
+// Quando nodemon riavvia il server, la connessione SSE cade e il browser
+// ricarica automaticamente la pagina.
+if (!IS_PROD) {
+    app.get('/live-reload', (req, res) => {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.write('data: connected\n\n');
+        // Keep-alive ping ogni 25s per evitare timeout
+        const ping = setInterval(() => res.write(': ping\n\n'), 25000);
+        req.on('close', () => clearInterval(ping));
+    });
+}
 
 const server = http.createServer(app);
 const io = new Server(server, {
