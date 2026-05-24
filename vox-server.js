@@ -4106,10 +4106,11 @@ function getTotalOnline() {
 // ══════════════════════════════════════════════════════════════════════════════
 // ♠  SCOPA — Motore di gioco con carte napoletane
 // ══════════════════════════════════════════════════════════════════════════════
-const scopaQueue   = [];          // { socketId, userId, name, face, color }
-const scopaGames   = new Map();   // gameId → gameState
-const scopaPlrGame = new Map();   // socketId → gameId
-const scopaWatchers= new Set();   // socketId di tutti nella lobby scopa
+const scopaQueue        = [];          // { socketId, userId, name, face, color }
+const scopaGames        = new Map();   // gameId → gameState
+const scopaPlrGame      = new Map();   // socketId → gameId
+const scopaWatchers     = new Set();   // socketId di tutti nella lobby scopa
+const scopaGraceTimers  = new Map();   // userId → { timer, gameId }  (grace period su disconnect)
 const SCOPA_WIN    = 11;
 
 function scopaBroadcastLobby(){
@@ -4301,14 +4302,37 @@ io.on('connection', (socket) => {
         if(!userId||typeof userId!=='string') return;
         const uid=userId.slice(0,60);
         scopaWatchers.add(socket.id);
+        // Annulla grace timer se il giocatore si sta riconnettendo
+        if(scopaGraceTimers.has(uid)){
+            const gt=scopaGraceTimers.get(uid);
+            clearTimeout(gt.timer);
+            scopaGraceTimers.delete(uid);
+        }
         // Rimuovi da coda se già presente
         const qi=scopaQueue.findIndex(p=>p.userId===uid);
         if(qi!==-1) scopaQueue.splice(qi,1);
-        // Se già in partita attiva, rimanda lo stato
-        const existingGid=scopaPlrGame.get(socket.id);
+        // Cerca partita attiva per socket.id (caso normale) o per userId (riconnessione)
+        let existingGid=scopaPlrGame.get(socket.id);
+        if(!existingGid){
+            for(const [gid,g] of scopaGames){
+                if(g.state!=='finished'&&g.playerOrder.includes(uid)){
+                    // Giocatore riconnesso: aggiorna socket nel gioco
+                    const oldSid=g.socketIds[uid];
+                    if(oldSid) scopaPlrGame.delete(oldSid);
+                    g.socketIds[uid]=socket.id;
+                    scopaPlrGame.set(socket.id,gid);
+                    existingGid=gid;
+                    // Notifica avversario che il giocatore è tornato
+                    const oppId=g.playerOrder.find(id=>id!==uid);
+                    const oppSock=oppId?io.sockets.sockets.get(g.socketIds[oppId]):null;
+                    if(oppSock) oppSock.emit('scopa:opp-reconnected',{name:g.playerInfo[uid].name});
+                    break;
+                }
+            }
+        }
         if(existingGid){
             const g=scopaGames.get(existingGid);
-            if(g&&g.state!=='finished'){socket.emit('scopa:state',scopaPublic(g,uid));return;}
+            if(g&&g.state!=='finished'){socket.emit('scopa:state',scopaPublic(g,uid));scopaBroadcastLobby();return;}
         }
         const player={socketId:socket.id,userId:uid,name:String(name||'Anonimo').slice(0,30),face:String(face||'🎭').slice(0,8),color:String(color||'#00d4ff').slice(0,20)};
         scopaQueue.push(player);
@@ -5113,16 +5137,35 @@ io.on('connection', (socket) => {
         }
 
         socket.broadcast.emit('user-disconnected', socket.id);
-        // Scopa: cleanup in caso di disconnessione
+        // Scopa: cleanup in caso di disconnessione (con grace period per riconnessione)
         const scopaGid=scopaPlrGame.get(socket.id);
         if(scopaGid){
             const sg=scopaGames.get(scopaGid);
-            if(sg){
-                const oppId=sg.playerOrder.find(id=>sg.socketIds[id]!==socket.id);
-                const oppSock=oppId?io.sockets.sockets.get(sg.socketIds[oppId]):null;
-                if(oppSock) oppSock.emit('scopa:opp-left',{});
+            if(sg&&sg.state!=='finished'){
+                const dcId=sg.playerOrder.find(id=>sg.socketIds[id]===socket.id);
+                if(dcId){
+                    // Avvisa avversario della disconnessione temporanea
+                    const oppId=sg.playerOrder.find(id=>id!==dcId);
+                    const oppSock=oppId?io.sockets.sockets.get(sg.socketIds[oppId]):null;
+                    if(oppSock) oppSock.emit('scopa:opp-disconnected',{});
+                    // Grace period 30s: il giocatore può riconnettersi
+                    const graceTimer=setTimeout(()=>{
+                        scopaGraceTimers.delete(dcId);
+                        const stillGame=scopaGames.get(scopaGid);
+                        if(stillGame&&stillGame.state!=='finished'){
+                            const oSock=oppId?io.sockets.sockets.get(stillGame.socketIds[oppId]):null;
+                            if(oSock) oSock.emit('scopa:opp-left',{});
+                            scopaGames.delete(scopaGid);
+                            if(oppId) scopaPlrGame.delete(stillGame.socketIds[oppId]);
+                        }
+                        scopaBroadcastLobby();
+                    },30000);
+                    scopaGraceTimers.set(dcId,{timer:graceTimer,gameId:scopaGid});
+                } else {
+                    scopaGames.delete(scopaGid);
+                }
+            } else if(sg){
                 scopaGames.delete(scopaGid);
-                if(oppId) scopaPlrGame.delete(sg.socketIds[oppId]);
             }
             scopaPlrGame.delete(socket.id);
         }

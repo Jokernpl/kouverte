@@ -3562,7 +3562,9 @@ function registerScopaListeners(){
   socket.on('scopa:choose',({cardId,options})=>{ _scSelCard=cardId; _scSelCap=[]; scRender(); });
   socket.on('scopa:round-end',(d)=> scRenderRoundEnd(d));
   socket.on('scopa:game-over',(d)=> scRenderGameOver(d));
-  socket.on('scopa:opp-left',()=>{ showToast('👋 Avversario disconnesso'); scRenderWaiting(1,1); });
+  socket.on('scopa:opp-left',()=>{ showToast('👋 Avversario abbandonato'); scRenderWaiting(1,1); });
+  socket.on('scopa:opp-disconnected',()=>{ showToast('⏳ Avversario disconnesso, attendi 30s...'); });
+  socket.on('scopa:opp-reconnected',({name})=>{ showToast('✅ '+name+' riconnesso!'); });
   socket.on('scopa:rematch-req',({by})=>{
     showToast('🔄 '+by+' vuole la rivincita!');
     const btn=document.getElementById('scRematchBtn');
