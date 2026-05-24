@@ -86,13 +86,72 @@ app.get('/favicon.ico', (req, res) => {
     res.sendFile(path.join(__dirname, 'icon.svg'));
 });
 
-// Landing page esplicita alla root — garantisce che index.html sia servita
-// anche se l'ordine dei middleware cambia
+// Landing page esplicita alla root
 app.get('/', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// ── OG Preview dinamica per stanza ──────────────────────────────────────────
+// Quando un bot social (WhatsApp, Telegram, Twitter) carica ?room=X,
+// restituisce una mini-HTML con i meta tag corretti per quella stanza.
+const ROOM_OG = {
+    mondo:     { name:'Mondo',       emoji:'🌍', img:'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=630&fit=crop', color:'#a78bfa' },
+    italia:    { name:'Italia',      emoji:'🇮🇹', img:'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=1200&h=630&fit=crop', color:'#10b981' },
+    roma:      { name:'Roma',        emoji:'🏛️', img:'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200&h=630&fit=crop', color:'#f59e0b' },
+    milano:    { name:'Milano',      emoji:'🏙️', img:'https://images.unsplash.com/photo-1520440229-6469a149ac59?w=1200&h=630&fit=crop', color:'#60a5fa' },
+    napoli:    { name:'Napoli',      emoji:'⚓', img:'https://images.pexels.com/photos/2265876/pexels-photo-2265876.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop', color:'#06b6d4' },
+    palermo:   { name:'Palermo',     emoji:'☀️', img:'https://images.pexels.com/photos/1388030/pexels-photo-1388030.jpeg?auto=compress&cs=tinysrgb&w=1200&h=630&fit=crop', color:'#f97316' },
+    sicilia:   { name:'Sicilia',     emoji:'🏝️', img:'https://images.unsplash.com/photo-1523365154888-8a758819b722?w=1200&h=630&fit=crop', color:'#eab308' },
+    campania:  { name:'Campania',    emoji:'🌋', img:'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&h=630&fit=crop', color:'#ef4444' },
+    confessionale: { name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=1200&h=630&fit=crop', color:'#8b5cf6' },
+};
+
+function isBot(ua) {
+    return /bot|crawl|facebook|twitter|telegram|whatsapp|slack|linkedin|discord|preview|scraper/i.test(ua || '');
+}
+
+app.get('/app.html', (req, res, next) => {
+    const roomId = req.query.room;
+    const og = roomId && ROOM_OG[roomId];
+    // Solo per bot sociali con una stanza valida
+    if (!og || !isBot(req.headers['user-agent'])) return next();
+
+    const title = `Chat ${og.name} Gratis — Kouverte`;
+    const desc  = `Entra nella stanza ${og.name} su Kouverte. Chat anonima italiana 🇮🇹 — niente registrazione, gratis.`;
+    const url   = `https://www.kouverte.com/app.html?room=${roomId}`;
+
+    res.set('Cache-Control', 'public, max-age=300');
+    res.send(`<!DOCTYPE html><html lang="it"><head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<meta name="description" content="${desc}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${desc}">
+<meta property="og:url" content="${url}">
+<meta property="og:image" content="${og.img}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="it_IT">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${desc}">
+<meta name="twitter:image" content="${og.img}">
+<meta http-equiv="refresh" content="0;url=${url}">
+<link rel="canonical" href="${url}">
+</head><body><a href="${url}">${og.emoji} ${title}</a></body></html>`);
+});
+
+// ── Clean URL per pagine città ──────────────────────────────────────────────
+const CITY_PAGES = ['napoli','roma','milano','palermo','sicilia','italia'];
+CITY_PAGES.forEach(city => {
+    app.get(`/${city}`, (req, res) => {
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.sendFile(path.join(__dirname, `${city}.html`));
+    });
 });
 
 // NO-CACHE per HTML/JS/CSS principali: gli update arrivano subito al refresh
