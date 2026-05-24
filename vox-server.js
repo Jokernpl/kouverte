@@ -3684,9 +3684,10 @@ io.on('connection', (socket) => {
         if (targetSocketId) {
             io.to(targetSocketId).emit('dm-receive', safe);
         } else {
-            // Destinatario offline: invia push
+            // Destinatario offline: invia push (sia utenti registrati che anonimi)
             const toUser = DB.users ? DB.users.find(u => u.id === safe.to || u.username === safe.to) : null;
-            if (toUser) pushToUser(toUser.id, { title: `💌 ${safe.fromName || 'Messaggio'}`, body: safe.text.slice(0, 100), url: '/app.html', tag: 'dm-msg' });
+            const pushId = toUser ? toUser.id : safe.to; // funziona anche per anonimi con sub salvata
+            if (pushId) pushToUser(pushId, { title: `💌 ${safe.fromName || 'Messaggio'}`, body: safe.text.slice(0, 100), url: '/app.html', tag: 'dm-msg' });
         }
     });
 
@@ -3703,23 +3704,31 @@ io.on('connection', (socket) => {
         const code = String(room.code).toUpperCase().slice(0, 6);
         if (code.length !== 6) return;
 
+        // Password opzionale: se fornita, viene hashata (bcrypt-light: sha256 base)
+        const rawPwd = room.password ? String(room.password).slice(0, 50) : null;
+        const pwdHash = rawPwd ? require('crypto').createHash('sha256').update(rawPwd + code).digest('hex').slice(0,16) : null;
+
         const safeRoom = {
             id: 'code_' + code,
             name: String(room.name || 'Stanza Privata').slice(0, 50),
             emoji: String(room.emoji || '🔐').slice(0, 4),
             code: code,
+            pwdHash,           // null = stanza aperta a chi ha il codice
+            hasPassword: !!pwdHash,
             ownerId: String(room.ownerId || '').slice(0, 40),
             tier: 'code',
             createdAt: Date.now()
         };
 
         global.codeRooms.set(code, safeRoom);
-        console.log(`[CODE-ROOM] Created: ${code} - ${safeRoom.name} by ${safeRoom.ownerId}`);
+        console.log(`[CODE-ROOM] Created: ${code} - ${safeRoom.name} (pwd: ${!!pwdHash})`);
 
-        socket.emit('code-room-created', { room: safeRoom });
+        // Risposta al creatore: include il codice ma NON il pwdHash
+        const { pwdHash: _, ...publicRoom } = safeRoom;
+        socket.emit('code-room-created', { room: publicRoom });
     });
 
-    socket.on('join-code-room', ({ code, room }) => {
+    socket.on('join-code-room', ({ code, room, password }) => {
         if (!code) return;
         const upperCode = String(code).toUpperCase();
 
@@ -3730,19 +3739,29 @@ io.on('connection', (socket) => {
                 name: String(room.name || ('Stanza ' + upperCode)).slice(0, 50),
                 emoji: String(room.emoji || '🔐').slice(0, 4),
                 code: upperCode,
+                pwdHash: null, hasPassword: false,
                 ownerId: '',
                 tier: 'code',
                 createdAt: Date.now()
             };
             global.codeRooms.set(upperCode, safeRoom);
-            console.log(`[CODE-ROOM] Joined and registered: ${upperCode}`);
         }
 
         const codeRoom = global.codeRooms.get(upperCode);
-        if (codeRoom) {
-            socket.emit('code-room-joined', { room: codeRoom });
-            console.log(`[CODE-ROOM] User joining code room: ${upperCode}`);
+        if (!codeRoom) { socket.emit('code-room-error', { error: 'Stanza non trovata' }); return; }
+
+        // Verifica password se richiesta
+        if (codeRoom.pwdHash) {
+            const attempt = password ? require('crypto').createHash('sha256').update(String(password).slice(0,50) + upperCode).digest('hex').slice(0,16) : null;
+            if (attempt !== codeRoom.pwdHash) {
+                socket.emit('code-room-error', { error: 'Password errata 🔒' });
+                return;
+            }
         }
+
+        const { pwdHash: _, ...publicRoom } = codeRoom;
+        socket.emit('code-room-joined', { room: publicRoom });
+        console.log(`[CODE-ROOM] User joining: ${upperCode}`);
     });
 
     // ===== CHAT ROOMS =====
@@ -3797,6 +3816,14 @@ io.on('connection', (socket) => {
     socket.on('chat-message', ({ roomId, msg }) => {
         if (!roomId || !msg?.text) return;
         // Sanitize base
+        // Valida thumbnail foto: deve essere data:image/jpeg;base64,... max 6KB
+        const thumbRaw = msg.photoThumb || null;
+        let safeThumb = null;
+        if (thumbRaw && typeof thumbRaw === 'string'
+            && thumbRaw.startsWith('data:image/jpeg;base64,')
+            && thumbRaw.length < 9000) {
+            safeThumb = thumbRaw;
+        }
         const clean = {
             userId:    String(msg.userId || 'anon').slice(0, 40),
             name:      String(msg.name   || 'Anonimo').slice(0, 30),
@@ -3808,6 +3835,7 @@ io.on('connection', (socket) => {
             active_bubble: /^[a-z_]{1,20}$/i.test(msg.active_bubble || '') ? msg.active_bubble : null,
             isPremium: !!msg.isPremium,
             msgCount:  Math.max(0, Math.min(99999, parseInt(msg.msgCount) || 0)),
+            photoThumb: safeThumb,
             text:      String(msg.text).slice(0, 800),
             ts:        Date.now(),
             roomId

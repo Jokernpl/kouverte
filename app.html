@@ -2116,6 +2116,10 @@ html[data-theme="light"] body {
       <label class="modal-label">Nome della stanza</label>
       <input type="text" id="newRoomName" class="modal-input" placeholder="Es. Amici del bar" maxlength="30">
 
+      <label class="modal-label">Password (opzionale)</label>
+      <input type="password" id="newRoomPassword" class="modal-input" placeholder="Lascia vuoto per nessuna password" maxlength="50" autocomplete="new-password">
+      <div class="code-hint" style="margin-top:-6px;margin-bottom:10px">🔒 Se imposti una password, chi entra dovrà inserirla oltre al codice</div>
+
       <label class="modal-label">Emoji (opzionale)</label>
       <div class="emoji-picker">
         <span class="emoji-opt selected" data-emoji="🎉">🎉</span>
@@ -2156,6 +2160,10 @@ html[data-theme="light"] body {
       <label class="modal-label">Inserisci il codice della stanza</label>
       <input type="text" id="joinRoomCode" class="modal-input code-input" placeholder="ABC123" maxlength="6" oninput="this.value=this.value.toUpperCase()">
       <div class="code-hint">Il codice è di 6 caratteri (lettere e numeri)</div>
+      <div id="joinPasswordWrap" style="display:none;margin-top:10px">
+        <label class="modal-label">🔒 Questa stanza richiede una password</label>
+        <input type="password" id="joinRoomPassword" class="modal-input" placeholder="Password della stanza" maxlength="50" autocomplete="current-password">
+      </div>
     </div>
     <div class="modal-footer">
       <button class="modal-btn modal-btn-secondary" onclick="closeModal('modalJoinRoom')">Annulla</button>
@@ -6299,38 +6307,45 @@ function appendMsg(msg){
   const senderBubbleFx = isSelf ? user.active_bubble : msg.active_bubble;
   const bubbleFxClass = senderBubbleFx ? ' bubble-' + senderBubbleFx : '';
 
+  // Helper: HTML dell'avatar (foto o emoji)
+  function avatarHtml(photoThumb, faceEmoji, col, size, frameClass2, auraClass2, auraStyle2, consec2, extraAttrs) {
+    const s = size || 36;
+    if (photoThumb && !consec2) {
+      return `<div class="mavatar${frameClass2} ${auraClass2} ${consec2?'hidden':''}" ${extraAttrs||''} style="${auraStyle2}width:${s}px;height:${s}px;border-radius:50%;overflow:hidden;flex-shrink:0;margin-top:1px">
+        <img src="${photoThumb}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">
+      </div>`;
+    }
+    return `<div class="mavatar${frameClass2} ${auraClass2} ${consec2?'hidden':''}" ${extraAttrs||''} style="${auraStyle2}background:${col}22;width:${s}px;height:${s}px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:${Math.round(s*0.5)}px;flex-shrink:0;margin-top:1px">
+      ${faceEmoji}
+    </div>`;
+  }
+
   if(isSelf){
-    // Bubble viola a destra + avatar del MIO utente
     row.className='mrow self';
     const myCol=user.color, myFace=user.face;
+    const myThumb=user.photoThumb||null;
     const myLvl=userLevel(user.msgCount||0);
     const myAuraClass=(isPrem()||myLvl>=10)?'aura-prem':'';
     const myAuraStyle=(isPrem()||myLvl>=10)?`color:${myCol};`:'';
     row.innerHTML=`
-      <div class="mavatar${frameClass} ${myAuraClass} ${consec?'hidden':''}" style="${myAuraStyle}background:${myCol}22;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px">
-        ${myFace}
-      </div>
+      ${avatarHtml(myThumb, myFace, myCol, 36, frameClass, myAuraClass, myAuraStyle, consec, '')}
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
         ${!consec?`<div style="font-size:11px;color:${myCol};font-weight:700;margin-bottom:3px;text-align:right"><span class="${(nickFxClass||'').trim()}" style="color:${myCol}">${esc(user.name)}</span> <span style="color:#9ca3af;font-weight:600">lvl ${myLvl}</span></div>`:''}
         <div class="mbubble-self${bubbleFxClass}">${esc(msg.text)}</div>
         <div class="mtime">${time}</div>
       </div>`;
   } else {
-    // Stile screenshot: avatar + nome colorato + testo inline
     row.className='mrow';
     const nameGlow=prem?`;text-shadow:0 0 6px ${col}`:'';
-    // Mostra "Nick lvl X" stile gaming
     const senderMc = msg.msgCount || 0;
     const lvl = userLevel(senderMc);
     const lvlBadge = !consec ? `<span style="font-size:9px;color:#9ca3af;margin-left:3px;font-weight:600">lvl ${lvl}</span>` : '';
     const auraClass = (prem || lvl>=10) ? 'aura-prem' : '';
     const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
-    // Click sull'avatar/nome → menu utente
     const clickData = `data-uid="${esc(msg.userId||'')}" data-uname="${esc(name)}" data-uface="${esc(face)}" data-ucolor="${col}" data-uframe="${esc(msg.activeFrame||'none')}" onclick="openUserMenu(this)" style="cursor:pointer"`;
+    const msgThumb = msg.photoThumb || null;
     row.innerHTML=`
-      <div class="mavatar${frameClass} ${auraClass} ${consec?'hidden':''}" ${clickData} style="${auraStyle}background:${col}22;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;margin-top:1px;cursor:pointer" title="Tocca per profilo">
-        ${face}
-      </div>
+      ${avatarHtml(msgThumb, face, col, 36, frameClass, auraClass, auraStyle, consec, clickData)}
       <div class="mbody">
         <div class="mline">
           ${!consec?`<span class="mname${nickFxClass}" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
@@ -6415,7 +6430,7 @@ function sendMsg(){
     userId:user.id, name:user.name, color:user.color,
     face:user.face, frame:user.activeFrame, activeFrame:user.activeFrame,
     active_nickFx:user.active_nickFx, active_bubble:user.active_bubble,
-    isPremium:isPrem(),
+    isPremium:isPrem(), photoThumb: user.photoThumb || null,
     text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount
   };
   socket.emit('chat-message',{roomId:room.id,msg});
@@ -6591,6 +6606,19 @@ function openAvatarMenu(){
     'Stile': FACE_EMOJIS.filter(e => '😎🤩🥷🎭🦹🦸🤡👑💎'.includes(e))
   };
   let html = '<div class="avatar-menu-sheet"><div class="avatar-menu-title">🎨 Personalizza Avatar</div>';
+  // Foto profilo in cima (se presente mostra anteprima, altrimenti upload)
+  if (user.customAvatar) {
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px;background:rgba(0,212,255,.08);border-radius:12px;border:1px solid rgba(0,212,255,.15)">
+      <img id="avatarPreviewImg" src="${user.customAvatar}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;flex-shrink:0">
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#fff">Foto profilo</div><div style="font-size:11px;color:#9ca3af;margin-top:2px">Attiva in chat e profilo</div></div>
+      <button onclick="triggerAvatarUpload()" style="background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);color:#00d4ff;font-size:12px;padding:5px 10px;border-radius:8px;cursor:pointer">Cambia</button>
+      <button onclick="resetAvatar()" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.25);color:#ef4444;font-size:12px;padding:5px 8px;border-radius:8px;cursor:pointer">✕</button>
+    </div>`;
+  } else {
+    html += `<button onclick="triggerAvatarUpload()" style="width:100%;display:flex;align-items:center;gap:10px;background:rgba(0,212,255,.08);border:1px dashed rgba(0,212,255,.3);color:#00d4ff;border-radius:12px;padding:12px 16px;cursor:pointer;margin-bottom:14px;font-weight:700;font-size:14px">
+      <span style="font-size:22px">📸</span><span>Carica foto profilo</span>
+    </button>`;
+  }
   for (const [sec, emojis] of Object.entries(grouped)){
     html += `<div class="avatar-menu-section-title">${sec}</div><div class="avatar-menu-grid">`;
     emojis.forEach(e => {
@@ -8426,21 +8454,13 @@ function generateRoomCode(){
 
 function createCodeRoom(){
   const name = document.getElementById('newRoomName').value.trim();
-  if (!name) {
-    showToast('⚠️ Inserisci un nome per la stanza');
-    document.getElementById('newRoomName').focus();
-    return;
-  }
-  if (name.length < 3) {
-    showToast('⚠️ Il nome deve avere almeno 3 caratteri');
-    return;
-  }
+  if (!name) { showToast('⚠️ Inserisci un nome per la stanza'); document.getElementById('newRoomName').focus(); return; }
+  if (name.length < 3) { showToast('⚠️ Il nome deve avere almeno 3 caratteri'); return; }
 
-  // Genera codice
   const code = generateRoomCode();
   currentRoomCode = code;
+  const password = (document.getElementById('newRoomPassword')?.value || '').trim() || null;
 
-  // Crea config stanza locale
   const customRoom = {
     id: 'code_' + code,
     name: selectedEmoji + ' ' + name,
@@ -8449,30 +8469,30 @@ function createCodeRoom(){
     tier: 'code',
     color: '#00d4ff',
     dot1: '#00d4ff', dot2: '#ff6b9d', dot3: '#f97316',
-    code: code,
-    ownerId: user.id
+    code, ownerId: user.id,
+    hasPassword: !!password
   };
 
-  // Salva stanza nelle stanze custom locali
   let myCodeRooms = getLS('kv4_code_rooms') || [];
   myCodeRooms.push(customRoom);
   setLS('kv4_code_rooms', myCodeRooms);
 
-  // Notifica server
-  if (socket && socket.connected) {
-    socket.emit('create-code-room', { room: customRoom });
+  if (socket?.connected) {
+    socket.emit('create-code-room', { room: { ...customRoom, password } });
   }
 
-  // Mostra risultato
   document.getElementById('generatedCode').textContent = code;
-  document.getElementById('codeResult').style.display = 'block';
+  const pwdLine = password ? `<div style="font-size:11px;color:#10b981;margin-top:4px">🔒 Password impostata</div>` : '';
+  const codeRes = document.getElementById('codeResult');
+  codeRes.style.display = 'block';
+  // Aggiungi riga password se non già presente
+  if (!document.getElementById('codePwdInfo')) {
+    const d = document.createElement('div'); d.id = 'codePwdInfo'; d.innerHTML = pwdLine;
+    codeRes.insertBefore(d, codeRes.firstChild);
+  }
   document.getElementById('createRoomBtn').textContent = 'Entra nella stanza';
-  document.getElementById('createRoomBtn').onclick = () => {
-    closeModal('modalCreateRoom');
-    enterCodeRoom(customRoom);
-  };
-
-  showToast('✅ Stanza creata! Codice: ' + code);
+  document.getElementById('createRoomBtn').onclick = () => { closeModal('modalCreateRoom'); enterCodeRoom(customRoom); };
+  showToast('✅ Stanza creata! Codice: ' + code + (password ? ' 🔒' : ''));
 }
 
 function copyRoomCode(){
@@ -8510,33 +8530,51 @@ function fallbackCopy(text){
 
 function joinCodeRoom(){
   const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
-  if (!code || code.length !== 6) {
-    showToast('⚠️ Inserisci un codice di 6 caratteri');
-    return;
-  }
+  if (!code || code.length !== 6) { showToast('⚠️ Inserisci un codice di 6 caratteri'); return; }
 
-  // Cerca prima nelle stanze locali
+  const pwdInput = document.getElementById('joinRoomPassword');
+  const password = pwdInput ? pwdInput.value.trim() : null;
+
   const myCodeRooms = getLS('kv4_code_rooms') || [];
   let foundRoom = myCodeRooms.find(r => r.code === code);
 
   if (!foundRoom) {
-    // Crea stanza temporanea solo con il codice e chiedi al server
     foundRoom = {
       id: 'code_' + code,
       name: '🔐 Stanza ' + code,
       emoji: '🔐',
       desc: 'Stanza privata - Codice: ' + code,
-      tier: 'code',
-      color: '#00d4ff',
+      tier: 'code', color: '#00d4ff',
       dot1: '#00d4ff', dot2: '#ff6b9d', dot3: '#f97316',
-      code: code
+      code
     };
-
-    // Salva localmente
     myCodeRooms.push(foundRoom);
     setLS('kv4_code_rooms', myCodeRooms);
   }
 
+  // Prima valida con il server (gestisce anche errore password)
+  if (socket?.connected) {
+    socket.once('code-room-error', ({ error }) => {
+      // Se errore password: mostra il campo password
+      if (error && error.includes('Password')) {
+        const wrap = document.getElementById('joinPasswordWrap');
+        if (wrap) { wrap.style.display = 'block'; document.getElementById('joinRoomPassword')?.focus(); }
+        showToast('🔒 ' + error);
+      } else {
+        showToast('⚠️ ' + error);
+      }
+    });
+    socket.once('code-room-joined', ({ room: serverRoom }) => {
+      if (serverRoom) Object.assign(foundRoom, serverRoom);
+      closeModal('modalJoinRoom');
+      if (!ROOMS.find(r => r.id === foundRoom.id)) ROOMS.push(foundRoom);
+      enterRoom(foundRoom.id);
+    });
+    socket.emit('join-code-room', { code, room: foundRoom, password: password || undefined });
+    return;
+  }
+
+  // Fallback offline
   closeModal('modalJoinRoom');
   enterCodeRoom(foundRoom);
 }
@@ -9370,34 +9408,67 @@ function changeEmoji(){
 function handleAvatarUpload(input){
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
+  if (file.size > 5 * 1024 * 1024) { showToast('⚠️ Foto troppo grande (max 5MB)'); return; }
+  if (!file.type.startsWith('image/')) { showToast('⚠️ Seleziona un\'immagine'); return; }
 
-  // Limita la dimensione a 2MB
-  if (file.size > 2 * 1024 * 1024) {
-    showToast('⚠️ La foto è troppo grande (max 2MB)');
-    return;
-  }
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    user.customAvatar = e.target.result; // Salva come data URL
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    // Crop circolare centrato, output 240×240 (profilo) e 48×48 (thumbnail chat)
+    function cropCircle(size, quality) {
+      const cv = document.createElement('canvas');
+      cv.width = cv.height = size;
+      const ctx = cv.getContext('2d');
+      // Clip circolare
+      ctx.beginPath();
+      ctx.arc(size/2, size/2, size/2, 0, Math.PI*2);
+      ctx.clip();
+      // Calcola crop centrato (aspect ratio preservato)
+      const s = Math.min(img.width, img.height);
+      const ox = (img.width  - s) / 2;
+      const oy = (img.height - s) / 2;
+      ctx.drawImage(img, ox, oy, s, s, 0, 0, size, size);
+      return cv.toDataURL('image/jpeg', quality);
+    }
+    user.customAvatar = cropCircle(240, 0.82);  // profilo
+    user.photoThumb   = cropCircle(48,  0.65);  // thumbnail chat
     saveUser();
     updateProfileUI();
-    showToast('📸 Avatar caricato!');
-    openLogoSettings();
+    // Aggiorna "Personalizza Avatar" se aperto
+    const prevEl = document.getElementById('avatarPreviewImg');
+    if (prevEl) prevEl.src = user.customAvatar;
+    showToast('📸 Foto caricata!');
+    // Chiudi modal e riapri settings
+    document.getElementById('avatarMenuOv')?.classList.remove('show');
+    setTimeout(() => openLogoSettings(), 200);
   };
-  reader.readAsDataURL(file);
+  img.onerror = () => showToast('⚠️ Impossibile leggere l\'immagine');
+  img.src = url;
+  // Reset input per riselezionare lo stesso file
+  input.value = '';
 }
 
 function resetAvatar(){
-  if (!user.customAvatar) {
-    showToast('⚠️ Nessun avatar personalizzato');
-    return;
-  }
   user.customAvatar = null;
+  user.photoThumb   = null;
   saveUser();
   updateProfileUI();
   showToast('🔄 Avatar ripristinato');
   openLogoSettings();
+}
+
+// Apre il file picker da qualsiasi punto
+function triggerAvatarUpload(){
+  let inp = document.getElementById('avatarInput');
+  if (!inp) {
+    inp = document.createElement('input');
+    inp.type = 'file'; inp.id = 'avatarInput'; inp.accept = 'image/*';
+    inp.style.display = 'none';
+    inp.onchange = () => handleAvatarUpload(inp);
+    document.body.appendChild(inp);
+  }
+  inp.click();
 }
 
 // CSS per il modale logo settings
