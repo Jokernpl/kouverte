@@ -4039,6 +4039,7 @@ const chatRoomUsers   = {}; // roomId -> Map<socketId, user>
 function getTotalOnline() {
     let tot = 0;
     for (const users of Object.values(chatRoomUsers)) tot += users.size;
+    tot += scopaWatchers ? scopaWatchers.size : 0;
     return tot;
 }
 
@@ -4073,6 +4074,9 @@ function scopaBroadcastLobby(){
         const s = io.sockets.sockets.get(sid);
         if(s) s.emit('scopa:lobby', payload);
     }
+    // Aggiorna il contatore "in sala" sulla game card in home
+    io.emit('room-online', { roomId: 'scopa', count: scopaWatchers.size });
+    io.emit('global-online', { count: getTotalOnline() });
 }
 
 function scopaDeck() {
@@ -5064,8 +5068,8 @@ io.on('connection', (socket) => {
         }
         const qsi=scopaQueue.findIndex(p=>p.socketId===socket.id);
         if(qsi!==-1) scopaQueue.splice(qsi,1);
-        scopaWatchers.delete(socket.id);
-        if(qsi!==-1||scopaGid) scopaBroadcastLobby();
+        const wasWatcher=scopaWatchers.delete(socket.id);
+        if(qsi!==-1||scopaGid||wasWatcher) scopaBroadcastLobby();
     });
 });
 

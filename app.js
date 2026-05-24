@@ -1687,12 +1687,18 @@ function connectSocket(){
     roomOnline[roomId]=count;
     const el=document.getElementById('ron_'+roomId);
     if(el){
-      el.textContent=count;
+      // Game card: mostra testo "X in sala" / "Nessuno ora"
+      if(el.classList.contains('gc-waiting')){
+        el.textContent=count>0?count+' in sala':'Nessuno ora';
+        el.classList.toggle('gc-waiting-empty',count===0);
+      } else {
+        el.textContent=count;
+      }
       if(count>prev){
         // bump animation
         el.classList.remove('bumping'); void el.offsetWidth; el.classList.add('bumping');
-        // glow whole card
-        const card=el.closest('.room-card');
+        // glow whole card (room-card o game-card)
+        const card=el.closest('.room-card,.game-card');
         if(card){card.classList.remove('just-joined');void card.offsetWidth;card.classList.add('just-joined');}
       }
     }
@@ -4545,7 +4551,6 @@ function tempBadge(cnt){
 
 function gameCard(r){
   const cnt = roomOnline[r.id]??0;
-  const waiting = cnt > 0 ? `<span class="gc-waiting">${cnt} in sala</span>` : `<span class="gc-waiting gc-waiting-empty">Nessuno ora</span>`;
   return `
   <div class="game-card" onclick="enterRoom('${r.id}')" style="--gc-color:${r.color}">
     <div class="gc-glow"></div>
@@ -4562,7 +4567,7 @@ function gameCard(r){
         </div>
       </div>
       <div class="gc-foot">
-        ${waiting}
+        <span class="gc-waiting${cnt===0?' gc-waiting-empty':''}" id="ron_${r.id}">${cnt>0?cnt+' in sala':'Nessuno ora'}</span>
         <button class="gc-play-btn">▶ Gioca</button>
       </div>
     </div>
