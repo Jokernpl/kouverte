@@ -6071,6 +6071,17 @@ function createAuthModal(){
         <div style="text-align:center;margin-top:12px">
           <a href="#" onclick="openRecoverModal();return false" style="font-size:12px;color:#00d4ff;text-decoration:none;font-weight:600">🔓 Password dimenticata? Recupera con codice o Telegram</a>
         </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px">
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.12)"></div>
+          <span style="font-size:11px;color:#64748b;white-space:nowrap">oppure continua con</span>
+          <div style="flex:1;height:1px;background:rgba(255,255,255,0.12)"></div>
+        </div>
+
+        <button type="button" onclick="loginWithTelegram()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px;margin-top:8px;background:linear-gradient(135deg,#2aabee,#229ed9);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(42,171,238,0.4);transition:opacity .2s" onmouseenter="this.style.opacity='.88'" onmouseleave="this.style.opacity='1'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L8.12 14.187l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.828.372z"/></svg>
+          Accedi con Telegram
+        </button>
       </form>
       <div class="modal-footer">
         <button type="button" class="modal-btn modal-btn-secondary" onclick="closeAuthModalSafe()">Annulla</button>
@@ -6092,6 +6103,90 @@ function closeAuthModalSafe(){
     sessionStorage.removeItem('kv_welcome_shown');
     setTimeout(() => showLoginWall(), 200);
   }
+}
+
+// ── Telegram Login ───────────────────────────────────────────────────────────
+
+function loginWithTelegram() {
+  // Se siamo dentro il Mini App Telegram usa initData direttamente
+  const tg = window.Telegram?.WebApp;
+  if (tg?.initData) {
+    _loginWithInitData(tg.initData);
+    return;
+  }
+  // Altrimenti apri il widget Telegram (web browser)
+  _openTelegramWidget();
+}
+
+function _loginWithInitData(initData) {
+  fetch('/api/tg/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ initData })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && data.token) {
+      setAuthToken(data.token);
+      document.getElementById('authModal')?.classList.remove('show');
+      showToast('✅ Accesso Telegram completato!');
+    } else {
+      showToast('❌ ' + (data.error || 'Errore Telegram'));
+    }
+  })
+  .catch(() => showToast('❌ Impossibile connettersi al server'));
+}
+
+window.onTgWidgetAuth = function(tgUser) {
+  fetch('/api/auth/telegram-widget', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tgUser)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok && data.token) {
+      setAuthToken(data.token);
+      document.getElementById('authModal')?.classList.remove('show');
+      showToast('✅ Benvenuto, ' + (data.user?.firstName || data.user?.username || 'utente') + '!');
+    } else {
+      showToast('❌ ' + (data.error || 'Errore autenticazione Telegram'));
+    }
+  })
+  .catch(() => showToast('❌ Impossibile connettersi al server'));
+};
+
+function _openTelegramWidget() {
+  // Crea e apre la popup del Telegram Login Widget
+  const BOT_NAME = 'Kouverte_bot';
+  const existingScript = document.getElementById('tg-widget-script');
+  if (existingScript) existingScript.remove();
+
+  // Il widget Telegram ha bisogno di un container visibile per il pulsante ufficiale
+  // ma noi usiamo il callback direttamente tramite data-onauth
+  const container = document.createElement('div');
+  container.id = 'tg-widget-container';
+  container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:99999;';
+  container.innerHTML = `
+    <div style="background:#1a2035;border-radius:16px;padding:28px 24px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div style="font-size:40px;margin-bottom:12px">✈️</div>
+      <div style="color:#fff;font-size:16px;font-weight:700;margin-bottom:8px">Accedi con Telegram</div>
+      <div style="color:#94a3b8;font-size:13px;margin-bottom:20px">Stai per essere reindirizzato a Telegram per autorizzare l'accesso</div>
+      <div id="tg-widget-btn-wrap" style="display:flex;justify-content:center;margin-bottom:16px"></div>
+      <button onclick="document.getElementById('tg-widget-container').remove()" style="background:transparent;border:1px solid rgba(255,255,255,0.2);color:#94a3b8;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer">Annulla</button>
+    </div>
+  `;
+  document.body.appendChild(container);
+
+  const script = document.createElement('script');
+  script.id = 'tg-widget-script';
+  script.src = 'https://telegram.org/js/telegram-widget.js?22';
+  script.setAttribute('data-telegram-login', BOT_NAME);
+  script.setAttribute('data-size', 'large');
+  script.setAttribute('data-onauth', 'onTgWidgetAuth(user)');
+  script.setAttribute('data-request-access', 'write');
+  script.setAttribute('data-radius', '8');
+  document.getElementById('tg-widget-btn-wrap').appendChild(script);
 }
 
 function switchAuthMode(mode){

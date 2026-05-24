@@ -3834,6 +3834,70 @@ app.post('/api/tg/auth', rateLimit('tg-auth', 10, 5 * 60 * 1000), (req, res) => 
     res.json({ ok: true, validated: true, token, user: { id: user.id, username: user.username, firstName: user.firstName } });
 });
 
+// Telegram Login Widget auth (web, non Mini App)
+// Hash: HMAC-SHA256(data_check_string, SHA256(BOT_TOKEN))
+app.post('/api/auth/telegram-widget', rateLimit('tg-widget', 10, 5 * 60 * 1000), async (req, res) => {
+    try {
+        const BOT_TOKEN_ACTIVE = process.env.BOT_TOKEN || '8782933185:AAF1NkjD1HQzwwBRCFBjK2ez0sjHyn5RujU';
+        const data = req.body || {};
+        const { hash } = data;
+        if (!hash) return res.status(400).json({ error: 'Hash mancante' });
+
+        const rest = { ...data };
+        delete rest.hash;
+        const dataCheckString = Object.keys(rest).sort().map(k => `${k}=${rest[k]}`).join('\n');
+        const secretKey = crypto.createHash('sha256').update(BOT_TOKEN_ACTIVE).digest();
+        const computedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+        if (computedHash !== hash) return res.status(401).json({ error: 'Auth Telegram non valida' });
+
+        const authDate = parseInt(rest.auth_date || '0');
+        if (Math.floor(Date.now() / 1000) - authDate > 86400) return res.status(401).json({ error: 'Auth scaduta, riprova' });
+
+        const tgIdRaw = String(rest.id || '').replace(/[^0-9]/g, '');
+        if (!tgIdRaw) return res.status(400).json({ error: 'ID Telegram mancante' });
+
+        const userId = 'tg_' + tgIdRaw;
+        const rawUsername = rest.username || ('u' + tgIdRaw);
+        const username = (sanitizeUsername(rawUsername) || ('u' + tgIdRaw)).slice(0, 20);
+        const firstName = String(rest.first_name || 'Utente').replace(/[<>"']/g, '').slice(0, 50);
+        const photoUrl = String(rest.photo_url || '').replace(/[<>"']/g, '').slice(0, 200);
+
+        DB.users = DB.users || [];
+        let user = DB.users.find(u => u.id === userId);
+        if (!user) {
+            user = {
+                id: userId,
+                username,
+                firstName,
+                telegramId: tgIdRaw,
+                photo_url: photoUrl || null,
+                verified: true,
+                is_admin: false,
+                is_moderator: false,
+                created_at: now()
+            };
+            DB.users.push(user);
+            DB.user_credits = DB.user_credits || [];
+            DB.user_credits.push({ user_id: userId, credits: 50, updated_at: now() });
+            saveDB(DB);
+        } else {
+            user.username = username;
+            user.firstName = firstName;
+            if (photoUrl) user.photo_url = photoUrl;
+            user.verified = true;
+            user.last_seen = now();
+            markDirty();
+        }
+
+        const token = generateToken(user.id);
+        res.json({ ok: true, token, user: publicUser(user) });
+    } catch (err) {
+        console.error('[tg-widget]', err);
+        res.status(500).json({ error: 'Errore interno' });
+    }
+});
+
 app.post('/api/cleanup', (req, res) => {
     const before = DB.stories.length;
     DB.stories = DB.stories.filter(s => s.expires_at > now());
