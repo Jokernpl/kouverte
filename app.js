@@ -9282,3 +9282,157 @@ function syncProfVideoCard(){
     if (v) v.play().catch(()=>{});
   }
 }
+
+// ══════════════════════════════════════════════════════════════
+// PANNELLO DIAGNOSTICO / RISOLVI PROBLEMI
+// ══════════════════════════════════════════════════════════════
+
+function openDiagnostic() {
+  const overlay = document.getElementById('diagOverlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+  const checks = document.getElementById('diagChecks');
+  if (checks && checks.innerHTML === '') runDiagnostics();
+}
+
+function closeDiagnostic() {
+  const overlay = document.getElementById('diagOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+async function runDiagnostics() {
+  const container = document.getElementById('diagChecks');
+  const tipsBox   = document.getElementById('diagTipsBox');
+  if (!container) return;
+
+  const CHECKS = [
+    { id:'internet',    icon:'🌐', name:'Connessione Internet' },
+    { id:'server',      icon:'🖥️', name:'Server Kouverte' },
+    { id:'realtime',    icon:'⚡', name:'Connessione in Tempo Reale' },
+    { id:'camera',      icon:'📷', name:'Fotocamera' },
+    { id:'mic',         icon:'🎤', name:'Microfono' },
+    { id:'webrtc',      icon:'📡', name:'Video Chat (WebRTC)' },
+    { id:'storage',     icon:'💾', name:'Salvataggio Locale' },
+    { id:'notify',      icon:'🔔', name:'Notifiche Push' },
+  ];
+
+  container.innerHTML = CHECKS.map(c => `
+    <div class="diag-check-item checking" id="diag-${c.id}">
+      <div class="diag-check-icon">${c.icon}</div>
+      <div class="diag-check-info">
+        <div class="diag-check-name">${c.name}</div>
+        <div class="diag-check-status" id="diag-${c.id}-status">Controllo...</div>
+      </div>
+      <div class="diag-check-badge" id="diag-${c.id}-badge">⟳</div>
+    </div>
+  `).join('');
+  if (tipsBox) { tipsBox.innerHTML = ''; tipsBox.className = 'diag-tips-box'; }
+
+  const tips = [];
+
+  // 1. Internet
+  await _diagCheck('internet', async () => {
+    if (!navigator.onLine) throw new Error('Dispositivo offline');
+    return 'Online ✓';
+  }, tips, 'Controlla la connessione Wi-Fi o dati mobili.');
+
+  // 2. Server
+  await _diagCheck('server', async () => {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), 4000);
+    try {
+      const r = await fetch('/health', { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return 'Risponde ✓';
+    } catch (e) {
+      clearTimeout(tid);
+      if (e.name === 'AbortError') throw new Error('Timeout — server lento');
+      throw new Error('Non raggiungibile');
+    }
+  }, tips, 'Ricarica la pagina. Se persiste, il server è in manutenzione.');
+
+  // 3. WebSocket / Socket.io
+  await _diagCheck('realtime', async () => {
+    const s = (typeof socket !== 'undefined') ? socket : null;
+    if (!s) throw new Error('Socket non inizializzato');
+    if (!s.connected) throw new Error('Disconnesso — ricarica la pagina');
+    return `Connesso (${s.id ? s.id.slice(0,8) : '?'}...)`;
+  }, tips, 'Ricarica la pagina per riconnetterti al server.');
+
+  // 4. Camera
+  await _diagCheck('camera', async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)
+      throw new Error('API non supportata dal browser');
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const cams = devs.filter(d => d.kind === 'videoinput');
+    if (!cams.length) throw new Error('Nessuna fotocamera trovata');
+    return `${cams.length} fotocamera${cams.length > 1 ? 'e' : ''} trovata${cams.length > 1 ? 'e' : ''} ✓`;
+  }, tips, 'Collega una webcam e concedi i permessi quando richiesto dal browser.');
+
+  // 5. Microfono
+  await _diagCheck('mic', async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)
+      throw new Error('API non supportata dal browser');
+    const devs = await navigator.mediaDevices.enumerateDevices();
+    const mics = devs.filter(d => d.kind === 'audioinput');
+    if (!mics.length) throw new Error('Nessun microfono trovato');
+    return `${mics.length} microfono${mics.length > 1 ? 'i' : ''} trovato${mics.length > 1 ? 'i' : ''} ✓`;
+  }, tips, 'Controlla che il microfono sia collegato e i permessi browser siano concessi.');
+
+  // 6. WebRTC
+  await _diagCheck('webrtc', async () => {
+    if (!window.RTCPeerConnection) throw new Error('Non supportato da questo browser');
+    const pc = new RTCPeerConnection({ iceServers: [] });
+    pc.close();
+    return 'Supportato ✓';
+  }, tips, 'Aggiorna Chrome, Firefox o Safari per abilitare il video chat.');
+
+  // 7. localStorage
+  await _diagCheck('storage', async () => {
+    try {
+      localStorage.setItem('_diag_test', '1');
+      localStorage.removeItem('_diag_test');
+      return 'Funziona ✓';
+    } catch {
+      throw new Error('Bloccato — modalità privata?');
+    }
+  }, tips, 'Prova ad uscire dalla modalità in incognito per salvare le preferenze.');
+
+  // 8. Notifiche
+  await _diagCheck('notify', async () => {
+    if (!('Notification' in window)) throw new Error('Non supportato dal browser');
+    const perm = Notification.permission;
+    if (perm === 'granted') return 'Abilitate ✓';
+    if (perm === 'denied') { const e = new Error('Bloccate — modifica le impostazioni browser'); e._warn = true; throw e; }
+    return 'Non ancora richieste';
+  }, tips, 'Per le notifiche: Impostazioni browser → Notifiche → Permetti per kouverte.com');
+
+  // Mostra suggerimenti
+  if (tipsBox && tips.length) {
+    tipsBox.className = 'diag-tips-box visible';
+    tipsBox.innerHTML = `
+      <div class="diag-tips-title">💡 Suggerimenti per risolvere</div>
+      ${tips.map(t => `<div class="diag-tip">${t}</div>`).join('')}
+    `;
+  }
+}
+
+async function _diagCheck(id, fn, tipsArr, errorTip) {
+  const item   = document.getElementById(`diag-${id}`);
+  const status = document.getElementById(`diag-${id}-status`);
+  const badge  = document.getElementById(`diag-${id}-badge`);
+  if (!item) return;
+  try {
+    const result = await fn();
+    item.className = 'diag-check-item ok';
+    if (status) status.textContent = result;
+    if (badge)  badge.textContent  = '✓';
+  } catch (e) {
+    const isWarn = e._warn === true;
+    item.className = `diag-check-item ${isWarn ? 'warn' : 'error'}`;
+    if (status) status.textContent = e.message;
+    if (badge)  badge.textContent  = isWarn ? '⚠' : '✗';
+    if (errorTip && tipsArr) tipsArr.push(errorTip);
+  }
+}

@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260524">
+<link rel="stylesheet" href="/app.css?v=20260601">
 </head>
 <body>
 
@@ -1135,6 +1135,26 @@
 <div class="opill" id="opill"><div class="opd"></div><span id="oCount">0</span> online</div>
 <div class="toast" id="toast"></div>
 
+<!-- ░░ DIAGNOSTIC FAB ░░ -->
+<button class="diag-fab" id="diagFab" onclick="openDiagnostic()" title="Risolvi problemi" aria-label="Diagnostica">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+</button>
+
+<!-- ░░ DIAGNOSTIC MODAL ░░ -->
+<div class="diag-overlay" id="diagOverlay" onclick="if(event.target===this)closeDiagnostic()">
+  <div class="diag-sheet">
+    <div class="diag-handle"></div>
+    <div class="diag-title">🔧 Risolvi Problemi</div>
+    <div class="diag-sub">Diagnostica automatica — controlla connessione, camera e audio</div>
+
+    <div id="diagChecks"></div>
+    <div id="diagTipsBox" class="diag-tips-box"></div>
+
+    <button class="diag-run-btn" onclick="runDiagnostics()">🔍 Riesegui Diagnostica</button>
+    <button class="diag-close-btn" onclick="closeDiagnostic()">Chiudi</button>
+  </div>
+</div>
+
 
 
 <!-- ═══ REFERRAL MODAL ═══ -->
@@ -1207,7 +1227,7 @@
 </div>
 
 
-<script src="/app.js?v=20260524"></script>
+<script src="/app.js?v=20260601"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

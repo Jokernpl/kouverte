@@ -2675,3 +2675,300 @@ html[data-theme="light"] body {
 .altro-row-chevron{width:14px;height:14px;stroke:#4b5563;flex-shrink:0}
 .altro-row-danger .altro-row-text{color:#f87171}
 .altro-row-danger .altro-row-icon{filter:grayscale(30%)}
+
+/* ╔═══════════════════════════════════════════════════════════════
+   ║  KOUVERTE v3 — VISUAL UPGRADE — Giugno 2026
+   ╚═══════════════════════════════════════════════════════════════ */
+
+/* ─── SFONDO ANIMATO HOME ─────────────────────────────────────── */
+#home::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% -5%,rgba(0,212,255,.09) 0%,transparent 65%),
+    radial-gradient(ellipse 55% 35% at 5% 80%,rgba(139,92,246,.06) 0%,transparent 60%),
+    radial-gradient(ellipse 45% 30% at 95% 40%,rgba(255,107,157,.05) 0%,transparent 60%);
+  pointer-events:none;z-index:0
+}
+.home-body{position:relative;z-index:1}
+
+/* ─── HERO CARD ANIMATA ─────────────────────────────────────── */
+.kv-hero-card{
+  background:rgba(0,212,255,.04) !important;
+  border:1px solid rgba(0,212,255,.22) !important;
+  position:relative;overflow:hidden;
+  animation:heroCardGlow 5s ease-in-out infinite
+}
+@keyframes heroCardGlow{
+  0%,100%{box-shadow:0 0 0 rgba(0,212,255,0),0 4px 20px rgba(0,0,0,.3)}
+  50%{box-shadow:0 0 30px rgba(0,212,255,.12),0 0 60px rgba(0,212,255,.05),0 4px 20px rgba(0,0,0,.3)}
+}
+.kv-hero-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(0,212,255,.6) 35%,rgba(255,107,157,.4) 65%,transparent 100%);
+  pointer-events:none
+}
+.kv-hero-logo{animation:heroLogoFloat 4s ease-in-out infinite}
+@keyframes heroLogoFloat{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-4px) scale(1.04)}
+}
+
+/* ─── ROOM CARDS UPGRADE ────────────────────────────────────── */
+.room-card{
+  background:linear-gradient(155deg,rgba(22,26,50,.98),rgba(10,13,22,.99)) !important;
+  border:1px solid rgba(255,255,255,.08) !important
+}
+.room-card:hover{
+  border-color:rgba(var(--rc-rgb,0,212,255),.5) !important;
+  transform:translateY(-5px) scale(1.01) !important;
+  box-shadow:0 14px 36px rgba(0,0,0,.55),0 0 0 1px rgba(var(--rc-rgb,0,212,255),.12),0 0 24px rgba(var(--rc-rgb,0,212,255),.1) !important
+}
+
+/* ─── NAV BAR UPGRADE ───────────────────────────────────────── */
+.bnav{
+  background:rgba(5,7,14,.97) !important;
+  border-top:1px solid rgba(255,255,255,.07) !important;
+  backdrop-filter:blur(32px) !important;
+  -webkit-backdrop-filter:blur(32px) !important;
+  position:relative
+}
+.bnav::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.3),rgba(255,107,157,.2),transparent);
+  pointer-events:none
+}
+.nbtn.active .nav-svg{stroke:#00d4ff !important;filter:drop-shadow(0 0 6px rgba(0,212,255,.55))}
+.nbtn.active .nlbl{color:#00d4ff !important}
+
+/* ─── HOME HEADER UPGRADE ───────────────────────────────────── */
+.home-hdr{position:relative}
+.home-hdr::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,212,255,.28),rgba(255,107,157,.15),transparent);
+  pointer-events:none
+}
+.hdr-app-title{
+  background:linear-gradient(90deg,#fff 55%,rgba(0,212,255,.8)) !important;
+  -webkit-background-clip:text !important;-webkit-text-fill-color:transparent !important;
+  background-clip:text !important
+}
+
+/* ─── LIVE FEED UPGRADE ─────────────────────────────────────── */
+.live-feed{
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;overflow:hidden;margin-bottom:8px
+}
+.live-feed-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);
+  font-size:12px;color:#b4bcc8;transition:background .15s
+}
+.live-feed-item:last-child{border-bottom:none}
+.live-feed-item:hover{background:rgba(255,255,255,.03)}
+.lf-dot{
+  width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0;
+  animation:rdot 1.5s ease-in-out infinite;box-shadow:0 0 6px rgba(16,185,129,.6)
+}
+.lf-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lf-time{font-size:10px;color:#4b5563;flex-shrink:0}
+
+/* ─── LIVE STATS BAR UPGRADE ────────────────────────────────── */
+.live-stats-bar{
+  display:flex;gap:0;
+  background:rgba(255,255,255,.025);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;overflow:hidden;
+  margin-bottom:12px
+}
+.live-stat{
+  flex:1;display:flex;align-items:center;gap:8px;
+  padding:10px 12px;border-right:1px solid rgba(255,255,255,.05)
+}
+.live-stat:last-child{border-right:none}
+.live-stat-icon{font-size:16px;flex-shrink:0}
+.live-stat-num{font-size:16px;font-weight:800;color:#fff;line-height:1}
+.live-stat-label{font-size:9px;color:#6b7280;margin-top:1px;font-weight:500}
+.pulse-dot{
+  width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;
+  animation:rdot 1.5s ease-in-out infinite;box-shadow:0 0 8px rgba(16,185,129,.7)
+}
+
+/* ─── TOAST UPGRADE ─────────────────────────────────────────── */
+.toast{
+  background:rgba(18,22,42,.97) !important;
+  border:1px solid rgba(0,212,255,.4) !important;
+  box-shadow:0 4px 24px rgba(0,0,0,.5),0 0 16px rgba(0,212,255,.12) !important;
+  backdrop-filter:blur(20px) !important
+}
+
+/* ─── ONLINE PILL UPGRADE ───────────────────────────────────── */
+.home-anon{
+  background:rgba(0,0,0,.65) !important;
+  border:1px solid rgba(255,255,255,.15) !important;
+  box-shadow:0 2px 8px rgba(0,0,0,.3)
+}
+
+/* ─── STANZE PRIVATE UPGRADE ────────────────────────────────── */
+.code-rooms-section{margin-bottom:8px}
+.code-room-btn{
+  display:flex;align-items:center;gap:12px;
+  width:100%;padding:14px 16px;
+  border-radius:14px;cursor:pointer;
+  transition:all .2s;text-align:left;color:inherit;
+  margin-bottom:8px
+}
+.code-room-btn.create{
+  background:rgba(0,212,255,.04);
+  border:1px solid rgba(0,212,255,.2)
+}
+.code-room-btn.create:hover{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.45);transform:translateY(-2px)}
+.code-room-btn.join{
+  background:rgba(16,185,129,.04);
+  border:1px solid rgba(16,185,129,.2)
+}
+.code-room-btn.join:hover{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.45);transform:translateY(-2px)}
+.crb-icon{font-size:24px;flex-shrink:0}
+.crb-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.crb-sub{font-size:11px;color:#6b7280}
+
+/* ─── ALTRO SHEET UPGRADE ───────────────────────────────────── */
+.altro-sheet{
+  background:linear-gradient(180deg,#1a1f3a 0%,#0d1020 100%) !important
+}
+.altro-card:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.4)}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANNELLO DIAGNOSTICO / RISOLVI PROBLEMI
+   ═══════════════════════════════════════════════════════════════ */
+
+.diag-fab{
+  position:fixed;bottom:74px;right:14px;
+  width:46px;height:46px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(5,7,14,.97),rgba(22,26,50,.97));
+  border:1.5px solid rgba(0,212,255,.4);
+  color:#00d4ff;font-size:20px;font-weight:800;
+  cursor:pointer;z-index:200;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(0,0,0,.45),0 0 14px rgba(0,212,255,.2);
+  transition:transform .2s,box-shadow .2s,border-color .2s;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)
+}
+.diag-fab:hover{
+  transform:scale(1.1);
+  border-color:rgba(0,212,255,.7);
+  box-shadow:0 6px 24px rgba(0,0,0,.5),0 0 24px rgba(0,212,255,.32)
+}
+.diag-fab:active{transform:scale(.92)}
+
+.diag-overlay{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.82);
+  z-index:9200;
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)
+}
+.diag-overlay.open{opacity:1;pointer-events:all}
+
+.diag-sheet{
+  width:100%;max-width:480px;
+  background:linear-gradient(180deg,#1a1f3a 0%,#0d1020 100%);
+  border:1px solid rgba(0,212,255,.15);
+  border-radius:24px 24px 0 0;
+  padding:20px 20px 44px;
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.25,.46,.45,.94);
+  max-height:88vh;overflow-y:auto
+}
+.diag-overlay.open .diag-sheet{transform:translateY(0)}
+
+.diag-handle{
+  width:36px;height:4px;background:rgba(255,255,255,.15);
+  border-radius:2px;margin:0 auto 18px
+}
+.diag-title{
+  font-size:20px;font-weight:800;color:#fff;
+  text-align:center;margin-bottom:4px;letter-spacing:-.4px
+}
+.diag-sub{
+  font-size:12px;color:#9ca3af;
+  text-align:center;margin-bottom:20px;line-height:1.5
+}
+
+.diag-check-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:12px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.06);
+  margin-bottom:8px;transition:all .3s
+}
+.diag-check-icon{
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;flex-shrink:0;background:rgba(255,255,255,.06)
+}
+.diag-check-info{flex:1;min-width:0}
+.diag-check-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px}
+.diag-check-status{font-size:11px;color:#6b7280}
+.diag-check-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;
+  border-radius:8px;flex-shrink:0;
+  background:rgba(255,255,255,.07);color:#9ca3af
+}
+
+.diag-check-item.ok{border-color:rgba(16,185,129,.25)}
+.diag-check-item.ok .diag-check-icon{background:rgba(16,185,129,.18)}
+.diag-check-item.ok .diag-check-status{color:#10b981}
+.diag-check-item.ok .diag-check-badge{background:rgba(16,185,129,.2);color:#10b981}
+
+.diag-check-item.error{border-color:rgba(239,68,68,.25)}
+.diag-check-item.error .diag-check-icon{background:rgba(239,68,68,.18)}
+.diag-check-item.error .diag-check-status{color:#ef4444}
+.diag-check-item.error .diag-check-badge{background:rgba(239,68,68,.2);color:#ef4444}
+
+.diag-check-item.warn{border-color:rgba(251,191,36,.25)}
+.diag-check-item.warn .diag-check-icon{background:rgba(251,191,36,.18)}
+.diag-check-item.warn .diag-check-status{color:#fbbf24}
+.diag-check-item.warn .diag-check-badge{background:rgba(251,191,36,.2);color:#fbbf24}
+
+.diag-check-item.checking .diag-check-badge{animation:diagSpin .7s linear infinite;display:inline-block}
+@keyframes diagSpin{to{transform:rotate(360deg)}}
+
+.diag-tips-box{
+  margin-top:14px;padding:14px 16px;
+  background:rgba(0,212,255,.04);
+  border:1px solid rgba(0,212,255,.14);
+  border-radius:14px;display:none
+}
+.diag-tips-box.visible{display:block}
+.diag-tips-title{
+  font-size:11px;font-weight:700;color:#00d4ff;
+  margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px
+}
+.diag-tip{
+  font-size:12px;color:#b4bcc8;
+  padding:4px 0 4px 14px;
+  position:relative;line-height:1.5
+}
+.diag-tip::before{
+  content:'→';position:absolute;left:0;
+  color:#00d4ff;font-size:10px;top:5px
+}
+
+.diag-run-btn{
+  width:100%;padding:15px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#00d4ff,#00e5b8);
+  color:#0f1117;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:18px;
+  box-shadow:0 4px 18px rgba(0,212,255,.3);
+  transition:transform .15s,box-shadow .15s
+}
+.diag-run-btn:active{transform:scale(.97)}
+.diag-close-btn{
+  width:100%;padding:10px;border:none;
+  background:transparent;color:#6b7280;
+  font-size:13px;cursor:pointer;margin-top:6px
+}
+.diag-close-btn:hover{color:#9ca3af}
