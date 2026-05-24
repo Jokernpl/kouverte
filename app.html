@@ -1631,9 +1631,22 @@ html[data-theme="light"] body {
 .prof-banner.b-fire{background:#ff6b9d}
 .prof-banner.b-neon{background:linear-gradient(135deg,#00ffff,#ff6b9d,#8b5cf6)}
 
+/* ── 3D Tilt Card ── */
+.prof-tilt-scene{perspective:900px;perspective-origin:50% 40%;padding:0}
+.prof-tilt-card{transform-style:preserve-3d;transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s ease;will-change:transform;backface-visibility:hidden}
+/* Shine layer che si sposta con il tilt */
+.prof-tilt-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.07),transparent 60%);pointer-events:none;transition:background .18s ease;z-index:3;border-radius:0 0 20px 20px}
+/* ── Particles canvas nel banner ── */
+#bannerParticles{position:absolute;inset:0;pointer-events:none;z-index:1}
 /* Hero profilo posizionato sopra il banner */
 .prof-hero{margin-top:-55px;position:relative;z-index:2}
 .prof-avatar-hero{box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+/* Avatar glow pulse (per utenti senza frame specifico) */
+.prof-avatar-hero.glow-default{animation:avatarGlow 3s ease-in-out infinite}
+@keyframes avatarGlow{0%,100%{box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 0 0 rgba(0,212,255,0)}
+  50%{box-shadow:0 4px 20px rgba(0,0,0,.4),0 0 18px 4px rgba(0,212,255,.25)}}
+/* ── Stats count-up ── */
+.stat-n{transition:color .2s}
 
 /* Stato personalizzato */
 .prof-status-row{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(0,212,255,0.15);border:1px solid rgba(0,212,255,0.3);border-radius:20px;margin-top:8px;cursor:pointer;transition:all 0.2s}
@@ -2322,8 +2335,13 @@ html[data-theme="light"] body {
 
 <!-- ░░ PROFILE ░░ -->
 <div id="profile" class="screen">
+  <!-- 3D Tilt wrapper per banner + hero -->
+  <div class="prof-tilt-scene" id="profTiltScene">
+  <div class="prof-tilt-card" id="profTiltCard">
+
   <!-- Banner profilo (sfondo personalizzabile) -->
   <div class="prof-banner" id="profBanner" onclick="cycleProfileBanner()" title="Tocca per cambiare banner">
+    <canvas id="bannerParticles"></canvas>
     <div class="prof-banner-overlay"></div>
     <div class="prof-banner-edit">🎨 Banner</div>
   </div>
@@ -2352,6 +2370,9 @@ html[data-theme="light"] body {
     <div id="premBadge" style="display:none" class="prem-badge">⭐ Premium</div>
     <div id="joinDate" style="font-size:10px;color:#4b5563;margin-top:6px"></div>
   </div>
+
+  </div><!-- /prof-tilt-card -->
+  </div><!-- /prof-tilt-scene -->
 
   <!-- Rank / Level bar -->
   <div class="rank-wrap">
@@ -3034,7 +3055,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn(); initProfileTilt(); initBannerParticles();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -6706,6 +6727,7 @@ function showScreen(name,btn){
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
   _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
+  if (name === 'profile') triggerProfileAnimations();
   // GA4: track screen view
   window.trackEvent?.('screen_view', { screen_name: name });
 }
@@ -9845,6 +9867,183 @@ function toggleVoicePlay(audioId) {
   } else {
     audio.pause();
     btn.textContent = '▶'; btn.classList.remove('playing');
+  }
+}
+
+// --- Profilo Animato: 3D Tilt + Particles + Count-up ---
+
+let _tiltRafId = null;
+let _tiltTargetX = 0, _tiltTargetY = 0;
+let _tiltCurrentX = 0, _tiltCurrentY = 0;
+let _particlesRaf = null;
+
+function initProfileTilt() {
+  const scene = document.getElementById('profTiltScene');
+  const card  = document.getElementById('profTiltCard');
+  if (!scene || !card) return;
+
+  // Lerp il tilt per smoothness
+  function applyTilt() {
+    _tiltCurrentX += (_tiltTargetX - _tiltCurrentX) * 0.12;
+    _tiltCurrentY += (_tiltTargetY - _tiltCurrentY) * 0.12;
+    card.style.transform = `rotateX(${_tiltCurrentX}deg) rotateY(${_tiltCurrentY}deg)`;
+    // Shine segue la rotazione
+    const shine = Math.abs(_tiltCurrentX) + Math.abs(_tiltCurrentY);
+    const cx = 50 + _tiltCurrentY * 2;
+    const cy = 50 - _tiltCurrentX * 2;
+    card.style.setProperty('--shine-cx', cx + '%');
+    card.style.setProperty('--shine-cy', cy + '%');
+    _tiltRafId = requestAnimationFrame(applyTilt);
+  }
+  function startTiltLoop() {
+    if (!_tiltRafId) applyTilt();
+  }
+  function stopTiltLoop() {
+    _tiltTargetX = 0; _tiltTargetY = 0;
+    // lascia smorzare da solo, poi cancella
+    setTimeout(() => { if (_tiltRafId) { cancelAnimationFrame(_tiltRafId); _tiltRafId = null; } }, 600);
+  }
+
+  // Mouse (desktop)
+  scene.addEventListener('mousemove', e => {
+    startTiltLoop();
+    const r = scene.getBoundingClientRect();
+    const nx = (e.clientX - r.left) / r.width  - 0.5;
+    const ny = (e.clientY - r.top)  / r.height - 0.5;
+    _tiltTargetY =  nx * 14;
+    _tiltTargetX = -ny * 10;
+  });
+  scene.addEventListener('mouseleave', () => stopTiltLoop());
+
+  // Touch (mobile)
+  scene.addEventListener('touchmove', e => {
+    startTiltLoop();
+    const t = e.touches[0];
+    const r = scene.getBoundingClientRect();
+    const nx = (t.clientX - r.left) / r.width  - 0.5;
+    const ny = (t.clientY - r.top)  / r.height - 0.5;
+    _tiltTargetY =  nx * 10;
+    _tiltTargetX = -ny * 8;
+  }, { passive: true });
+  scene.addEventListener('touchend', () => stopTiltLoop());
+
+  // Giroscopio (solo se profilo visibile)
+  if (typeof DeviceOrientationEvent !== 'undefined') {
+    window.addEventListener('deviceorientation', e => {
+      const profileEl = document.getElementById('profile');
+      if (!profileEl?.classList.contains('active')) return;
+      startTiltLoop();
+      _tiltTargetY = Math.max(-10, Math.min(10, (e.gamma || 0) / 4));
+      _tiltTargetX = Math.max(-8,  Math.min(8,  ((e.beta  || 0) - 40) / 6));
+    });
+  }
+}
+
+function initBannerParticles() {
+  const canvas = document.getElementById('bannerParticles');
+  if (!canvas) return;
+  const banner = canvas.parentElement;
+  const ctx = canvas.getContext('2d');
+
+  function resize() {
+    canvas.width  = banner.offsetWidth  || 360;
+    canvas.height = banner.offsetHeight || 150;
+  }
+  resize();
+
+  const COLORS = ['#00d4ff','#ff6b9d','#00e5b8','rgba(255,255,255,.8)'];
+  const P_COUNT = 28;
+  const particles = Array.from({ length: P_COUNT }, () => spawnParticle(canvas));
+
+  function spawnParticle(cv, fromBottom) {
+    return {
+      x: Math.random() * (cv?.width || 360),
+      y: fromBottom ? (cv?.height || 150) + 4 : Math.random() * (cv?.height || 150),
+      r: Math.random() * 2.2 + 0.4,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -(Math.random() * 0.45 + 0.15),
+      alpha: Math.random() * 0.55 + 0.15,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      life: fromBottom ? 1 : Math.random()
+    };
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+      ctx.save();
+      ctx.globalAlpha = p.alpha * Math.min(1, p.life * 3);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 5;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      p.x += p.vx; p.y += p.vy; p.life -= 0.004;
+      if (p.life <= 0 || p.y < -4) particles[i] = spawnParticle(canvas, true);
+    });
+    _particlesRaf = requestAnimationFrame(draw);
+  }
+
+  // Avvia/ferma con visibilità del profilo
+  const profileEl = document.getElementById('profile');
+  if (profileEl) {
+    new MutationObserver(() => {
+      if (profileEl.classList.contains('active')) {
+        resize();
+        if (!_particlesRaf) draw();
+      } else {
+        cancelAnimationFrame(_particlesRaf); _particlesRaf = null;
+      }
+    }).observe(profileEl, { attributes: true, attributeFilter: ['class'] });
+    if (profileEl.classList.contains('active')) draw();
+  }
+}
+
+function countUpStat(elId, target, duration) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  const start = Date.now();
+  const from  = 0;
+  const diff  = target - from;
+  if (diff <= 0) { el.textContent = target; return; }
+  function tick() {
+    const t = Math.min(1, (Date.now() - start) / duration);
+    const ease = 1 - Math.pow(1 - t, 3); // cubic ease-out
+    el.textContent = Math.round(from + diff * ease);
+    if (t < 1) requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+function triggerProfileAnimations() {
+  // Count-up sulle stat cards
+  setTimeout(() => {
+    const msgs  = (typeof user !== 'undefined' && user) ? (user.msgCount || 0)  : 0;
+    const rooms = (typeof user !== 'undefined' && user) ? (user.roomsJoined || 0) : 0;
+    const badges = (typeof user !== 'undefined' && user) ? (user.badges?.length || 0) : 0;
+    countUpStat('stMsgs',   msgs,   900);
+    countUpStat('stRooms',  rooms,  750);
+    countUpStat('stBadges', badges, 600);
+  }, 120);
+
+  // Glow default sull'avatar se nessuna cornice speciale
+  const avatar = document.getElementById('profAvatarHero');
+  if (avatar) {
+    const hasFrame = [...avatar.classList].some(c => c.startsWith('frame-'));
+    avatar.classList.toggle('glow-default', !hasFrame);
+  }
+
+  // Particles (se non già avviate)
+  if (!_particlesRaf) {
+    const canvas = document.getElementById('bannerParticles');
+    if (canvas) {
+      const banner = canvas.parentElement;
+      canvas.width  = banner.offsetWidth  || 360;
+      canvas.height = banner.offsetHeight || 150;
+      initBannerParticles._started = false; // force restart
+    }
   }
 }
 
