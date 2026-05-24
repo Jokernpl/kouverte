@@ -656,6 +656,45 @@ body{position:relative}
 /* Overflow visible sul chat msgs per il bottone hover */
 #chatMsgs .mrow{overflow:visible}
 
+/* ── Image button ── */
+.cimg{width:34px;height:34px;border-radius:50%;border:none;flex-shrink:0;
+  background:rgba(56,189,248,.12);color:#38bdf8;font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,background .15s;align-self:flex-end;border:1px solid rgba(56,189,248,.25)}
+.cimg:hover{background:rgba(56,189,248,.22)}
+.cimg:active{transform:scale(.9)}
+
+/* ── Chat image bubble ── */
+.chat-img-wrap{display:block;cursor:pointer;border-radius:10px;overflow:hidden;
+  max-width:220px;max-height:180px;position:relative;margin:2px 0}
+.chat-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;border-radius:10px;
+  transition:filter .2s}
+.chat-img-wrap:hover img{filter:brightness(.85)}
+.chat-img-wrap .img-expand{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;opacity:0;transition:opacity .2s;font-size:22px}
+.chat-img-wrap:hover .img-expand{opacity:1}
+
+/* ── @Mention autocomplete ── */
+.mention-dropdown{
+  position:absolute;bottom:56px;left:8px;right:8px;z-index:60;
+  background:#1a1f3a;border:1px solid rgba(0,212,255,.2);border-radius:12px;
+  overflow:hidden;animation:slideUpFade .18s ease;
+  box-shadow:0 -4px 20px rgba(0,0,0,.4)
+}
+.mention-item{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;cursor:pointer;
+  transition:background .12s;border-bottom:1px solid rgba(255,255,255,.04)
+}
+.mention-item:last-child{border-bottom:none}
+.mention-item:hover,.mention-item.selected{background:rgba(0,212,255,.1)}
+.mention-item-face{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.mention-item-name{font-size:13px;font-weight:700;color:#fff}
+.mention-item-sub{font-size:10px;color:#6e747d;margin-top:1px}
+
+/* @mention inline nel testo */
+.mention{color:#00d4ff;font-weight:700;background:rgba(0,212,255,.1);
+  border-radius:4px;padding:0 3px}
+
 /* ── Reaction button ── */
 .creact{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:rgba(0,229,184,.12);color:#00e5b8;font-size:18px;
@@ -1556,6 +1595,26 @@ html[data-theme="light"] body {
 .shop-desc{font-size:10px;color:#9ca3af;line-height:1.3;margin-bottom:8px}
 .shop-price{font-size:11px;font-weight:700;color:#fbbf24;padding-top:6px;border-top:1px solid rgba(0,212,255,0.15)}
 .shop-price.owned{color:#10b981}
+
+/* ═══════════════════════════════
+   STRIPE PAYMENTS MODAL
+═══════════════════════════════ */
+.stripe-topup-btn{margin-left:auto;background:linear-gradient(135deg,#635bff,#4a43d4);color:#fff;border:none;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:opacity 0.2s}
+.stripe-topup-btn:hover{opacity:0.85}
+.stripe-modal-box{max-width:540px}
+.stripe-modal-sub{font-size:12px;color:#6e747d;text-align:center;margin-bottom:16px;line-height:1.5}
+.stripe-packs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stripe-pack{position:relative;background:linear-gradient(135deg,rgba(99,91,255,0.08),rgba(74,67,212,0.05));border:1px solid rgba(99,91,255,0.25);border-radius:14px;padding:14px 12px 12px;cursor:pointer;text-align:center;transition:all 0.25s;overflow:hidden}
+.stripe-pack:hover{border-color:#635bff;transform:translateY(-2px);box-shadow:0 8px 20px rgba(99,91,255,0.25)}
+.stripe-pack.popular{border-color:#635bff;background:linear-gradient(135deg,rgba(99,91,255,0.18),rgba(74,67,212,0.12));box-shadow:0 0 0 1px #635bff}
+.stripe-pack-badge{position:absolute;top:6px;right:6px;background:#635bff;color:#fff;font-size:9px;font-weight:600;padding:2px 7px;border-radius:8px}
+.stripe-pack-label{font-size:13px;font-weight:700;color:#fff;margin-bottom:6px}
+.stripe-pack-coins{font-size:22px;font-weight:800;color:#fff;margin-bottom:4px;letter-spacing:-0.5px}
+.stripe-pack-desc{font-size:10px;color:#9ca3af;margin-bottom:10px;line-height:1.4}
+.stripe-pack-price{font-size:18px;font-weight:700;color:#635bff;margin-bottom:10px}
+.stripe-pack-btn{width:100%;background:#635bff;color:#fff;border:none;border-radius:10px;padding:8px 0;font-size:12px;font-weight:600;cursor:pointer;transition:background 0.2s}
+.stripe-pack-btn:hover{background:#4a43d4}
+.stripe-modal-note{font-size:10px;color:#6e747d;text-align:center;line-height:1.6;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px}
 
 /* ═══════════════════════════════
    MATCH ANONIMO MODAL

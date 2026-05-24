@@ -309,6 +309,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     setTimeout(() => promptResetPassword(token), 1500);
   }
   syncPremiumStatus();
+  // Controlla ritorno da Stripe (stripe_ok / stripe_cancel query params)
+  checkStripeReturn();
   // Setup button event listeners
   const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
   if(continuaBtn) continuaBtn.addEventListener('click', openContinua);
@@ -804,6 +806,168 @@ const GIFTS = [
 ];
 
 let selectedGiftId = null;
+
+// ════════════════════════════════════════════════════════
+// IMAGE SHARING — invia foto nella chat
+// ════════════════════════════════════════════════════════
+function handleChatImage(evt){
+  const file = evt.target.files?.[0];
+  evt.target.value = ''; // reset per poter caricare stessa immagine di nuovo
+  if(!file || !file.type.startsWith('image/')) return;
+  if(!room){ showToast('Entra in una stanza prima'); return; }
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const rawSrc = e.target.result;
+    const img = new Image();
+    img.onload = () => {
+      // Comprimi: max 600px lato lungo, jpeg 0.72
+      const MAX = 600;
+      let w = img.width, h = img.height;
+      if(w > h && w > MAX){ h = Math.round(h * MAX/w); w = MAX; }
+      else if(h > w && h > MAX){ w = Math.round(w * MAX/h); h = MAX; }
+      const cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = cv.toDataURL('image/jpeg', 0.72);
+
+      // Valida dimensione: max 160KB base64
+      if(compressed.length > 220000){
+        showToast('❌ Immagine troppo grande (max ~160KB)');
+        return;
+      }
+
+      const msg = {
+        userId: user.id, name: user.name, color: user.color,
+        face: user.face, activeFrame: user.activeFrame,
+        isPremium: isPrem(), photoThumb: user.photoThumb || null,
+        imgData: { url: compressed, w, h },
+        text: '📷 Immagine', ts: Date.now(), roomId: room.id,
+        msgCount: user.msgCount
+      };
+      socket.emit('chat-message', { roomId: room.id, msg });
+      appendMsg(msg); scrollBot();
+      user.msgCount = (user.msgCount||0) + 1;
+      if(!isPrem()) user.freeUsed = (user.freeUsed||0) + 1;
+      updateFreeBar(); saveUser();
+      // Missione giornaliera
+      incrementDailyMission('send_image');
+      checkBadges();
+      showToast('📷 Immagine inviata!');
+    };
+    img.src = rawSrc;
+  };
+  reader.readAsDataURL(file);
+}
+
+function openImgLightbox(src){
+  const lb = document.getElementById('imgLightbox');
+  const im = document.getElementById('imgLightboxImg');
+  if(!lb || !im) return;
+  im.src = src;
+  lb.style.display = 'flex';
+}
+
+// ════════════════════════════════════════════════════════
+// @MENTION AUTOCOMPLETE
+// ════════════════════════════════════════════════════════
+let _mentionQuery = null;
+let _mentionSelectedIdx = 0;
+
+function initMentionListener(){
+  const inp = document.getElementById('msgInput');
+  if(!inp || inp._mentionInited) return;
+  inp._mentionInited = true;
+
+  inp.addEventListener('input', () => {
+    const val  = inp.value;
+    const pos  = inp.selectionStart || val.length;
+    // Trova l'ultimo @ prima del cursore
+    const before = val.slice(0, pos);
+    const atIdx = before.lastIndexOf('@');
+    if(atIdx === -1 || (atIdx > 0 && /\S/.test(before[atIdx-1]))){
+      closeMentionDropdown(); return;
+    }
+    const query = before.slice(atIdx + 1);
+    if(query.length > 20 || /\s/.test(query)){ closeMentionDropdown(); return; }
+    _mentionQuery = { query, atIdx, pos };
+    showMentionDropdown(query);
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    const dd = document.getElementById('mentionDropdown');
+    if(!dd || dd.style.display === 'none') return;
+    const items = dd.querySelectorAll('.mention-item');
+    if(e.key === 'ArrowDown'){ e.preventDefault(); _mentionSelectedIdx = Math.min(_mentionSelectedIdx+1, items.length-1); highlightMentionItem(items); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); _mentionSelectedIdx = Math.max(_mentionSelectedIdx-1, 0); highlightMentionItem(items); }
+    else if(e.key === 'Enter' || e.key === 'Tab'){
+      const sel = items[_mentionSelectedIdx];
+      if(sel){ e.preventDefault(); applyMention(sel.dataset.name); }
+    } else if(e.key === 'Escape'){ closeMentionDropdown(); }
+  });
+}
+
+function showMentionDropdown(query){
+  const dd = document.getElementById('mentionDropdown');
+  if(!dd || !room) return;
+
+  // Ottieni utenti in stanza da chatRoomUsers
+  const roomMap = chatRoomUsers[room.id];
+  let candidates = [];
+  if(roomMap){
+    for(const [, u] of roomMap.entries()){
+      if(u.name && u.name !== user.name) candidates.push(u);
+    }
+  }
+  // Filtra per query
+  const q = query.toLowerCase();
+  const filtered = q
+    ? candidates.filter(u => u.name.toLowerCase().startsWith(q) || u.name.toLowerCase().includes(q))
+    : candidates;
+
+  if(!filtered.length){ closeMentionDropdown(); return; }
+
+  _mentionSelectedIdx = 0;
+  dd.innerHTML = filtered.slice(0,6).map((u,i) => `
+    <div class="mention-item ${i===0?'selected':''}" data-name="${esc(u.name)}" onclick="applyMention('${esc(u.name)}')">
+      <div class="mention-item-face">${u.face||'🎭'}</div>
+      <div>
+        <div class="mention-item-name">${esc(u.name)}</div>
+        <div class="mention-item-sub">lvl ${typeof userLevel==='function'?userLevel(u.msgCount||0):1}</div>
+      </div>
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function highlightMentionItem(items){
+  items.forEach((el,i) => el.classList.toggle('selected', i === _mentionSelectedIdx));
+}
+
+function applyMention(name){
+  const inp = document.getElementById('msgInput');
+  if(!inp || !_mentionQuery) return;
+  const { atIdx, pos } = _mentionQuery;
+  const before = inp.value.slice(0, atIdx);
+  const after  = inp.value.slice(pos);
+  inp.value = before + '@' + name + ' ' + after;
+  const newPos = atIdx + name.length + 2;
+  inp.setSelectionRange(newPos, newPos);
+  closeMentionDropdown();
+  inp.focus();
+}
+
+function closeMentionDropdown(){
+  const dd = document.getElementById('mentionDropdown');
+  if(dd) dd.style.display = 'none';
+  _mentionQuery = null;
+}
+
+// Evidenzia @mentions nel testo renderizzato
+function renderMentions(text){
+  return text.replace(/@([\wÀ-ž]{1,30})/g, (m, name) =>
+    `<span class="mention">@${esc(name)}</span>`
+  );
+}
 
 // ════════════════════════════════════════════════════════
 // LIVE REACTIONS — emoji volanti stile TikTok/Instagram Live
@@ -2620,6 +2784,7 @@ function openShop(){
         <div class="shop-coins-bar">
           <span style="font-size:14px;font-weight:600;color:#fbbf24">🪙 ${user.coins||0}</span>
           <span style="font-size:11px;color:#9ca3af">Le tue monete</span>
+          <button class="stripe-topup-btn" onclick="openStripeModal()">💳 Ricarica con carta</button>
         </div>
         ${grid}
       </div>
@@ -2659,6 +2824,129 @@ function shopBuy(itemId){
   updateCoinBar();
   showToast('🎉 Acquistato e attivato: ' + it.name);
   openShop();
+}
+
+// ══════════════════════════════════════════
+// STRIPE PAYMENTS — ricarica con carta
+// ══════════════════════════════════════════
+var _stripeModalBuilt = false;
+
+const STRIPE_PACKS_CLIENT = [
+  { id:'coins_300',   type:'coins',   coins:300,  eur:'2.99', label:'Starter',      desc:'300 monete',                icon:'🪙', popular:false },
+  { id:'coins_900',   type:'coins',   coins:900,  eur:'6.99', label:'Popular',      desc:'900 monete · +10% bonus',   icon:'💰', popular:true  },
+  { id:'coins_2500',  type:'coins',   coins:2500, eur:'16.99',label:'Mega',         desc:'2500 monete · +25% bonus',  icon:'💎', popular:false },
+  { id:'premium_30',  type:'premium', days:30,    eur:'4.99', label:'Premium 30gg', desc:'Frame · Badge VIP · No limiti',icon:'👑', popular:false },
+  { id:'premium_365', type:'premium', days:365,   eur:'39.99',label:'VIP Annuale',  desc:'Un anno completo · Miglior valore',icon:'🌟', popular:false }
+];
+
+function openStripeModal(){
+  let modal = document.getElementById('stripeModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'stripeModal';
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if(e.target === modal) modal.classList.remove('show'); };
+    document.body.appendChild(modal);
+  }
+
+  const packsHtml = STRIPE_PACKS_CLIENT.map(p => {
+    const badgeHtml = p.popular ? '<div class="stripe-pack-badge">⭐ Più scelto</div>' : '';
+    const coinInfo  = p.type === 'coins'   ? `<div class="stripe-pack-coins">${p.icon} ${p.coins} monete</div>` : '';
+    const premInfo  = p.type === 'premium' ? `<div class="stripe-pack-coins">${p.icon} ${p.days} giorni</div>` : '';
+    return `
+      <div class="stripe-pack ${p.popular?'popular':''}" onclick="buyWithStripe('${p.id}')">
+        ${badgeHtml}
+        <div class="stripe-pack-label">${p.label}</div>
+        ${coinInfo}${premInfo}
+        <div class="stripe-pack-desc">${p.desc}</div>
+        <div class="stripe-pack-price">€${p.eur}</div>
+        <button class="stripe-pack-btn">Acquista</button>
+      </div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box stripe-modal-box">
+      <div class="modal-hdr">
+        <div class="modal-title">💳 Ricarica con Carta</div>
+        <button class="modal-close" onclick="document.getElementById('stripeModal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="stripe-modal-sub">Pagamento sicuro via Stripe · Carta di credito / debito / Apple Pay / Google Pay</p>
+        <div class="stripe-packs-grid">${packsHtml}</div>
+        <p class="stripe-modal-note">🔒 I tuoi dati di pagamento non vengono mai salvati sui nostri server.<br>Gestito da <strong>Stripe</strong> — lo standard sicurezza dei pagamenti online.</p>
+      </div>
+    </div>
+  `;
+  modal.classList.add('show');
+}
+
+// Ricarica monete + stato premium dal server (usato dopo ritorno da Stripe)
+async function loadUserFromServer(){
+  if(!user?.id) return;
+  try {
+    const r = await fetch('/api/stripe/balance?userId=' + encodeURIComponent(user.id));
+    if(!r.ok) return;
+    const d = await r.json();
+    if(typeof d.coins === 'number'){
+      user.coins = d.coins;
+      updateCoinBar();
+    }
+    if(d.isPremium){
+      user.isPremium = true;
+      user.premExpiry = d.premExpiry;
+    }
+    saveUser();
+    updateProfileUI && updateProfileUI();
+  } catch(e){ /* silent */ }
+}
+
+async function buyWithStripe(packId){
+  if(!user?.id){ showToast('❌ Accedi prima'); return; }
+  const pack = STRIPE_PACKS_CLIENT.find(p => p.id === packId);
+  if(!pack) return;
+  showToast('⏳ Apertura pagamento…');
+  try {
+    const r = await fetch('/api/stripe/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ packId, userId: user.id })
+    });
+    const data = await r.json();
+    if(data.url){
+      window.location.href = data.url;
+    } else {
+      showToast('❌ ' + (data.error || 'Errore pagamento'));
+    }
+  } catch(e) {
+    showToast('❌ Errore connessione: ' + e.message);
+  }
+}
+
+// Gestione ritorno da Stripe (success/cancel)
+function checkStripeReturn(){
+  const params = new URLSearchParams(window.location.search);
+  if(params.get('stripe_ok') === '1'){
+    const packId = params.get('pack') || '';
+    const pack = STRIPE_PACKS_CLIENT.find(p => p.id === packId);
+    // Pulisci URL
+    history.replaceState({}, '', window.location.pathname);
+    // Mostra toast con dettaglio
+    if(pack){
+      if(pack.type === 'coins'){
+        showToast(`🎉 Pagamento riuscito! +${pack.coins} monete in arrivo…`);
+        // Ricarica dati utente dal server dopo 2s (il webhook ha già accreditato)
+        setTimeout(() => loadUserFromServer && loadUserFromServer(), 2000);
+      } else {
+        showToast(`👑 Premium attivato! ${pack.days} giorni di accesso VIP.`);
+        setTimeout(() => loadUserFromServer && loadUserFromServer(), 2000);
+      }
+    } else {
+      showToast('✅ Pagamento riuscito! Le monete verranno accreditate a breve.');
+    }
+  } else if(params.get('stripe_cancel') === '1'){
+    history.replaceState({}, '', window.location.pathname);
+    showToast('❌ Pagamento annullato');
+  }
 }
 
 // ══════════════════════════════════════════

@@ -14,6 +14,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { checkBlockchainConfirmations } = require('./bitcoin-service');
 const webpush = require('web-push');
+const Stripe = require('stripe');
 
 const app = express();
 const PORT = process.env.PORT || 8082;
@@ -33,12 +34,36 @@ const VAPID_PUBLIC  = process.env.VAPID_PUBLIC  || 'BHfw5QpQadjL3KfUbjDUQVdkfWfD
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE || 'TquEMw0x3SDmqbSChx_BgZ0Jx1SwPcdNrFSoEQGKAGM';
 webpush.setVapidDetails('mailto:info@kouverte.com', VAPID_PUBLIC, VAPID_PRIVATE);
 
+// ============================================================
+// STRIPE CONFIG
+// Set env vars: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+// STRIPE_PUBLISHABLE_KEY usato lato client (vedi /api/stripe/config)
+// ============================================================
+const STRIPE_SECRET_KEY      = process.env.STRIPE_SECRET_KEY || null;
+const STRIPE_WEBHOOK_SECRET  = process.env.STRIPE_WEBHOOK_SECRET || null;
+const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || null;
+const stripe = STRIPE_SECRET_KEY ? Stripe(STRIPE_SECRET_KEY) : null;
+
+// Pacchetti Stripe: coins (monete in-app) + abbonamenti premium
+const STRIPE_PACKS = {
+    coins_300:  { id: 'coins_300',  type: 'coins',   coins: 300,  eur: 299,   label: 'Starter',   desc: '300 monete', icon: '🪙' },
+    coins_900:  { id: 'coins_900',  type: 'coins',   coins: 900,  eur: 699,   label: 'Popular',   desc: '900 monete + 10% bonus', icon: '💰', popular: true },
+    coins_2500: { id: 'coins_2500', type: 'coins',   coins: 2500, eur: 1699,  label: 'Mega',      desc: '2500 monete + 25% bonus', icon: '💎' },
+    premium_30: { id: 'premium_30', type: 'premium', days: 30,    eur: 499,   label: 'Premium 30gg', desc: 'Tutti i frame + badge VIP + senza limiti', icon: '👑' },
+    premium_365:{ id: 'premium_365',type: 'premium', days: 365,   eur: 3999,  label: 'VIP Annuale',  desc: 'Miglior valore — 1 anno completo', icon: '🌟' }
+};
+
 // Bitcoin Payment Config
 const BITCOIN_ADDRESS = process.env.BITCOIN_ADDRESS || 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
 const BTC_RATE = 0.00005; // 1 credito = 0.00005 BTC (1 BTC = 20,000 crediti)
 const BITCOIN_MIN_CONFIRMATIONS = parseInt(process.env.BITCOIN_MIN_CONFIRMATIONS || '4');
 
-app.use(express.json({ limit: '10mb' }));
+// Il webhook Stripe richiede body RAW (non JSON parsato) per la verifica firma.
+// Escludiamo quella route dal middleware json globale.
+app.use((req, res, next) => {
+    if (req.path === '/api/stripe/webhook') return next();
+    express.json({ limit: '10mb' })(req, res, next);
+});
 
 // Trust proxy in production (per req.ip corretto dietro Render/ngrok)
 app.set('trust proxy', 1);
@@ -1967,6 +1992,141 @@ app.get('/api/me/premium-status', (req, res) => {
         return res.json({ premium: true, expiresAt: p.expiresAt, activatedAt: p.activatedAt });
     }
     res.json({ premium: false });
+});
+
+// ============================================================
+// STRIPE PAYMENTS
+// ============================================================
+
+// Espone la publishable key al frontend (non è un segreto)
+app.get('/api/stripe/config', (req, res) => {
+    if (!stripe) return res.status(503).json({ error: 'Stripe non configurato. Imposta STRIPE_SECRET_KEY.' });
+    res.json({ publishableKey: STRIPE_PUBLISHABLE_KEY });
+});
+
+// Crea una Checkout Session Stripe
+app.post('/api/stripe/create-checkout', async (req, res) => {
+    if (!stripe) return res.status(503).json({ error: 'Pagamenti con carta non disponibili al momento.' });
+    const { packId, userId } = req.body || {};
+    if (!packId || !userId) return res.status(400).json({ error: 'packId e userId richiesti' });
+    const pack = STRIPE_PACKS[packId];
+    if (!pack) return res.status(400).json({ error: 'Pacchetto non valido' });
+
+    const origin = req.headers.origin || 'https://www.kouverte.com';
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'payment',
+            line_items: [{
+                price_data: {
+                    currency: 'eur',
+                    unit_amount: pack.eur, // già in centesimi
+                    product_data: {
+                        name: `Kouverte · ${pack.label}`,
+                        description: pack.desc,
+                        images: ['https://www.kouverte.com/icon-512.png']
+                    }
+                },
+                quantity: 1
+            }],
+            metadata: { packId, userId, type: pack.type },
+            success_url: `${origin}/app.html?stripe_ok=1&pack=${packId}`,
+            cancel_url:  `${origin}/app.html?stripe_cancel=1`,
+            locale: 'it',
+            allow_promotion_codes: true
+        });
+        res.json({ url: session.url, sessionId: session.id });
+    } catch(e) {
+        console.error('[Stripe] create-checkout error:', e.message);
+        res.status(500).json({ error: 'Errore creazione pagamento: ' + e.message });
+    }
+});
+
+// Webhook Stripe — deve ricevere il body RAW (non JSON parsato)
+// Registrare PRIMA del middleware json() generico usando express.raw()
+app.post('/api/stripe/webhook',
+    express.raw({ type: 'application/json' }),
+    async (req, res) => {
+        if (!stripe) return res.status(503).send('Stripe non configurato');
+        const sig = req.headers['stripe-signature'];
+        if (!sig || !STRIPE_WEBHOOK_SECRET) {
+            console.warn('[Stripe] Webhook ricevuto senza firma o senza secret configurato');
+            return res.status(400).send('Webhook signature missing');
+        }
+        let event;
+        try {
+            event = stripe.webhooks.constructEvent(req.body, sig, STRIPE_WEBHOOK_SECRET);
+        } catch(e) {
+            console.error('[Stripe] Webhook signature error:', e.message);
+            return res.status(400).send(`Webhook Error: ${e.message}`);
+        }
+
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object;
+            const { packId, userId, type } = session.metadata || {};
+            const pack = STRIPE_PACKS[packId];
+            if (!pack || !userId) {
+                console.warn('[Stripe] Webhook: metadata mancanti', session.id);
+                return res.json({ received: true });
+            }
+
+            // Trova utente nel DB
+            const user = (DB.users || []).find(u => u.id === userId);
+            if (!user) {
+                console.warn('[Stripe] Webhook: utente non trovato', userId);
+                return res.json({ received: true });
+            }
+
+            // Salva transazione
+            DB.stripe_payments = DB.stripe_payments || [];
+            // Evita doppia esecuzione (idempotenza)
+            if (DB.stripe_payments.find(p => p.sessionId === session.id)) {
+                return res.json({ received: true });
+            }
+            DB.stripe_payments.push({
+                sessionId: session.id, packId, userId, type: pack.type,
+                eur: pack.eur, paidAt: Date.now()
+            });
+
+            if (pack.type === 'coins') {
+                // Accredita monete
+                user.kvData = user.kvData || {};
+                user.kvData.coins = (user.kvData.coins || 0) + pack.coins;
+                console.log(`[Stripe] +${pack.coins} monete → utente ${userId}`);
+            } else if (pack.type === 'premium') {
+                // Attiva/prolunga premium
+                DB.kv_premium = DB.kv_premium || {};
+                const existing = DB.kv_premium[userId];
+                const base = (existing && existing.expiresAt > Date.now()) ? existing.expiresAt : Date.now();
+                DB.kv_premium[userId] = {
+                    activatedAt: Date.now(),
+                    expiresAt: base + pack.days * 24 * 60 * 60 * 1000,
+                    sessionId: session.id,
+                    source: 'stripe'
+                };
+                user.kvData = user.kvData || {};
+                user.kvData.isPremium = true;
+                user.kvData.premExpiry = DB.kv_premium[userId].expiresAt;
+                console.log(`[Stripe] Premium ${pack.days}gg → utente ${userId}, scade ${new Date(DB.kv_premium[userId].expiresAt).toISOString()}`);
+            }
+            markDirty();
+        }
+        res.json({ received: true });
+    }
+);
+
+// Endpoint sync saldo dopo pagamento Stripe — restituisce coins + premium correnti
+app.get('/api/stripe/balance', (req, res) => {
+    const { userId } = req.query;
+    if (!userId || typeof userId !== 'string') return res.status(400).json({ error: 'userId richiesto' });
+    const user = (DB.users || []).find(u => u.id === userId);
+    if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const kv = user.kvData || {};
+    DB.kv_premium = DB.kv_premium || {};
+    const prem = DB.kv_premium[userId];
+    const isPremium = !!(kv.isPremium || (prem && prem.expiresAt > Date.now()));
+    const premExpiry = isPremium ? (prem?.expiresAt || kv.premExpiry || 0) : 0;
+    res.json({ coins: kv.coins || 0, isPremium, premExpiry });
 });
 
 // Legacy ownership endpoint (JWT) — left for compat
