@@ -3583,6 +3583,19 @@ function registerScopaListeners(){
     if(btn){btn.textContent='✅ Accetta rivincita';btn.style.background='#10b981';}
   });
   socket.on('scopa:error',({msg})=> showToast('❌ '+msg));
+  socket.on('scopa:credits-update', ({delta, total, freeGame, remaining, reason}) => {
+    if(reason==='free'){
+      const leftTxt = remaining > 0 ? ` (${remaining} gratis rimast${remaining===1?'a':'e'})` : ' (ultima gratis!)';
+      showToast('🎁 Partita GRATIS'+leftTxt);
+    } else if(reason==='entry'){
+      showToast(`🪙 -5 crediti · Rimasti: ${total}`);
+      // Aggiorna crediti locali
+      if(user) { user.credits = total; syncProfVideoCard && syncProfVideoCard(); }
+    } else if(reason==='win'){
+      showToast(`🏆 +${delta} crediti! Rimasti: ${total}`);
+      if(user) { user.credits = total; syncProfVideoCard && syncProfVideoCard(); }
+    }
+  });
 }
 
 /* ─── Calcolo catture lato client (per UX) ─── */
@@ -3710,6 +3723,28 @@ function scRenderWaiting(pos, tot){
       <div class="sc-rule"><span class="sc-rb">🃏</span> <b>Primiera</b>: 7=21, 6=18, A=16… (+1pt)</div>
       <div class="sc-rule"><span class="sc-rb">🎮</span> Prima a <b>11 punti</b> vince la partita!</div>
     </div>
+    <div class="sc-credits-info" id="scCreditsInfo">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;color:#00d4ff;font-weight:700">🪙 Crediti partita</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">
+        <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px">🎁</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Prime 3</div>
+          <div style="font-size:13px;color:#00d4ff;font-weight:700">GRATIS</div>
+        </div>
+        <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px">💸</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Ingresso</div>
+          <div style="font-size:13px;color:#f87171;font-weight:700">-5 🪙</div>
+        </div>
+        <div style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:10px;text-align:center">
+          <div style="font-size:20px">🏆</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">Vittoria</div>
+          <div style="font-size:13px;color:#10b981;font-weight:700">+20 🪙</div>
+        </div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -3831,12 +3866,16 @@ function scRenderGameOver({roundScore, totalScore, winner, winnerInfo}){
   const body=document.getElementById('scopaBody');
   if(!body||!_sc) return;
   const iWon=winner===_sc.myId;
+  const creditBadge = iWon
+    ? `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);border-radius:20px;padding:8px 18px;margin:12px auto;font-size:14px;font-weight:700;color:#10b981">🏆 +20 🪙 crediti!</div>`
+    : `<div style="display:inline-flex;align-items:center;gap:6px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:20px;padding:8px 18px;margin:12px auto;font-size:13px;color:#f87171">Nessun credito · ritenta!</div>`;
   body.innerHTML=`
   <div class="sc-gameover">
     <div class="sc-go-trophy">${iWon?'🏆':'💀'}</div>
     <div class="sc-go-title ${iWon?'win':'lose'}">${iWon?'HAI VINTO!':'HAI PERSO!'}</div>
     <div class="sc-go-who">${esc(winnerInfo.face)} ${esc(winnerInfo.name)} ha vinto</div>
     <div class="sc-go-score">${totalScore[_sc.myId]} — ${totalScore[_sc.oppId]}</div>
+    <div style="text-align:center">${creditBadge}</div>
     <div class="sc-go-btns">
       <button class="sc-rematch-btn" id="scRematchBtn" onclick="scRequestRematch()">🔄 Rivincita</button>
       <button class="sc-quit-btn" onclick="closeScopaGame()">Esci</button>

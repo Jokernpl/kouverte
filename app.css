@@ -2559,6 +2559,7 @@ html[data-theme="light"] body {
 .sc-go-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 .sc-rematch-btn{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,255,136,0.3);letter-spacing:.5px}
 .sc-quit-btn{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer}
+.sc-credits-info{background:rgba(0,0,0,0.25);border:1px solid rgba(0,212,255,0.15);border-radius:14px;padding:14px 16px;margin:16px 0 0;width:100%;max-width:360px;box-sizing:border-box}
 
 /* Animations */
 @keyframes scopa-spin{to{transform:rotate(360deg)}}

@@ -333,7 +333,8 @@ function loadDB() {
             user_inventory: [],
             transactions: [],
             user_credits: [],
-            bitcoin_payments: []
+            bitcoin_payments: [],
+            scopa_stats: {}
         };
     }
     return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
@@ -3898,6 +3899,16 @@ app.post('/api/auth/telegram-widget', rateLimit('tg-widget', 10, 5 * 60 * 1000),
     }
 });
 
+// Stats Scopa per utente (free games rimanenti + crediti)
+app.get('/api/scopa/stats', verifyToken, (req, res) => {
+    const uid = req.user.id;
+    DB.scopa_stats = DB.scopa_stats || {};
+    const stats = DB.scopa_stats[uid] || { gamesPlayed:0, wins:0 };
+    const cr = (DB.user_credits||[]).find(c => c.user_id === uid);
+    const freeLeft = Math.max(0, SCOPA_FREE_GAMES - stats.gamesPlayed);
+    res.json({ ok:true, gamesPlayed: stats.gamesPlayed, wins: stats.wins, freeGamesLeft: freeLeft, credits: cr?.credits ?? 0 });
+});
+
 app.post('/api/cleanup', (req, res) => {
     const before = DB.stories.length;
     DB.stories = DB.stories.filter(s => s.expires_at > now());
@@ -4399,6 +4410,47 @@ function scopaNextTurn(game){
     }
     scopaEmitBoth(game);
 }
+const SCOPA_FREE_GAMES  = 3;
+const SCOPA_ENTRY_COST  = 5;
+const SCOPA_WIN_REWARD  = 20; // 10 × 2
+
+function _scopaStats(userId){
+    DB.scopa_stats = DB.scopa_stats || {};
+    if(!DB.scopa_stats[userId]) DB.scopa_stats[userId] = { gamesPlayed:0, wins:0 };
+    return DB.scopa_stats[userId];
+}
+function _scopaCredits(userId){
+    DB.user_credits = DB.user_credits || [];
+    let cr = DB.user_credits.find(c => c.user_id === userId);
+    if(!cr){ cr = { user_id:userId, credits:0, updated_at:now() }; DB.user_credits.push(cr); }
+    return cr;
+}
+// Ritorna { ok:bool, freeGame:bool, remaining:number }
+function scopaDeductEntry(userId){
+    const stats = _scopaStats(userId);
+    if(stats.gamesPlayed < SCOPA_FREE_GAMES) return { ok:true, freeGame:true, remaining: SCOPA_FREE_GAMES - stats.gamesPlayed - 1 };
+    const cr = _scopaCredits(userId);
+    if(cr.credits < SCOPA_ENTRY_COST) return { ok:false, freeGame:false, credits:cr.credits };
+    cr.credits -= SCOPA_ENTRY_COST;
+    cr.updated_at = now();
+    markDirty();
+    return { ok:true, freeGame:false, credits:cr.credits };
+}
+function scopaRecordGame(p1Id, p2Id){
+    _scopaStats(p1Id).gamesPlayed++;
+    _scopaStats(p2Id).gamesPlayed++;
+    markDirty();
+}
+function scopaAwardWin(winnerId, winnerSocketId){
+    const cr = _scopaCredits(winnerId);
+    cr.credits += SCOPA_WIN_REWARD;
+    cr.updated_at = now();
+    _scopaStats(winnerId).wins++;
+    markDirty();
+    const ws = io.sockets.sockets.get(winnerSocketId);
+    if(ws) ws.emit('scopa:credits-update', { delta: SCOPA_WIN_REWARD, total: cr.credits, reason:'win' });
+}
+
 function scopaEndRound(game){
     const[a,b]=game.playerOrder;
     const rs=scopaRoundScore(game);
@@ -4416,6 +4468,8 @@ function scopaEndRound(game){
         if(sb) sb.emit('scopa:game-over',payload);
         scopaPlrGame.delete(game.socketIds[a]);
         scopaPlrGame.delete(game.socketIds[b]);
+        // Accredita 20 crediti al vincitore (10 × raddoppio)
+        scopaAwardWin(winner, game.socketIds[winner]);
         setTimeout(scopaBroadcastLobby, 100);
     } else {
         // Nuova mano tra 3 secondi
@@ -4497,6 +4551,20 @@ io.on('connection', (socket) => {
         const p1=scopaQueue.shift(), p2=scopaQueue.shift();
         const s1=io.sockets.sockets.get(p1.socketId), s2=io.sockets.sockets.get(p2.socketId);
         if(!s1||!s2){if(s1)scopaQueue.unshift(p1);if(s2)scopaQueue.unshift(p2);scopaBroadcastLobby();return;}
+
+        // Controlla e scala 5 crediti (prime 3 partite gratis)
+        const fee1 = scopaDeductEntry(p1.userId);
+        const fee2 = scopaDeductEntry(p2.userId);
+        if(!fee1.ok){ s1.emit('scopa:error',{msg:`Crediti insufficienti (serve ${SCOPA_ENTRY_COST}, hai ${fee1.credits}). Ricarica nello Shop!`}); scopaQueue.unshift(p2); scopaBroadcastLobby(); return; }
+        if(!fee2.ok){ s2.emit('scopa:error',{msg:`Crediti insufficienti (serve ${SCOPA_ENTRY_COST}, hai ${fee2.credits}). Ricarica nello Shop!`}); scopaQueue.unshift(p1); scopaBroadcastLobby(); return; }
+        // Notifica costo/gratis ai due giocatori
+        if(fee1.freeGame) s1.emit('scopa:credits-update',{delta:0, freeGame:true, remaining:fee1.remaining, reason:'free'});
+        else s1.emit('scopa:credits-update',{delta:-SCOPA_ENTRY_COST, total:_scopaCredits(p1.userId).credits, reason:'entry'});
+        if(fee2.freeGame) s2.emit('scopa:credits-update',{delta:0, freeGame:true, remaining:fee2.remaining, reason:'free'});
+        else s2.emit('scopa:credits-update',{delta:-SCOPA_ENTRY_COST, total:_scopaCredits(p2.userId).credits, reason:'entry'});
+        // Incrementa contatore partite
+        scopaRecordGame(p1.userId, p2.userId);
+
         const deck=scopaShuffle(scopaDeck());
         const gameId='sc'+Date.now().toString(36);
         const game={
