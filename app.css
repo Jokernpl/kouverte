@@ -586,6 +586,95 @@ body{position:relative}
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform .15s,background .15s;align-self:flex-end;border:1px solid rgba(255,107,157,.3)}
 .cgift:active{transform:scale(.9);background:rgba(255,107,157,.3)}
+
+/* ── Reaction button ── */
+.creact{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+  background:rgba(0,229,184,.12);color:#00e5b8;font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,background .15s;align-self:flex-end;border:1px solid rgba(0,229,184,.25)}
+.creact:hover{background:rgba(0,229,184,.22)}
+.creact:active{transform:scale(.9)}
+.creact.open{background:rgba(0,229,184,.3);transform:rotate(20deg) scale(1.1)}
+
+/* ── Reaction picker ── */
+.reaction-picker{
+  position:absolute;bottom:56px;left:0;right:0;z-index:50;
+  padding:10px 12px;
+  background:linear-gradient(180deg,transparent,rgba(15,17,23,.96) 15%);
+  animation:slideUpFade .22s cubic-bezier(.22,.61,.36,1)
+}
+.reaction-picker-row{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-wrap:nowrap;overflow-x:auto;padding:6px 4px
+}
+.reaction-emoji-btn{
+  width:46px;height:46px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.07);backdrop-filter:blur(6px);
+  font-size:22px;cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,background .2s;
+  box-shadow:0 2px 8px rgba(0,0,0,.3)
+}
+.reaction-emoji-btn:hover{transform:scale(1.25);background:rgba(255,255,255,.14)}
+.reaction-emoji-btn:active{transform:scale(0.9)}
+@keyframes slideUpFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Floating reactions ── */
+.reaction-float{
+  position:absolute;right:16px;
+  font-size:36px;
+  pointer-events:none;user-select:none;
+  animation:floatUp 3s ease-out forwards;
+  filter:drop-shadow(0 0 8px currentColor);
+  will-change:transform,opacity
+}
+.reaction-float.big{font-size:52px;animation-duration:3.4s}
+.reaction-float.mega{font-size:70px;animation-duration:3.8s}
+@keyframes floatUp{
+  0%  {opacity:1;transform:translateY(0) scale(1) rotate(0deg)}
+  15% {opacity:1;transform:translateY(-60px) scale(1.15) rotate(-8deg)}
+  35% {opacity:1;transform:translateY(-140px) scale(1) rotate(5deg)}
+  60% {opacity:.9;transform:translateY(-250px) scale(.9) rotate(-3deg)}
+  85% {opacity:.4;transform:translateY(-360px) scale(.75) rotate(2deg)}
+  100%{opacity:0;transform:translateY(-440px) scale(.6) rotate(0deg)}
+}
+
+/* ── Combo badge ── */
+.reaction-combo{
+  position:absolute;right:10px;
+  background:linear-gradient(135deg,#ff6b9d,#ff2d6e);
+  color:#fff;font-size:11px;font-weight:800;
+  padding:3px 8px;border-radius:20px;
+  animation:comboBounce .4s ease,floatUp 2.5s ease-out forwards;
+  box-shadow:0 0 12px rgba(255,45,110,.6);
+  pointer-events:none;letter-spacing:.3px
+}
+@keyframes comboBounce{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+
+/* ── Fire Banner ── */
+.fire-banner-inner{
+  background:linear-gradient(90deg,rgba(255,60,0,.9),rgba(255,140,0,.95),rgba(255,60,0,.9));
+  padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:12px;
+  animation:bannerDrop .4s cubic-bezier(.22,.61,.36,1);
+  box-shadow:0 4px 20px rgba(255,60,0,.5)
+}
+.fire-banner-text{font-size:13px;font-weight:900;color:#fff;letter-spacing:1px;text-transform:uppercase;
+  text-shadow:0 0 10px rgba(255,200,0,.8)}
+.fire-banner-icon{font-size:22px;animation:fireShake .3s ease-in-out infinite alternate}
+@keyframes bannerDrop{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes fireShake{from{transform:rotate(-10deg) scale(1)}to{transform:rotate(10deg) scale(1.15)}}
+@keyframes fireGlow{from{opacity:.6}to{opacity:1}}
+
+/* ── Reaction counter badge (live in header) ── */
+.react-counter{
+  display:none;align-items:center;gap:4px;
+  background:rgba(255,60,0,.2);border:1px solid rgba(255,60,0,.4);
+  border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;color:#ff7c3a;
+  animation:rcountPop .3s ease
+}
+.react-counter.visible{display:flex}
+@keyframes rcountPop{from{transform:scale(0.5);opacity:0}to{transform:scale(1);opacity:1}}
+
 /* Gift picker bottom sheet */
 .gift-picker-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:8500;display:none;align-items:flex-end;
   backdrop-filter:blur(4px)}

@@ -804,6 +804,166 @@ const GIFTS = [
 
 let selectedGiftId = null;
 
+// ════════════════════════════════════════════════════════
+// LIVE REACTIONS — emoji volanti stile TikTok/Instagram Live
+// ════════════════════════════════════════════════════════
+const REACTION_EMOJIS = ['❤️','🔥','😂','😍','😮','👏','💋','🤯','✨','💎','🥵','🫶'];
+const REACTION_COLORS = {
+  '❤️':'#ff2d6e','🔥':'#ff6a00','😂':'#fbbf24','😍':'#ff6b9d',
+  '😮':'#38bdf8','👏':'#10b981','💋':'#ff2d6e','🤯':'#a78bfa',
+  '✨':'#00e5b8','💎':'#38bdf8','🥵':'#ef4444','🫶':'#ff6b9d'
+};
+let _reactionPickerOpen = false;
+let _recentReactions = []; // {ts, emoji} — per fire mode detection
+let _fireModeActive = false;
+let _fireModeTimer = null;
+let _reactCount = 0;
+let _reactCountTimer = null;
+
+function toggleReactionPicker(){
+  const picker = document.getElementById('reactionPicker');
+  const btn = document.getElementById('reactBtn');
+  _reactionPickerOpen = !_reactionPickerOpen;
+  if(_reactionPickerOpen){
+    // Build emoji grid se vuoto
+    const row = document.getElementById('reactionPickerRow');
+    if(!row.children.length){
+      row.innerHTML = REACTION_EMOJIS.map(e =>
+        `<button class="reaction-emoji-btn" onclick="sendReaction('${e}')">${e}</button>`
+      ).join('');
+    }
+    picker.style.display = 'block';
+    btn.classList.add('open');
+    // Chiudi cliccando fuori
+    setTimeout(()=>document.addEventListener('click', _closePicker, {once:true}), 50);
+  } else {
+    picker.style.display = 'none';
+    btn.classList.remove('open');
+  }
+}
+function _closePicker(e){
+  const p = document.getElementById('reactionPicker');
+  const b = document.getElementById('reactBtn');
+  if(p && !p.contains(e.target) && e.target !== b){
+    p.style.display='none';
+    if(b) b.classList.remove('open');
+    _reactionPickerOpen = false;
+  }
+}
+
+function sendReaction(emoji){
+  if(!room || !socket) return;
+  // Chiudi picker
+  document.getElementById('reactionPicker').style.display='none';
+  document.getElementById('reactBtn').classList.remove('open');
+  _reactionPickerOpen = false;
+
+  const color = REACTION_COLORS[emoji] || '#00d4ff';
+  // Spawn locale immediato
+  spawnFloatingReaction(emoji, color, 1, true);
+  trackReactionLocal(emoji);
+
+  // Emetti sul socket
+  socket.emit('chat-reaction', {
+    roomId: room.id,
+    emoji,
+    color,
+    userId: user.id,
+    name: user.name
+  });
+  haptic('light');
+}
+
+function spawnFloatingReaction(emoji, color, combo, isSelf){
+  const stage = document.getElementById('reactionStage');
+  if(!stage) return;
+
+  // Posizione X casuale nell'area destra (20-80% da destra)
+  const rightOffset = 8 + Math.random() * 60; // px da destra
+  const bottomOffset = 60 + Math.random() * 20; // px dal basso
+
+  // Dimensione in base al combo
+  const sizeClass = combo >= 10 ? 'mega' : combo >= 4 ? 'big' : '';
+
+  // Elemento emoji
+  const el = document.createElement('div');
+  el.className = 'reaction-float ' + sizeClass;
+  el.textContent = emoji;
+  el.style.right = rightOffset + 'px';
+  el.style.bottom = bottomOffset + 'px';
+  el.style.color = color;
+  stage.appendChild(el);
+  // Rimuovi dopo animazione
+  el.addEventListener('animationend', ()=>el.remove());
+
+  // Badge combo se >1
+  if(combo > 1){
+    const badge = document.createElement('div');
+    badge.className = 'reaction-combo';
+    badge.textContent = '×' + combo;
+    badge.style.right = (rightOffset - 4) + 'px';
+    badge.style.bottom = (bottomOffset + 30) + 'px';
+    stage.appendChild(badge);
+    badge.addEventListener('animationend', ()=>badge.remove());
+  }
+
+  // Vibrazione su mobile (solo propria reazione)
+  if(isSelf) haptic('light');
+}
+
+function trackReactionLocal(emoji){
+  const now = Date.now();
+  _recentReactions.push({ts: now, emoji});
+  // Pulisci vecchie (>8 secondi)
+  _recentReactions = _recentReactions.filter(r => now - r.ts < 8000);
+
+  // Aggiorna counter nell'header
+  _reactCount++;
+  const counter = document.getElementById('reactCounter');
+  const numEl = document.getElementById('reactCountNum');
+  if(counter && numEl){
+    numEl.textContent = _reactCount;
+    counter.classList.add('visible');
+    if(_reactCountTimer) clearTimeout(_reactCountTimer);
+    _reactCountTimer = setTimeout(()=>{
+      _reactCount = 0;
+      counter.classList.remove('visible');
+    }, 4000);
+  }
+}
+
+function triggerFireMode(count){
+  if(_fireModeActive) return;
+  _fireModeActive = true;
+
+  const banner = document.getElementById('fireBanner');
+  const overlay = document.getElementById('fireOverlay');
+  const counter = document.getElementById('reactCounter');
+
+  if(banner){ banner.style.display='block'; }
+  if(overlay){ overlay.style.display='block'; }
+  if(counter){ counter.style.background='rgba(255,60,0,.35)'; }
+
+  // Lancia 10 emoji di fuoco random a cascata
+  for(let i=0;i<12;i++){
+    setTimeout(()=> spawnFloatingReaction('🔥','#ff6a00',1), i*120);
+  }
+
+  haptic('heavy');
+  showToast('🔥 FUOCO IN STANZA! ' + count + ' reazioni');
+
+  // Fine fire mode dopo 6 secondi
+  _fireModeTimer = setTimeout(()=>{
+    _fireModeActive = false;
+    if(banner){
+      banner.style.animation='bannerDrop .4s reverse forwards';
+      setTimeout(()=>{ banner.style.display='none'; banner.style.animation=''; },400);
+    }
+    if(overlay) overlay.style.display='none';
+    if(counter) counter.style.background='';
+  }, 6000);
+}
+
 function openGiftPicker(){
   selectedGiftId=null;
   document.getElementById('giftPickerCoins').textContent=user.coins||0;
@@ -1317,6 +1477,17 @@ function connectSocket(){
       if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
     }
   });
+  // ── Live Reactions ──
+  socket.on('chat-reaction',({roomId,emoji,color,combo})=>{
+    if(roomId!==room?.id) return;
+    spawnFloatingReaction(emoji,color,combo||1);
+    trackReactionLocal(emoji);
+  });
+  socket.on('chat-fire-mode',({roomId,count})=>{
+    if(roomId!==room?.id) return;
+    triggerFireMode(count);
+  });
+
   socket.on('chat-typing',({roomId,user:u})=>{
     if(roomId!==room?.id||u?.id===user.id) return;
     typingUsers[u.id]=u; renderTyping();

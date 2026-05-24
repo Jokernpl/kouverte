@@ -4076,6 +4076,41 @@ io.on('connection', (socket) => {
         socket.to('chat-' + roomId).emit('voice-msg', { roomId, msg });
     });
 
+    // ── Live Reactions ──────────────────────────────────────────────────────
+    socket.on('chat-reaction', ({ roomId, emoji, color, userId, name }) => {
+        if (!roomId || typeof roomId !== 'string' || roomId.length > 40) return;
+        // Valida emoji (deve essere una stringa corta)
+        const safeEmoji = typeof emoji === 'string' ? [...emoji].slice(0, 2).join('') : '❤️';
+        const safeColor = /^#[0-9a-f]{6}$/i.test(color) ? color : '#ff6b9d';
+
+        // Traccia reazioni recenti per fire mode (per stanza)
+        global.roomRecentReactions = global.roomRecentReactions || {};
+        const now = Date.now();
+        global.roomRecentReactions[roomId] = (global.roomRecentReactions[roomId] || [])
+            .filter(r => now - r.ts < 8000);
+        global.roomRecentReactions[roomId].push({ ts: now, userId: String(userId||'').slice(0,40) });
+        const count = global.roomRecentReactions[roomId].length;
+
+        // Calcola combo: quante persone diverse hanno reagito negli ultimi 2 secondi
+        const recent2s = global.roomRecentReactions[roomId].filter(r => now - r.ts < 2000);
+        const uniqueUsers2s = new Set(recent2s.map(r => r.userId)).size;
+        const combo = Math.min(uniqueUsers2s, 99);
+
+        // Broadcast reazione a tutta la stanza (incluso mittente)
+        io.to('chat-' + roomId).emit('chat-reaction', { roomId, emoji: safeEmoji, color: safeColor, combo });
+
+        // Fire mode: 15+ reazioni negli ultimi 8 secondi → broadcast una volta
+        const FIRE_THRESHOLD = 15;
+        const FIRE_COOLDOWN  = 15000; // 15s tra un fire mode e l'altro
+        global.roomFireCooldown = global.roomFireCooldown || {};
+        const lastFire = global.roomFireCooldown[roomId] || 0;
+        if (count >= FIRE_THRESHOLD && Date.now() - lastFire > FIRE_COOLDOWN) {
+            global.roomFireCooldown[roomId] = Date.now();
+            io.to('chat-' + roomId).emit('chat-fire-mode', { roomId, count });
+            console.log(`[FIRE] ${roomId} — ${count} reazioni in 8s!`);
+        }
+    });
+
     socket.on('chat-typing', ({ roomId, user }) => {
         if (!roomId || !user) return;
         socket.to('chat-' + roomId).emit('chat-typing', { roomId, user });

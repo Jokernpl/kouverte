@@ -501,6 +501,8 @@
         </div>
       </div>
     </div>
+    <!-- Live reaction counter -->
+    <div id="reactCounter" class="react-counter">🔥 <span id="reactCountNum">0</span></div>
     <!-- Speed dating timer -->
     <div id="sdTimer" style="display:none;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:#00d4ff;cursor:pointer;flex-shrink:0" title="Speed Dating - tempo rimanente" onclick="sdTimerClick()">⚡ <span id="sdTimerVal">3:00</span></div>
     <!-- Boost button -->
@@ -515,6 +517,17 @@
 
   <!-- Toolbar chat: modalita speciali (RIMOSSE: non funzionavano) -->
 
+
+  <!-- Live Reactions: container floating emoji + fire banner -->
+  <div id="reactionStage" style="position:absolute;inset:0;pointer-events:none;z-index:40;overflow:hidden"></div>
+  <div id="fireBanner" style="display:none;position:absolute;top:0;left:0;right:0;z-index:45;pointer-events:none">
+    <div class="fire-banner-inner">
+      <span class="fire-banner-icon">🔥</span>
+      <span class="fire-banner-text">LA STANZA HA PRESO FUOCO!</span>
+      <span class="fire-banner-icon">🔥</span>
+    </div>
+  </div>
+  <div id="fireOverlay" style="display:none;position:absolute;inset:0;z-index:35;pointer-events:none;background:linear-gradient(180deg,rgba(255,80,0,.08),rgba(255,30,0,.04));animation:fireGlow 1s ease-in-out infinite alternate"></div>
 
   <div class="chat-msgs" id="chatMsgs"></div>
 
@@ -531,11 +544,19 @@
     </div>
   </div>
 
+  <!-- Reaction Picker (slide-up) -->
+  <div id="reactionPicker" class="reaction-picker" style="display:none">
+    <div class="reaction-picker-row" id="reactionPickerRow">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
   <div class="chat-bar">
     <div class="chat-bar-row">
       <textarea class="cinput" id="msgInput" placeholder="Scrivi a tutti... 👋" rows="1"></textarea>
       <button class="cvoice" id="voiceRecordBtn" title="Tieni premuto per registrare">🎙️</button>
       <button class="cgift" onclick="openGiftPicker()" title="Invia un regalo">🎁</button>
+      <button class="creact" id="reactBtn" onclick="toggleReactionPicker()" title="Reagisci">🎆</button>
       <button class="csend" onclick="sendMsg()">➤</button>
     </div>
   </div>
