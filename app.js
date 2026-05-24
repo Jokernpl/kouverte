@@ -69,6 +69,7 @@ const ROOMS = [
   { id:'sicilia',       name:'Sicilia',     emoji:'🏝️', img:'https://images.unsplash.com/photo-1523365154888-8a758819b722?w=600&h=400&fit=crop', desc:'Trinacria, mare e tradizione',           tier:'public',     color:'#eab308', dot1:'#eab308',dot2:'#facc15',dot3:'#fde047' },
   { id:'campania',      name:'Campania',    emoji:'🌋', img:'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=600&h=400&fit=crop', desc:'Napoli, Salerno, costiere e dintorni',  tier:'public',     color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
   { id:'confessionale', name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=600&h=400&fit=crop', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
+  { id:'flirt',         name:'Flirt 🔞',    emoji:'🌹', img:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=400&fit=crop', desc:'Chat piccante adulti. Solo 18+. Anonima, calda, senza filtri.', tier:'adult', color:'#ff2d6e', dot1:'#ff2d6e',dot2:'#ff6b9d',dot3:'#ff2d6e' },
 ];
 
 function isRoomActiveNow(){ return true; }
@@ -3166,6 +3167,24 @@ function renderRooms(){
   document.getElementById('roomsList').innerHTML = ROOMS.map(roomCard).join('');
 }
 
+// ── Age Gate 18+ ──────────────────────────────────────────────────────────────
+function showAgeGate(pendingRoomId){
+  const m = document.getElementById('ageGateModal');
+  if(m){ m.dataset.pending = pendingRoomId; m.style.display='flex'; document.body.style.overflow='hidden'; }
+}
+function confirmAge(){
+  setLS('kv4_age_confirmed', 1);
+  const m = document.getElementById('ageGateModal');
+  const pending = m?.dataset?.pending;
+  if(m){ m.style.display='none'; document.body.style.overflow=''; }
+  if(pending) enterRoom(pending);
+}
+function denyAge(){
+  const m = document.getElementById('ageGateModal');
+  if(m){ m.style.display='none'; document.body.style.overflow=''; }
+  showToast('🔞 Accesso riservato ai maggiorenni');
+}
+
 // ── Temperatura stanza in base agli online ──
 function tempBadge(cnt){
   if(cnt>=10) return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ff6b9d,#ff6b9d);animation:hot-pulse 1.2s ease-in-out infinite"><span>🔥</span><span>BOLLENTE</span></div>`;
@@ -3205,10 +3224,15 @@ function roomCard(r){
 
   // Animazione "live-room" se più di 5 utenti
   const liveCls = cnt >= 5 ? ' live-room' : '';
+  // Classe speciale per stanze adulti
+  const adultCls = r.tier === 'adult' ? ' adult-room' : '';
+  // Badge 18+ per stanze adulti (sovrascrive fomo)
+  const adultBadge = r.tier === 'adult'
+    ? '<div class="fomo-tag adult">🔞 18+</div>' : fomoIndicator;
 
   return `
-  <div class="room-card${liveCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
-    ${fomoIndicator}
+  <div class="room-card${liveCls}${adultCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
+    ${adultBadge}
 
     <!-- Badge row in alto -->
     <div class="rc-badges">
@@ -3242,6 +3266,14 @@ function roomCard(r){
 function enterRoom(roomId){
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
+
+  // Stanze adulti 18+: age gate una-tantum
+  if(cfg.tier==='adult'){
+    if(!getLS('kv4_age_confirmed')){
+      showAgeGate(roomId);
+      return;
+    }
+  }
 
   // Stanze segrete: chiedi codice (memorizzato localmente)
   if(cfg.tier==='secret'){

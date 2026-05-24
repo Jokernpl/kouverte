@@ -1367,6 +1367,12 @@ html[data-theme="light"] body {
 .fomo-tag.trending{background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;box-shadow:0 0 10px rgba(249,115,22,0.5)}
 .fomo-tag.live{background:#10b981;color:#fff;box-shadow:0 0 10px rgba(16,185,129,0.5)}
 @keyframes fomoBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+/* Adult room card — bordo pulsante rosa */
+.room-card.adult-room{border-color:rgba(255,45,110,.35)!important}
+.room-card.adult-room::before{background:linear-gradient(135deg,rgba(255,45,110,.12),rgba(255,107,157,.08))!important;opacity:1!important}
+.room-card.adult-room:hover{border-color:rgba(255,45,110,.6)!important;box-shadow:0 0 20px rgba(255,45,110,.2)!important}
+.fomo-tag.adult{background:linear-gradient(135deg,#ff2d6e,#ff6b9d);color:#fff;box-shadow:0 0 12px rgba(255,45,110,.6);animation:adultPulse 1.5s ease-in-out infinite}
+@keyframes adultPulse{0%,100%{box-shadow:0 0 8px rgba(255,45,110,.5)}50%{box-shadow:0 0 18px rgba(255,45,110,.85)}}
 
 .rc-preview{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(0,0,0,0.25);border-radius:8px;margin-top:8px;font-size:10px;animation:feedSlideIn 0.5s ease-out}
 .rc-preview-dot{width:5px;height:5px;background:#10b981;border-radius:50%;box-shadow:0 0 4px #10b981;flex-shrink:0;animation:dotPulse 1.5s ease-in-out infinite}

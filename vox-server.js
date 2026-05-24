@@ -107,6 +107,7 @@ const ROOM_OG = {
     sicilia:   { name:'Sicilia',     emoji:'🏝️', img:'https://images.unsplash.com/photo-1523365154888-8a758819b722?w=1200&h=630&fit=crop', color:'#eab308' },
     campania:  { name:'Campania',    emoji:'🌋', img:'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&h=630&fit=crop', color:'#ef4444' },
     confessionale: { name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=1200&h=630&fit=crop', color:'#8b5cf6' },
+    flirt:         { name:'Flirt 🔞',      emoji:'🌹', img:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=1200&h=630&fit=crop', color:'#ff2d6e' },
 };
 
 function isBot(ua) {

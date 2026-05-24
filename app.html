@@ -1086,6 +1086,27 @@
 
 
 <!-- App video lightbox -->
+<!-- Age Gate Modal 18+ -->
+<div id="ageGateModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.92);backdrop-filter:blur(20px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#1a1f3a;border:1px solid rgba(255,45,110,.3);border-radius:24px;max-width:360px;width:100%;padding:32px 24px;text-align:center;box-shadow:0 0 60px rgba(255,45,110,.15)">
+    <div style="font-size:52px;margin-bottom:12px">🔞</div>
+    <h2 style="font-size:20px;font-weight:800;color:#fff;margin-bottom:10px">Contenuto Adulti</h2>
+    <p style="font-size:13px;color:#9ca3af;line-height:1.65;margin-bottom:24px">
+      La stanza <strong style="color:#ff6b9d">Flirt</strong> è riservata esclusivamente a persone maggiorenni.<br><br>
+      Confermando dichiari di avere <strong>almeno 18 anni</strong> e accetti che i contenuti possano essere di natura esplicita tra adulti consenzienti.
+    </p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button onclick="confirmAge()" style="background:linear-gradient(135deg,#ff2d6e,#ff6b9d);border:none;color:#fff;font-size:15px;font-weight:800;padding:14px;border-radius:14px;cursor:pointer;letter-spacing:.3px">
+        ✅ Ho 18+ anni — Entra
+      </button>
+      <button onclick="denyAge()" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#9ca3af;font-size:13px;font-weight:600;padding:12px;border-radius:14px;cursor:pointer">
+        ← Sono minorenne — Esci
+      </button>
+    </div>
+    <p style="font-size:10px;color:#4b5563;margin-top:16px;line-height:1.5">L'accesso non autorizzato da parte di minori è vietato dai <a href="/terms.html" style="color:#6e747d">Termini di Servizio</a>.</p>
+  </div>
+</div>
+
 <div id="appVidLightbox" onclick="if(event.target===this||event.target.closest('#appVidLightbox')===this)closeAppVideoLightbox()">
   <button class="avl-close" onclick="closeAppVideoLightbox()">✕</button>
   <video id="appLightboxVid" src="/kouverte-reel-720.mp4" controls playsinline preload="none"
