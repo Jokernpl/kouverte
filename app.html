@@ -1194,27 +1194,38 @@
 (function(){
   var h = location.hostname;
   if (h !== 'localhost' && h !== '127.0.0.1') return;
-  var toast, pollTimer;
+  var connected = false, toast, pollTimer;
   function showToast(msg) {
     if (!toast) {
       toast = document.createElement('div');
-      toast.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#000;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,.4)';
+      toast.style.cssText = 'position:fixed;top:12px;left:50%;transform:translateX(-50%);background:#f59e0b;color:#000;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:999999;box-shadow:0 4px 12px rgba(0,0,0,.4);transition:opacity .3s';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
   }
   function connect() {
     var sse = new EventSource('/live-reload');
-    sse.onopen = function() { if (toast) { toast.remove(); toast = null; } };
+    sse.onopen = function() {
+      connected = true;
+      if (toast) { toast.remove(); toast = null; }
+    };
     sse.onerror = function() {
       sse.close();
-      showToast('🔄 Riavvio server...');
+      if (!connected) {
+        // Server non ancora pronto, riprova silenziosamente
+        setTimeout(connect, 800);
+        return;
+      }
+      // Era connessa → server riavviato, aspetta e ricarica
+      showToast('🔄 Server riavviato...');
       clearInterval(pollTimer);
       pollTimer = setInterval(function() {
-        fetch('/').then(function() {
-          clearInterval(pollTimer);
-          showToast('✅ Ricarico...');
-          setTimeout(function(){ location.reload(); }, 200);
+        fetch('/').then(function(r) {
+          if (r.ok) {
+            clearInterval(pollTimer);
+            showToast('✅ Ricarico...');
+            setTimeout(function(){ location.reload(); }, 250);
+          }
         }).catch(function(){});
       }, 400);
     };
