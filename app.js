@@ -1439,6 +1439,9 @@ function getRank(mc){
 
 function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
+  // Aggiorna subtitle header profilo
+  const profHeaderSub=document.getElementById('profHeaderSub');
+  if(profHeaderSub) profHeaderSub.textContent=user.username?('@'+user.username):'Personalizza il tuo avatar';
   // Mostra @username se l'utente e' registrato
   const uEl = document.getElementById('profUsername');
   const shareBtn = document.getElementById('profShareBtn');
@@ -1719,6 +1722,8 @@ function connectSocket(){
   socket.on('global-online',({count})=>{
     document.getElementById('oCount').textContent=count;
     document.getElementById('opill').style.display='flex';
+    const ph=document.getElementById('onlinePillHdr');
+    if(ph) ph.textContent=count;
   });
 
   // NEW: ricevi lista utenti in stanza (per video chat + lista chip)
