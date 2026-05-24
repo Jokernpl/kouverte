@@ -176,6 +176,9 @@ body{position:relative}
 
 /* ─── GRID di TILE (rettangoli stile cavou) ─── */
 #roomsList{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+/* Sezioni e game-card si estendono su tutta la larghezza */
+#roomsList > .sec-label,
+#roomsList > .games-grid { grid-column: 1 / -1 }
 
 .room-card{
   height:108px;
@@ -245,9 +248,10 @@ body{position:relative}
 }
 
 .rc-tile-name-overlay{
-  font-size:15px;font-weight:600;color:#fff;text-align:center;letter-spacing:-.2px;
+  font-size:12px;font-weight:700;color:#fff;text-align:center;letter-spacing:-.2px;
   text-shadow:0 2px 8px rgba(0,0,0,.8);
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  padding:0 4px;
   position:relative;z-index:2
 }
 

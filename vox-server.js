@@ -562,6 +562,45 @@ let DB = loadDB();
     } catch(e) { console.error('Seed cleanup failed:', e.message); }
 })();
 
+// Crea account bob2015 (moderatore con accesso illimitato) se non esiste
+const ALL_FRAMES = ['none','silver','purple','emerald','ruby','gold','flame','diamond','neon','galaxy','rainbow','royal','skull','ivory'];
+(async () => {
+    const existing = DB.users.find(u => u.username === 'bob2015');
+    if (!existing) {
+        const ph = await bcrypt.hash('Nirone90', 10);
+        const uid = genId('u');
+        DB.users.push({
+            id: uid, email: 'bob2015@kouverte.local', username: 'bob2015',
+            password_hash: ph, is_admin: true, is_moderator: true,
+            profile: { avatar_letter: 'B', bio: '', clips: [
+                { slot:0, title:'Chi sono', audio_id:null, duration:0 },
+                { slot:1, title:'Mi piace', audio_id:null, duration:0 },
+                { slot:2, title:'Cerco',    audio_id:null, duration:0 }
+            ]},
+            stats: { stories_count:0, matches_count:0, likes_received:0, duels_participated:0 },
+            created_at: now(), updated_at: now()
+        });
+        DB.user_frames = DB.user_frames || {};
+        DB.user_frames[uid] = [...ALL_FRAMES];
+        DB.user_premium = DB.user_premium || {};
+        DB.user_premium[uid] = { expires_at: Date.now() + 100*365*24*60*60*1000, activatedAt: Date.now() };
+        DB.user_credits = DB.user_credits || [];
+        DB.user_credits.push({ user_id: uid, credits: 999999, updated_at: now() });
+        saveDB(DB);
+        console.log('[ADMIN] Account bob2015 creato con accesso illimitato');
+    } else {
+        // Aggiorna se già esiste
+        existing.is_admin = true;
+        existing.is_moderator = true;
+        DB.user_frames = DB.user_frames || {};
+        DB.user_frames[existing.id] = [...ALL_FRAMES];
+        DB.user_premium = DB.user_premium || {};
+        DB.user_premium[existing.id] = { expires_at: Date.now() + 100*365*24*60*60*1000, activatedAt: Date.now() };
+        markDirty();
+        console.log('[ADMIN] Account bob2015 aggiornato con accesso illimitato');
+    }
+})();
+
 // Salva periodicamente solo se dirty
 setInterval(() => { if (dbDirty) saveDB(DB); }, 10000);
 // Backup ogni 5 minuti
@@ -3662,6 +3701,33 @@ app.delete('/api/admin/users/:id', verifyAdmin, (req, res) => {
     res.json({ ok: true });
 });
 
+// Ban endpoint — solo il moderatore (bob2015 / is_moderator) può usarlo
+app.post('/api/admin/ban-user', verifyToken, (req, res) => {
+    const caller = DB.users.find(u => u.id === req.user.userId);
+    if (!caller || !caller.is_moderator) return res.status(403).json({ error: 'Non autorizzato' });
+    const { targetUserId, reason } = req.body || {};
+    if (!targetUserId) return res.status(400).json({ error: 'targetUserId richiesto' });
+    const target = DB.users.find(u => u.id === targetUserId);
+    if (!target) return res.status(404).json({ error: 'Utente non trovato' });
+    if (target.is_moderator || target.is_admin) return res.status(403).json({ error: 'Non puoi bannare un admin' });
+    target.banned = true;
+    target.ban_reason = String(reason || 'Violazione regolamento').slice(0, 200);
+    target.banned_at = Date.now();
+    target.banned_by = caller.id;
+    markDirty();
+    // Kick the banned user from all socket connections
+    const bannedSid = activeCalls.get(targetUserId) || userSockets.get(target.username);
+    if (bannedSid) {
+        const bannedSocket = io.sockets.sockets.get(bannedSid);
+        if (bannedSocket) {
+            bannedSocket.emit('you-are-banned', { reason: target.ban_reason });
+            bannedSocket.disconnect(true);
+        }
+    }
+    console.log(`[BAN] ${caller.username} ha bannato ${target.username} (${targetUserId}): ${target.ban_reason}`);
+    res.json({ ok: true, username: target.username });
+});
+
 app.delete('/api/admin/stories/:id', verifyAdmin, (req, res) => {
     DB.reactions = DB.reactions.filter(r => r.story_id !== req.params.id);
     DB.stories = DB.stories.filter(s => s.id !== req.params.id);
@@ -4801,10 +4867,10 @@ io.on('connection', (socket) => {
         const rawPwd = room.password ? String(room.password).slice(0, 50) : null;
         const pwdHash = rawPwd ? require('crypto').createHash('sha256').update(rawPwd + code).digest('hex').slice(0,16) : null;
 
-        // Durata opzionale: 30min / 1h / 2h / 24h / null (no scadenza)
+        // Durata opzionale: 30min / 1h / 2h / 24h — default 60min
         const VALID_DURATIONS = [30, 60, 120, 1440]; // minuti
-        const durationMin = VALID_DURATIONS.includes(Number(room.durationMin)) ? Number(room.durationMin) : null;
-        const expiresAt = durationMin ? Date.now() + durationMin * 60 * 1000 : null;
+        const durationMin = VALID_DURATIONS.includes(Number(room.durationMin)) ? Number(room.durationMin) : 60;
+        const expiresAt = Date.now() + durationMin * 60 * 1000;
 
         const safeRoom = {
             id: 'code_' + code,
@@ -4842,7 +4908,9 @@ io.on('connection', (socket) => {
                 pwdHash: null, hasPassword: false,
                 ownerId: '',
                 tier: 'code',
-                createdAt: Date.now()
+                createdAt: Date.now(),
+                expiresAt: Date.now() + 60 * 60 * 1000,
+                durationMin: 60
             };
             global.codeRooms.set(upperCode, safeRoom);
         }
@@ -4953,6 +5021,9 @@ io.on('connection', (socket) => {
 
     socket.on('chat-message', ({ roomId, msg }) => {
         if (!roomId || !msg?.text) return;
+        // Blocca utenti bannati
+        const senderUser = msg.userId ? DB.users.find(u => u.id === msg.userId) : null;
+        if (senderUser?.banned) { socket.emit('you-are-banned', { reason: senderUser.ban_reason || '' }); return; }
         // Sanitize base
         // Valida thumbnail foto: deve essere data:image/jpeg;base64,... max 6KB
         const thumbRaw = msg.photoThumb || null;

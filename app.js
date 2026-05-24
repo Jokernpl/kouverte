@@ -1634,6 +1634,13 @@ function connectSocket(){
   });
   socket.on('disconnect',()=>setConnState('offline'));
   socket.on('connect_error',()=>setConnState('offline'));
+  socket.on('you-are-banned',({reason})=>{
+    showToast('🔨 Account bannato' + (reason ? ': ' + reason : '') + '. Contatta il supporto.');
+    // Forza logout
+    localStorage.removeItem('kv4_token');
+    localStorage.removeItem('kv4_user');
+    setTimeout(()=>location.reload(), 2500);
+  });
   socket.on('reconnect_attempt',()=>setConnState('connecting'));
   socket.on('chat-message',({roomId,msg})=>{
     // Aggiorna preview nella card
@@ -6723,6 +6730,7 @@ function openUserMenu(el){
           <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionStartWebRTC('${esc(uid)}','${esc(uname)}')">📹 Video chat</button>
           <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionFavoriteFromMenu('${esc(uid)}','${esc(uname)}','${uface}','${ucolor}')">❤️ Aggiungi ai preferiti</button>
           <button class="modal-btn modal-btn-secondary" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);width:100%;padding:10px" onclick="actionBlockFromMenu('${esc(uid)}','${esc(uname)}','${uface}')">🚫 Blocca utente</button>
+          ${(user && user.username === 'bob2015') ? `<button class="modal-btn" style="background:rgba(220,38,38,0.25);color:#fca5a5;border:1px solid rgba(220,38,38,0.6);width:100%;padding:10px;font-weight:700" onclick="banUserFromMenu('${esc(uid)}','${esc(uname)}')">🔨 BAN utente</button>` : ''}
         </div>
       </div>
     </div>
@@ -6776,6 +6784,23 @@ function actionBlockFromMenu(uid, uname, uface){
     saveUser();
   }
   showToast('🚫 ' + uname + ' bloccato');
+}
+
+async function banUserFromMenu(uid, uname){
+  document.getElementById('userMenuModal').classList.remove('show');
+  const reason = prompt(`🔨 Motivo ban per ${uname} (opzionale):`, 'Violazione regolamento') ?? '';
+  if (reason === null) return; // cancelled
+  try {
+    const token = getLS('kv4_token');
+    const r = await fetch('/api/admin/ban-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ targetUserId: uid, reason })
+    });
+    const data = await r.json();
+    if (data.ok) showToast('🔨 ' + uname + ' bannato!');
+    else showToast('❌ ' + (data.error || 'Errore ban'));
+  } catch(e) { showToast('❌ Errore connessione'); }
 }
 
 function actionStartWebRTC(uid, uname){

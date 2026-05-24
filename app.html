@@ -287,25 +287,17 @@
 
       <label class="modal-label">Durata stanza</label>
       <div class="duration-picker" id="durationPicker">
-        <div class="dur-opt selected" data-min="0" onclick="selectDuration(this)">
-          <span class="dur-main">∞</span>
-          <span class="dur-sub">Nessun limite</span>
-        </div>
         <div class="dur-opt" data-min="30" onclick="selectDuration(this)">
           <span class="dur-main">30m</span>
           <span class="dur-sub">Breve</span>
         </div>
-        <div class="dur-opt" data-min="60" onclick="selectDuration(this)">
+        <div class="dur-opt selected" data-min="60" onclick="selectDuration(this)">
           <span class="dur-main">1h</span>
-          <span class="dur-sub">Media</span>
+          <span class="dur-sub">Standard</span>
         </div>
         <div class="dur-opt" data-min="120" onclick="selectDuration(this)">
           <span class="dur-main">2h</span>
           <span class="dur-sub">Lunga</span>
-        </div>
-        <div class="dur-opt" data-min="1440" onclick="selectDuration(this)">
-          <span class="dur-main">24h</span>
-          <span class="dur-sub">Giornata</span>
         </div>
       </div>
 
