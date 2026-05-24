@@ -1987,6 +1987,203 @@ html[data-theme="light"] body {
 .modal-btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 
 /* ═══════════════════════════════
+   KOUVERTE NOTTE SYSTEM
+═══════════════════════════════ */
+.notte-banner{margin:12px 16px 0;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.25),rgba(129,140,248,0.15));border:1px solid rgba(99,102,241,0.35);padding:14px 16px;cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.notte-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(99,102,241,0.2),transparent 60%);pointer-events:none}
+.notte-banner:active{transform:scale(0.98)}
+.notte-banner-inner{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.notte-banner-icon{font-size:28px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(129,140,248,0.6))}
+.notte-banner-text{flex:1}
+.notte-banner-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:-0.2px}
+.notte-banner-sub{font-size:11px;color:rgba(165,180,252,0.8);margin-top:2px}
+.notte-banner-cta{background:rgba(99,102,241,0.9);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;flex-shrink:0}
+.notte-banner-cta:hover{background:#6366f1}
+.notte-live-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(239,68,68,0.2);border:1px solid rgba(239,68,68,0.4);color:#f87171;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px}
+.notte-live-badge::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:notte-live-pulse 1.5s ease-in-out infinite}
+.notte-timer{font-size:11px;color:rgba(165,180,252,0.7);margin-top:3px}
+.notte-timer.urgent{color:#f87171;font-weight:700;animation:notte-urgent-flash 1s ease-in-out infinite}
+@keyframes notte-live-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+@keyframes notte-urgent-flash{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Entrance overlay */
+.notte-entrance-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9800;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;opacity:0;pointer-events:none;transition:opacity .4s}
+.notte-entrance-overlay.show{opacity:1;pointer-events:all}
+.notte-entrance-moon{font-size:72px;margin-bottom:20px;filter:drop-shadow(0 0 20px rgba(129,140,248,0.6));animation:notte-float 3s ease-in-out infinite}
+.notte-entrance-title{font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px;text-align:center}
+.notte-entrance-theme{font-size:16px;color:rgba(165,180,252,0.8);text-align:center;margin-top:10px;max-width:280px;line-height:1.5;font-style:italic}
+.notte-entrance-btn{margin-top:32px;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;border:none;border-radius:16px;padding:16px 40px;font-size:16px;font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(99,102,241,0.4)}
+.notte-entrance-btn:hover{transform:scale(1.03);box-shadow:0 6px 30px rgba(99,102,241,0.6)}
+.notte-entrance-rules{display:flex;flex-direction:column;gap:8px;margin-top:20px;width:100%;max-width:300px}
+.notte-entrance-rule{font-size:12px;color:rgba(255,255,255,0.5);display:flex;align-items:center;gap:8px}
+.notte-entrance-rule span{font-size:16px}
+@keyframes notte-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+/* Fullscreen Notte modal */
+.notte-fullscreen{position:fixed;inset:0;background:#0a0c18;z-index:9700;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .35s cubic-bezier(0.34,1.56,0.64,1)}
+.notte-fullscreen.show{transform:translateY(0)}
+.notte-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:rgba(99,102,241,0.15);border-bottom:1px solid rgba(99,102,241,0.2);flex-shrink:0}
+.notte-header-back{background:none;border:none;color:#a5b4fc;font-size:20px;cursor:pointer;padding:4px;line-height:1}
+.notte-header-info{flex:1}
+.notte-header-title{font-size:16px;font-weight:700;color:#fff}
+.notte-header-theme{font-size:11px;color:rgba(165,180,252,0.7);margin-top:1px;font-style:italic}
+.notte-header-live{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#f87171}
+.notte-header-live::before{content:'';width:6px;height:6px;background:#ef4444;border-radius:50%;animation:notte-live-pulse 1.5s infinite}
+.notte-theme-strip{padding:12px 16px;background:rgba(99,102,241,0.08);border-bottom:1px solid rgba(99,102,241,0.12);flex-shrink:0}
+.notte-theme-text{font-size:14px;color:rgba(165,180,252,0.9);font-style:italic;text-align:center;line-height:1.5}
+.notte-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.notte-msg{display:flex;flex-direction:column;gap:4px;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:12px;position:relative;transition:background .2s}
+.notte-msg.winner{background:linear-gradient(135deg,rgba(250,204,21,0.1),rgba(251,191,36,0.06));border-color:rgba(250,204,21,0.3)}
+.notte-msg-meta{display:flex;align-items:center;gap:6px}
+.notte-msg-face{font-size:18px;line-height:1}
+.notte-msg-name{font-size:11px;font-weight:600;color:rgba(165,180,252,0.7)}
+.notte-msg-text{font-size:14px;color:#e2e8f0;line-height:1.55;word-break:break-word}
+.notte-msg-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.notte-vote-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.2);color:rgba(165,180,252,0.7);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.notte-vote-btn:hover{background:rgba(99,102,241,0.25);color:#a5b4fc}
+.notte-vote-btn.voted{background:rgba(99,102,241,0.4);border-color:#6366f1;color:#fff}
+.notte-vote-count{font-size:12px;font-weight:700;color:#a5b4fc}
+.notte-msg-time{font-size:10px;color:rgba(255,255,255,0.25)}
+.notte-input-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid rgba(99,102,241,0.15);flex-shrink:0;background:#0a0c18}
+.notte-input{flex:1;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;padding:10px 16px;color:#fff;font-size:14px;outline:none;font-family:inherit}
+.notte-input::placeholder{color:rgba(165,180,252,0.4)}
+.notte-input:focus{border-color:rgba(99,102,241,0.5)}
+.notte-send-btn{width:40px;height:40px;border-radius:50%;background:#6366f1;border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s,transform .15s}
+.notte-send-btn:hover{background:#818cf8;transform:scale(1.05)}
+.notte-participants{font-size:11px;color:rgba(165,180,252,0.5);padding:0 16px 8px;flex-shrink:0}
+
+/* Banner active state + aliases from JS */
+.notte-banner.active{border-color:rgba(239,68,68,0.4);box-shadow:0 0 20px rgba(239,68,68,0.15)}
+.notte-banner-glow{display:none}
+.notte-icon{font-size:28px;flex-shrink:0;filter:drop-shadow(0 0 8px rgba(129,140,248,0.6))}
+.notte-info{flex:1}
+.notte-title{font-size:15px;font-weight:700;color:#fff}
+.notte-theme{font-size:11px;color:rgba(165,180,252,0.8);margin-top:2px;font-style:italic}
+.notte-timer{font-size:13px;font-weight:700;color:#a5b4fc;flex-shrink:0}
+.notte-timer.urgent{color:#f87171;animation:notte-urgent-flash 1s infinite}
+.notte-next{font-size:11px;color:rgba(165,180,252,0.5)}
+.notte-enter-btn{background:rgba(99,102,241,0.9);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:background .2s;flex-shrink:0}
+.notte-enter-btn:hover{background:#6366f1}
+/* Notte modal open state */
+.notte-fullscreen.open{transform:translateY(0)}
+/* Modal header overrides */
+.notte-header-left{display:flex;align-items:center;gap:8px;flex:1}
+.notte-header-timer{font-size:13px;font-weight:700;color:#a5b4fc;margin-right:8px}
+.notte-close-btn{background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;cursor:pointer;padding:4px;line-height:1;transition:color .2s}
+.notte-close-btn:hover{color:#fff}
+/* Theme strip text */
+.notte-theme-strip{font-size:14px;color:rgba(165,180,252,0.9);font-style:italic;text-align:center;line-height:1.5;padding:12px 16px;background:rgba(99,102,241,0.08);border-bottom:1px solid rgba(99,102,241,0.12);flex-shrink:0}
+/* Nottte input element (no class in JS) */
+#notteInput{flex:1;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:24px;padding:10px 16px;color:#fff;font-size:14px;outline:none;font-family:inherit}
+#notteInput::placeholder{color:rgba(165,180,252,0.4)}
+#notteInput:focus{border-color:rgba(99,102,241,0.5)}
+/* Message aliases */
+.notte-msg.me{background:rgba(99,102,241,0.15);border-color:rgba(99,102,241,0.25)}
+.notte-msg-face{font-size:20px;flex-shrink:0;margin-right:4px}
+.notte-msg-body{flex:1;min-width:0}
+/* Entrance aliases */
+.notte-entrance-content{display:flex;flex-direction:column;align-items:center;width:100%;max-width:340px}
+.notte-entrance-sub{font-size:13px;color:rgba(255,255,255,0.4);margin-top:8px;text-align:center}
+.notte-entrance-skip{background:none;border:none;color:rgba(255,255,255,0.3);font-size:13px;cursor:pointer;margin-top:14px;text-decoration:underline}
+.notte-entrance-skip:hover{color:rgba(255,255,255,0.6)}
+/* Ending aliases */
+.notte-ending-content{display:flex;flex-direction:column;align-items:center;width:100%;max-width:340px}
+.notte-ending-moon{font-size:52px;margin-bottom:16px;animation:notte-winner-bounce .6s ease-out}
+.notte-end-winner{margin-top:16px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:14px;padding:14px;width:100%;max-width:300px}
+.notte-end-winner-label{font-size:11px;color:#fbbf24;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.notte-end-winner-text{font-size:14px;color:#fff;font-style:italic;line-height:1.5}
+.notte-end-winner-votes{font-size:12px;color:rgba(251,191,36,0.7);margin-top:6px}
+.notte-end-nomsg{font-size:14px;color:rgba(255,255,255,0.35);margin-top:16px;text-align:center;font-style:italic}
+.notte-end-reward{margin-top:14px;font-size:14px;color:#10b981;font-weight:600}
+
+/* Ending overlay */
+.notte-ending-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:9900;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;opacity:0;pointer-events:none;transition:opacity .4s}
+.notte-ending-overlay.show{opacity:1;pointer-events:all}
+.notte-ending-crown{font-size:60px;margin-bottom:16px;animation:notte-winner-bounce .6s ease-out}
+.notte-ending-title{font-size:24px;font-weight:800;color:#fbbf24;letter-spacing:-0.3px}
+.notte-ending-winner{font-size:16px;color:#fff;margin-top:10px;text-align:center;max-width:280px;line-height:1.5}
+.notte-ending-coins{margin-top:20px;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);border-radius:12px;padding:12px 20px;font-size:18px;font-weight:700;color:#fbbf24}
+.notte-ending-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;width:100%;max-width:280px}
+.notte-ending-stat{background:rgba(255,255,255,0.05);border-radius:10px;padding:10px;text-align:center}
+.notte-ending-stat-n{font-size:20px;font-weight:700;color:#fff}
+.notte-ending-stat-l{font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px}
+@keyframes notte-winner-bounce{0%{transform:scale(0.5);opacity:0}60%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+
+/* ═══════════════════════════════
+   CITY LEADERBOARD WIDGET
+═══════════════════════════════ */
+.city-lb-widget{margin:16px 16px 0;border-radius:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);overflow:hidden}
+.city-lb-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.05)}
+.city-lb-title{font-size:13px;font-weight:700;color:#e2e8f0;display:flex;align-items:center;gap:6px}
+.city-lb-date{font-size:10px;color:rgba(255,255,255,0.3);font-weight:400}
+.city-lb-rows{padding:10px 16px 12px;display:flex;flex-direction:column;gap:7px}
+.city-lb-row{display:flex;align-items:center;gap:10px;position:relative}
+.city-lb-medal{font-size:14px;width:20px;text-align:center;flex-shrink:0}
+.city-lb-name{font-size:12px;font-weight:600;color:#e2e8f0;width:68px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.city-lb-bar-wrap{flex:1;background:rgba(255,255,255,0.05);border-radius:20px;height:6px;overflow:hidden}
+.city-lb-bar{height:100%;border-radius:20px;transition:width .8s cubic-bezier(0.25,0.46,0.45,0.94);min-width:4px}
+.city-lb-count{font-size:11px;font-weight:700;color:rgba(255,255,255,0.45);width:36px;text-align:right;flex-shrink:0}
+.city-lb-empty{padding:16px;text-align:center;font-size:12px;color:rgba(255,255,255,0.3)}
+
+/* ═══════════════════════════════
+   VOICE NOTE PLAYER (Profile)
+═══════════════════════════════ */
+.vnp-wrap{margin:14px 16px 0;border-radius:16px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.12);padding:14px 16px}
+.vnp-label{font-size:11px;font-weight:700;color:rgba(0,212,255,0.6);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.vnp-empty{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.vnp-empty-icon{font-size:32px;opacity:0.4}
+.vnp-empty-text{font-size:12px;color:rgba(255,255,255,0.35);text-align:center}
+.vnp-record-btn{background:linear-gradient(135deg,#00d4ff,#00a0cc);color:#0f1117;border:none;border-radius:24px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 12px rgba(0,212,255,0.3)}
+.vnp-record-btn:hover{transform:scale(1.03);box-shadow:0 4px 20px rgba(0,212,255,0.4)}
+.vnp-record-btn.recording{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;animation:vnp-pulse-rec .8s ease-in-out infinite;box-shadow:0 2px 16px rgba(239,68,68,0.5)}
+@keyframes vnp-pulse-rec{0%,100%{box-shadow:0 2px 12px rgba(239,68,68,0.4)}50%{box-shadow:0 2px 24px rgba(239,68,68,0.8)}}
+.vnp-recording-ui{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+.vnp-rec-timer{font-size:24px;font-weight:700;color:#ef4444;font-variant-numeric:tabular-nums;letter-spacing:2px}
+.vnp-waveform{display:flex;align-items:center;justify-content:center;gap:3px;height:32px;width:100%}
+.vnp-wave-bar{width:4px;border-radius:4px;background:#00d4ff;animation:vnp-wave 0.8s ease-in-out infinite}
+.vnp-wave-bar:nth-child(1){animation-delay:0s;height:8px}
+.vnp-wave-bar:nth-child(2){animation-delay:.1s;height:16px}
+.vnp-wave-bar:nth-child(3){animation-delay:.2s;height:24px}
+.vnp-wave-bar:nth-child(4){animation-delay:.3s;height:32px}
+.vnp-wave-bar:nth-child(5){animation-delay:.4s;height:20px}
+.vnp-wave-bar:nth-child(6){animation-delay:.5s;height:12px}
+.vnp-wave-bar:nth-child(7){animation-delay:.6s;height:28px}
+.vnp-wave-bar:nth-child(8){animation-delay:.7s;height:16px}
+@keyframes vnp-wave{0%,100%{transform:scaleY(0.4);opacity:.6}50%{transform:scaleY(1);opacity:1}}
+.vnp-rec-stop{background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);color:#f87171;border-radius:12px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;margin-top:4px;transition:background .2s}
+.vnp-rec-stop:hover{background:rgba(239,68,68,0.25)}
+.vnp-saved-ui{display:flex;align-items:center;gap:12px;width:100%}
+.vnp-play-btn{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#00a0cc);border:none;color:#0f1117;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform .2s;box-shadow:0 2px 10px rgba(0,212,255,0.35)}
+.vnp-play-btn:hover{transform:scale(1.08)}
+.vnp-play-btn.playing{background:linear-gradient(135deg,#10b981,#059669)}
+.vnp-saved-info{flex:1}
+.vnp-saved-label{font-size:13px;font-weight:600;color:#e2e8f0}
+.vnp-saved-hint{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
+.vnp-del-btn{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;border-radius:10px;padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;transition:background .2s;flex-shrink:0}
+.vnp-del-btn:hover{background:rgba(239,68,68,0.2)}
+
+/* ═══════════════════════════════
+   MESSAGE CONTEXT MENU
+═══════════════════════════════ */
+.msg-ctx-menu{position:fixed;background:#1a1f3a;border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:6px;min-width:200px;box-shadow:0 8px 32px rgba(0,0,0,0.4),0 2px 8px rgba(0,0,0,0.3);z-index:9999;transform-origin:top left;animation:ctx-pop .18s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes ctx-pop{from{transform:scale(0.85);opacity:0}to{transform:scale(1);opacity:1}}
+.ctx-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:500;color:#e2e8f0;transition:background .15s;-webkit-tap-highlight-color:transparent}
+.ctx-item:hover,.ctx-item:active{background:rgba(0,212,255,0.12)}
+.ctx-item-icon{font-size:17px;width:24px;text-align:center;flex-shrink:0}
+.ctx-item.cancel{color:rgba(255,255,255,0.35);font-size:12px}
+.ctx-item.cancel:hover,.ctx-item.cancel:active{background:rgba(255,255,255,0.04)}
+
+/* ═══════════════════════════════
+   STANZA CODICE: DURATA PICKER
+═══════════════════════════════ */
+.duration-picker{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.dur-opt{flex:1;min-width:60px;padding:8px 4px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.dur-opt.selected{background:rgba(0,212,255,0.15);border-color:rgba(0,212,255,0.4);color:#00d4ff}
+.dur-opt:hover:not(.selected){background:rgba(255,255,255,0.08);color:#e2e8f0}
+.dur-opt .dur-main{font-size:14px;font-weight:700;display:block;color:inherit}
+.dur-opt .dur-sub{font-size:9px;opacity:.7;display:block;margin-top:1px}
+
+/* ═══════════════════════════════
    MOBILE RESPONSIVE - VIDEO SECTION
 ═══════════════════════════════ */
 @media(max-width:768px){

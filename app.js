@@ -70,6 +70,7 @@ const ROOMS = [
   { id:'campania',      name:'Campania',    emoji:'🌋', img:'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=600&h=400&fit=crop', desc:'Napoli, Salerno, costiere e dintorni',  tier:'public',     color:'#ef4444', dot1:'#ef4444',dot2:'#f87171',dot3:'#fca5a5' },
   { id:'confessionale', name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=600&h=400&fit=crop', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
   { id:'flirt',         name:'Flirt 🔞',    emoji:'🌹', img:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=400&fit=crop', desc:'Chat piccante adulti. Solo 18+. Anonima, calda, senza filtri.', tier:'adult', color:'#ff2d6e', dot1:'#ff2d6e',dot2:'#ff6b9d',dot3:'#ff2d6e' },
+  { id:'notte',         name:'Kouverte Notte', emoji:'🌙', img:'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=600&h=400&fit=crop', desc:'Evento serale alle 23:00. Una domanda, tutti rispondono.', tier:'notte', color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
 ];
 
 function isRoomActiveNow(){ return true; }
@@ -311,6 +312,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   syncPremiumStatus();
   // Controlla ritorno da Stripe (stripe_ok / stripe_cancel query params)
   checkStripeReturn();
+  // Inizializza feature nuove
+  initCityLeaderboard();
+  initKouverteNotte();
   // Setup button event listeners
   const continuaBtn = Array.from(document.querySelectorAll('.nbtn')).find(b => b.textContent.includes('Continua'));
   if(continuaBtn) continuaBtn.addEventListener('click', openContinua);
@@ -1526,6 +1530,13 @@ function updateProfileUI(){
   }
 
   updateFreeBar();
+
+  // Voice note player
+  if (!window._voiceNotePlayerInit) {
+    window._voiceNotePlayerInit = true;
+    const vnSaved = user.kvData?.voiceNote || null;
+    renderVoiceNotePlayer(vnSaved ? 'saved' : 'empty');
+  }
 }
 
 function copyRef(){
@@ -2954,6 +2965,527 @@ function checkStripeReturn(){
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// 🏆 CLASSIFICA CITTÀ LIVE
+// ══════════════════════════════════════════════════════════════
+var _cityStats = [];
+const CITY_LABELS = {
+  napoli:'⚓ Napoli', roma:'🏛️ Roma', milano:'🏙️ Milano',
+  palermo:'☀️ Palermo', sicilia:'🏝️ Sicilia', campania:'🌋 Campania',
+  italia:'🇮🇹 Italia', mondo:'🌍 Mondo', confessionale:'🕯️ Confessionale',
+  flirt:'🌹 Flirt'
+};
+const CITY_COLORS = {
+  napoli:'#06b6d4', roma:'#f59e0b', milano:'#60a5fa', palermo:'#f97316',
+  sicilia:'#eab308', campania:'#ef4444', italia:'#10b981', mondo:'#a78bfa',
+  confessionale:'#8b5cf6', flirt:'#ff2d6e'
+};
+
+function initCityLeaderboard(){
+  // Fetch iniziale
+  fetch('/api/leaderboard/cities')
+    .then(r => r.json()).then(d => { _cityStats = d.cities || []; renderCityLeaderboard(); })
+    .catch(() => {});
+  // Update real-time via socket
+  if(socket) socket.on('city-stats-update', (d) => { _cityStats = d.cities || []; renderCityLeaderboard(); });
+}
+
+function renderCityLeaderboard(){
+  const el = document.getElementById('cityLeaderboard');
+  if(!el || !_cityStats.length) return;
+  el.style.display = 'block';
+  const medals = ['🥇','🥈','🥉'];
+  const today = new Date().toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+  el.innerHTML = `
+    <div class="city-lb-header">
+      <div class="city-lb-title">🔥 Stanze più attive oggi</div>
+      <div class="city-lb-date">${today}</div>
+    </div>
+    <div class="city-lb-rows">
+    ${_cityStats.slice(0,5).map((c,i) => {
+      const col = CITY_COLORS[c.id] || '#00d4ff';
+      const label = CITY_LABELS[c.id] || c.id;
+      const width = Math.max(8, Math.round((_cityStats[0]?.msgs || 1) > 0 ? (c.msgs / _cityStats[0].msgs) * 100 : 0));
+      return `<div class="city-lb-row" onclick="enterRoom('${c.id}')">
+        <span class="city-lb-medal">${medals[i] || `<span style='font-size:11px;color:rgba(255,255,255,.35)'>#${i+1}</span>`}</span>
+        <span class="city-lb-name">${label}</span>
+        <div class="city-lb-bar-wrap"><div class="city-lb-bar" style="width:${width}%;background:${col}"></div></div>
+        <span class="city-lb-count">${c.msgs}</span>
+      </div>`;
+    }).join('')}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// 🌙 KOUVERTE NOTTE
+// ══════════════════════════════════════════════════════════════
+var _notteSession = null;
+var _notteCountdownTimer = null;
+var _notteVotes = {}; // msgId → boolean (voted by me)
+
+function initKouverteNotte(){
+  fetch('/api/notte/status').then(r => r.json()).then(d => {
+    if(d.active){
+      _notteSession = { theme: d.theme, endsAt: d.endsAt, sessionId: d.sessionId };
+      showNotteBanner(true);
+    } else {
+      showNotteBanner(false, d.nextAt);
+    }
+  }).catch(() => {});
+
+  if(socket){
+    socket.on('notte-start', (d) => {
+      _notteSession = d;
+      _notteVotes = {};
+      showNotteBanner(true);
+      showNotteEntrance(d.theme);
+    });
+    socket.on('notte-end', (d) => {
+      _notteSession = null;
+      hideNotteBanner();
+      showNotteEnding(d);
+      // Se l'utente è nella stanza notte, torna alla home
+      if(room?.id === 'notte') setTimeout(() => showScreen('home'), 3000);
+    });
+    socket.on('notte-message', (msg) => {
+      appendNotteMessage(msg);
+    });
+    socket.on('notte-vote-update', (d) => {
+      const vEl = document.getElementById('nv_' + d.msgId);
+      if(vEl) vEl.textContent = '❤️ ' + d.votes;
+    });
+  }
+}
+
+function showNotteBanner(active, nextAt){
+  let banner = document.getElementById('notteBanner');
+  if(!banner){
+    banner = document.createElement('div');
+    banner.id = 'notteBanner';
+    banner.className = 'notte-banner';
+    document.getElementById('home')?.prepend(banner);
+  }
+  if(active && _notteSession){
+    banner.innerHTML = `
+      <div class="notte-banner-glow"></div>
+      <div class="notte-banner-inner">
+        <div class="notte-icon">🌙</div>
+        <div class="notte-info">
+          <div class="notte-title">Kouverte Notte è LIVE!</div>
+          <div class="notte-theme">${esc(_notteSession.theme)}</div>
+        </div>
+        <div class="notte-timer" id="notteTimer"></div>
+        <button class="notte-enter-btn" onclick="enterNotteRoom()">Entra →</button>
+      </div>`;
+    banner.classList.add('active');
+    startNotteCountdown(_notteSession.endsAt);
+  } else if(nextAt){
+    banner.innerHTML = `
+      <div class="notte-banner-inner preview">
+        <div class="notte-icon">🌙</div>
+        <div class="notte-info">
+          <div class="notte-title">Kouverte Notte</div>
+          <div class="notte-theme">Ogni sera alle 23:00 — una domanda, tutti rispondono</div>
+        </div>
+        <div class="notte-next" id="notteNext"></div>
+      </div>`;
+    banner.classList.remove('active');
+    startNotteNextCountdown(nextAt);
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function hideNotteBanner(){
+  const b = document.getElementById('notteBanner');
+  if(b) b.classList.remove('active');
+}
+
+function startNotteCountdown(endsAt){
+  clearInterval(_notteCountdownTimer);
+  _notteCountdownTimer = setInterval(() => {
+    const left = endsAt - Date.now();
+    const el = document.getElementById('notteTimer');
+    if(!el){ clearInterval(_notteCountdownTimer); return; }
+    if(left <= 0){ el.textContent = '🔒 Chiusa'; clearInterval(_notteCountdownTimer); return; }
+    const m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000);
+    el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+    if(left < 60000) el.classList.add('urgent');
+  }, 1000);
+}
+
+function startNotteNextCountdown(nextAt){
+  clearInterval(_notteCountdownTimer);
+  _notteCountdownTimer = setInterval(() => {
+    const left = nextAt - Date.now();
+    const el = document.getElementById('notteNext');
+    if(!el || left <= 0){ clearInterval(_notteCountdownTimer); return; }
+    const h = Math.floor(left / 3600000), m = Math.floor((left % 3600000) / 60000);
+    el.textContent = h > 0 ? `tra ${h}h ${m}m` : `tra ${m} min`;
+  }, 30000);
+  const el = document.getElementById('notteNext');
+  if(el){
+    const left = nextAt - Date.now();
+    const h = Math.floor(left/3600000), m = Math.floor((left%3600000)/60000);
+    el.textContent = h > 0 ? `tra ${h}h ${m}m` : `tra ${m} min`;
+  }
+}
+
+function showNotteEntrance(theme){
+  const overlay = document.createElement('div');
+  overlay.className = 'notte-entrance-overlay';
+  overlay.innerHTML = `
+    <div class="notte-entrance-content">
+      <div class="notte-entrance-moon">🌙</div>
+      <div class="notte-entrance-title">Kouverte Notte</div>
+      <div class="notte-entrance-theme">${esc(theme)}</div>
+      <div class="notte-entrance-sub">La notte è iniziata. Sei anonimo.</div>
+      <button class="notte-entrance-btn" onclick="this.closest('.notte-entrance-overlay').remove();enterNotteRoom()">Entra nella Notte →</button>
+      <button class="notte-entrance-skip" onclick="this.closest('.notte-entrance-overlay').remove()">Più tardi</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.classList.add('show'), 50);
+}
+
+function showNotteEnding(data){
+  const overlay = document.createElement('div');
+  overlay.className = 'notte-ending-overlay';
+  const winHtml = data.winner
+    ? `<div class="notte-end-winner">
+        <div class="notte-end-winner-label">⭐ Messaggio vincitore</div>
+        <div class="notte-end-winner-text">"${esc(data.winner.text)}"</div>
+        <div class="notte-end-winner-votes">❤️ ${data.winner.votes} cuori · +150 monete</div>
+      </div>`
+    : '<div class="notte-end-nomsg">Stanotte nessuno ha risposto…</div>';
+  overlay.innerHTML = `
+    <div class="notte-ending-content">
+      <div class="notte-ending-moon">🌙✨</div>
+      <div class="notte-ending-title">La Notte è finita</div>
+      <div class="notte-ending-stats">${data.participants || 0} anonimi · ${data.totalMessages || 0} messaggi</div>
+      ${winHtml}
+      <div class="notte-end-reward">+20 monete per aver partecipato!</div>
+      <button onclick="this.closest('.notte-ending-overlay').remove()" class="notte-entrance-btn">Grazie 🌙</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.classList.add('show'), 50);
+  setTimeout(() => { overlay.classList.remove('show'); setTimeout(() => overlay.remove(), 500); }, 8000);
+}
+
+function enterNotteRoom(){
+  if(!_notteSession){ showToast('🌙 La Notte non è ancora attiva'); return; }
+  enterRoom('notte');
+}
+
+function appendNotteMessage(msg){
+  const container = document.getElementById('notte-messages');
+  if(!container) return;
+  const isMe = msg.userId === (user.serverId || user.id);
+  const el = document.createElement('div');
+  el.className = `notte-msg ${isMe ? 'me' : ''}`;
+  el.id = 'nmsg_' + msg.id;
+  el.innerHTML = `
+    <div class="notte-msg-face">${esc(msg.face)}</div>
+    <div class="notte-msg-body">
+      <div class="notte-msg-text">${esc(msg.text)}</div>
+    </div>
+    <button class="notte-vote-btn" id="nv_${msg.id}" onclick="voteNotteMsg('${msg.id}')">❤️ ${msg.votes||0}</button>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendNotteMessage(){
+  const inp = document.getElementById('notteInput');
+  const text = inp?.value.trim();
+  if(!text || !_notteSession || !socket) return;
+  socket.emit('notte-message', { userId: user.serverId||user.id, name: user.name||'Anonimo', face: user.face||'🎭', color: user.color||'#00d4ff', text });
+  inp.value = '';
+}
+
+function voteNotteMsg(msgId){
+  if(!socket || !_notteSession) return;
+  const already = _notteVotes[msgId];
+  _notteVotes[msgId] = !already;
+  socket.emit('notte-vote', { msgId, voterId: user.serverId||user.id });
+  const btn = document.getElementById('nv_' + msgId);
+  if(btn) btn.classList.toggle('voted', !already);
+}
+
+function openNotteModal(){
+  if(!_notteSession){ showToast('🌙 La Notte inizia alle 23:00'); return; }
+  let modal = document.getElementById('notteModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id = 'notteModal';
+    modal.className = 'notte-fullscreen';
+    modal.innerHTML = `
+      <div class="notte-header">
+        <div class="notte-header-left">
+          <span class="notte-live-badge">● LIVE</span>
+          <span class="notte-header-title">Kouverte Notte</span>
+        </div>
+        <div class="notte-header-timer" id="notteModalTimer"></div>
+        <button class="notte-close-btn" onclick="document.getElementById('notteModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="notte-theme-strip" id="notteThemeStrip"></div>
+      <div class="notte-messages" id="notte-messages"></div>
+      <div class="notte-input-bar">
+        <input id="notteInput" placeholder="Rispondi anonimamente…" maxlength="280" onkeydown="if(event.key==='Enter')sendNotteMessage()">
+        <button class="notte-send-btn" onclick="sendNotteMessage()">✦</button>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  const themeEl = document.getElementById('notteThemeStrip');
+  if(themeEl && _notteSession) themeEl.textContent = _notteSession.theme;
+  modal.classList.add('open');
+  startNotteCountdown(_notteSession.endsAt);
+  document.getElementById('notteInput')?.focus();
+}
+
+// ══════════════════════════════════════════════════════════════
+// 📤 SHARE CARD ANONIMA — genera immagine virale per Instagram
+// ══════════════════════════════════════════════════════════════
+function generateShareCard(text, roomName){
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080; canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+
+  // Background sfumato scuro
+  const bg = ctx.createLinearGradient(0, 0, 1080, 1080);
+  bg.addColorStop(0, '#0f1117');
+  bg.addColorStop(0.5, '#1a1f3a');
+  bg.addColorStop(1, '#0f1117');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, 1080, 1080);
+
+  // Pattern di stelle
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  for(let i = 0; i < 120; i++){
+    const x = Math.random() * 1080, y = Math.random() * 1080;
+    const r = Math.random() * 2 + 0.5;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Cerchio decorativo
+  const grad = ctx.createRadialGradient(540, 540, 100, 540, 540, 500);
+  grad.addColorStop(0, 'rgba(99,91,255,0.12)');
+  grad.addColorStop(1, 'rgba(99,91,255,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(540, 540, 500, 0, Math.PI*2); ctx.fill();
+
+  // Linea orizzontale sopra
+  ctx.strokeStyle = 'rgba(99,91,255,0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(100, 200); ctx.lineTo(980, 200); ctx.stroke();
+
+  // Logo Kouverte
+  ctx.fillStyle = '#635bff';
+  ctx.font = 'bold 42px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('KOUVERTE', 540, 170);
+
+  // Stanza
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '28px Inter, sans-serif';
+  ctx.fillText(roomName || 'Chat Anonima', 540, 230);
+
+  // Virgolette decorative
+  ctx.fillStyle = 'rgba(99,91,255,0.3)';
+  ctx.font = 'bold 200px Georgia, serif';
+  ctx.fillText('"', 80, 440);
+
+  // Testo del messaggio — a capo automatico
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 52px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  const words = text.split(' ');
+  let line = '', y = 460, lineH = 72;
+  const maxW = 860;
+  for(const word of words){
+    const test = line + (line ? ' ' : '') + word;
+    if(ctx.measureText(test).width > maxW && line){
+      ctx.fillText(line, 540, y); line = word; y += lineH;
+      if(y > 760) break;
+    } else line = test;
+  }
+  if(line) ctx.fillText(line, 540, y);
+
+  // Linea sotto
+  ctx.strokeStyle = 'rgba(99,91,255,0.5)';
+  ctx.beginPath(); ctx.moveTo(100, 860); ctx.lineTo(980, 860); ctx.stroke();
+
+  // Footer
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '28px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Indovina chi sono • kouverte.com', 540, 920);
+
+  // Mascherina anonima
+  ctx.font = '56px sans-serif';
+  ctx.fillText('🎭', 540, 990);
+
+  return canvas.toDataURL('image/png');
+}
+
+async function shareMessage(text, roomName){
+  const imgData = generateShareCard(text, roomName);
+  const blob = await (await fetch(imgData)).blob();
+  const file = new File([blob], 'kouverte-share.png', { type: 'image/png' });
+
+  if(navigator.canShare && navigator.canShare({ files: [file] })){
+    await navigator.share({
+      title: 'Qualcuno su Kouverte ha detto…',
+      text: `"${text.slice(0,60)}" — indovina chi. kouverte.com`,
+      files: [file]
+    });
+  } else {
+    // Fallback: download
+    const a = document.createElement('a');
+    a.href = imgData; a.download = 'kouverte-share.png'; a.click();
+    showToast('📥 Immagine salvata! Condividila su Instagram');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// 🎤 PROFILO VOCE — registrazione e riproduzione
+// ══════════════════════════════════════════════════════════════
+var _voiceRecorder = null;
+var _voiceChunks = [];
+var _voiceRecording = false;
+var _voiceTimeout = null;
+const VOICE_NOTE_MAX_SEC = 15;
+
+async function startVoiceNoteRecording(){
+  if(_voiceRecording){ stopVoiceNoteRecording(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _voiceChunks = [];
+    _voiceRecorder = new MediaRecorder(stream, { mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm' });
+    _voiceRecorder.ondataavailable = e => { if(e.data.size > 0) _voiceChunks.push(e.data); };
+    _voiceRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(_voiceChunks, { type: _voiceRecorder.mimeType });
+      const reader = new FileReader();
+      reader.onload = e => {
+        const audio = e.target.result;
+        socket.emit('voice-note-save', { userId: user.serverId||user.id, audio });
+        socket.once('voice-note-saved', () => {
+          user.voiceNote = audio;
+          saveUser();
+          renderVoiceNotePlayer('saved');
+          showToast('🎤 Nota vocale salvata!');
+        });
+      };
+      reader.readAsDataURL(blob);
+    };
+    _voiceRecorder.start();
+    _voiceRecording = true;
+    renderVoiceNotePlayer('recording');
+    // Auto-stop dopo 15 secondi
+    _voiceTimeout = setTimeout(stopVoiceNoteRecording, VOICE_NOTE_MAX_SEC * 1000);
+  } catch(e){
+    showToast('❌ Microfono non disponibile: ' + e.message);
+  }
+}
+
+function stopVoiceNoteRecording(){
+  clearTimeout(_voiceTimeout);
+  if(_voiceRecorder && _voiceRecorder.state !== 'inactive') _voiceRecorder.stop();
+  _voiceRecording = false;
+  renderVoiceNotePlayer('processing');
+}
+
+function deleteVoiceNote(){
+  if(!confirm('Cancellare la nota vocale?')) return;
+  socket.emit('voice-note-delete', { userId: user.serverId||user.id });
+  delete user.voiceNote;
+  saveUser();
+  renderVoiceNotePlayer('empty');
+  showToast('🗑️ Nota vocale cancellata');
+}
+
+function renderVoiceNotePlayer(state){
+  const el = document.getElementById('voiceNotePlayer');
+  if(!el) return;
+  if(state === 'empty'){
+    el.innerHTML = `
+      <div class="vnp-label">🎤 Nota Vocale Profilo</div>
+      <div class="vnp-empty">
+        <div class="vnp-empty-icon">🎙️</div>
+        <div class="vnp-empty-text">Aggiungi una nota vocale.<br>Chi visita il tuo profilo potrà ascoltarti.</div>
+        <button class="vnp-record-btn" onclick="startVoiceNoteRecording()">🎙️ Registra (max 15s)</button>
+      </div>`;
+  } else if(state === 'recording'){
+    let _sec = 0;
+    el.innerHTML = `
+      <div class="vnp-label">🔴 Registrazione in corso…</div>
+      <div class="vnp-recording-ui">
+        <div class="vnp-rec-timer" id="vnpRecTimer">0:00</div>
+        <div class="vnp-waveform">
+          <div class="vnp-wave-bar"></div><div class="vnp-wave-bar"></div>
+          <div class="vnp-wave-bar"></div><div class="vnp-wave-bar"></div>
+          <div class="vnp-wave-bar"></div><div class="vnp-wave-bar"></div>
+          <div class="vnp-wave-bar"></div><div class="vnp-wave-bar"></div>
+        </div>
+        <button class="vnp-rec-stop" onclick="stopVoiceNoteRecording()">■ Ferma e salva</button>
+      </div>`;
+    // Tick timer
+    if(window._vnpTimerInterval) clearInterval(window._vnpTimerInterval);
+    window._vnpTimerInterval = setInterval(() => {
+      _sec++;
+      const t = document.getElementById('vnpRecTimer');
+      if(t) t.textContent = Math.floor(_sec/60)+':'+((_sec%60)+'').padStart(2,'0');
+      if(_sec >= VOICE_NOTE_MAX_SEC){ clearInterval(window._vnpTimerInterval); }
+    }, 1000);
+  } else if(state === 'processing'){
+    if(window._vnpTimerInterval) clearInterval(window._vnpTimerInterval);
+    el.innerHTML = `<div class="vnp-label">⏳ Elaborazione in corso…</div>`;
+  } else if(state === 'saved'){
+    if(window._vnpTimerInterval) clearInterval(window._vnpTimerInterval);
+    const src = user.voiceNote || user.kvData?.voiceNote || '';
+    el.innerHTML = `
+      <div class="vnp-label">🎤 Nota Vocale Profilo</div>
+      <div class="vnp-saved-ui">
+        <button class="vnp-play-btn" id="vnpPlayBtn" onclick="playVoiceNote(this)">▶</button>
+        <div class="vnp-saved-info">
+          <div class="vnp-saved-label">Nota vocale attiva ✓</div>
+          <div class="vnp-saved-hint">Tocca ▶ per ascoltare la tua registrazione</div>
+        </div>
+        <button class="vnp-del-btn" onclick="deleteVoiceNote()" title="Cancella">🗑️</button>
+      </div>`;
+    // Store src on the button
+    const btn = el.querySelector('#vnpPlayBtn');
+    if(btn) btn._vnSrc = src;
+  }
+}
+
+function playVoiceNote(btnEl){
+  const src = (typeof btnEl === 'string') ? btnEl : btnEl?._vnSrc || '';
+  if(!src) { showToast('🎤 Nessuna nota vocale disponibile'); return; }
+  const existing = document.getElementById('vnpAudio');
+  if(existing){ existing.pause(); existing.remove(); }
+  const audio = new Audio(src);
+  audio.id = 'vnpAudio';
+  document.body.appendChild(audio);
+  audio.play().catch(() => showToast('❌ Impossibile riprodurre'));
+  const btn = typeof btnEl === 'string' ? document.getElementById('vnpPlayBtn') : btnEl;
+  if(btn){
+    btn.textContent = '⏸';
+    btn.classList.add('playing');
+    audio.onended = () => { btn.textContent = '▶'; btn.classList.remove('playing'); };
+  }
+}
+
+async function playProfileVoiceNote(userId){
+  try {
+    const r = await fetch('/api/voice-note/' + userId);
+    if(!r.ok){ showToast('🎤 Nessuna nota vocale'); return; }
+    const d = await r.json();
+    const audio = new Audio(d.audio);
+    audio.play().catch(() => showToast('❌ Riproduzione non riuscita'));
+    showToast('🎤 Nota vocale in riproduzione…');
+  } catch(e){ showToast('❌ Errore'); }
+}
+
 // ══════════════════════════════════════════
 // MATCH ANONIMO INTELLIGENTE
 // ══════════════════════════════════════════
@@ -4083,7 +4615,34 @@ function appendMsg(msg){
   row.dataset.replyUid   = msg.userId || '';
   // Swipe-to-reply (touch) + hover button (desktop)
   attachSwipeReply(row, msgId, msg.userId||'', name, col, msg.text.slice(0,120));
+  // Long-press → share card
+  row.addEventListener('contextmenu', (e) => { e.preventDefault(); showMsgContextMenu(e, msg.text, room?.name||'Kouverte'); });
+  let _lpTimer; row.addEventListener('touchstart', () => { _lpTimer = setTimeout(() => showMsgContextMenu(null, msg.text, room?.name||'Kouverte'), 600); }, { passive: true });
+  row.addEventListener('touchend', () => clearTimeout(_lpTimer));
+  row.addEventListener('touchmove', () => clearTimeout(_lpTimer));
   c.appendChild(row);
+}
+
+// Menu contestuale messaggio (long-press / tasto destro)
+function showMsgContextMenu(event, text, roomName){
+  document.getElementById('msgCtxMenu')?.remove();
+  const menu = document.createElement('div');
+  menu.id = 'msgCtxMenu';
+  menu.className = 'msg-ctx-menu';
+  menu.innerHTML = `
+    <button class="ctx-item" onclick="shareMessage('${text.replace(/'/g,'\\\'').slice(0,200)}','${(roomName||'').replace(/'/g,'\\\'').slice(0,30)}');document.getElementById('msgCtxMenu').remove()">📤 Condividi come Story</button>
+    <button class="ctx-item" onclick="navigator.clipboard?.writeText('${text.replace(/'/g,'\\\'').slice(0,200)}');showToast('📋 Copiato');document.getElementById('msgCtxMenu').remove()">📋 Copia testo</button>
+    <button class="ctx-item cancel" onclick="document.getElementById('msgCtxMenu').remove()">Annulla</button>`;
+  document.body.appendChild(menu);
+  if(event){
+    menu.style.left = Math.min(event.clientX, window.innerWidth - 200) + 'px';
+    menu.style.top  = Math.min(event.clientY, window.innerHeight - 140) + 'px';
+  } else {
+    menu.style.left = '50%'; menu.style.top = '50%';
+    menu.style.transform = 'translate(-50%,-50%)';
+  }
+  menu.classList.add('show');
+  setTimeout(() => document.addEventListener('click', function h(){ menu.remove(); document.removeEventListener('click',h); }), 100);
 }
 
 // Costruisce il quote block HTML per i messaggi con replyTo
@@ -6446,6 +7005,11 @@ function generateRoomCode(){
   return code;
 }
 
+function selectDuration(el) {
+  document.querySelectorAll('#durationPicker .dur-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
 function createCodeRoom(){
   const name = document.getElementById('newRoomName').value.trim();
   if (!name) { showToast('⚠️ Inserisci un nome per la stanza'); document.getElementById('newRoomName').focus(); return; }
@@ -6454,6 +7018,10 @@ function createCodeRoom(){
   const code = generateRoomCode();
   currentRoomCode = code;
   const password = (document.getElementById('newRoomPassword')?.value || '').trim() || null;
+
+  // Duration picker
+  const durEl = document.querySelector('#durationPicker .dur-opt.selected');
+  const durationMin = durEl ? parseInt(durEl.dataset.min || '0', 10) : 0;
 
   const customRoom = {
     id: 'code_' + code,
@@ -6464,7 +7032,8 @@ function createCodeRoom(){
     color: '#00d4ff',
     dot1: '#00d4ff', dot2: '#ff6b9d', dot3: '#f97316',
     code, ownerId: user.id,
-    hasPassword: !!password
+    hasPassword: !!password,
+    durationMin: durationMin || null
   };
 
   let myCodeRooms = getLS('kv4_code_rooms') || [];
@@ -6486,7 +7055,8 @@ function createCodeRoom(){
   }
   document.getElementById('createRoomBtn').textContent = 'Entra nella stanza';
   document.getElementById('createRoomBtn').onclick = () => { closeModal('modalCreateRoom'); enterCodeRoom(customRoom); };
-  showToast('✅ Stanza creata! Codice: ' + code + (password ? ' 🔒' : ''));
+  const durLabel = durationMin === 30 ? '30min' : durationMin === 60 ? '1h' : durationMin === 120 ? '2h' : durationMin === 1440 ? '24h' : '';
+  showToast('✅ Stanza creata! Codice: ' + code + (password ? ' 🔒' : '') + (durLabel ? ` ⏳ ${durLabel}` : ''));
 }
 
 function copyRoomCode(){

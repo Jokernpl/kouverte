@@ -260,6 +260,9 @@
     <div class="sec-label">🔥 Stanze attive ora</div>
     <div id="roomsList"></div>
 
+    <!-- City Leaderboard -->
+    <div id="cityLeaderboard" class="city-lb-widget" style="display:none"></div>
+
     <!-- Feed Live -->
     <div class="sec-label" style="margin-top:20px">📡 Feed Live</div>
     <div id="liveFeed" class="live-feed">
@@ -332,7 +335,31 @@
       <input type="password" id="newRoomPassword" class="modal-input" placeholder="Lascia vuoto per nessuna password" maxlength="50" autocomplete="new-password">
       <div class="code-hint" style="margin-top:-6px;margin-bottom:10px">🔒 Se imposti una password, chi entra dovrà inserirla oltre al codice</div>
 
-      <label class="modal-label">Emoji (opzionale)</label>
+      <label class="modal-label">Durata stanza</label>
+      <div class="duration-picker" id="durationPicker">
+        <div class="dur-opt selected" data-min="0" onclick="selectDuration(this)">
+          <span class="dur-main">∞</span>
+          <span class="dur-sub">Nessun limite</span>
+        </div>
+        <div class="dur-opt" data-min="30" onclick="selectDuration(this)">
+          <span class="dur-main">30m</span>
+          <span class="dur-sub">Breve</span>
+        </div>
+        <div class="dur-opt" data-min="60" onclick="selectDuration(this)">
+          <span class="dur-main">1h</span>
+          <span class="dur-sub">Media</span>
+        </div>
+        <div class="dur-opt" data-min="120" onclick="selectDuration(this)">
+          <span class="dur-main">2h</span>
+          <span class="dur-sub">Lunga</span>
+        </div>
+        <div class="dur-opt" data-min="1440" onclick="selectDuration(this)">
+          <span class="dur-main">24h</span>
+          <span class="dur-sub">Giornata</span>
+        </div>
+      </div>
+
+      <label class="modal-label" style="margin-top:12px">Emoji (opzionale)</label>
       <div class="emoji-picker">
         <span class="emoji-opt selected" data-emoji="🎉">🎉</span>
         <span class="emoji-opt" data-emoji="💎">💎</span>
@@ -564,14 +591,24 @@
     </div>
   </div>
 
+  <!-- @Mention autocomplete dropdown -->
+  <div id="mentionDropdown" class="mention-dropdown" style="display:none"></div>
+
   <div class="chat-bar">
     <div class="chat-bar-row">
-      <textarea class="cinput" id="msgInput" placeholder="Scrivi a tutti... 👋" rows="1"></textarea>
+      <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleChatImage(event)">
+      <button class="cimg" onclick="document.getElementById('imgFileInput').click()" title="Invia immagine">📷</button>
+      <textarea class="cinput" id="msgInput" placeholder="Scrivi a tutti... @nomeutente 👋" rows="1"></textarea>
       <button class="cvoice" id="voiceRecordBtn" title="Tieni premuto per registrare">🎙️</button>
       <button class="cgift" onclick="openGiftPicker()" title="Invia un regalo">🎁</button>
       <button class="creact" id="reactBtn" onclick="toggleReactionPicker()" title="Reagisci">🎆</button>
       <button class="csend" onclick="sendMsg()">➤</button>
     </div>
+  </div>
+  <!-- Image lightbox -->
+  <div id="imgLightbox" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.95);display:none;align-items:center;justify-content:center" onclick="document.getElementById('imgLightbox').style.display='none'">
+    <img id="imgLightboxImg" style="max-width:94vw;max-height:90vh;border-radius:12px;object-fit:contain">
+    <button style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:40px;height:40px;border-radius:50%;cursor:pointer" onclick="document.getElementById('imgLightbox').style.display='none'">✕</button>
   </div>
 </div>
 
@@ -702,6 +739,9 @@
     <button class="ref-copy" onclick="copyRef()">📋 Copia link referral</button>
     <div class="ref-hint">Ogni amico che si iscrive ti regala una cornice esclusiva!</div>
   </div>
+
+  <!-- Voice Note Profile -->
+  <div id="voiceNotePlayer" class="vnp-wrap"></div>
 
   <div class="frames-sec">
     <div class="sec-lbl">🖼️ Cornici profilo</div>

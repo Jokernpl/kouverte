@@ -754,6 +754,158 @@ function trackWeeklyMsg(userId, name, face, color) {
     markDirty();
 }
 
+// ============================================================
+// 🏆 CLASSIFICA CITTÀ LIVE — messaggi per stanza al giorno
+// ============================================================
+function getItalianDateStr() {
+    // UTC+2 in estate (CEST), UTC+1 in inverno (CET) — approssimazione UTC+1
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    return d.toISOString().split('T')[0];
+}
+
+function trackDailyCity(roomId) {
+    const today = getItalianDateStr();
+    DB.daily_city = DB.daily_city || {};
+    if (!DB.daily_city[today]) DB.daily_city[today] = {};
+    DB.daily_city[today][roomId] = (DB.daily_city[today][roomId] || 0) + 1;
+    // Pulizia: max 7 giorni
+    const days = Object.keys(DB.daily_city).sort();
+    while (days.length > 7) delete DB.daily_city[days.shift()];
+    markDirty();
+    // Broadcast classifica aggiornata a tutti i connessi
+    const today2 = DB.daily_city[getItalianDateStr()] || {};
+    const ranked = Object.entries(today2).map(([id, n]) => ({ id, msgs: n })).sort((a, b) => b.msgs - a.msgs);
+    io.emit('city-stats-update', { cities: ranked });
+}
+
+app.get('/api/leaderboard/cities', (req, res) => {
+    const today = getItalianDateStr();
+    DB.daily_city = DB.daily_city || {};
+    const stats = DB.daily_city[today] || {};
+    const ranked = Object.entries(stats).map(([id, msgs]) => ({ id, msgs })).sort((a, b) => b.msgs - a.msgs);
+    res.json({ today, cities: ranked });
+});
+
+// ============================================================
+// 🌙 KOUVERTE NOTTE — evento serale quotidiano alle 23:00
+// ============================================================
+const NOTTE_THEMES = [
+    "Qual è la cosa più imbarazzante che ti è successa?",
+    "Cosa non hai mai detto a nessuno?",
+    "Il tuo segreto più piccolo?",
+    "Cosa cambieresti della tua vita adesso?",
+    "La cosa più coraggiosa che hai fatto?",
+    "Di cosa ti vergogni di più?",
+    "Cosa ti manca di più in questo momento?",
+    "Qual è il tuo sogno nel cassetto?",
+    "La cosa più stupida che hai fatto per amore?",
+    "Cosa ti tiene sveglio la notte?",
+    "Un consiglio a te stesso di 10 anni fa?",
+    "Il momento in cui ti sei sentito più solo?",
+    "La persona che vorresti risentire?",
+    "Cosa non riesci a perdonarti?",
+    "Il tuo desiderio più assurdo?"
+];
+const NOTTE_DURATION_MS = 15 * 60 * 1000; // 15 minuti
+let notteActive = false;
+
+function getTodayNotteTheme() {
+    const day = Math.floor(Date.now() / (24 * 60 * 60 * 1000));
+    return NOTTE_THEMES[day % NOTTE_THEMES.length];
+}
+
+function startKouverteNotte() {
+    if (notteActive) return;
+    notteActive = true;
+    const theme = getTodayNotteTheme();
+    const endsAt = Date.now() + NOTTE_DURATION_MS;
+    const sessionId = 'notte_' + Date.now();
+    DB.current_notte = { id: sessionId, theme, startedAt: Date.now(), endsAt, votes: {}, messages: [] };
+    DB.notte_sessions = DB.notte_sessions || [];
+    DB.notte_sessions = DB.notte_sessions.slice(-30); // max 30 sessioni
+    DB.notte_sessions.push(DB.current_notte);
+    markDirty();
+
+    io.emit('notte-start', { sessionId, theme, endsAt });
+    console.log(`[🌙 NOTTE] Iniziata! Tema: ${theme}`);
+
+    // Push a tutti i subscriber
+    const payload = JSON.stringify({
+        title: '🌙 Kouverte Notte è iniziata!',
+        body: theme,
+        icon: '/icon-192.png',
+        url: '/app.html?notte=1',
+        tag: 'kouverte-notte'
+    });
+    (DB.push_subscriptions || []).forEach(sub => {
+        webpush.sendNotification(sub.subscription, payload).catch(() => {});
+    });
+
+    setTimeout(endKouverteNotte, NOTTE_DURATION_MS);
+}
+
+function endKouverteNotte() {
+    if (!notteActive) return;
+    notteActive = false;
+    const session = DB.current_notte;
+    if (!session) return;
+
+    // Trova messaggio con più voti
+    let winner = null, maxVotes = 0;
+    for (const msg of session.messages || []) {
+        const v = (session.votes[msg.id] || []).length;
+        if (v > maxVotes) { maxVotes = v; winner = { ...msg, votes: v }; }
+    }
+
+    if (winner) {
+        const wu = (DB.users || []).find(u => u.id === winner.userId);
+        if (wu) {
+            wu.kvData = wu.kvData || {};
+            wu.kvData.notteWins = (wu.kvData.notteWins || 0) + 1;
+            wu.kvData.coins = (wu.kvData.coins || 0) + 150;
+            if (!(wu.kvData.badges || []).includes('notte_winner')) {
+                wu.kvData.badges = [...(wu.kvData.badges || []), 'notte_winner'];
+            }
+        }
+    }
+    // Tutti i partecipanti: +20 monete
+    const participants = new Set((session.messages || []).map(m => m.userId).filter(Boolean));
+    for (const uid of participants) {
+        const u = (DB.users || []).find(u => u.id === uid);
+        if (u) { u.kvData = u.kvData || {}; u.kvData.coins = (u.kvData.coins || 0) + 20; }
+    }
+    markDirty();
+    io.emit('notte-end', {
+        winner: winner || null,
+        totalMessages: (session.messages || []).length,
+        participants: participants.size
+    });
+    DB.current_notte = null;
+    console.log(`[🌙 NOTTE] Finita! ${participants.size} partecipanti, vincitore: ${winner?.text?.slice(0, 30) || 'nessuno'}`);
+}
+
+// Controlla ogni minuto se è ora (23:00 ora italiana)
+setInterval(() => {
+    const now = new Date(Date.now() + 60 * 60 * 1000); // UTC+1
+    if (now.getUTCHours() === 22 && now.getUTCMinutes() === 0) startKouverteNotte();
+    if (DB.current_notte && Date.now() > DB.current_notte.endsAt && notteActive) endKouverteNotte();
+}, 60 * 1000);
+
+// Stato Notte per chi entra in ritardo
+app.get('/api/notte/status', (req, res) => {
+    if (DB.current_notte && Date.now() < DB.current_notte.endsAt) {
+        const s = DB.current_notte;
+        res.json({ active: true, theme: s.theme, endsAt: s.endsAt, sessionId: s.id,
+            totalMessages: s.messages.length });
+    } else {
+        // Anticipazione: manda timer per prossima notte
+        const now = new Date(Date.now() + 60 * 60 * 1000);
+        const next = new Date(now); next.setUTCHours(22, 0, 0, 0);
+        if (now.getUTCHours() >= 22) next.setUTCDate(next.getUTCDate() + 1);
+        res.json({ active: false, nextAt: next.getTime() - 60 * 60 * 1000 });
+    }
+});
+
 // Endpoint: top 10 per messaggi nell'ultima settimana
 app.get('/api/leaderboard/chat', (req, res) => {
     const stats = getWeeklyStats();
@@ -1635,6 +1787,13 @@ app.post('/api/me/friends/remove', verifyToken, (req, res) => {
     res.json({ ok: true, friendsCount: user.friends.length });
 });
 
+// Ottieni voice note di un utente (per riproduzione nel profilo)
+app.get('/api/voice-note/:userId', (req, res) => {
+    const u = (DB.users || []).find(u => u.id === req.params.userId);
+    if (!u || !u.kvData?.voiceNote) return res.status(404).json({ error: 'Nota vocale non trovata' });
+    res.json({ audio: u.kvData.voiceNote, ts: u.kvData.voiceNoteTs });
+});
+
 // Get profile by username
 app.get('/api/profile/:username', (req, res) => {
     const username = req.params.username.toLowerCase();
@@ -1673,6 +1832,8 @@ app.get('/api/profile/:username', (req, res) => {
         weeklyMsgs,
         joinedAt: user.created_at,
         stats: user.stats,
+        notteWins: kv.notteWins || 0,
+        voiceNote: kv.voiceNote ? { hasNote: true, ts: kv.voiceNoteTs } : null,
         clips: (user.profile?.clips || []).map(c => ({
             ...c,
             story_preview: userStories.find(s => s.id === c.audio_id)
@@ -4160,16 +4321,76 @@ io.on('connection', (socket) => {
     });
 
     socket.on('dm-open', (data) => {
-        // Carica history DB per questa coppia
         if (!data?.withUserId) return;
         const myId = socket._dmUserId;
         if (!myId) return;
         const dmKey = [myId, String(data.withUserId)].sort().join('_');
         const msgs = (DB.dm_messages || [])
-            .filter(m => m.key === dmKey)
-            .slice(-50) // ultimi 50
+            .filter(m => m.key === dmKey).slice(-50)
             .map(m => ({ from: m.from, to: m.to, text: m.text, ts: m.ts, fromName: m.fromName, fromFace: m.fromFace }));
         socket.emit('dm-history', { withUserId: data.withUserId, msgs });
+    });
+
+    // ===== 🌙 KOUVERTE NOTTE socket handlers =====
+    socket.on('notte-message', (data) => {
+        if (!DB.current_notte || Date.now() > DB.current_notte.endsAt) return;
+        if (!data?.text || typeof data.text !== 'string') return;
+        const msgId = 'nm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,6);
+        const msg = {
+            id: msgId,
+            userId: String(data.userId || '').slice(0, 60),
+            name:   String(data.name || 'Anonimo').slice(0, 30),
+            face:   String(data.face || '🎭').slice(0, 4),
+            color:  /^#[0-9a-f]{6}$/i.test(data.color) ? data.color : '#00d4ff',
+            text:   String(data.text).slice(0, 280),
+            ts:     Date.now(),
+            votes:  0
+        };
+        DB.current_notte.messages.push(msg);
+        if (DB.current_notte.messages.length > 500) DB.current_notte.messages.shift();
+        io.emit('notte-message', msg);
+        markDirty();
+    });
+
+    socket.on('notte-vote', (data) => {
+        if (!DB.current_notte || Date.now() > DB.current_notte.endsAt) return;
+        const { msgId, voterId } = data || {};
+        if (!msgId || !voterId) return;
+        DB.current_notte.votes[msgId] = DB.current_notte.votes[msgId] || [];
+        const already = DB.current_notte.votes[msgId].includes(String(voterId));
+        if (already) {
+            DB.current_notte.votes[msgId] = DB.current_notte.votes[msgId].filter(v => v !== String(voterId));
+        } else {
+            DB.current_notte.votes[msgId].push(String(voterId));
+        }
+        const voteCount = DB.current_notte.votes[msgId].length;
+        io.emit('notte-vote-update', { msgId, votes: voteCount });
+    });
+
+    // ===== 🎤 PROFILO VOCE — salva/cancella nota vocale =====
+    socket.on('voice-note-save', (data) => {
+        if (!data?.userId || !data?.audio) return;
+        const uid = String(data.userId).slice(0, 60);
+        const u = (DB.users || []).find(u => u.id === uid);
+        if (!u) return;
+        // Valida: deve essere data:audio/...;base64, max 150KB
+        const raw = String(data.audio);
+        if (!raw.startsWith('data:audio/') || raw.length > 200000) return;
+        u.kvData = u.kvData || {};
+        u.kvData.voiceNote = raw;
+        u.kvData.voiceNoteTs = Date.now();
+        markDirty();
+        socket.emit('voice-note-saved', { ok: true });
+    });
+
+    socket.on('voice-note-delete', (data) => {
+        if (!data?.userId) return;
+        const u = (DB.users || []).find(u => u.id === String(data.userId).slice(0,60));
+        if (!u) return;
+        u.kvData = u.kvData || {};
+        delete u.kvData.voiceNote;
+        delete u.kvData.voiceNoteTs;
+        markDirty();
     });
 
     // ===== STANZE A CODICE (Custom Rooms) =====
@@ -4185,16 +4406,23 @@ io.on('connection', (socket) => {
         const rawPwd = room.password ? String(room.password).slice(0, 50) : null;
         const pwdHash = rawPwd ? require('crypto').createHash('sha256').update(rawPwd + code).digest('hex').slice(0,16) : null;
 
+        // Durata opzionale: 30min / 1h / 2h / 24h / null (no scadenza)
+        const VALID_DURATIONS = [30, 60, 120, 1440]; // minuti
+        const durationMin = VALID_DURATIONS.includes(Number(room.durationMin)) ? Number(room.durationMin) : null;
+        const expiresAt = durationMin ? Date.now() + durationMin * 60 * 1000 : null;
+
         const safeRoom = {
             id: 'code_' + code,
             name: String(room.name || 'Stanza Privata').slice(0, 50),
             emoji: String(room.emoji || '🔐').slice(0, 4),
             code: code,
-            pwdHash,           // null = stanza aperta a chi ha il codice
+            pwdHash,
             hasPassword: !!pwdHash,
             ownerId: String(room.ownerId || '').slice(0, 40),
             tier: 'code',
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            expiresAt,           // null = nessuna scadenza
+            durationMin
         };
 
         global.codeRooms.set(code, safeRoom);
@@ -4226,6 +4454,13 @@ io.on('connection', (socket) => {
 
         const codeRoom = global.codeRooms.get(upperCode);
         if (!codeRoom) { socket.emit('code-room-error', { error: 'Stanza non trovata' }); return; }
+
+        // Controlla scadenza
+        if (codeRoom.expiresAt && Date.now() > codeRoom.expiresAt) {
+            global.codeRooms.delete(upperCode);
+            socket.emit('code-room-error', { error: '⏳ Questa stanza è scaduta e non esiste più' });
+            return;
+        }
 
         // Verifica password se richiesta
         if (codeRoom.pwdHash) {
@@ -4360,8 +4595,9 @@ io.on('connection', (socket) => {
         if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
         // Broadcast a tutti nella stanza TRANNE chi ha inviato (il mittente si gestisce lato client)
         socket.to('chat-' + roomId).emit('chat-message', { roomId, msg: clean });
-        // Traccia per leaderboard settimanale
+        // Traccia per leaderboard settimanale + classifica città
         trackWeeklyMsg(clean.userId, clean.name, clean.face, clean.color);
+        trackDailyCity(roomId);
     });
 
     // Messaggio vocale: trasmette audio base64 a tutti nella stanza
