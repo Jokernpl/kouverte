@@ -2286,7 +2286,7 @@ app.get('/api/stripe/config', (req, res) => {
 });
 
 // Crea una Checkout Session Stripe
-app.post('/api/stripe/create-checkout', async (req, res) => {
+app.post('/api/stripe/create-checkout', rateLimit('stripe-checkout', 10, 15 * 60 * 1000), async (req, res) => {
     if (!stripe) return res.status(503).json({ error: 'Pagamenti con carta non disponibili al momento.' });
     const { packId, userId } = req.body || {};
     if (!packId || !userId) return res.status(400).json({ error: 'packId e userId richiesti' });
@@ -4628,6 +4628,21 @@ io.on('connection', (socket) => {
     });
 
     // ── Live Reactions ──────────────────────────────────────────────────────
+    // ── REGALO VIRTUALE ──────────────────────────────────────
+    socket.on('gift', ({ roomId, giftId, giftIcon, giftName, from, face }) => {
+        if (!roomId || typeof roomId !== 'string' || roomId.length > 40) return;
+        const safeGiftId   = typeof giftId   === 'string' ? giftId.slice(0, 30)   : '';
+        const safeGiftIcon = typeof giftIcon === 'string' ? giftIcon.slice(0, 8)  : '🎁';
+        const safeGiftName = typeof giftName === 'string' ? giftName.slice(0, 30) : 'Regalo';
+        const safeFrom     = typeof from     === 'string' ? from.slice(0, 30)     : 'Qualcuno';
+        const safeFace     = typeof face     === 'string' ? face.slice(0, 8)      : '🎭';
+        // Rimbalza a tutti gli ALTRI utenti nella stanza (il mittente lo renderizza già in locale)
+        socket.to('chat-' + roomId).emit('gift', {
+            roomId, giftId: safeGiftId, giftIcon: safeGiftIcon, giftName: safeGiftName,
+            from: safeFrom, face: safeFace
+        });
+    });
+
     socket.on('chat-reaction', ({ roomId, emoji, color, userId, name }) => {
         if (!roomId || typeof roomId !== 'string' || roomId.length > 40) return;
         // Valida emoji (deve essere una stringa corta)
@@ -4728,6 +4743,23 @@ io.on('connection', (socket) => {
 
         socket.broadcast.emit('user-disconnected', socket.id);
     });
+});
+
+// ─── Express global error handler (4 params = error middleware) ───────────────
+app.use((err, req, res, next) => {
+    console.error('[Express error]', req.method, req.path, err.message || err);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: 'Errore interno del server' });
+});
+
+// ─── Process-level crash guards ──────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+    console.error('[CRASH] uncaughtException:', err);
+    // Salva il DB prima di morire
+    try { if (dbDirty) { require('fs').writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); } } catch(_) {}
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[CRASH] unhandledRejection:', reason);
 });
 
 // ============ START ============
