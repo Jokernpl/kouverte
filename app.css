@@ -2244,3 +2244,240 @@ html[data-theme="light"] body {
     font-size:16px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ♠ SCOPA — Carte Napoletane (UI futuristica)
+═══════════════════════════════════════════════════════════ */
+.scopa-fs{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 0%,#071a10 0%,#050810 55%,#060c12 100%);z-index:5000;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .4s cubic-bezier(0.34,1.1,0.64,1);overflow:hidden;max-width:480px;margin:0 auto;left:0;right:0}
+.scopa-fs.show{transform:translateY(0)}
+
+/* Header */
+.scopa-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(0,255,136,0.12);background:rgba(0,255,136,0.04);flex-shrink:0}
+.scopa-back{background:none;border:1px solid rgba(0,255,136,0.25);color:#00ff88;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .2s}
+.scopa-back:hover{background:rgba(0,255,136,0.12)}
+.scopa-hdr-mid{flex:1;text-align:center}
+.scopa-hdr-title{font-size:17px;font-weight:900;color:#00ff88;letter-spacing:4px;text-shadow:0 0 18px rgba(0,255,136,0.45)}
+.scopa-hdr-sub{font-size:9px;color:rgba(0,255,136,0.4);letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.scopa-hdr-score{display:flex;align-items:center;gap:3px;font-size:20px;font-weight:800;min-width:64px;justify-content:flex-end}
+.sc-s-me{color:#00ff88}
+.sc-s-sep{color:rgba(255,255,255,0.25);font-size:14px}
+.sc-s-opp{color:#ff4466}
+
+/* Body */
+.scopa-body{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+/* Waiting room */
+.scopa-wait{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:24px;padding:24px}
+.scopa-wait-ring{width:90px;height:90px;border-radius:50%;border:2px solid rgba(0,255,136,0.15);display:flex;align-items:center;justify-content:center;position:relative}
+.scopa-wait-ring::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;border-top-color:#00ff88;animation:scopa-spin 1.2s linear infinite}
+.scopa-wait-ring-icon{font-size:36px;filter:drop-shadow(0 0 12px rgba(0,255,136,0.6))}
+.scopa-wait-title{font-size:22px;font-weight:800;color:#00ff88;letter-spacing:3px;text-shadow:0 0 20px rgba(0,255,136,0.4)}
+.scopa-wait-sub{font-size:13px;color:rgba(255,255,255,0.45);text-align:center;line-height:1.5}
+.scopa-wait-queue{display:flex;align-items:center;gap:8px;background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.15);border-radius:12px;padding:10px 16px}
+.scopa-wait-queue-num{font-size:28px;font-weight:900;color:#00ff88;line-height:1}
+.scopa-wait-queue-lbl{font-size:11px;color:rgba(0,255,136,0.5);letter-spacing:1px;text-transform:uppercase}
+
+/* Game board */
+.scopa-board{flex:1;display:flex;flex-direction:column;padding:10px 12px;gap:8px;overflow:hidden}
+
+/* Opponent info bar */
+.scopa-opp-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,68,102,0.06);border:1px solid rgba(255,68,102,0.12);border-radius:10px;flex-shrink:0}
+.scopa-opp-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#ff4466,#cc2244);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0}
+.scopa-opp-name{flex:1;font-size:13px;font-weight:700;color:#ff9eb5}
+.scopa-opp-stats{display:flex;gap:10px;align-items:center}
+.scopa-stat-pill{display:flex;align-items:center;gap:3px;font-size:10px;color:rgba(255,255,255,0.45)}
+.scopa-stat-pill b{color:#fff;font-weight:700}
+.scopa-opp-hand{display:flex;gap:4px;align-items:center}
+.sc-back{width:20px;height:28px;background:linear-gradient(135deg,#1a2a1a,#0a180a);border:1px solid rgba(0,255,136,0.2);border-radius:4px;flex-shrink:0}
+
+/* Table */
+.scopa-table-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:0}
+.scopa-table-lbl{font-size:9px;letter-spacing:2px;color:rgba(0,255,136,0.35);text-transform:uppercase}
+.scopa-table-cards{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;min-height:72px;padding:8px}
+
+/* Turn indicator */
+.scopa-turn-bar{text-align:center;padding:5px;flex-shrink:0}
+.scopa-turn-txt{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.scopa-turn-txt.my-turn{color:#00ff88;text-shadow:0 0 12px rgba(0,255,136,0.5);animation:scopa-pulse-txt 1.5s ease-in-out infinite}
+.scopa-turn-txt.opp-turn{color:rgba(255,255,255,0.3)}
+
+/* My hand */
+.scopa-my-bar{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:10px;flex-shrink:0}
+.scopa-my-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#00ff88,#00cc66);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#000;flex-shrink:0}
+.scopa-my-label{font-size:11px;color:rgba(0,255,136,0.5);letter-spacing:1px;text-transform:uppercase}
+.scopa-my-hand{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;flex:1}
+
+/* Capture UI */
+.scopa-capture-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px;background:rgba(0,255,136,0.04);border-top:1px solid rgba(0,255,136,0.08);flex-shrink:0;min-height:44px}
+.scopa-capture-sum{font-size:13px;color:rgba(255,255,255,0.5);font-weight:600}
+.scopa-capture-sum span{color:#00ff88;font-size:18px;font-weight:900}
+.scopa-btn-capture{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:10px;padding:8px 18px;font-size:13px;font-weight:900;letter-spacing:1px;cursor:pointer;box-shadow:0 0 18px rgba(0,255,136,0.45);animation:scopa-glow-pulse 1s ease-in-out infinite;transition:transform .15s}
+.scopa-btn-capture:active{transform:scale(0.95)}
+.scopa-btn-throw{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s}
+.scopa-btn-throw:active{background:rgba(255,255,255,0.1)}
+
+/* Cards */
+.sc-card{width:44px;height:62px;border-radius:8px;background:#f5f0e8;border:2px solid #d4c9a8;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 3px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;flex-shrink:0;user-select:none;-webkit-tap-highlight-color:transparent}
+.sc-card:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.4)}
+.sc-card.selected-hand{transform:translateY(-8px);box-shadow:0 0 0 2px #00ff88,0 12px 24px rgba(0,255,136,0.4);border-color:#00ff88}
+.sc-card.selected-table{box-shadow:0 0 0 2px #fbbf24,0 8px 20px rgba(251,191,36,0.4);border-color:#fbbf24;background:#fff9ed}
+.sc-card.disabled{opacity:.35;pointer-events:none}
+.sc-card-val{font-size:14px;font-weight:900;line-height:1;color:var(--sc)}
+.sc-card-suit{font-size:18px;line-height:1;color:var(--sc)}
+.sc-card-val-b{font-size:12px;font-weight:700;line-height:1;color:var(--sc);align-self:flex-end}
+
+/* Table card (larger) */
+.sc-card.table-card{width:50px;height:70px}
+.sc-card.table-card .sc-card-val{font-size:15px}
+.sc-card.table-card .sc-card-suit{font-size:22px}
+.sc-card.table-card .sc-card-val-b{font-size:13px}
+
+/* Flash / Scopa announcement */
+.scopa-flash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);z-index:50;pointer-events:none;opacity:0;transition:opacity .3s}
+.scopa-flash.show{opacity:1;pointer-events:all}
+.scopa-flash-inner{text-align:center;animation:scopa-flash-in .4s cubic-bezier(0.34,1.56,0.64,1)}
+.scopa-flash-word{font-size:52px;font-weight:900;color:#00ff88;letter-spacing:6px;text-shadow:0 0 40px rgba(0,255,136,0.8),0 0 80px rgba(0,255,136,0.4)}
+.scopa-flash-sub{font-size:16px;color:rgba(255,255,255,0.6);margin-top:6px}
+
+/* Round end overlay */
+.scopa-round-end{position:absolute;inset:0;background:rgba(5,8,16,0.95);z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s}
+.scopa-round-end.show{opacity:1;pointer-events:all}
+.scopa-re-title{font-size:14px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase}
+.scopa-re-score-row{display:flex;gap:20px;align-items:center}
+.scopa-re-block{text-align:center}
+.scopa-re-num{font-size:42px;font-weight:900;line-height:1}
+.scopa-re-num.green{color:#00ff88;text-shadow:0 0 20px rgba(0,255,136,0.5)}
+.scopa-re-num.red{color:#ff4466;text-shadow:0 0 20px rgba(255,68,102,0.5)}
+.scopa-re-name{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px}
+.scopa-re-sep{font-size:28px;color:rgba(255,255,255,0.15)}
+.scopa-re-detail{width:100%;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:12px;padding:12px}
+.scopa-re-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px}
+.scopa-re-row:last-child{border-bottom:none}
+.scopa-re-row-lbl{color:rgba(255,255,255,0.45)}
+.scopa-re-row-me{color:#00ff88;font-weight:700;min-width:16px;text-align:right}
+.scopa-re-row-opp{color:#ff4466;font-weight:700;min-width:16px;text-align:left}
+.scopa-re-row-pts{display:flex;gap:6px;align-items:center}
+.scopa-re-btn{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:12px;padding:12px 32px;font-size:15px;font-weight:900;letter-spacing:1px;cursor:pointer;box-shadow:0 0 20px rgba(0,255,136,0.3);transition:transform .15s}
+.scopa-re-btn:active{transform:scale(0.96)}
+
+/* Game over overlay */
+.scopa-gameover{position:absolute;inset:0;background:rgba(5,8,16,0.97);z-index:70;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:24px;opacity:0;pointer-events:none;transition:opacity .3s}
+.scopa-gameover.show{opacity:1;pointer-events:all}
+.scopa-go-trophy{font-size:64px;filter:drop-shadow(0 0 24px rgba(251,191,36,0.8));animation:scopa-trophy 1s ease-out}
+.scopa-go-title{font-size:32px;font-weight:900;letter-spacing:4px;text-shadow:0 0 30px currentColor}
+.scopa-go-title.win{color:#00ff88}
+.scopa-go-title.lose{color:#ff4466}
+.scopa-go-sub{font-size:14px;color:rgba(255,255,255,0.4)}
+.scopa-go-final{display:flex;gap:24px;align-items:center}
+.scopa-go-score{text-align:center}
+.scopa-go-score-n{font-size:48px;font-weight:900;line-height:1}
+.scopa-go-score-n.me{color:#00ff88}
+.scopa-go-score-n.opp{color:#ff4466}
+.scopa-go-score-l{font-size:11px;color:rgba(255,255,255,0.3);margin-top:2px}
+.scopa-go-sep{font-size:32px;color:rgba(255,255,255,0.1)}
+.scopa-go-btns{display:flex;gap:10px}
+.scopa-go-btn-rematch{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,255,136,0.3);transition:transform .15s}
+.scopa-go-btn-rematch:active{transform:scale(0.95)}
+.scopa-go-btn-leave{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
+.scopa-go-btn-leave:active{background:rgba(255,255,255,0.1)}
+
+/* Deck counter */
+.scopa-deck-info{display:flex;align-items:center;gap:4px;font-size:10px;color:rgba(0,255,136,0.35);letter-spacing:1px;padding:2px 0;flex-shrink:0;justify-content:center}
+
+/* ── Dynamic content classes (scRenderWaiting / scRender) ── */
+/* Waiting room */
+.sc-waiting{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:20px;padding:24px;overflow-y:auto}
+.sc-wait-deck{position:relative;width:80px;height:90px;margin-bottom:8px}
+.sc-wait-card{position:absolute;inset:0;width:50px;height:70px;background:linear-gradient(135deg,#0e2a1a,#071810);border:1px solid rgba(0,255,136,0.25);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.5)}
+.sc-wait-title{font-size:18px;font-weight:800;color:#00ff88;letter-spacing:2px;text-align:center;text-shadow:0 0 16px rgba(0,255,136,0.4)}
+.sc-wait-sub{font-size:12px;color:rgba(255,255,255,0.4);text-align:center}
+.sc-wait-dots{display:flex;gap:6px;align-items:center}
+.sc-wait-dots span{width:8px;height:8px;border-radius:50%;background:#00ff88;opacity:.3;animation:sc-dot-pulse 1.4s ease-in-out infinite}
+.sc-wait-dots span:nth-child(2){animation-delay:.2s}
+.sc-wait-dots span:nth-child(3){animation-delay:.4s}
+.sc-rules{background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.1);border-radius:14px;padding:14px 16px;width:100%;max-width:320px}
+.sc-rules-title{font-size:12px;font-weight:700;color:#00ff88;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+.sc-rule{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,0.55);padding:4px 0;line-height:1.4}
+.sc-rb{font-size:14px;flex-shrink:0;min-width:22px}
+/* Game board rows */
+.sc-opp-row,.sc-me-row{display:flex;flex-direction:column;gap:4px;padding:8px 12px;flex-shrink:0}
+.sc-opp-row{background:rgba(255,68,102,0.04);border-bottom:1px solid rgba(255,68,102,0.1)}
+.sc-me-row{background:rgba(0,255,136,0.03);border-top:1px solid rgba(0,255,136,0.08)}
+.sc-plr-info{display:flex;align-items:center;gap:6px}
+.sc-plr-face{font-size:20px}
+.sc-plr-name{font-size:13px;font-weight:700;color:rgba(255,255,255,0.75);flex:1}
+.sc-turn-badge{font-size:10px;font-weight:700;letter-spacing:1px;padding:2px 8px;border-radius:6px}
+.sc-turn-badge.me{background:rgba(0,255,136,0.15);color:#00ff88;border:1px solid rgba(0,255,136,0.25)}
+.sc-turn-badge.opp{background:rgba(255,68,102,0.15);color:#ff4466;border:1px solid rgba(255,68,102,0.25)}
+.sc-stats-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sc-pill{font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.05);border-radius:6px;padding:2px 6px}
+.sc-pill.act{color:rgba(0,255,136,0.7);background:rgba(0,255,136,0.06)}
+.sc-scope{color:rgba(251,191,36,0.7)!important}
+.sc-wait-lbl{font-size:11px;color:rgba(255,255,255,0.25);font-style:italic}
+.sc-opp-hand{display:flex;gap:4px;align-items:center;min-height:28px;flex-wrap:wrap}
+/* Table area */
+.sc-table-wrap{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 12px;gap:6px;overflow:hidden;min-height:0}
+.sc-table-info{display:flex;justify-content:space-between;width:100%;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:.5px}
+.sc-deck-lbl{color:rgba(0,255,136,0.35)}
+.sc-table{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:center;padding:8px;min-height:80px;background:rgba(0,255,136,0.03);border:1px dashed rgba(0,255,136,0.12);border-radius:14px;width:100%}
+.sc-empty-table{font-size:11px;color:rgba(0,255,136,0.2);font-style:italic;letter-spacing:1px}
+.sc-confirm-btn{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:10px;padding:9px 20px;font-size:13px;font-weight:900;cursor:pointer;box-shadow:0 0 16px rgba(0,255,136,0.45);animation:scopa-glow-pulse 1s ease-in-out infinite;letter-spacing:.5px;flex-shrink:0}
+.sc-no-cap-hint{font-size:11px;color:rgba(255,255,255,0.35);text-align:center}
+.sc-play-table-btn{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s}
+.sc-play-table-btn:active{background:rgba(255,255,255,0.12)}
+/* My hand */
+.sc-hand{display:flex;gap:7px;flex-wrap:wrap;justify-content:center;align-items:flex-end;min-height:70px}
+.sc-sel-hint{font-size:11px;color:rgba(255,255,255,0.35);text-align:center;display:flex;align-items:center;gap:6px;justify-content:center}
+.sc-cancel-mini{background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer}
+.sc-sum-hint{font-size:12px;color:#fbbf24;font-weight:700;text-align:center}
+/* Cards (sc-card defined above; these are modifiers) */
+.sc-card{width:44px;height:64px;border-radius:8px;background:#f9f3e3;border:2px solid #cfc5a0;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 3px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;flex-shrink:0;user-select:none;-webkit-tap-highlight-color:transparent}
+.sc-card.sc-selectable:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.4)}
+.sc-card.sc-selected{transform:translateY(-8px);box-shadow:0 0 0 2.5px #00ff88,0 12px 24px rgba(0,255,136,0.4);border-color:#00ff88}
+.sc-card.sc-selected.table-card{transform:none;box-shadow:0 0 0 2.5px #fbbf24,0 8px 20px rgba(251,191,36,0.35);border-color:#fbbf24}
+.sc-card.sc-dimmed{opacity:.35}
+.sc-card.sc-face{background:#f5ede0}
+.sc-card.sc-sm{width:22px;height:32px;border-radius:5px;border-width:1.5px}
+.sc-card.table-card{width:50px;height:72px}
+.sc-card-back.sc-sm,.sc-card-back{background:linear-gradient(135deg,#0e2a1a,#071810);border:2px solid rgba(0,255,136,0.2);border-radius:8px;width:44px;height:64px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative}
+.sc-back-inner{width:100%;height:100%;border-radius:6px;background:repeating-linear-gradient(-45deg,transparent,transparent 3px,rgba(0,255,136,0.04) 3px,rgba(0,255,136,0.04) 6px)}
+.sc-vt{font-size:13px;font-weight:900;line-height:1;color:var(--sc)}
+.sc-si{font-size:19px;line-height:1;color:var(--sc)}
+.sc-vb{font-size:11px;font-weight:700;line-height:1;color:var(--sc);align-self:flex-end}
+.sc-cnt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:10px;font-weight:800;color:#00ff88}
+/* Flash announcement */
+.sc-flash{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.5);background:#00ff88;color:#050810;font-size:36px;font-weight:900;letter-spacing:4px;padding:16px 32px;border-radius:16px;z-index:9999;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;text-align:center;white-space:nowrap;max-width:90vw}
+.sc-flash.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* Round end */
+.sc-round-end{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;height:100%;overflow-y:auto;justify-content:center}
+.sc-re-title{font-size:12px;font-weight:700;letter-spacing:3px;color:rgba(255,255,255,0.3);text-transform:uppercase}
+.sc-re-grid{display:flex;gap:12px;align-items:flex-start;width:100%;max-width:320px}
+.sc-re-vs{font-size:14px;font-weight:800;color:rgba(255,255,255,0.2);align-self:center;flex-shrink:0}
+.sc-re-col{flex:1;display:flex;flex-direction:column;gap:4px;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.08);border-radius:12px;padding:10px}
+.sc-re-col:last-child{background:rgba(255,68,102,0.04);border-color:rgba(255,68,102,0.08)}
+.sc-re-head{font-size:14px;font-weight:800;color:rgba(255,255,255,0.65);margin-bottom:6px;text-align:center}
+.sc-re-row{font-size:12px;color:rgba(255,255,255,0.35);padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);text-align:center}
+.sc-re-row:last-child{border-bottom:none}
+.sc-re-row.won{color:#00ff88;font-weight:700}
+.sc-re-tot{font-size:18px;font-weight:900;color:#00ff88;text-align:center;margin-top:8px}
+.sc-re-score{font-size:36px;font-weight:900;letter-spacing:4px;color:#fff}
+.sc-re-next{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;animation:scopa-pulse-txt 1.5s ease-in-out infinite}
+/* Game over */
+.sc-gameover{display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px;height:100%;overflow-y:auto;justify-content:center;text-align:center}
+.sc-go-trophy{font-size:72px;filter:drop-shadow(0 0 24px rgba(251,191,36,0.8));animation:scopa-trophy 1s ease-out}
+.sc-go-title{font-size:28px;font-weight:900;letter-spacing:5px}
+.sc-go-title.win{color:#00ff88;text-shadow:0 0 24px rgba(0,255,136,0.5)}
+.sc-go-title.lose{color:#ff4466;text-shadow:0 0 24px rgba(255,68,102,0.5)}
+.sc-go-who{font-size:14px;color:rgba(255,255,255,0.4)}
+.sc-go-score{font-size:44px;font-weight:900;letter-spacing:6px;color:#fff;text-shadow:0 0 24px rgba(255,255,255,0.15)}
+.sc-go-btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.sc-rematch-btn{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:12px;padding:12px 24px;font-size:14px;font-weight:900;cursor:pointer;box-shadow:0 0 18px rgba(0,255,136,0.3);letter-spacing:.5px}
+.sc-quit-btn{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:12px 20px;font-size:14px;font-weight:600;cursor:pointer}
+
+/* Animations */
+@keyframes scopa-spin{to{transform:rotate(360deg)}}
+@keyframes scopa-pulse-txt{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes scopa-glow-pulse{0%,100%{box-shadow:0 0 18px rgba(0,255,136,0.45)}50%{box-shadow:0 0 28px rgba(0,255,136,0.75)}}
+@keyframes scopa-flash-in{0%{transform:scale(0.4) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes scopa-trophy{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0deg)}}
+@keyframes sc-dot-pulse{0%,100%{opacity:.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}

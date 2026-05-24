@@ -71,6 +71,7 @@ const ROOMS = [
   { id:'confessionale', name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=600&h=400&fit=crop', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
   { id:'flirt',         name:'Flirt 🔞',    emoji:'🌹', img:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=400&fit=crop', desc:'Chat piccante adulti. Solo 18+. Anonima, calda, senza filtri.', tier:'adult', color:'#ff2d6e', dot1:'#ff2d6e',dot2:'#ff6b9d',dot3:'#ff2d6e' },
   { id:'notte',         name:'Kouverte Notte', emoji:'🌙', img:'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=600&h=400&fit=crop', desc:'Evento serale alle 23:00. Una domanda, tutti rispondono.', tier:'notte', color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
+  { id:'scopa',         name:'Scopa', emoji:'♠', img:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop', desc:'Sfida 1vs1 a carte napoletane. 2 giocatori per tavolo — gli altri in attesa.', tier:'scopa', color:'#00ff88', dot1:'#00ff88',dot2:'#00cc66',dot3:'#00ffaa' },
 ];
 
 function isRoomActiveNow(){ return true; }
@@ -3486,6 +3487,317 @@ async function playProfileVoiceNote(userId){
   } catch(e){ showToast('❌ Errore'); }
 }
 
+// ══════════════════════════════════════════════════════════════
+// ♠  SCOPA — Carte Napoletane (multiplayer 1vs1)
+// ══════════════════════════════════════════════════════════════
+var _sc = null;  // game state
+var _scSelCard = null;  // carta in mano selezionata (id)
+var _scSelCap = [];    // id carte tavolo selezionate per cattura
+var _scGameId = null;
+
+const SC_ICON  = {coppe:'♥',denari:'♦',bastoni:'♣',spade:'♠'};
+const SC_COLOR = {coppe:'#f43f5e',denari:'#f59e0b',bastoni:'#22c55e',spade:'#38bdf8'};
+const SC_VL    = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
+const SC_VN    = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
+const SC_SN    = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
+
+function openScopaGame(){
+  let scr=document.getElementById('scopaScreen');
+  if(!scr){
+    scr=document.createElement('div');
+    scr.id='scopaScreen';
+    scr.className='scopa-fs';
+    scr.innerHTML=`
+      <div class="scopa-hdr">
+        <button class="scopa-back" onclick="closeScopaGame()">←</button>
+        <div class="scopa-hdr-mid">
+          <div class="scopa-hdr-title">♠ SCOPA</div>
+          <div class="scopa-hdr-sub">Carte Napoletane</div>
+        </div>
+        <div class="scopa-hdr-score" id="scHdrScore"></div>
+      </div>
+      <div class="scopa-body" id="scopaBody"></div>`;
+    document.body.appendChild(scr);
+  }
+  setTimeout(()=>scr.classList.add('show'),30);
+  _scSelCard=null; _scSelCap=[];
+  scRenderWaiting(1,1);
+  registerScopaListeners();
+  if(socket?.connected){
+    socket.emit('scopa:join',{
+      userId:user.serverId||user.id,
+      name:user.name||'Anonimo',
+      face:user.face||'🎭',
+      color:user.color||'#00d4ff'
+    });
+  }
+}
+
+function closeScopaGame(){
+  const scr=document.getElementById('scopaScreen');
+  if(scr){scr.classList.remove('show');setTimeout(()=>scr.remove(),420);}
+  if(socket?.connected) socket.emit('scopa:leave');
+  _sc=null; _scSelCard=null; _scSelCap=[]; _scGameId=null;
+  window._scopaLR=false;
+}
+
+function registerScopaListeners(){
+  if(window._scopaLR||!socket) return;
+  window._scopaLR=true;
+  socket.on('scopa:waiting',({position,total})=> scRenderWaiting(position,total));
+  socket.on('scopa:state',(st)=>{ _sc=st; _scGameId=st.gameId; _scSelCard=null; _scSelCap=[]; scRender(); });
+  socket.on('scopa:scopa',({byPlayerId})=>{
+    const mine=byPlayerId===(user.serverId||user.id);
+    scFlash(mine?'⚡ SCOPA!':'💀 Scopa avversario',mine?'#00ff88':'#ff4466');
+  });
+  socket.on('scopa:choose',({cardId,options})=>{ _scSelCard=cardId; _scSelCap=[]; scRender(); });
+  socket.on('scopa:round-end',(d)=> scRenderRoundEnd(d));
+  socket.on('scopa:game-over',(d)=> scRenderGameOver(d));
+  socket.on('scopa:opp-left',()=>{ showToast('👋 Avversario disconnesso'); scRenderWaiting(1,1); });
+  socket.on('scopa:rematch-req',({by})=>{
+    showToast('🔄 '+by+' vuole la rivincita!');
+    const btn=document.getElementById('scRematchBtn');
+    if(btn){btn.textContent='✅ Accetta rivincita';btn.style.background='#10b981';}
+  });
+  socket.on('scopa:error',({msg})=> showToast('❌ '+msg));
+}
+
+/* ─── Calcolo catture lato client (per UX) ─── */
+function scClientCaptures(card, table){
+  const v=card.value;
+  const singles=table.filter(c=>c.value===v);
+  if(singles.length) return singles.map(c=>[c]);
+  const res=[];
+  for(let mask=1;mask<(1<<table.length);mask++){
+    const combo=table.filter((_,i)=>mask>>i&1);
+    if(combo.length>=2&&combo.reduce((s,c)=>s+c.value,0)===v) res.push(combo);
+  }
+  return res;
+}
+
+/* ─── Card HTML ─── */
+function scCardHTML(card, opts={}){
+  const {sel,selected,dimmed,back,small,count}=opts;
+  if(back){
+    return `<div class="sc-card sc-card-back${small?' sc-sm':''}">
+      <div class="sc-back-inner">${count>1?`<div class="sc-cnt">${count}</div>`:''}</div></div>`;
+  }
+  const icon=SC_ICON[card.suit], color=SC_COLOR[card.suit], lbl=SC_VL[card.value];
+  const isFace=card.value>=8;
+  return `<div class="sc-card${isFace?' sc-face':''} ${sel?'sc-selectable':''} ${selected?'sc-selected':''} ${dimmed?'sc-dimmed':''} ${small?'sc-sm':''}"
+    style="--sc:${color}" data-cid="${card.id}"
+    onclick="${sel?`scCardClick('${card.id}')`:''}">
+    <span class="sc-vt">${lbl}</span>
+    <span class="sc-si">${icon}</span>
+    <span class="sc-vb">${lbl}</span>
+  </div>`;
+}
+
+/* ─── Click su carta ─── */
+function scCardClick(cardId){
+  if(!_sc?.isMyTurn) return;
+  // Carta in mano?
+  const hand=_sc.myHand||[];
+  const card=hand.find(c=>c.id===cardId);
+  if(card){
+    if(_scSelCard===cardId){ _scSelCard=null; _scSelCap=[]; }
+    else {
+      _scSelCard=cardId; _scSelCap=[];
+      const opts=scClientCaptures(card,_sc.table);
+      if(opts.length===1) _scSelCap=opts[0].map(c=>c.id);
+      // 0 opzioni → piazza sul tavolo; >1 → l'utente sceglie manualmente
+    }
+    scRender(); return;
+  }
+  // Carta sul tavolo (per selezionare cattura manuale)
+  if(_scSelCard){
+    const tc=_sc.table.find(c=>c.id===cardId);
+    if(!tc) return;
+    if(_scSelCap.includes(cardId)) _scSelCap=_scSelCap.filter(id=>id!==cardId);
+    else _scSelCap.push(cardId);
+    scRender();
+  }
+}
+
+function scPlayCard(){
+  if(!_scSelCard||!_scGameId) return;
+  socket.emit('scopa:play-card',{gameId:_scGameId,cardId:_scSelCard,captureIds:[]});
+  _scSelCard=null; _scSelCap=[];
+}
+
+function scConfirmCapture(){
+  if(!_scSelCard||!_scGameId||!_scSelCap.length) return;
+  socket.emit('scopa:play-card',{gameId:_scGameId,cardId:_scSelCard,captureIds:_scSelCap});
+  _scSelCard=null; _scSelCap=[];
+}
+
+function scCancelSel(){ _scSelCard=null; _scSelCap=[]; scRender(); }
+
+/* ─── Renders ─── */
+function scRenderWaiting(pos, tot){
+  const body=document.getElementById('scopaBody');
+  if(!body) return;
+  document.getElementById('scHdrScore').innerHTML='';
+  body.innerHTML=`
+  <div class="sc-waiting">
+    <div class="sc-wait-deck">
+      ${[0,1,2,3].map(i=>`<div class="sc-wait-card" style="transform:rotate(${(i-1.5)*9}deg) translateY(${Math.abs(i-1.5)*6}px)"></div>`).join('')}
+    </div>
+    <div class="sc-wait-title">${pos===1&&tot===1?'In attesa di un avversario…':`Coda · Posizione ${pos}`}</div>
+    <div class="sc-wait-sub">${tot===1?'Sei il primo — aspetta un avversario':tot+' giocatori in coda'}</div>
+    <div class="sc-wait-dots"><span></span><span></span><span></span></div>
+    <div class="sc-rules">
+      <div class="sc-rules-title">📜 Regole Scopa</div>
+      <div class="sc-rule"><span class="sc-rb">♥♦♣♠</span> Mazzo napoletano 40 carte, 4 semi</div>
+      <div class="sc-rule"><span class="sc-rb">🎯</span> Cattura carte con lo stesso valore</div>
+      <div class="sc-rule"><span class="sc-rb">⚡</span> <b>Scopa</b>: prendi tutte le carte del tavolo</div>
+      <div class="sc-rule"><span class="sc-rb">🏆</span> <b>Carte</b>: chi ne ha di più (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb">💰</span> <b>Denari</b>: maggioranza dei denari (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb">🌟</span> <b>Settebello</b>: il 7 di denari (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb">🃏</span> <b>Primiera</b>: 7=21, 6=18, A=16… (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb">🎮</span> Prima a <b>11 punti</b> vince la partita!</div>
+    </div>
+  </div>`;
+}
+
+function scRender(){
+  const body=document.getElementById('scopaBody');
+  if(!body||!_sc) return;
+  const st=_sc;
+  // Aggiorna header punteggio
+  const sh=document.getElementById('scHdrScore');
+  if(sh) sh.innerHTML=`<span class="sc-s-me">${st.myTotalScore}</span><span class="sc-s-sep">—</span><span class="sc-s-opp">${st.oppTotalScore}</span>`;
+
+  // Calcola info sulla carta selezionata
+  const selCard=st.myHand?.find(c=>c.id===_scSelCard);
+  const capOpts=selCard?scClientCaptures(selCard,st.table):[];
+  const sumSel=_scSelCap.length?st.table.filter(c=>_scSelCap.includes(c.id)).reduce((s,c)=>s+c.value,0):0;
+  const validCap=selCard&&sumSel===selCard.value&&_scSelCap.length>0;
+  const noCapPossible=selCard&&capOpts.length===0;
+
+  // Per ogni carta tavolo: può far parte di una cattura con la carta selezionata?
+  const capturableSet=new Set();
+  if(selCard) capOpts.forEach(opt=>opt.forEach(c=>capturableSet.add(c.id)));
+
+  body.innerHTML=`
+  <!-- AVVERSARIO -->
+  <div class="sc-opp-row">
+    <div class="sc-plr-info">
+      <span class="sc-plr-face">${esc(st.oppInfo.face)}</span>
+      <span class="sc-plr-name">${esc(st.oppInfo.name)}</span>
+      ${!st.isMyTurn?'<span class="sc-turn-badge opp">✦ Turno</span>':''}
+    </div>
+    <div class="sc-stats-row">
+      <span class="sc-pill">🃏${st.oppHandCount}</span>
+      <span class="sc-pill">📦${st.oppCaptured}</span>
+      <span class="sc-pill">💰${st.oppDenari}</span>
+      <span class="sc-pill sc-scope">♠${st.oppScope}</span>
+    </div>
+    <div class="sc-opp-hand">${Array(st.oppHandCount).fill(0).map(()=>scCardHTML(null,{back:true,small:true})).join('')}</div>
+  </div>
+
+  <!-- TAVOLO -->
+  <div class="sc-table-wrap">
+    <div class="sc-table-info">
+      <span>Tavolo · ${st.table.length} carte</span>
+      <span class="sc-deck-lbl">📤 ${st.deckCount} nel mazzo</span>
+    </div>
+    <div class="sc-table" id="scTable">
+      ${st.table.length?st.table.map(c=>scCardHTML(c,{
+        sel:st.isMyTurn&&!!_scSelCard&&(capturableSet.has(c.id)||_scSelCap.includes(c.id)),
+        selected:_scSelCap.includes(c.id),
+        dimmed:st.isMyTurn&&!!_scSelCard&&!capturableSet.has(c.id)&&!_scSelCap.includes(c.id)&&capturableSet.size>0
+      })).join(''):'<div class="sc-empty-table">— Tavolo vuoto —</div>'}
+    </div>
+    ${validCap?`<button class="sc-confirm-btn" onclick="scConfirmCapture()">⚡ Cattura ${_scSelCap.length} carta${_scSelCap.length>1?'e':''}</button>`:''}
+    ${noCapPossible&&_scSelCard?`<div class="sc-no-cap-hint">Nessuna cattura possibile — la carta andrà sul tavolo</div><button class="sc-play-table-btn" onclick="scPlayCard()">Metti sul tavolo →</button>`:''}
+  </div>
+
+  <!-- IO -->
+  <div class="sc-me-row">
+    <div class="sc-stats-row" style="margin-bottom:6px">
+      <span class="sc-pill act">📦${st.myCaptured}</span>
+      <span class="sc-pill act">💰${st.myDenari}</span>
+      <span class="sc-pill sc-scope act">♠${st.myScope}</span>
+      ${st.isMyTurn?'<span class="sc-turn-badge me">✦ Il tuo turno</span>':'<span class="sc-wait-lbl">Attendi...</span>'}
+    </div>
+    <div class="sc-hand" id="scHand">
+      ${(st.myHand||[]).map(c=>scCardHTML(c,{
+        sel:st.isMyTurn,
+        selected:_scSelCard===c.id,
+      })).join('')}
+    </div>
+    ${_scSelCard&&!noCapPossible?`<div class="sc-sel-hint">Seleziona le carte da catturare o <button class="sc-cancel-mini" onclick="scCancelSel()">annulla</button></div>`:''}
+    ${_scSelCard&&!noCapPossible&&!validCap?`<div class="sc-sum-hint">${_scSelCap.length?`Somma: ${sumSel} / ${selCard?.value??'?'}`:''}</div>`:''}
+  </div>`;
+}
+
+function scFlash(text, color='#00ff88'){
+  const scr=document.getElementById('scopaScreen');
+  if(!scr) return;
+  const el=document.createElement('div');
+  el.className='sc-flash';
+  el.textContent=text;
+  el.style.color=color==='#00ff88'?'#050810':'#fff';
+  el.style.background=color;
+  if(color!=='#00ff88') el.style.boxShadow=`0 0 30px ${color}88`;
+  scr.appendChild(el);
+  setTimeout(()=>el.classList.add('show'),30);
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),400);},2200);
+}
+
+function scRenderRoundEnd({roundScore, totalScore}){
+  const body=document.getElementById('scopaBody');
+  if(!body||!_sc) return;
+  const myId=_sc.myId, oppId=_sc.oppId;
+  const ms=roundScore[myId], os=roundScore[oppId];
+  const cats=['scope','settebello','carte','denari','primiera'];
+  const catLabel={scope:'Scope',settebello:'Settebello',carte:'Carte',denari:'Denari',primiera:'Primiera'};
+  body.innerHTML=`
+  <div class="sc-round-end">
+    <div class="sc-re-title">Fine Mano</div>
+    <div class="sc-re-grid">
+      <div class="sc-re-col">
+        <div class="sc-re-head">${esc(_sc.myInfo.face)} Tu</div>
+        ${cats.map(k=>`<div class="sc-re-row ${ms[k]?'won':''}">${catLabel[k]}${ms[k]?' +1':''}</div>`).join('')}
+        <div class="sc-re-tot">+${ms.total} pt</div>
+      </div>
+      <div class="sc-re-vs">VS</div>
+      <div class="sc-re-col">
+        <div class="sc-re-head">${esc(_sc.oppInfo.face)} Avv.</div>
+        ${cats.map(k=>`<div class="sc-re-row ${os[k]?'won':''}">${catLabel[k]}${os[k]?' +1':''}</div>`).join('')}
+        <div class="sc-re-tot">+${os.total} pt</div>
+      </div>
+    </div>
+    <div class="sc-re-score">${totalScore[myId]} — ${totalScore[oppId]}</div>
+    <div class="sc-re-next">Nuova mano tra poco…</div>
+  </div>`;
+}
+
+function scRenderGameOver({roundScore, totalScore, winner, winnerInfo}){
+  const body=document.getElementById('scopaBody');
+  if(!body||!_sc) return;
+  const iWon=winner===_sc.myId;
+  body.innerHTML=`
+  <div class="sc-gameover">
+    <div class="sc-go-trophy">${iWon?'🏆':'💀'}</div>
+    <div class="sc-go-title ${iWon?'win':'lose'}">${iWon?'HAI VINTO!':'HAI PERSO!'}</div>
+    <div class="sc-go-who">${esc(winnerInfo.face)} ${esc(winnerInfo.name)} ha vinto</div>
+    <div class="sc-go-score">${totalScore[_sc.myId]} — ${totalScore[_sc.oppId]}</div>
+    <div class="sc-go-btns">
+      <button class="sc-rematch-btn" id="scRematchBtn" onclick="scRequestRematch()">🔄 Rivincita</button>
+      <button class="sc-quit-btn" onclick="closeScopaGame()">Esci</button>
+    </div>
+  </div>`;
+}
+
+function scRequestRematch(){
+  if(!_scGameId) return;
+  socket.emit('scopa:rematch',{gameId:_scGameId});
+  const btn=document.getElementById('scRematchBtn');
+  if(btn){btn.textContent='⏳ Aspetto...';btn.disabled=true;}
+}
+
 // ══════════════════════════════════════════
 // MATCH ANONIMO INTELLIGENTE
 // ══════════════════════════════════════════
@@ -4261,6 +4573,7 @@ function roomCard(r){
 
 // ══ ENTER/LEAVE ══
 function enterRoom(roomId){
+  if(roomId==='scopa'){ openScopaGame(); return; }
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
 

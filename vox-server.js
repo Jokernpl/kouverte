@@ -4042,8 +4042,285 @@ function getTotalOnline() {
     return tot;
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ♠  SCOPA — Motore di gioco con carte napoletane
+// ══════════════════════════════════════════════════════════════════════════════
+const scopaQueue   = [];          // { socketId, userId, name, face, color }
+const scopaGames   = new Map();   // gameId → gameState
+const scopaPlrGame = new Map();   // socketId → gameId
+const SCOPA_WIN    = 11;
+
+function scopaDeck() {
+    const cards = [];
+    for (const suit of ['coppe','denari','bastoni','spade']) {
+        for (let v = 1; v <= 10; v++) cards.push({ suit, value: v, id: suit[0]+v });
+    }
+    return cards;
+}
+function scopaShuffle(a) {
+    const d=[...a];
+    for(let i=d.length-1;i>0;i--){const j=0|(Math.random()*(i+1));[d[i],d[j]]=[d[j],d[i]];}
+    return d;
+}
+function scopaPrimVal(v){return{7:21,6:18,1:16,5:15,4:14,3:13,2:12}[v]||10;}
+function scopaPrimiera(cards){
+    let s=0;
+    for(const suit of['coppe','denari','bastoni','spade']){
+        const sc=cards.filter(c=>c.suit===suit);
+        if(!sc.length)return -1;
+        s+=Math.max(...sc.map(c=>scopaPrimVal(c.value)));
+    }
+    return s;
+}
+// Restituisce array di opzioni di cattura (ogni opzione = array di carte del tavolo)
+function scopaCaptures(card, table){
+    const v=card.value;
+    const singles=table.filter(c=>c.value===v);
+    if(singles.length) return singles.map(c=>[c]); // singola priorità
+    // Combinazioni multi-carta (bitmask)
+    const res=[];
+    for(let mask=1;mask<(1<<table.length);mask++){
+        const combo=table.filter((_,i)=>mask>>i&1);
+        if(combo.length>=2&&combo.reduce((s,c)=>s+c.value,0)===v) res.push(combo);
+    }
+    return res;
+}
+function scopaRoundScore(game){
+    const [a,b]=game.playerOrder;
+    const ca=game.captured[a],cb=game.captured[b];
+    const sa={scope:game.scope[a],settebello:0,carte:0,denari:0,primiera:0};
+    const sb={scope:game.scope[b],settebello:0,carte:0,denari:0,primiera:0};
+    if(ca.some(c=>c.suit==='denari'&&c.value===7)) sa.settebello=1;
+    else sb.settebello=1;
+    if(ca.length>cb.length) sa.carte=1; else if(cb.length>ca.length) sb.carte=1;
+    const da=ca.filter(c=>c.suit==='denari').length, db=cb.filter(c=>c.suit==='denari').length;
+    if(da>db) sa.denari=1; else if(db>da) sb.denari=1;
+    const pa=scopaPrimiera(ca), pb=scopaPrimiera(cb);
+    if(pa>=0&&pb>=0){if(pa>pb) sa.primiera=1; else if(pb>pa) sb.primiera=1;}
+    else if(pa>=0) sa.primiera=1; else if(pb>=0) sb.primiera=1;
+    sa.total=sa.scope+sa.settebello+sa.carte+sa.denari+sa.primiera;
+    sb.total=sb.scope+sb.settebello+sb.carte+sb.denari+sb.primiera;
+    return{[a]:sa,[b]:sb};
+}
+function scopaNewRound(game){
+    const deck=scopaShuffle(scopaDeck());
+    const[a,b]=game.playerOrder;
+    game.hands={[a]:deck.splice(0,3),[b]:deck.splice(0,3)};
+    game.table=deck.splice(0,4);
+    game.deck=deck;
+    game.captured={[a]:[],[b]:[]};
+    game.scope={[a]:0,[b]:0};
+    game.lastCapBy=null;
+    game.state='playing';
+    game.currentTurn=game.roundStarter;
+}
+function scopaPublic(game, forId){
+    const opp=game.playerOrder.find(id=>id!==forId);
+    return{
+        gameId:game.gameId, myId:forId, oppId:opp,
+        myInfo:game.playerInfo[forId], oppInfo:game.playerInfo[opp],
+        myHand:game.hands[forId], oppHandCount:game.hands[opp].length,
+        table:game.table, deckCount:game.deck.length,
+        myScope:game.scope[forId], oppScope:game.scope[opp],
+        myCaptured:game.captured[forId].length, oppCaptured:game.captured[opp].length,
+        myDenari:game.captured[forId].filter(c=>c.suit==='denari').length,
+        oppDenari:game.captured[opp].filter(c=>c.suit==='denari').length,
+        myTotalScore:game.totalScore[forId], oppTotalScore:game.totalScore[opp],
+        currentTurn:game.currentTurn, isMyTurn:game.currentTurn===forId,
+        state:game.state
+    };
+}
+function scopaEmitBoth(game){
+    const[a,b]=game.playerOrder;
+    const sa=io.sockets.sockets.get(game.socketIds[a]);
+    const sb=io.sockets.sockets.get(game.socketIds[b]);
+    if(sa) sa.emit('scopa:state', scopaPublic(game,a));
+    if(sb) sb.emit('scopa:state', scopaPublic(game,b));
+}
+function scopaNextTurn(game){
+    const[a,b]=game.playerOrder;
+    game.currentTurn=game.currentTurn===a?b:a;
+    if(game.hands[a].length===0&&game.hands[b].length===0){
+        if(game.deck.length>=6){
+            game.hands[a]=game.deck.splice(0,3);
+            game.hands[b]=game.deck.splice(0,3);
+        } else {
+            // Fine mano: le carte rimaste sul tavolo vanno all'ultimo che ha preso
+            if(game.table.length>0&&game.lastCapBy){
+                game.captured[game.lastCapBy].push(...game.table);
+                game.table=[];
+            }
+            scopaEndRound(game); return;
+        }
+    }
+    scopaEmitBoth(game);
+}
+function scopaEndRound(game){
+    const[a,b]=game.playerOrder;
+    const rs=scopaRoundScore(game);
+    game.totalScore[a]+=rs[a].total;
+    game.totalScore[b]+=rs[b].total;
+    const sa=io.sockets.sockets.get(game.socketIds[a]);
+    const sb=io.sockets.sockets.get(game.socketIds[b]);
+    // Controlla vittoria
+    const aWin=game.totalScore[a]>=SCOPA_WIN, bWin=game.totalScore[b]>=SCOPA_WIN;
+    if(aWin||bWin){
+        game.state='finished';
+        const winner=(aWin&&game.totalScore[a]>=game.totalScore[b])?a:b;
+        const payload={roundScore:rs,totalScore:game.totalScore,winner,winnerInfo:game.playerInfo[winner]};
+        if(sa) sa.emit('scopa:game-over',payload);
+        if(sb) sb.emit('scopa:game-over',payload);
+        scopaPlrGame.delete(game.socketIds[a]);
+        scopaPlrGame.delete(game.socketIds[b]);
+    } else {
+        // Nuova mano tra 3 secondi
+        const payload={roundScore:rs,totalScore:game.totalScore};
+        if(sa) sa.emit('scopa:round-end',payload);
+        if(sb) sb.emit('scopa:round-end',payload);
+        game.roundStarter=game.playerOrder[(game.playerOrder.indexOf(game.roundStarter)+1)%2];
+        game.currentTurn=game.roundStarter;
+        scopaNewRound(game);
+        setTimeout(()=>scopaEmitBoth(game),3500);
+    }
+}
+function scopaExecCapture(game, byId, card, cardIdx, captured){
+    game.hands[byId].splice(cardIdx,1);
+    const capIds=new Set(captured.map(c=>c.id));
+    game.table=game.table.filter(c=>!capIds.has(c.id));
+    game.captured[byId].push(card,...captured);
+    game.lastCapBy=byId;
+    const isScopa=game.table.length===0;
+    const gameStillGoing=(game.hands[game.playerOrder[0]].length+game.hands[game.playerOrder[1]].length+game.deck.length)>0;
+    if(isScopa&&gameStillGoing){
+        game.scope[byId]++;
+        const[a,b]=game.playerOrder;
+        const sa=io.sockets.sockets.get(game.socketIds[a]);
+        const sb=io.sockets.sockets.get(game.socketIds[b]);
+        if(sa) sa.emit('scopa:scopa',{byPlayerId:byId});
+        if(sb) sb.emit('scopa:scopa',{byPlayerId:byId});
+    }
+    scopaNextTurn(game);
+}
+
 io.on('connection', (socket) => {
     console.log('[WEBRTC] Utente connesso:', socket.id);
+
+    // ── SCOPA socket handlers ──────────────────────────────────────
+    socket.on('scopa:join', ({ userId, name, face, color }) => {
+        if(!userId||typeof userId!=='string') return;
+        const uid=userId.slice(0,60);
+        // Rimuovi da coda se già presente
+        const qi=scopaQueue.findIndex(p=>p.userId===uid);
+        if(qi!==-1) scopaQueue.splice(qi,1);
+        // Se già in partita attiva, rimanda lo stato
+        const existingGid=scopaPlrGame.get(socket.id);
+        if(existingGid){
+            const g=scopaGames.get(existingGid);
+            if(g&&g.state!=='finished'){socket.emit('scopa:state',scopaPublic(g,uid));return;}
+        }
+        const player={socketId:socket.id,userId:uid,name:String(name||'Anonimo').slice(0,30),face:String(face||'🎭').slice(0,8),color:String(color||'#00d4ff').slice(0,20)};
+        scopaQueue.push(player);
+        if(scopaQueue.length<2){
+            socket.emit('scopa:waiting',{position:1,total:scopaQueue.length});
+            return;
+        }
+        // Match! Prendi i primi 2
+        const p1=scopaQueue.shift(), p2=scopaQueue.shift();
+        const s1=io.sockets.sockets.get(p1.socketId), s2=io.sockets.sockets.get(p2.socketId);
+        if(!s1||!s2){if(s1)scopaQueue.unshift(p1);if(s2)scopaQueue.unshift(p2);return;}
+        const deck=scopaShuffle(scopaDeck());
+        const gameId='sc'+Date.now().toString(36);
+        const game={
+            gameId, playerOrder:[p1.userId,p2.userId],
+            playerInfo:{[p1.userId]:p1,[p2.userId]:p2},
+            socketIds:{[p1.userId]:p1.socketId,[p2.userId]:p2.socketId},
+            hands:{[p1.userId]:deck.splice(0,3),[p2.userId]:deck.splice(0,3)},
+            table:deck.splice(0,4), deck,
+            captured:{[p1.userId]:[],[p2.userId]:[]},
+            scope:{[p1.userId]:0,[p2.userId]:0},
+            totalScore:{[p1.userId]:0,[p2.userId]:0},
+            currentTurn:p1.userId, roundStarter:p1.userId,
+            lastCapBy:null, state:'playing'
+        };
+        scopaGames.set(gameId,game);
+        scopaPlrGame.set(p1.socketId,gameId);
+        scopaPlrGame.set(p2.socketId,gameId);
+        s1.emit('scopa:state',scopaPublic(game,p1.userId));
+        s2.emit('scopa:state',scopaPublic(game,p2.userId));
+        // Notifica coda rimanente
+        scopaQueue.forEach((p,i)=>{const s=io.sockets.sockets.get(p.socketId);if(s)s.emit('scopa:waiting',{position:i+1,total:scopaQueue.length});});
+    });
+
+    socket.on('scopa:play-card', ({ gameId, cardId, captureIds }) => {
+        const game=scopaGames.get(gameId);
+        if(!game||game.state!=='playing') return;
+        const myId=game.playerOrder.find(id=>game.socketIds[id]===socket.id);
+        if(!myId||game.currentTurn!==myId) return;
+        const hand=game.hands[myId];
+        const idx=hand.findIndex(c=>c.id===cardId);
+        if(idx===-1) return;
+        const card=hand[idx];
+        const opts=scopaCaptures(card,game.table);
+        if(!opts.length){
+            // Nessuna cattura: metti sul tavolo
+            hand.splice(idx,1);
+            game.table.push(card);
+            scopaNextTurn(game); return;
+        }
+        if(captureIds&&captureIds.length){
+            // Il client ha specificato le carte da catturare
+            const sel=game.table.filter(c=>captureIds.includes(c.id));
+            const sum=sel.reduce((s,c)=>s+c.value,0);
+            if(sum!==card.value){socket.emit('scopa:error',{msg:'Cattura non valida'});return;}
+            const selSet=new Set(sel.map(c=>c.id));
+            const valid=opts.find(opt=>opt.length===sel.length&&opt.every(c=>selSet.has(c.id)));
+            if(!valid){socket.emit('scopa:error',{msg:'Combinazione non valida'});return;}
+            scopaExecCapture(game,myId,card,idx,sel); return;
+        }
+        if(opts.length===1){
+            scopaExecCapture(game,myId,card,idx,opts[0]); return;
+        }
+        // Più opzioni: chiedi al client di scegliere
+        socket.emit('scopa:choose',{cardId,options:opts});
+    });
+
+    socket.on('scopa:rematch', ({ gameId }) => {
+        const game=scopaGames.get(gameId);
+        if(!game||game.state!=='finished') return;
+        const myId=game.playerOrder.find(id=>game.socketIds[id]===socket.id);
+        if(!myId) return;
+        game.rematchVotes=game.rematchVotes||new Set();
+        game.rematchVotes.add(myId);
+        const oppId=game.playerOrder.find(id=>id!==myId);
+        const oppSock=io.sockets.sockets.get(game.socketIds[oppId]);
+        if(oppSock) oppSock.emit('scopa:rematch-req',{by:game.playerInfo[myId].name});
+        if(game.rematchVotes.size===2){
+            game.totalScore={[game.playerOrder[0]]:0,[game.playerOrder[1]]:0};
+            game.roundStarter=game.playerOrder[0];
+            game.state='playing';
+            game.rematchVotes=new Set();
+            scopaNewRound(game);
+            scopaEmitBoth(game);
+        }
+    });
+
+    socket.on('scopa:leave', () => {
+        const gid=scopaPlrGame.get(socket.id);
+        if(gid){
+            const game=scopaGames.get(gid);
+            if(game){
+                const myId=game.playerOrder.find(id=>game.socketIds[id]===socket.id);
+                const oppId=game.playerOrder.find(id=>game.socketIds[id]!==socket.id);
+                const oppSock=oppId?io.sockets.sockets.get(game.socketIds[oppId]):null;
+                if(oppSock) oppSock.emit('scopa:opp-left',{});
+                scopaGames.delete(gid);
+                scopaPlrGame.delete(socket.id);
+                if(oppId) scopaPlrGame.delete(game.socketIds[oppId]);
+            }
+        }
+        const qi=scopaQueue.findIndex(p=>p.socketId===socket.id);
+        if(qi!==-1) scopaQueue.splice(qi,1);
+    });
 
     // Register user with socket
     socket.on('register-user', (data) => {
@@ -4742,6 +5019,21 @@ io.on('connection', (socket) => {
         }
 
         socket.broadcast.emit('user-disconnected', socket.id);
+        // Scopa: cleanup in caso di disconnessione
+        const scopaGid=scopaPlrGame.get(socket.id);
+        if(scopaGid){
+            const sg=scopaGames.get(scopaGid);
+            if(sg){
+                const oppId=sg.playerOrder.find(id=>sg.socketIds[id]!==socket.id);
+                const oppSock=oppId?io.sockets.sockets.get(sg.socketIds[oppId]):null;
+                if(oppSock) oppSock.emit('scopa:opp-left',{});
+                scopaGames.delete(scopaGid);
+                if(oppId) scopaPlrGame.delete(sg.socketIds[oppId]);
+            }
+            scopaPlrGame.delete(socket.id);
+        }
+        const qsi=scopaQueue.findIndex(p=>p.socketId===socket.id);
+        if(qsi!==-1) scopaQueue.splice(qsi,1);
     });
 });
 
