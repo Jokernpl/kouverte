@@ -1465,6 +1465,13 @@ app.get('/api/users/search', (req, res) => {
     res.json({ users: matches });
 });
 
+// ─── helper: mappa userId → socketId per notifiche real-time ───────────────
+// (condiviso con DM — usa lo stesso global.dmServerIds)
+function getUserSocketId(userId) {
+    if (!global.dmServerIds) return null;
+    return global.dmServerIds.get(userId) || global.dmUsers?.get(userId) || null;
+}
+
 // Lista amici dell'utente (richiede auth)
 app.get('/api/me/friends', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
@@ -1473,6 +1480,7 @@ app.get('/api/me/friends', verifyToken, (req, res) => {
     const friends = friendIds.map(fid => {
         const f = DB.users.find(u => u.id === fid);
         if (!f) return null;
+        const onlineSid = getUserSocketId(fid);
         return {
             id: f.id,
             username: f.username,
@@ -1480,28 +1488,137 @@ app.get('/api/me/friends', verifyToken, (req, res) => {
             kvColor: f.kvData?.color || '#a855f7',
             kvActiveFrame: f.kvData?.activeFrame || 'none',
             kvName: f.kvData?.name || f.username,
-            online: false // TODO: tracking real-time
+            online: !!(onlineSid)
         };
     }).filter(Boolean);
     res.json({ friends });
 });
 
-// Aggiungi amico
-app.post('/api/me/friends/add', verifyToken, (req, res) => {
+// Richieste in entrata (pending)
+app.get('/api/me/friends/requests', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
+    const incoming = (user.friendRequests || []).map(r => {
+        const from = DB.users.find(u => u.id === r.from);
+        if (!from) return null;
+        return {
+            from: from.id,
+            username: from.username,
+            kvFace: from.kvData?.face || '🎭',
+            kvColor: from.kvData?.color || '#00d4ff',
+            kvName: from.kvData?.name || from.username,
+            ts: r.ts
+        };
+    }).filter(Boolean);
+    res.json({ requests: incoming });
+});
+
+// Invia richiesta di amicizia (sostituisce /add diretto)
+app.post('/api/me/friends/request', verifyToken, (req, res) => {
+    const me = DB.users.find(u => u.id === req.user.userId);
+    if (!me) return res.status(404).json({ error: 'Utente non trovato' });
     const friendId = String(req.body?.friendId || '');
     if (!friendId) return res.status(400).json({ error: 'friendId richiesto' });
-    if (friendId === user.id) return res.status(400).json({ error: 'Non puoi aggiungere te stesso' });
+    if (friendId === me.id) return res.status(400).json({ error: 'Non puoi aggiungere te stesso' });
     const friend = DB.users.find(u => u.id === friendId);
-    if (!friend) return res.status(404).json({ error: 'Amico non trovato' });
+    if (!friend) return res.status(404).json({ error: 'Utente non trovato' });
 
-    user.friends = user.friends || [];
-    if (!user.friends.includes(friendId)) {
-        user.friends.push(friendId);
+    // Già amici?
+    if ((me.friends || []).includes(friendId)) return res.json({ ok: true, status: 'already_friends' });
+
+    // Richiesta già inviata?
+    friend.friendRequests = friend.friendRequests || [];
+    if (friend.friendRequests.find(r => r.from === me.id)) return res.json({ ok: true, status: 'already_sent' });
+
+    // Se B ha già inviato una richiesta ad A → accetta automaticamente
+    me.friendRequests = me.friendRequests || [];
+    if (me.friendRequests.find(r => r.from === friendId)) {
+        // Accetta cross-request
+        me.friendRequests = me.friendRequests.filter(r => r.from !== friendId);
+        me.friends = me.friends || [];
+        friend.friends = friend.friends || [];
+        if (!me.friends.includes(friendId)) me.friends.push(friendId);
+        if (!friend.friends.includes(me.id)) friend.friends.push(me.id);
         markDirty();
+        // Notifica real-time entrambi
+        const friendSock = getUserSocketId(friendId);
+        if (friendSock) io.to(friendSock).emit('friend-accepted', { userId: me.id, username: me.username, kvFace: me.kvData?.face || '🎭', kvColor: me.kvData?.color || '#00d4ff' });
+        return res.json({ ok: true, status: 'auto_accepted' });
     }
-    res.json({ ok: true, friendsCount: user.friends.length });
+
+    // Aggiungi richiesta a B
+    friend.friendRequests.push({ from: me.id, ts: Date.now() });
+    markDirty();
+
+    // Notifica real-time a B se online
+    const targetSock = getUserSocketId(friendId);
+    if (targetSock) {
+        io.to(targetSock).emit('friend-request', {
+            from: me.id,
+            username: me.username,
+            kvFace: me.kvData?.face || '🎭',
+            kvColor: me.kvData?.color || '#00d4ff',
+            kvName: me.kvData?.name || me.username
+        });
+    } else {
+        // Push notification offline
+        pushToUser(friendId, {
+            title: `👋 ${me.kvData?.name || me.username} vuole essere tuo amico`,
+            body: 'Apri Kouverte per accettare la richiesta',
+            url: '/app.html',
+            tag: 'friend-req-' + me.id
+        });
+    }
+    res.json({ ok: true, status: 'sent' });
+});
+
+// Accetta richiesta di amicizia
+app.post('/api/me/friends/accept', verifyToken, (req, res) => {
+    const me = DB.users.find(u => u.id === req.user.userId);
+    if (!me) return res.status(404).json({ error: 'Utente non trovato' });
+    const fromId = String(req.body?.fromId || '');
+    if (!fromId) return res.status(400).json({ error: 'fromId richiesto' });
+    const other = DB.users.find(u => u.id === fromId);
+    if (!other) return res.status(404).json({ error: 'Utente non trovato' });
+
+    // Rimuovi richiesta dal pending
+    me.friendRequests = (me.friendRequests || []).filter(r => r.from !== fromId);
+
+    // Aggiungi amicizia bilaterale
+    me.friends = me.friends || [];
+    other.friends = other.friends || [];
+    if (!me.friends.includes(fromId)) me.friends.push(fromId);
+    if (!other.friends.includes(me.id)) other.friends.push(me.id);
+    markDirty();
+
+    // Notifica chi ha inviato la richiesta
+    const otherSock = getUserSocketId(fromId);
+    if (otherSock) {
+        io.to(otherSock).emit('friend-accepted', {
+            userId: me.id,
+            username: me.username,
+            kvFace: me.kvData?.face || '🎭',
+            kvColor: me.kvData?.color || '#00d4ff',
+            kvName: me.kvData?.name || me.username
+        });
+    }
+    res.json({ ok: true });
+});
+
+// Rifiuta/ignora richiesta
+app.post('/api/me/friends/reject', verifyToken, (req, res) => {
+    const me = DB.users.find(u => u.id === req.user.userId);
+    if (!me) return res.status(404).json({ error: 'Utente non trovato' });
+    const fromId = String(req.body?.fromId || '');
+    me.friendRequests = (me.friendRequests || []).filter(r => r.from !== fromId);
+    markDirty();
+    res.json({ ok: true });
+});
+
+// Compat: vecchio endpoint /add — ora manda richiesta invece di aggiungere direttamente
+app.post('/api/me/friends/add', verifyToken, (req, res, next) => {
+    req.url = '/api/me/friends/request';
+    next('route');
 });
 
 // Rimuovi amico
@@ -1511,6 +1628,9 @@ app.post('/api/me/friends/remove', verifyToken, (req, res) => {
     const friendId = String(req.body?.friendId || '');
     if (!friendId) return res.status(400).json({ error: 'friendId richiesto' });
     user.friends = (user.friends || []).filter(id => id !== friendId);
+    // Rimuovi anche dall'altro lato
+    const other = DB.users.find(u => u.id === friendId);
+    if (other) other.friends = (other.friends || []).filter(id => id !== user.id);
     markDirty();
     res.json({ ok: true, friendsCount: user.friends.length });
 });
@@ -3984,43 +4104,72 @@ io.on('connection', (socket) => {
     });
 
     // ===== DM 1:1 (Messaggi diretti tra amici) =====
-    if (!global.dmUsers) global.dmUsers = new Map(); // userId -> socketId
-    if (!global.dmServerIds) global.dmServerIds = new Map(); // serverId -> socketId
+    // Entrambe le map usano il serverDbId come chiave canonica
+    if (!global.dmUsers) global.dmUsers = new Map();     // serverDbId → socketId
+    if (!global.dmServerIds) global.dmServerIds = new Map(); // (compat alias)
 
     socket.on('dm-register', (data) => {
         if (!data) return;
-        const uid = String(data.userId || '').slice(0, 60);
-        const sid = String(data.serverId || '').slice(0, 60);
-        if (uid) global.dmUsers.set(uid, socket.id);
-        if (sid) global.dmServerIds.set(sid, socket.id);
-        socket._dmUserId = uid;
-        socket._dmServerId = sid;
+        // Usa serverId come chiave canonica; fallback a userId per utenti anonimi
+        const canonical = String(data.serverId || data.userId || '').slice(0, 60);
+        if (canonical) {
+            global.dmUsers.set(canonical, socket.id);
+            global.dmServerIds.set(canonical, socket.id);
+        }
+        socket._dmUserId = canonical;
+        socket._dmServerId = canonical;
     });
 
     socket.on('dm-send', (data) => {
         if (!data || !data.to || !data.text) return;
+        const fromId = String(data.from || socket._dmUserId || '').slice(0, 60);
         const safe = {
-            from: String(data.from || socket._dmUserId || '').slice(0, 60),
-            fromServerId: socket._dmServerId || '',
-            to: String(data.to || '').slice(0, 60),
-            text: String(data.text).slice(0, 500),
-            ts: Date.now(),
-            fromName: String(data.fromName || '').slice(0, 30)
+            from:     fromId,
+            to:       String(data.to).slice(0, 60),
+            text:     String(data.text).slice(0, 500),
+            ts:       Date.now(),
+            fromName: String(data.fromName || '').slice(0, 30),
+            fromFace: String(data.fromFace || '🎭').slice(0, 4)
         };
-        // Cerca destinatario per userId OR serverId
-        const targetSocketId = global.dmUsers.get(safe.to) || global.dmServerIds.get(safe.to);
+        // Salva messaggio nel DB per recapito offline
+        DB.dm_messages = DB.dm_messages || [];
+        const dmKey = [safe.from, safe.to].sort().join('_');
+        DB.dm_messages.push({ ...safe, key: dmKey });
+        // Tieni solo ultimi 200 msg per coppia
+        const keyCounts = {};
+        DB.dm_messages = DB.dm_messages.filter(m => {
+            keyCounts[m.key] = (keyCounts[m.key] || 0) + 1;
+            return keyCounts[m.key] <= 200;
+        });
+        markDirty();
+
+        // Consegna real-time se destinatario online
+        const targetSocketId = global.dmUsers.get(safe.to);
         if (targetSocketId) {
             io.to(targetSocketId).emit('dm-receive', safe);
         } else {
-            // Destinatario offline: invia push (sia utenti registrati che anonimi)
-            const toUser = DB.users ? DB.users.find(u => u.id === safe.to || u.username === safe.to) : null;
-            const pushId = toUser ? toUser.id : safe.to; // funziona anche per anonimi con sub salvata
-            if (pushId) pushToUser(pushId, { title: `💌 ${safe.fromName || 'Messaggio'}`, body: safe.text.slice(0, 100), url: '/app.html', tag: 'dm-msg' });
+            // Offline: push notification
+            const toUser = DB.users ? DB.users.find(u => u.id === safe.to) : null;
+            if (toUser) pushToUser(toUser.id, {
+                title: `💌 ${safe.fromName || 'Messaggio privato'}`,
+                body: safe.text.slice(0, 100),
+                url: '/app.html',
+                tag: 'dm-msg-' + safe.from
+            });
         }
     });
 
     socket.on('dm-open', (data) => {
-        // Placeholder: in futuro caricare history dal DB
+        // Carica history DB per questa coppia
+        if (!data?.withUserId) return;
+        const myId = socket._dmUserId;
+        if (!myId) return;
+        const dmKey = [myId, String(data.withUserId)].sort().join('_');
+        const msgs = (DB.dm_messages || [])
+            .filter(m => m.key === dmKey)
+            .slice(-50) // ultimi 50
+            .map(m => ({ from: m.from, to: m.to, text: m.text, ts: m.ts, fromName: m.fromName, fromFace: m.fromFace }));
+        socket.emit('dm-history', { withUserId: data.withUserId, msgs });
     });
 
     // ===== STANZE A CODICE (Custom Rooms) =====

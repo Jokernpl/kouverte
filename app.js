@@ -1596,14 +1596,19 @@ function connectSocket(){
   socket.on('connect',()=>{
     setConnState('online');
     if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
-    // Registra utente per DM (con il suo serverId se loggato)
+    // Registra utente per DM — usa sempre serverId come ID canonico
     if (user) {
-      socket.emit('dm-register', { userId: user.id, serverId: user.serverId, username: user.username });
+      const canonicalId = user.serverId || user.id;
+      socket.emit('dm-register', { userId: canonicalId, serverId: canonicalId, username: user.username });
     }
-    // Registra DM listener una volta sola
+    // Registra DM + friend listeners una volta sola
     if (typeof registerDmListener === 'function' && !window._dmListenerRegistered) {
       registerDmListener();
       window._dmListenerRegistered = true;
+    }
+    if (!window._friendListenerRegistered) {
+      registerFriendListeners();
+      window._friendListenerRegistered = true;
     }
     // Registra gift listener una volta sola
     if (!window._giftListenerRegistered) {
@@ -5855,18 +5860,16 @@ function createFriendsModal(){
   div.innerHTML = `
     <div class="modal-box" style="max-width:480px">
       <div class="modal-hdr">
-        <div class="modal-title">👥 Amici & Utenti</div>
+        <div class="modal-title">👥 Amici</div>
         <button class="modal-close" onclick="document.getElementById('friendsModal').classList.remove('show')">✕</button>
       </div>
       <div class="modal-body" style="max-height:65vh;overflow-y:auto">
         <div class="friends-tabs">
-          <button class="friends-tab active" data-tab="friends" onclick="switchFriendsTab('friends')">👥 I miei Amici</button>
-          <button class="friends-tab" data-tab="search" onclick="switchFriendsTab('search')">🔍 Cerca Utenti</button>
+          <button class="friends-tab active" data-tab="friends" onclick="switchFriendsTab('friends')">👥 Amici</button>
+          <button class="friends-tab" data-tab="requests" onclick="switchFriendsTab('requests')">🔔 Richieste<span id="friendsReqBadge" class="friends-req-badge" style="display:none"></span></button>
+          <button class="friends-tab" data-tab="search" onclick="switchFriendsTab('search')">🔍 Cerca</button>
         </div>
-
-        <div id="friendsTabContent">
-          <!-- Tab content -->
-        </div>
+        <div id="friendsTabContent"></div>
       </div>
     </div>
   `;
@@ -5880,11 +5883,9 @@ function switchFriendsTab(tab){
     t.classList.toggle('active', t.dataset.tab === tab);
   });
   const content = document.getElementById('friendsTabContent');
-  if (tab === 'friends') {
-    renderFriendsList(content);
-  } else {
-    renderSearchTab(content);
-  }
+  if (tab === 'friends')   renderFriendsList(content);
+  else if (tab === 'requests') renderFriendRequests(content);
+  else renderSearchTab(content);
 }
 
 function renderFriendsList(container){
@@ -5914,19 +5915,26 @@ function renderFriendsList(container){
       `;
       return;
     }
-    container.innerHTML = friends.map(f => `
+    container.innerHTML = friends.map(f => {
+      const unread = dmUnread[f.id] || 0;
+      const unreadBadge = unread ? `<span class="dm-unread-badge">${unread}</span>` : '';
+      const onlineDot = f.online ? '<span class="friend-online-dot"></span>' : '';
+      return `
       <div class="friend-row">
-        <div class="friend-avatar frame-${f.kvActiveFrame || 'none'}" style="background:${f.kvColor||'#00d4ff'}22">${f.kvFace || '🎭'}</div>
+        <div class="friend-avatar-wrap">
+          <div class="friend-avatar frame-${f.kvActiveFrame || 'none'}" style="background:${f.kvColor||'#00d4ff'}22">${f.kvFace || '🎭'}</div>
+          ${onlineDot}
+        </div>
         <div class="friend-info">
           <div class="friend-name">${esc(f.kvName || f.username)}</div>
-          <div class="friend-username">@${esc(f.username)}</div>
+          <div class="friend-username">@${esc(f.username)} ${f.online ? '<span class="friend-online-label">● online</span>' : ''}</div>
         </div>
         <div class="friend-actions">
-          <button class="friend-btn chat" onclick="openDmChat('${f.id}','${esc(f.username)}','${f.kvFace||''}','${f.kvColor||'#00d4ff'}')">💬</button>
+          <button class="friend-btn chat" id="dm-badge-${f.id}" onclick="openDmChat('${f.id}','${esc(f.username)}','${f.kvFace||''}','${f.kvColor||'#00d4ff'}')">💬${unreadBadge}</button>
           <button class="friend-btn remove" onclick="removeFriend('${f.id}')">✕</button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
   }).catch(e => {
     container.innerHTML = '<div class="friend-empty">❌ Errore caricamento</div>';
   });
@@ -5977,8 +5985,8 @@ function searchUsers(q){
               </div>
               <div class="friend-actions">
                 ${isMe ? '<span style="font-size:10px;color:#9ca3af">Tu</span>' :
-                  isFriend ? '<button class="friend-btn chat" onclick="openDmChat(&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;,&quot;'+(u.kvFace||'')+'&quot;,&quot;'+(u.kvColor||'#00d4ff')+'&quot;)">💬</button>' :
-                  '<button class="friend-btn add" onclick="addFriend(&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;)">➕ Aggiungi</button>'
+                  isFriend ? '<button class="friend-btn chat" onclick="openDmChat(&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;,&quot;'+(u.kvFace||'')+'&quot;,&quot;'+(u.kvColor||'#00d4ff')+'&quot;)">💬 Chat</button>' :
+                  '<button class="friend-btn add" id="addbtn_'+u.id+'" onclick="addFriendBtn(this,&quot;'+u.id+'&quot;,&quot;'+esc(u.username)+'&quot;)">➕ Aggiungi</button>'
                 }
               </div>
             </div>
@@ -5990,26 +5998,99 @@ function searchUsers(q){
   }, 350);
 }
 
+function renderFriendRequests(container){
+  if (!isLoggedIn) {
+    container.innerHTML = `<div class="friend-empty"><div class="friend-empty-icon">🔐</div><div>Devi loggarti</div></div>`;
+    return;
+  }
+  container.innerHTML = '<div style="text-align:center;padding:14px;color:#9ca3af">Caricamento...</div>';
+  fetch('/api/me/friends/requests', { headers: { 'Authorization': 'Bearer ' + authToken } })
+    .then(r => r.json()).then(json => {
+      const reqs = json.requests || [];
+      // Aggiorna badge
+      const badge = document.getElementById('friendsReqBadge');
+      if (badge) { badge.textContent = reqs.length || ''; badge.style.display = reqs.length ? 'flex' : 'none'; }
+      if (reqs.length === 0) {
+        container.innerHTML = `<div class="friend-empty"><div class="friend-empty-icon">✅</div><div>Nessuna richiesta in attesa</div></div>`;
+        return;
+      }
+      container.innerHTML = reqs.map(r => `
+        <div class="friend-row friend-req-row">
+          <div class="friend-avatar-wrap">
+            <div class="friend-avatar" style="background:${r.kvColor||'#00d4ff'}22">${r.kvFace || '🎭'}</div>
+          </div>
+          <div class="friend-info">
+            <div class="friend-name">${esc(r.kvName || r.username)}</div>
+            <div class="friend-username">@${esc(r.username)}</div>
+          </div>
+          <div class="friend-actions">
+            <button class="friend-btn accept" onclick="acceptFriendRequest('${r.from}','${esc(r.username)}')">✓ Accetta</button>
+            <button class="friend-btn reject" onclick="rejectFriendRequest('${r.from}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }).catch(() => {
+      container.innerHTML = '<div class="friend-empty">❌ Errore caricamento</div>';
+    });
+}
+
+async function acceptFriendRequest(fromId, username){
+  try {
+    const res = await fetch('/api/me/friends/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ fromId })
+    });
+    if (res.ok) {
+      showToast(`✅ Ora sei amico di ${username}!`);
+      renderFriendRequests(document.getElementById('friendsTabContent'));
+    }
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+async function rejectFriendRequest(fromId){
+  try {
+    await fetch('/api/me/friends/reject', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
+      body: JSON.stringify({ fromId })
+    });
+    renderFriendRequests(document.getElementById('friendsTabContent'));
+  } catch(e) { /* silent */ }
+}
+
+// Wrapper con feedback visivo sul bottone (versione search results)
+async function addFriendBtn(btn, friendId, username){
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  await addFriend(friendId, username);
+  btn.textContent = '📩 Inviata';
+  btn.className = 'friend-btn sent';
+}
+
 async function addFriend(friendId, username){
   if (!isLoggedIn) {
     showToast('🔐 Devi loggarti per aggiungere amici');
     return;
   }
   try {
-    const res = await fetch('/api/me/friends/add', {
+    const res = await fetch('/api/me/friends/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken },
       body: JSON.stringify({ friendId })
     });
     const json = await res.json();
     if (res.ok) {
-      showToast('✅ ' + username + ' aggiunto agli amici!');
-      // Aggiorna friendsList localmente
-      const q = document.getElementById('friendsSearchInput')?.value;
-      if (q) searchUsers(q);
-      // Refetch friends
+      if (json.status === 'already_friends') { showToast('👥 Siete già amici!'); return; }
+      if (json.status === 'already_sent')    { showToast('⏳ Richiesta già inviata'); return; }
+      if (json.status === 'auto_accepted')   { showToast('✅ ' + username + ' ti aveva già aggiunto — ora siete amici!'); }
+      else                                   { showToast('📩 Richiesta inviata a ' + username); }
+      // Refetch lista amici
       fetch('/api/me/friends', { headers: { 'Authorization': 'Bearer ' + authToken } })
         .then(r => r.json()).then(d => { friendsList = d.friends || []; });
+      // Aggiorna risultati ricerca
+      const q = document.getElementById('friendsSearchInput')?.value;
+      if (q) searchUsers(q);
     } else {
       showToast('❌ ' + (json.error || 'Errore'));
     }
@@ -6035,9 +6116,43 @@ async function removeFriend(friendId){
   }
 }
 
+// Listener real-time per eventi amicizia via socket
+function registerFriendListeners(){
+  if (!socket) return;
+  // Richiesta di amicizia in arrivo
+  socket.on('friend-request', (data) => {
+    // Aggiorna badge tab Richieste
+    const badge = document.getElementById('friendsReqBadge');
+    if (badge) {
+      const cur = parseInt(badge.textContent || '0') + 1;
+      badge.textContent = cur;
+      badge.style.display = 'flex';
+    }
+    // Toast interattivo
+    showToast(`👋 ${data.kvName || data.username} vuole essere tuo amico`);
+    // Se modal aperto sulla tab richieste, ricarica
+    const activeTab = document.querySelector('.friends-tab.active');
+    if (activeTab?.dataset?.tab === 'requests') {
+      renderFriendRequests(document.getElementById('friendsTabContent'));
+    }
+  });
+  // Richiesta accettata dall'altro utente
+  socket.on('friend-accepted', (data) => {
+    showToast(`🎉 ${data.kvName || data.username} ha accettato la tua richiesta!`);
+    // Aggiorna lista amici
+    fetch('/api/me/friends', { headers: { 'Authorization': 'Bearer ' + authToken } })
+      .then(r => r.json()).then(d => { friendsList = d.friends || []; });
+    // Se il modal amici è aperto, ricarica
+    const activeTab = document.querySelector('.friends-tab.active');
+    if (activeTab?.dataset?.tab === 'friends') {
+      renderFriendsList(document.getElementById('friendsTabContent'));
+    }
+  });
+}
+
 // DM Chat 1:1 via socket.io
 function openDmChat(friendId, friendUsername, friendFace, friendColor){
-  document.getElementById('friendsModal').classList.remove('show');
+  document.getElementById('friendsModal')?.classList.remove('show');
   const modal = document.getElementById('dmModal') || createDmModal();
   document.getElementById('dmTitle').textContent = '💬 ' + friendUsername;
   document.getElementById('dmTargetId').value = friendId;
@@ -6045,12 +6160,27 @@ function openDmChat(friendId, friendUsername, friendFace, friendColor){
   document.getElementById('dmTargetFace').value = friendFace || '🎭';
   document.getElementById('dmTargetColor').value = friendColor || '#00d4ff';
 
-  // Carica history locale
+  // Azzera badge non letti
+  if (dmUnread[friendId]) {
+    dmUnread[friendId] = 0;
+    updateDmBadge(friendId, 0);
+  }
+
+  // Mostra history locale (in attesa di quella dal server)
+  const myId = user.serverId || user.id;
   const history = dmHistory[friendId] || [];
   const msgsContainer = document.getElementById('dmMessages');
-  msgsContainer.innerHTML = history.map(m => `<div class="dm-msg ${m.out?'out':'in'}">${esc(m.text)}</div>`).join('') ||
-    '<div style="text-align:center;color:#9ca3af;padding:20px;font-size:12px">Inizia la conversazione!</div>';
+  if (history.length > 0) {
+    msgsContainer.innerHTML = '';
+    history.forEach(m => appendDmBubble(msgsContainer, m.text, m.out, m.out ? null : m.fromName, m.ts));
+  } else {
+    msgsContainer.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:20px;font-size:12px">Inizia la conversazione!</div>';
+  }
   modal.classList.add('show');
+
+  // Richiedi history dal server (sovrascrive quella locale se più completa)
+  if (socket && socket.connected) socket.emit('dm-open', { withUserId: friendId });
+
   setTimeout(() => {
     msgsContainer.scrollTop = msgsContainer.scrollHeight;
     document.getElementById('dmInput').focus();
@@ -6102,36 +6232,82 @@ function sendDm(){
     return;
   }
 
-  const msg = { from: user.id, to: targetId, text, ts: Date.now() };
+  const myId = user.serverId || user.id;
+  const msg = { from: myId, to: targetId, text, ts: Date.now(), fromName: user.name || user.username || 'Anonimo', fromFace: user.face || '🎭' };
   socket.emit('dm-send', msg);
 
   // Append local
   dmHistory[targetId] = dmHistory[targetId] || [];
   dmHistory[targetId].push({ text, out: true, ts: msg.ts });
   const c = document.getElementById('dmMessages');
-  c.insertAdjacentHTML('beforeend', `<div class="dm-msg out">${esc(text)}</div>`);
+  appendDmBubble(c, text, true, null, msg.ts);
   c.scrollTop = c.scrollHeight;
   input.value = '';
 }
 
-// Listener socket per DM ricevuti (registrato dopo connectSocket)
+// Crea una bubble DM con nome e timestamp
+function appendDmBubble(container, text, isOut, fromName, ts){
+  const time = ts ? new Date(ts).toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit' }) : '';
+  const nameHtml = !isOut && fromName ? `<div class="dm-msg-name">${esc(fromName)}</div>` : '';
+  container.insertAdjacentHTML('beforeend',
+    `<div class="dm-msg ${isOut ? 'out' : 'in'}">${nameHtml}<div class="dm-msg-text">${esc(text)}</div><div class="dm-msg-ts">${time}</div></div>`
+  );
+}
+
+// Listener socket per DM ricevuti + history (registrato dopo connectSocket)
 function registerDmListener(){
   if (!socket) return;
+
   socket.on('dm-receive', (data) => {
     const fromId = data.from;
     dmHistory[fromId] = dmHistory[fromId] || [];
-    dmHistory[fromId].push({ text: data.text, out: false, ts: data.ts });
-    // Se il DM modal è aperto e su questo utente, mostra
+    dmHistory[fromId].push({ text: data.text, out: false, ts: data.ts, fromName: data.fromName });
+    // Se DM modal aperto su questo utente, mostra in tempo reale
     const dmModal = document.getElementById('dmModal');
     const currTargetId = document.getElementById('dmTargetId')?.value;
     if (dmModal && dmModal.classList.contains('show') && currTargetId === fromId) {
       const c = document.getElementById('dmMessages');
-      c.insertAdjacentHTML('beforeend', `<div class="dm-msg in">${esc(data.text)}</div>`);
+      appendDmBubble(c, data.text, false, data.fromName, data.ts);
       c.scrollTop = c.scrollHeight;
     } else {
-      showToast('💬 Nuovo messaggio da ' + (data.fromName || 'amico'));
+      // Badge notifica + toast
+      updateDmBadge(fromId, 1);
+      showToast(`💬 ${data.fromName || 'amico'}: ${data.text.slice(0,40)}`);
     }
   });
+
+  socket.on('dm-history', (data) => {
+    // Popola la finestra DM con history dal server
+    const dmModal = document.getElementById('dmModal');
+    const currTargetId = document.getElementById('dmTargetId')?.value;
+    if (!dmModal || !dmModal.classList.contains('show') || currTargetId !== data.withUserId) return;
+    const c = document.getElementById('dmMessages');
+    const myId = user.serverId || user.id;
+    if (data.msgs && data.msgs.length > 0) {
+      c.innerHTML = '';
+      data.msgs.forEach(m => {
+        const isOut = m.from === myId;
+        appendDmBubble(c, m.text, isOut, isOut ? null : m.fromName, m.ts);
+      });
+      c.scrollTop = c.scrollHeight;
+    }
+  });
+}
+
+// Badge contatore messaggi non letti per ogni amico
+var dmUnread = {};
+function updateDmBadge(fromId, delta){
+  dmUnread[fromId] = (dmUnread[fromId] || 0) + delta;
+  // Aggiorna badge nella lista amici se il modal è aperto
+  const badge = document.getElementById('dm-badge-' + fromId);
+  if (badge) {
+    badge.textContent = dmUnread[fromId] || '';
+    badge.style.display = dmUnread[fromId] ? 'flex' : 'none';
+  }
+  // Badge totale sul tab
+  const total = Object.values(dmUnread).reduce((a,b)=>a+b,0);
+  const tabBadge = document.getElementById('friendsTabDmBadge');
+  if (tabBadge) { tabBadge.textContent = total || ''; tabBadge.style.display = total ? 'flex' : 'none'; }
 }
 
 // ══════════════════════════════════════════
