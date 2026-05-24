@@ -562,16 +562,31 @@ let DB = loadDB();
     } catch(e) { console.error('Seed cleanup failed:', e.message); }
 })();
 
-// Crea account bob2015 (moderatore con accesso illimitato) se non esiste
+// Crea/aggiorna account bob2015 (admin con accesso illimitato)
 const ALL_FRAMES = ['none','silver','purple','emerald','ruby','gold','flame','diamond','neon','galaxy','rainbow','royal','skull','ivory'];
+const BOB_EMAIL    = 'bob2015.gc@gmail.com';
+const BOB_USERNAME = 'bob2015';
+const BOB_PASSWORD = 'Nirone90';
 (async () => {
-    const existing = DB.users.find(u => u.username === 'bob2015');
-    if (!existing) {
-        const ph = await bcrypt.hash('Nirone90', 10);
+    // Cerca per username O per vecchia email locale
+    let bob = DB.users.find(u => u.username === BOB_USERNAME)
+           || DB.users.find(u => u.email === 'bob2015@kouverte.local');
+
+    const ph = await bcrypt.hash(BOB_PASSWORD, 10);
+
+    DB.user_frames   = DB.user_frames   || {};
+    DB.user_premium  = DB.user_premium  || {};
+    DB.user_credits  = DB.user_credits  || [];
+
+    if (!bob) {
         const uid = genId('u');
-        DB.users.push({
-            id: uid, email: 'bob2015@kouverte.local', username: 'bob2015',
-            password_hash: ph, is_admin: true, is_moderator: true,
+        bob = {
+            id: uid,
+            email: BOB_EMAIL,
+            username: BOB_USERNAME,
+            password_hash: ph,
+            is_admin: true,
+            is_moderator: true,
             profile: { avatar_letter: 'B', bio: '', clips: [
                 { slot:0, title:'Chi sono', audio_id:null, duration:0 },
                 { slot:1, title:'Mi piace', audio_id:null, duration:0 },
@@ -579,26 +594,34 @@ const ALL_FRAMES = ['none','silver','purple','emerald','ruby','gold','flame','di
             ]},
             stats: { stories_count:0, matches_count:0, likes_received:0, duels_participated:0 },
             created_at: now(), updated_at: now()
-        });
-        DB.user_frames = DB.user_frames || {};
-        DB.user_frames[uid] = [...ALL_FRAMES];
-        DB.user_premium = DB.user_premium || {};
-        DB.user_premium[uid] = { expires_at: Date.now() + 100*365*24*60*60*1000, activatedAt: Date.now() };
-        DB.user_credits = DB.user_credits || [];
-        DB.user_credits.push({ user_id: uid, credits: 999999, updated_at: now() });
-        saveDB(DB);
-        console.log('[ADMIN] Account bob2015 creato con accesso illimitato');
+        };
+        DB.users.push(bob);
+        console.log('[ADMIN] Account bob2015 creato');
     } else {
-        // Aggiorna se già esiste
-        existing.is_admin = true;
-        existing.is_moderator = true;
-        DB.user_frames = DB.user_frames || {};
-        DB.user_frames[existing.id] = [...ALL_FRAMES];
-        DB.user_premium = DB.user_premium || {};
-        DB.user_premium[existing.id] = { expires_at: Date.now() + 100*365*24*60*60*1000, activatedAt: Date.now() };
-        markDirty();
-        console.log('[ADMIN] Account bob2015 aggiornato con accesso illimitato');
+        // Aggiorna sempre tutti i campi critici
+        bob.email         = BOB_EMAIL;
+        bob.username      = BOB_USERNAME;
+        bob.password_hash = ph;
+        bob.is_admin      = true;
+        bob.is_moderator  = true;
+        bob.updated_at    = now();
+        console.log('[ADMIN] Account bob2015 aggiornato');
     }
+
+    const uid = bob.id;
+
+    // Tutte le cornici
+    DB.user_frames[uid] = [...ALL_FRAMES];
+
+    // Premium 100 anni
+    DB.user_premium[uid] = { expires_at: Date.now() + 100*365*24*60*60*1000, activatedAt: Date.now() };
+
+    // Credits: rimuovi vecchi e metti 999999
+    DB.user_credits = DB.user_credits.filter(c => c.user_id !== uid);
+    DB.user_credits.push({ user_id: uid, credits: 999999, updated_at: now() });
+
+    saveDB(DB);
+    console.log(`[ADMIN] bob2015 → email:${BOB_EMAIL} frames:${ALL_FRAMES.length} credits:999999 premium:100y`);
 })();
 
 // Salva periodicamente solo se dirty
