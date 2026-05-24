@@ -2482,6 +2482,29 @@ html[data-theme="light"] body {
 @keyframes scopa-trophy{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0deg)}}
 @keyframes sc-dot-pulse{0%,100%{opacity:.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
 
+/* ════════════════════════════════════════
+   🎮 GAME CARD — sezione Giochi in home
+════════════════════════════════════════ */
+.sec-label-games{margin-top:20px;color:#00ff88;letter-spacing:2px}
+.games-grid{padding:0 12px 0;display:flex;flex-direction:column;gap:10px}
+.game-card{border-radius:16px;overflow:hidden;background:#0e1c12;border:1px solid rgba(0,255,136,0.18);position:relative;cursor:pointer;transition:transform .2s,box-shadow .2s;user-select:none;-webkit-tap-highlight-color:transparent}
+.game-card:active{transform:scale(0.98)}
+.game-card:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,255,136,0.2)}
+.gc-glow{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,255,136,0.08),transparent 70%);pointer-events:none;z-index:1}
+.gc-img{height:130px;position:relative;background-size:cover;background-position:center}
+.gc-img-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,28,18,0.1) 0%,rgba(14,28,18,0.85) 100%)}
+.gc-badge{position:absolute;top:10px;left:10px;background:rgba(0,255,136,0.9);color:#000;font-size:10px;font-weight:900;letter-spacing:1.5px;padding:4px 10px;border-radius:20px;z-index:2}
+.gc-body{padding:12px 14px 14px;position:relative;z-index:2}
+.gc-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.gc-emoji{font-size:28px;flex-shrink:0;line-height:1;filter:drop-shadow(0 0 8px rgba(0,255,136,0.5))}
+.gc-name{font-size:18px;font-weight:900;color:#00ff88;letter-spacing:1px;line-height:1.1;text-shadow:0 0 14px rgba(0,255,136,0.35)}
+.gc-desc{font-size:12px;color:rgba(255,255,255,0.45);margin-top:3px;line-height:1.4}
+.gc-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.gc-waiting{font-size:11px;color:rgba(0,255,136,0.5);font-weight:600;letter-spacing:.5px}
+.gc-waiting-empty{color:rgba(255,255,255,0.2)}
+.gc-play-btn{background:linear-gradient(135deg,#00ff88,#00cc66);color:#000;border:none;border-radius:10px;padding:8px 20px;font-size:13px;font-weight:900;letter-spacing:.5px;cursor:pointer;box-shadow:0 0 14px rgba(0,255,136,0.35);transition:transform .15s,box-shadow .15s;pointer-events:none}
+.game-card:hover .gc-play-btn{box-shadow:0 0 22px rgba(0,255,136,0.55)}
+
 /* ── Lobby: tavoli attivi ── */
 .sc-lobby-wrap{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px}
 .sc-lobby-hdr{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:rgba(0,255,136,0.6);letter-spacing:1px;text-transform:uppercase;padding:0 2px}

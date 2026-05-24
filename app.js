@@ -4506,7 +4506,14 @@ function startLiveStats(){
 }
 
 function renderRooms(){
-  document.getElementById('roomsList').innerHTML = ROOMS.map(roomCard).join('');
+  const chatRooms  = ROOMS.filter(r => r.tier !== 'scopa');
+  const gameRooms  = ROOMS.filter(r => r.tier === 'scopa');
+  const gamesSection = gameRooms.length ? `
+    <div class="sec-label sec-label-games">🎮 Giochi</div>
+    <div class="games-grid">${gameRooms.map(gameCard).join('')}</div>
+  ` : '';
+  document.getElementById('roomsList').innerHTML =
+    gamesSection + chatRooms.map(roomCard).join('');
 }
 
 // ── Age Gate 18+ ──────────────────────────────────────────────────────────────
@@ -4534,6 +4541,32 @@ function tempBadge(cnt){
   if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#00e5b8,#00d4ff);color:#0f1117"><span>✨</span><span>ATTIVA</span></div>`;
   if(cnt>=1)  return `<div class="rc-flag-pill"><span>💬</span><span>LIVE</span></div>`;
   return `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>😴</span><span>SILENZIOSA</span></div>`;
+}
+
+function gameCard(r){
+  const cnt = roomOnline[r.id]??0;
+  const waiting = cnt > 0 ? `<span class="gc-waiting">${cnt} in sala</span>` : `<span class="gc-waiting gc-waiting-empty">Nessuno ora</span>`;
+  return `
+  <div class="game-card" onclick="enterRoom('${r.id}')" style="--gc-color:${r.color}">
+    <div class="gc-glow"></div>
+    <div class="gc-img" style="background-image:url('${r.img||''}')">
+      <div class="gc-img-overlay"></div>
+      <div class="gc-badge">🎮 GIOCO</div>
+    </div>
+    <div class="gc-body">
+      <div class="gc-top">
+        <span class="gc-emoji">${r.emoji}</span>
+        <div>
+          <div class="gc-name">${esc(r.name)}</div>
+          <div class="gc-desc">${esc(r.desc)}</div>
+        </div>
+      </div>
+      <div class="gc-foot">
+        ${waiting}
+        <button class="gc-play-btn">▶ Gioca</button>
+      </div>
+    </div>
+  </div>`;
 }
 
 function roomCard(r){
