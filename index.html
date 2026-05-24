@@ -260,6 +260,81 @@ nav{
   padding:4px 12px;border-radius:999px
 }
 
+/* ── VIDEO PREVIEW SECTION ── */
+.video-showcase{
+  position:relative;z-index:2;padding:60px 24px 72px;
+  max-width:1080px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:64px
+}
+@media(max-width:860px){.video-showcase{grid-template-columns:1fr;text-align:center;gap:40px}}
+.video-showcase-copy{order:1}
+@media(max-width:860px){.video-showcase-copy{order:2}}
+.video-showcase-copy .section-eyebrow{margin-bottom:14px}
+.video-showcase-copy h2{font-size:clamp(26px,4vw,42px);font-weight:900;letter-spacing:-1.5px;line-height:1.1;margin-bottom:16px}
+.video-showcase-copy p{font-size:14px;color:rgba(255,255,255,.42);line-height:1.8;margin-bottom:28px;max-width:420px}
+@media(max-width:860px){.video-showcase-copy p{margin-left:auto;margin-right:auto}}
+.video-features-list{display:flex;flex-direction:column;gap:10px;margin-bottom:32px}
+.vf-item{display:flex;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.65)}
+.vf-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);flex-shrink:0}
+.video-showcase-phone{order:2;display:flex;justify-content:center;align-items:center;position:relative}
+@media(max-width:860px){.video-showcase-phone{order:1}}
+/* Glow blob dietro il telefono */
+.video-showcase-phone::before{
+  content:'';position:absolute;width:280px;height:380px;
+  background:radial-gradient(ellipse,rgba(0,212,255,.18) 0%,transparent 70%);
+  border-radius:50%;pointer-events:none;z-index:0
+}
+/* Cornice telefono CSS puro */
+.phone-frame{
+  width:220px;height:440px;border-radius:38px;
+  border:6px solid rgba(255,255,255,.14);
+  background:#07090f;overflow:hidden;
+  position:relative;z-index:1;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.7),0 0 50px rgba(0,212,255,.08);
+  cursor:pointer
+}
+/* Notch */
+.phone-frame::before{
+  content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:72px;height:18px;background:#07090f;
+  border-radius:0 0 14px 14px;z-index:10
+}
+.phone-frame video{width:100%;height:100%;object-fit:cover;display:block}
+/* Overlay play (nascosto mentre il video è in play) */
+.phone-play-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.25);z-index:5;transition:opacity .3s;border-radius:32px
+}
+.phone-play-overlay.hidden{opacity:0;pointer-events:none}
+.phone-play-btn{
+  width:54px;height:54px;border-radius:50%;
+  background:rgba(0,212,255,.9);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 10px rgba(0,212,255,.15),0 0 40px rgba(0,212,255,.3);
+  transition:transform .2s
+}
+.phone-play-btn:hover{transform:scale(1.08)}
+.phone-play-btn svg{width:20px;height:20px;fill:#0f1117;margin-left:3px}
+/* Fullscreen video lightbox */
+.vid-lightbox{
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,.92);backdrop-filter:blur(16px);
+  align-items:center;justify-content:center
+}
+.vid-lightbox.open{display:flex}
+.vid-lightbox video{
+  max-width:min(90vw,720px);max-height:90vh;
+  border-radius:16px;box-shadow:0 0 80px rgba(0,0,0,.8);outline:none
+}
+.vid-lightbox-close{
+  position:absolute;top:20px;right:20px;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);
+  color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .2s
+}
+.vid-lightbox-close:hover{background:rgba(255,255,255,.2)}
+
 /* ── BENTO FEATURES ── */
 .bento-section{
   position:relative;z-index:2;
@@ -569,6 +644,76 @@ footer{
     <span class="ss-label">Messaggi oggi</span>
   </div>
 </div>
+
+<!-- VIDEO PREVIEW -->
+<section class="video-showcase" id="preview">
+  <div class="video-showcase-copy">
+    <div class="section-eyebrow">Vedi come funziona</div>
+    <h2>Chat anonima.<br>Video HD.<br>Istantanea.</h2>
+    <p>Nessun account, nessun dato personale. Scegli una stanza, scrivi o attiva la webcam. In meno di 5 secondi sei già dentro.</p>
+    <div class="video-features-list">
+      <div class="vf-item"><div class="vf-dot"></div>Stanze per città italiane — Napoli, Roma, Milano…</div>
+      <div class="vf-item"><div class="vf-dot" style="background:var(--rose)"></div>Video HD via WebRTC — nessun plugin necessario</div>
+      <div class="vf-item"><div class="vf-dot" style="background:var(--mint)"></div>Messaggi vocali hold-to-record, regali virtuali, profili</div>
+      <div class="vf-item"><div class="vf-dot" style="background:#f97316"></div>100% gratuito e anonimo — per sempre</div>
+    </div>
+    <a href="/app.html" class="btn-hero btn-hero-primary" style="text-decoration:none">
+      Entra ora — è gratis
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+
+  <div class="video-showcase-phone">
+    <div class="phone-frame" id="phoneFrame" onclick="openVideoLightbox()">
+      <video id="phoneVideo" autoplay muted loop playsinline preload="metadata"
+             src="/kouverte-reel-720.mp4"
+             poster=""
+             style="width:100%;height:100%;object-fit:cover;display:block">
+      </video>
+      <div class="phone-play-overlay" id="phonePlayOverlay">
+        <button class="phone-play-btn" aria-label="Guarda il video a schermo intero">
+          <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO LIGHTBOX -->
+<div class="vid-lightbox" id="vidLightbox" onclick="if(event.target===this)closeVideoLightbox()">
+  <button class="vid-lightbox-close" onclick="closeVideoLightbox()">✕</button>
+  <video id="lightboxVideo" src="/kouverte-reel-720.mp4" controls playsinline preload="none"></video>
+</div>
+
+<script>
+// Nascondi overlay play quando il video parte
+(function(){
+  const v = document.getElementById('phoneVideo');
+  const o = document.getElementById('phonePlayOverlay');
+  if (!v || !o) return;
+  v.addEventListener('playing', () => o.classList.add('hidden'));
+  v.addEventListener('pause',   () => o.classList.remove('hidden'));
+  // Su mobile autoplay spesso bloccato — mostra overlay
+  v.addEventListener('canplay', () => { if (!v.paused) o.classList.add('hidden'); });
+  v.play().catch(() => o.classList.remove('hidden'));
+})();
+
+function openVideoLightbox(){
+  const lb = document.getElementById('vidLightbox');
+  const lv = document.getElementById('lightboxVideo');
+  lb.classList.add('open');
+  if (lv) { lv.currentTime = 0; lv.play().catch(()=>{}); }
+  document.body.style.overflow = 'hidden';
+}
+function closeVideoLightbox(){
+  const lb = document.getElementById('vidLightbox');
+  const lv = document.getElementById('lightboxVideo');
+  lb.classList.remove('open');
+  if (lv) lv.pause();
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeVideoLightbox(); });
+</script>
 
 <!-- BENTO FEATURES -->
 <section class="bento-section" id="features">

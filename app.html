@@ -611,6 +611,17 @@ body{position:relative}
   background:#00d4ff;color:#0f1117;font-size:16px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform .15s;align-self:flex-end}
+/* ── App Video Lightbox ── */
+#appVidLightbox{display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.93);backdrop-filter:blur(20px);
+  align-items:center;justify-content:center;flex-direction:column;gap:16px}
+#appVidLightbox.open{display:flex}
+#appVidLightbox video{max-width:min(92vw,720px);max-height:82vh;
+  border-radius:14px;box-shadow:0 0 60px rgba(0,0,0,.8);outline:none}
+.avl-close{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.1);
+  border:1px solid rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background .2s;position:absolute;top:20px;right:20px}
+.avl-close:hover{background:rgba(255,255,255,.2)}
 /* ── Voice Message Button ── */
 .cvoice{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:rgba(0,212,255,.12);color:#00d4ff;font-size:18px;
@@ -2383,6 +2394,24 @@ html[data-theme="light"] body {
   </div><!-- /prof-tilt-scene -->
 
   <!-- Rank / Level bar -->
+  <!-- Video preview card (visibile solo ai nuovi utenti con pochi messaggi) -->
+  <div id="profVideoCard" style="display:none;margin:14px 16px 0;border-radius:18px;overflow:hidden;position:relative;cursor:pointer;background:#07090f;border:1px solid rgba(0,212,255,.15)" onclick="openAppVideoLightbox()">
+    <video id="profVideoThumb" src="/kouverte-reel-720.mp4" muted loop playsinline preload="metadata"
+           style="width:100%;height:160px;object-fit:cover;display:block;pointer-events:none"></video>
+    <div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.75) 100%);display:flex;flex-direction:column;justify-content:flex-end;padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:50%;background:rgba(0,212,255,.9);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 16px rgba(0,212,255,.4)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#0f1117"><path d="M5 3l14 9-14 9V3z"/></svg>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#fff">Scopri Kouverte</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:1px">Guarda com'è la chat — 30 secondi</div>
+        </div>
+        <div style="margin-left:auto;font-size:10px;font-weight:700;color:#00d4ff;background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.2);padding:3px 8px;border-radius:8px">ANTEPRIMA</div>
+      </div>
+    </div>
+  </div>
+
   <div class="rank-wrap">
     <div class="rank-row">
       <div class="rank-icon" id="rankIcon">🥚</div>
@@ -10106,6 +10135,9 @@ function triggerProfileAnimations() {
     avatar.classList.toggle('glow-default', !hasFrame);
   }
 
+  // Video preview card per nuovi utenti
+  syncProfVideoCard?.();
+
   // Particles (se non già avviate)
   if (!_particlesRaf) {
     const canvas = document.getElementById('bannerParticles');
@@ -10199,6 +10231,47 @@ if ('serviceWorker' in navigator) {
       window.location.href = event.data.url;
     }
   });
+}
+</script>
+
+<!-- App video lightbox -->
+<div id="appVidLightbox" onclick="if(event.target===this||event.target.closest('#appVidLightbox')===this)closeAppVideoLightbox()">
+  <button class="avl-close" onclick="closeAppVideoLightbox()">✕</button>
+  <video id="appLightboxVid" src="/kouverte-reel-720.mp4" controls playsinline preload="none"
+         style="max-width:min(92vw,720px);max-height:82vh;border-radius:14px"></video>
+</div>
+
+<script>
+function openAppVideoLightbox(){
+  const lb = document.getElementById('appVidLightbox');
+  const v  = document.getElementById('appLightboxVid');
+  lb.classList.add('open');
+  if (v) { v.currentTime = 0; v.play().catch(()=>{}); }
+  document.body.style.overflow = 'hidden';
+}
+function closeAppVideoLightbox(){
+  const lb = document.getElementById('appVidLightbox');
+  const v  = document.getElementById('appLightboxVid');
+  lb.classList.remove('open');
+  if (v) v.pause();
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppVideoLightbox(); });
+
+// Mostra/nascondi card video profilo in base all'esperienza utente
+function syncProfVideoCard(){
+  const card = document.getElementById('profVideoCard');
+  if (!card) return;
+  const msgCount = (typeof user !== 'undefined' && user) ? (user.msgCount || 0) : 0;
+  const dismissed = localStorage.getItem('kv_prof_video_dismissed');
+  // Mostra ai nuovi utenti (meno di 10 messaggi) che non hanno dismissato
+  const show = !dismissed && msgCount < 10;
+  card.style.display = show ? 'block' : 'none';
+  if (show) {
+    // Avvia anteprima video silenziosa
+    const v = document.getElementById('profVideoThumb');
+    if (v) v.play().catch(()=>{});
+  }
 }
 </script>
 </body>
