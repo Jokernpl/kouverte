@@ -164,6 +164,17 @@ app.use((req, res, next) => {
     }
     next();
 });
+// Cache lunga per asset statici (CSS/JS/immagini) — immutabili tra deploy
+app.use((req, res, next) => {
+    const url = req.url.split('?')[0];
+    if (/\.(css|js)$/.test(url) && !url.includes('socket.io')) {
+        // 7 giorni — si invalida automaticamente al prossimo deploy (Render cambia hash)
+        res.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+    } else if (/\.(png|jpg|jpeg|webp|svg|ico|woff2|mp4)$/.test(url)) {
+        res.set('Cache-Control', 'public, max-age=2592000'); // 30 giorni
+    }
+    next();
+});
 app.use(express.static(__dirname, {
     dotfiles: 'deny',
     index: ['index.html'],
@@ -637,6 +648,58 @@ app.get('/api/leaderboard/weekly', (req, res) => {
         .filter(x => x.user);
 
     res.json({ ok: true, period: 'week', topChampions, topBoosters });
+});
+
+// ============ LEADERBOARD CHAT (messaggi settimanali) ============
+
+// Calcola timestamp del lunedì corrente alle 00:00 UTC
+function currentWeekStart() {
+    const d = new Date();
+    const day = d.getUTCDay(); // 0=dom, 1=lun, ...
+    const diffToMon = (day === 0 ? -6 : 1 - day);
+    const mon = new Date(d);
+    mon.setUTCDate(d.getUTCDate() + diffToMon);
+    mon.setUTCHours(0, 0, 0, 0);
+    return mon.getTime();
+}
+
+function getWeeklyStats() {
+    const weekStart = currentWeekStart();
+    DB.weekly_chat = DB.weekly_chat || { weekStart: 0, users: {} };
+    // Nuovo lunedì → azzera classifica
+    if (DB.weekly_chat.weekStart < weekStart) {
+        DB.weekly_chat = { weekStart, users: {} };
+        markDirty();
+    }
+    return DB.weekly_chat;
+}
+
+// Incrementa contatore messaggi settimanali per un utente
+function trackWeeklyMsg(userId, name, face, color) {
+    if (!userId) return;
+    const stats = getWeeklyStats();
+    if (!stats.users[userId]) {
+        stats.users[userId] = { name: name || 'Anonimo', face: face || '🎭', color: color || '#00d4ff', msgs: 0, updatedAt: Date.now() };
+    }
+    const u = stats.users[userId];
+    u.msgs++;
+    u.name = name || u.name;          // aggiorna nome se cambiato
+    u.face = face || u.face;
+    u.color = color || u.color;
+    u.updatedAt = Date.now();
+    markDirty();
+}
+
+// Endpoint: top 10 per messaggi nell'ultima settimana
+app.get('/api/leaderboard/chat', (req, res) => {
+    const stats = getWeeklyStats();
+    const top = Object.entries(stats.users)
+        .map(([id, u]) => ({ id, name: u.name, face: u.face, color: u.color, msgs: u.msgs }))
+        .filter(u => u.msgs > 0)
+        .sort((a, b) => b.msgs - a.msgs)
+        .slice(0, 25);
+    const resetDate = new Date(stats.weekStart + 7 * 24 * 60 * 60 * 1000).toISOString();
+    res.json({ ok: true, weekStart: stats.weekStart, resetDate, top });
 });
 
 // ============ BATTLE EVENTS (calendario ricorrente) ============
@@ -3846,6 +3909,8 @@ io.on('connection', (socket) => {
         if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
         // Broadcast a tutti nella stanza TRANNE chi ha inviato (il mittente si gestisce lato client)
         socket.to('chat-' + roomId).emit('chat-message', { roomId, msg: clean });
+        // Traccia per leaderboard settimanale
+        trackWeeklyMsg(clean.userId, clean.name, clean.face, clean.color);
     });
 
     // Messaggio vocale: trasmette audio base64 a tutti nella stanza
