@@ -137,50 +137,111 @@ body{position:relative}
 #home{background:#0f1117;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
 
 /* Home header con logo */
+/* ══════════════════════════════════════
+   HEADER UNIFICATO (home, profilo, chat)
+   ══════════════════════════════════════ */
 .home-hdr{
-  padding:10px 14px 8px;
-  background:rgba(8,11,20,.95);
-  border-bottom:1px solid rgba(255,255,255,.06);
-  position:sticky;top:0;z-index:20;backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px)
+  padding:12px 16px 10px;
+  background:rgba(8,11,20,.97);
+  border-bottom:1px solid rgba(255,255,255,.05);
+  position:sticky;top:0;z-index:20;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)
 }
-/* Row inside header: hamburger | logo | right-actions */
-.home-hdr-row{display:flex;align-items:center;gap:8px}
-.home-logo-row{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
-.home-mascot{width:32px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,212,255,.1);border-radius:10px;border:1px solid rgba(0,212,255,.2)}
-.home-mascot svg{width:18px;height:18px;display:none}
-.home-mascot::after{content:'K';font-size:15px;font-weight:900;color:#00d4ff;letter-spacing:-0.5px}
-.home-title{font-size:17px;font-weight:800;letter-spacing:1.5px;color:#fff;white-space:nowrap}
-.home-title span{color:#00d4ff}
-.home-sub{font-size:10px;color:#6e747d;font-weight:500;letter-spacing:0;margin-top:1px;white-space:nowrap}
-/* Header icon buttons (hamburger, search, bell) */
+.home-hdr-row{display:flex;align-items:center;gap:10px}
+/* App title */
+.hdr-app-title{
+  flex:1;font-size:22px;font-weight:700;color:#fff;
+  letter-spacing:-.3px;white-space:nowrap
+}
+/* Plain icon buttons — no box, just the icon */
+.hdr-plain-btn{
+  width:36px;height:36px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:none;border:none;cursor:pointer;
+  color:#9ca3af;transition:color .15s;position:relative;
+  border-radius:8px
+}
+.hdr-plain-btn:active{color:#00d4ff}
+/* Keep hdr-icon-btn for backwards compat (profile header) */
 .hdr-icon-btn{
-  width:34px;height:34px;flex-shrink:0;
+  width:36px;height:36px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
   border-radius:10px;cursor:pointer;color:#b4bcc8;transition:background .15s,color .15s;
   position:relative
 }
 .hdr-icon-btn:active{background:rgba(0,212,255,.15);color:#00d4ff}
-.hdr-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.hdr-right{display:flex;align-items:center;gap:2px;flex-shrink:0}
 /* Notification dot on bell */
 .hdr-notif-dot{
-  position:absolute;top:5px;right:5px;
+  position:absolute;top:6px;right:6px;
   width:7px;height:7px;border-radius:50%;
-  background:#ff6b9d;border:1.5px solid #080b14;
-  display:none
+  background:#00d4ff;border:1.5px solid #080b14
 }
-/* Online pill in header */
+/* Online pill */
 .home-anon{
   display:inline-flex;align-items:center;gap:5px;
-  background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.1);
-  border-radius:999px;padding:4px 10px;font-size:10px;font-weight:600;color:#e5e7eb;
-  flex-shrink:0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;padding:5px 11px;font-size:10px;font-weight:600;color:#e5e7eb;
+  flex-shrink:0;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  margin-left:4px
 }
 .hdr-live-dot{
-  width:6px;height:6px;border-radius:50%;background:#10b981;
+  width:7px;height:7px;border-radius:50%;background:#10b981;
   animation:rdot 1.5s ease-in-out infinite;flex-shrink:0
+}
+/* Legacy classes kept for profile/other screens */
+.home-logo-row{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.home-mascot{width:28px;height:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,212,255,.1);border-radius:8px;border:1px solid rgba(0,212,255,.2)}
+.home-mascot::after{content:'K';font-size:13px;font-weight:900;color:#00d4ff}
+.home-title{font-size:16px;font-weight:800;letter-spacing:.5px;color:#fff;white-space:nowrap}
+.home-title span{color:#00d4ff}
+.home-sub{font-size:10px;color:#6e747d;font-weight:500;margin-top:1px;white-space:nowrap}
+
+/* ══════════════════════════════════════
+   K HERO BANNER CARD
+   ══════════════════════════════════════ */
+.kv-hero-card{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:18px;padding:16px 18px;
+  margin-bottom:16px
+}
+.kv-hero-logo{
+  width:54px;height:54px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,#0d9bcc,#00d4ff,#00e5b8);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:900;color:#fff;letter-spacing:-1px;
+  box-shadow:0 4px 20px rgba(0,212,255,.3)
+}
+.kv-hero-info{flex:1;min-width:0}
+.kv-hero-title{font-size:20px;font-weight:800;color:#fff;letter-spacing:.5px;line-height:1.1}
+.kv-hero-title span{color:#00d4ff}
+.kv-hero-sub{font-size:11px;color:#6b7280;margin-top:3px;font-weight:400}
+.kv-hero-live{
+  display:inline-flex;align-items:center;gap:5px;
+  background:#10b981;border-radius:999px;
+  padding:7px 14px;font-size:11px;font-weight:700;color:#fff;
+  flex-shrink:0;letter-spacing:.3px
+}
+.kv-hero-live-dot{
+  width:6px;height:6px;border-radius:50%;background:#fff;
+  animation:rdot 1.5s ease-in-out infinite
+}
+
+/* ══════════════════════════════════════
+   SECTION LABEL ROW (label + "Vedi tutte")
+   ══════════════════════════════════════ */
+.sec-label-row{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:4px 0 10px
+}
+.sec-label-link{
+  font-size:11px;font-weight:600;color:#00d4ff;
+  text-decoration:none;cursor:pointer;flex-shrink:0;
+  white-space:nowrap;padding:2px 0
 }
 
 /* Category filter */
@@ -191,9 +252,12 @@ body{position:relative}
   cursor:pointer;transition:all .2s;white-space:nowrap}
 .cat-btn.active{border-color:#00d4ff;color:#fff;background:rgba(0,212,255,.15)}
 
-.home-body{padding:6px 16px 90px}
-.sec-label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;
-  margin:12px 0 8px;display:flex;align-items:center;gap:6px}
+.home-body{padding:14px 16px 90px}
+.sec-label{
+  font-size:10px;font-weight:700;color:#6b7280;
+  text-transform:uppercase;letter-spacing:1.5px;
+  margin:0;display:flex;align-items:center;gap:6px;flex:1
+}
 .sec-label::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
 
 /* ─── GRID di TILE (rettangoli stile cavou) ─── */
@@ -301,12 +365,16 @@ body{position:relative}
 /* Chat header */
 .chat-hdr{
   display:flex;align-items:center;gap:10px;padding:10px 14px;
-  background:linear-gradient(180deg,#1a1f3a,#16182a);
-  border-bottom:1px solid rgba(0,212,255,.15);flex-shrink:0
+  background:rgba(8,11,20,.97);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  flex-shrink:0;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  position:sticky;top:0;z-index:20
 }
-.chat-back{width:34px;height:34px;border:none;background:rgba(255,255,255,.08);
-  border-radius:10px;color:#fff;font-size:17px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-back{width:36px;height:36px;border:none;background:none;
+  color:#9ca3af;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:color .15s}
+.chat-back:active{color:#00d4ff}
 .chat-hdr-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;
   justify-content:center;font-size:17px;flex-shrink:0}
 .chat-hdr-info{flex:1;min-width:0}

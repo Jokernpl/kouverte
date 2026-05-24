@@ -91,25 +91,16 @@
   <div class="kv-particles" id="kvParticles"></div>
   <div class="home-hdr">
     <div class="home-hdr-row">
-      <!-- Hamburger -->
-      <button class="hdr-icon-btn" onclick="openContinua()" aria-label="Menu">
-        <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><rect y="0" width="18" height="2" rx="1"/><rect y="6" width="13" height="2" rx="1"/><rect y="12" width="18" height="2" rx="1"/></svg>
+      <button class="hdr-plain-btn" onclick="openContinua()" aria-label="Menu">
+        <svg width="20" height="15" viewBox="0 0 20 15" fill="currentColor"><rect y="0" width="20" height="2.2" rx="1.1"/><rect y="6.4" width="14" height="2.2" rx="1.1"/><rect y="12.8" width="20" height="2.2" rx="1.1"/></svg>
       </button>
-      <!-- Logo -->
-      <div class="home-logo-row">
-        <div class="home-mascot"></div>
-        <div>
-          <div class="home-title">KOU<span>VERTE</span></div>
-          <div class="home-sub">Chat Anonima Italiana</div>
-        </div>
-      </div>
-      <!-- Right actions -->
+      <span class="hdr-app-title">Kouverte</span>
       <div class="hdr-right">
-        <button class="hdr-icon-btn" onclick="openFriendsModal()" aria-label="Cerca utenti">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <button class="hdr-plain-btn" onclick="openFriendsModal()" aria-label="Cerca">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </button>
-        <button class="hdr-icon-btn" onclick="subscribePushNotifications()" id="bellBtn" aria-label="Notifiche" style="position:relative">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <button class="hdr-plain-btn" onclick="subscribePushNotifications()" id="bellBtn" aria-label="Notifiche" style="position:relative">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <div class="hdr-notif-dot" id="notifHeaderDot"></div>
         </button>
         <div class="home-anon">
@@ -121,6 +112,18 @@
   </div>
 
   <div class="home-body">
+    <!-- K Banner Card -->
+    <div class="kv-hero-card">
+      <div class="kv-hero-logo">K</div>
+      <div class="kv-hero-info">
+        <div class="kv-hero-title">KOU<span>VERTE</span></div>
+        <div class="kv-hero-sub">Chat Anonima Italiana</div>
+      </div>
+      <div class="kv-hero-live">
+        <span class="kv-hero-live-dot"></span>Live
+      </div>
+    </div>
+
     <!-- Banner Installa app PWA -->
     <div id="installBanner" class="install-banner" onclick="triggerInstall()" style="display:none">
       <div class="tg-icon" style="background:#00d4ff">📲</div>
@@ -585,25 +588,19 @@
 
 <!-- ░░ PROFILE ░░ -->
 <div id="profile" class="screen">
-  <!-- Header profilo — stessa struttura dell'home -->
+  <!-- Header profilo -->
   <div class="home-hdr">
     <div class="home-hdr-row">
-      <button class="hdr-icon-btn" onclick="showScreen('home',document.querySelector('[data-sc=home]'))" aria-label="Torna alle stanze">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <button class="hdr-plain-btn" onclick="showScreen('home',document.querySelector('[data-sc=home]'))" aria-label="Torna alle stanze">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div class="home-logo-row">
-        <div class="home-mascot"></div>
-        <div>
-          <div class="home-title" style="font-size:16px;letter-spacing:.5px">Profilo</div>
-          <div class="home-sub" id="profHeaderSub">Personalizza il tuo avatar</div>
-        </div>
-      </div>
+      <span class="hdr-app-title" style="font-size:18px">Profilo</span>
       <div class="hdr-right">
-        <button class="hdr-icon-btn" onclick="openLogoSettings()" aria-label="Impostazioni avatar">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <button class="hdr-plain-btn" onclick="openLogoSettings()" aria-label="Avatar">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
-        <button class="hdr-icon-btn" onclick="openAuthModal()" aria-label="Account">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <button class="hdr-plain-btn" onclick="openAuthModal()" aria-label="Account">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
       </div>
     </div>

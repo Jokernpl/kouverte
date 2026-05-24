@@ -4529,11 +4529,16 @@ function renderRooms(){
   const chatRooms = ROOMS.filter(r => r.tier !== 'scopa');
   const gameRooms = ROOMS.filter(r => r.tier === 'scopa');
   const gamesSection = gameRooms.length ? `
-    <div class="sec-label sec-label-games">🎮 Giochi</div>
+    <div class="sec-label-row" style="grid-column:1/-1">
+      <div class="sec-label" style="margin:0">🎮 Giochi</div>
+    </div>
     <div class="games-grid">${gameRooms.map(gameCard).join('')}</div>
   ` : '';
   const chatSection = chatRooms.length ? `
-    <div class="sec-label" style="margin-top:${gameRooms.length?'20px':'0'}">🔥 Stanze attive ora</div>
+    <div class="sec-label-row" style="grid-column:1/-1;margin-top:${gameRooms.length?'16px':'0'}">
+      <div class="sec-label" style="margin:0">✦ Stanze in evidenza</div>
+      <span class="sec-label-link" onclick="openContinua()">Vedi tutte ›</span>
+    </div>
     ${chatRooms.map(roomCard).join('')}
   ` : '';
   document.getElementById('roomsList').innerHTML = gamesSection + chatSection;
