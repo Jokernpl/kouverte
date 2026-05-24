@@ -544,6 +544,19 @@
     </div>
   </div>
 
+  <!-- Reply Bar (slide-up sopra input quando si risponde) -->
+  <div id="replyBar" class="reply-bar" style="display:none">
+    <div class="reply-bar-line" id="replyBarLine"></div>
+    <div class="reply-bar-body">
+      <div class="reply-bar-icon">↩️</div>
+      <div class="reply-bar-content">
+        <div class="reply-bar-name" id="replyBarName"></div>
+        <div class="reply-bar-text" id="replyBarText"></div>
+      </div>
+    </div>
+    <button class="reply-bar-close" onclick="clearReply()">✕</button>
+  </div>
+
   <!-- Reaction Picker (slide-up) -->
   <div id="reactionPicker" class="reaction-picker" style="display:none">
     <div class="reaction-picker-row" id="reactionPickerRow">

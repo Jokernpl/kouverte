@@ -4037,7 +4037,13 @@ io.on('connection', (socket) => {
             photoThumb: safeThumb,
             text:      String(msg.text).slice(0, 800),
             ts:        Date.now(),
-            roomId
+            roomId,
+            replyTo: msg.replyTo ? {
+                userId: String(msg.replyTo.userId || '').slice(0, 40),
+                name:   String(msg.replyTo.name   || 'Anonimo').slice(0, 30),
+                color:  /^#[0-9a-f]{6}$/i.test(msg.replyTo.color) ? msg.replyTo.color : '#00d4ff',
+                text:   String(msg.replyTo.text   || '').slice(0, 120)
+            } : undefined
         };
         // Salva in storia (max 100 per stanza)
         chatRoomHistory[roomId] = chatRoomHistory[roomId] || [];

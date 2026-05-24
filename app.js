@@ -124,6 +124,7 @@ const BADGES = [
 var socket=null, user=null, room=null;
 var tTimer=null, isTyping=false, typingUsers={};
 var roomOnline={}, lastSender=null, activeCat='all';
+var activeReply=null; // { msgId, userId, name, color, text } — messaggio a cui si sta rispondendo
 var selFrameId=null;
 const sessionRooms=new Set(); // conta solo questa sessione, non persiste
 // Preview messaggi per ogni stanza (ultimi 3-4 per la card)
@@ -3737,6 +3738,9 @@ function appendMsg(msg){
     </div>`;
   }
 
+  // Quote block se il messaggio è una risposta
+  const replyBlock = msg.replyTo ? buildReplyQuote(msg.replyTo) : '';
+
   if(isSelf){
     row.className='mrow self';
     const myCol=user.color, myFace=user.face;
@@ -3748,7 +3752,7 @@ function appendMsg(msg){
       ${avatarHtml(myThumb, myFace, myCol, 36, frameClass, myAuraClass, myAuraStyle, consec, '')}
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
         ${!consec?`<div style="font-size:11px;color:${myCol};font-weight:700;margin-bottom:3px;text-align:right"><span class="${(nickFxClass||'').trim()}" style="color:${myCol}">${esc(user.name)}</span> <span style="color:#9ca3af;font-weight:600">lvl ${myLvl}</span></div>`:''}
-        <div class="mbubble-self${bubbleFxClass}">${esc(msg.text)}</div>
+        <div class="mbubble-self${bubbleFxClass}">${replyBlock}${esc(msg.text)}</div>
         <div class="mtime">${time}</div>
       </div>`;
   } else {
@@ -3766,7 +3770,7 @@ function appendMsg(msg){
       <div class="mbody">
         <div class="mline">
           ${!consec?`<span class="mname${nickFxClass}" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
-          <span class="mtext">${esc(msg.text)}</span>
+          ${replyBlock}<span class="mtext">${esc(msg.text)}</span>
         </div>
         ${!consec?`<div class="mtime">${time}</div>`:''}
       </div>`;
@@ -3777,8 +3781,25 @@ function appendMsg(msg){
     const msgId = row.dataset.msgId;
     if(msgId) toggleMsgReaction(msgId, '❤️');
   };
-  row.dataset.msgId = `${Date.now()}-${Math.random()}`;
+  const msgId = `${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+  row.dataset.msgId = msgId;
+  // Salva dati per reply sul DOM
+  row.dataset.replyName  = name;
+  row.dataset.replyColor = col;
+  row.dataset.replyText  = msg.text.slice(0, 120);
+  row.dataset.replyUid   = msg.userId || '';
+  // Swipe-to-reply (touch) + hover button (desktop)
+  attachSwipeReply(row, msgId, msg.userId||'', name, col, msg.text.slice(0,120));
   c.appendChild(row);
+}
+
+// Costruisce il quote block HTML per i messaggi con replyTo
+function buildReplyQuote(replyTo){
+  if(!replyTo) return '';
+  const safeColor = /^#[0-9a-f]{6}$/i.test(replyTo.color) ? replyTo.color : '#00d4ff';
+  const safeName  = esc(String(replyTo.name||'Anonimo').slice(0,30));
+  const safeText  = esc(String(replyTo.text||'').slice(0,80));
+  return `<div class="msg-quote" style="--qcol:${safeColor}"><div class="msg-quote-name">${safeName}</div><div class="msg-quote-text">${safeText}</div></div>`;
 }
 
 function toggleMsgReaction(msgId, emoji){
@@ -3818,6 +3839,93 @@ function toggleMsgReaction(msgId, emoji){
 
 function addSys(text){ appendMsg({type:'system',text}); scrollBot(); }
 
+// ════════════════════════════════════════════════════════
+// REPLY TO MESSAGE
+// ════════════════════════════════════════════════════════
+function startReply(msgId, userId, name, color, text){
+  activeReply = { msgId, userId, name, color, text };
+  const bar = document.getElementById('replyBar');
+  const nameEl = document.getElementById('replyBarName');
+  const textEl = document.getElementById('replyBarText');
+  const line = document.getElementById('replyBarLine');
+  if(!bar) return;
+  nameEl.textContent = name;
+  nameEl.style.color = color || '#00d4ff';
+  textEl.textContent = text.slice(0, 80);
+  line.style.background = color || '#00d4ff';
+  bar.style.display = 'flex';
+  // Focus sull'input
+  const inp = document.getElementById('msgInput');
+  if(inp){ inp.focus(); }
+  haptic('light');
+}
+
+function clearReply(){
+  activeReply = null;
+  const bar = document.getElementById('replyBar');
+  if(bar) bar.style.display = 'none';
+}
+
+// Swipe-to-reply: aggiungo listener touch su un messaggio
+function attachSwipeReply(row, msgId, userId, name, color, text){
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let swiping = false;
+  const SWIPE_THRESHOLD = 60;
+
+  row.style.position = 'relative';
+
+  row.addEventListener('touchstart', (e)=>{
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    swiping = false;
+  }, {passive:true});
+
+  row.addEventListener('touchmove', (e)=>{
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = Math.abs(e.touches[0].clientY - touchStartY);
+    // Solo swipe orizzontale (non scroll verticale)
+    if(dy > 20 && !swiping) return;
+    if(dx > 8){
+      swiping = true;
+      const clamped = Math.min(dx, SWIPE_THRESHOLD + 10);
+      row.style.transform = `translateX(${clamped}px)`;
+      row.classList.add('swiping');
+      if(dx >= SWIPE_THRESHOLD){
+        row.classList.add('swipe-triggered');
+      } else {
+        row.classList.remove('swipe-triggered');
+      }
+    }
+  }, {passive:true});
+
+  row.addEventListener('touchend', ()=>{
+    const travelX = parseFloat(row.style.transform.replace('translateX(','').replace('px)','')) || 0;
+    row.style.transform = '';
+    row.classList.remove('swiping','swipe-triggered');
+    if(travelX >= SWIPE_THRESHOLD){
+      startReply(msgId, userId, name, color, text);
+    }
+  }, {passive:true});
+
+  // Desktop: bottone reply su hover (appare a destra del messaggio)
+  row.addEventListener('mouseenter', ()=>{
+    if(!row._replyBtn){
+      const btn = document.createElement('button');
+      btn.className = 'msg-reply-hover-btn';
+      btn.innerHTML = '↩';
+      btn.title = 'Rispondi';
+      btn.onclick = (e)=>{ e.stopPropagation(); startReply(msgId, userId, name, color, text); };
+      row._replyBtn = btn;
+      row.style.position = 'relative';
+    }
+    row.appendChild(row._replyBtn);
+  });
+  row.addEventListener('mouseleave', ()=>{
+    if(row._replyBtn && row._replyBtn.parentNode === row) row.removeChild(row._replyBtn);
+  });
+}
+
 function sendMsg(){
   const inp=document.getElementById('msgInput');
   const text=inp.value.trim();
@@ -3838,6 +3946,10 @@ function sendMsg(){
 
   // Confessionale: anonimizza completamente (nome random, no level/premium)
   const isConfession = room.tier==='confession';
+  // Cattura reply prima di creare il msg
+  const reply = activeReply ? { ...activeReply } : null;
+  clearReply();
+
   const msg = isConfession ? {
     userId:'anon_'+Math.random().toString(36).slice(2,8),
     name:'Anonimo',
@@ -3848,7 +3960,8 @@ function sendMsg(){
     face:user.face, frame:user.activeFrame, activeFrame:user.activeFrame,
     active_nickFx:user.active_nickFx, active_bubble:user.active_bubble,
     isPremium:isPrem(), photoThumb: user.photoThumb || null,
-    text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount
+    text, ts:Date.now(), roomId:room.id, msgCount:user.msgCount,
+    replyTo: reply || undefined
   };
   socket.emit('chat-message',{roomId:room.id,msg});
   appendMsg(msg); scrollBot();
