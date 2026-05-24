@@ -228,14 +228,15 @@ app.use((req, res, next) => {
     }
     next();
 });
-// Cache lunga per asset statici (CSS/JS/immagini) — immutabili tra deploy
+// Cache asset statici — no-cache per JS/CSS (si aggiornano spesso), lunga per immagini/font
 app.use((req, res, next) => {
     const url = req.url.split('?')[0];
     if (/\.(css|js)$/.test(url) && !url.includes('socket.io')) {
-        // 7 giorni — si invalida automaticamente al prossimo deploy (Render cambia hash)
-        res.set('Cache-Control', 'public, max-age=604800, stale-while-revalidate=86400');
+        // Sempre fresco: browser richiede il file ad ogni caricamento,
+        // ma può usare il cached se ETag/Last-Modified coincidono (304)
+        res.set('Cache-Control', 'no-cache');
     } else if (/\.(png|jpg|jpeg|webp|svg|ico|woff2|mp4)$/.test(url)) {
-        res.set('Cache-Control', 'public, max-age=2592000'); // 30 giorni
+        res.set('Cache-Control', 'public, max-age=2592000'); // 30 giorni (immagini non cambiano)
     }
     next();
 });

@@ -4512,14 +4512,17 @@ function startLiveStats(){
 }
 
 function renderRooms(){
-  const chatRooms  = ROOMS.filter(r => r.tier !== 'scopa');
-  const gameRooms  = ROOMS.filter(r => r.tier === 'scopa');
+  const chatRooms = ROOMS.filter(r => r.tier !== 'scopa');
+  const gameRooms = ROOMS.filter(r => r.tier === 'scopa');
   const gamesSection = gameRooms.length ? `
     <div class="sec-label sec-label-games">🎮 Giochi</div>
     <div class="games-grid">${gameRooms.map(gameCard).join('')}</div>
   ` : '';
-  document.getElementById('roomsList').innerHTML =
-    gamesSection + chatRooms.map(roomCard).join('');
+  const chatSection = chatRooms.length ? `
+    <div class="sec-label" style="margin-top:${gameRooms.length?'20px':'0'}">🔥 Stanze attive ora</div>
+    ${chatRooms.map(roomCard).join('')}
+  ` : '';
+  document.getElementById('roomsList').innerHTML = gamesSection + chatSection;
 }
 
 // ── Age Gate 18+ ──────────────────────────────────────────────────────────────
