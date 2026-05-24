@@ -154,6 +154,44 @@ CITY_PAGES.forEach(city => {
     });
 });
 
+// ── Profilo utente pubblico /u/:username ─────────────────────────────────────
+app.get('/u/:username', (req, res) => {
+    const username = req.params.username.toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!username) return res.status(404).redirect('/');
+    const user = DB.users ? DB.users.find(u => u.username === username) : null;
+    if (!user) {
+        res.set('Cache-Control', 'no-cache');
+        return res.redirect('/');
+    }
+    const kv = user.kvData || {};
+    const face = kv.face || '🎭';
+    const msgCount = kv.msgCount || 0;
+    const level = Math.max(1, Math.floor(1 + Math.log2(msgCount + 1) * 2.2));
+    const displayName = kv.name || user.username;
+    const bio = user.profile?.bio || '';
+    const title = `${face} ${displayName} — Profilo Kouverte`;
+    const desc = bio
+        ? `${displayName}: "${bio.slice(0, 120)}" · Livello ${level} su Kouverte, la chat italiana anonima.`
+        : `Conosci ${displayName} su Kouverte. Livello ${level}. Chat anonima italiana, gratis.`;
+    // Per bot social: OG meta immediata
+    if (isBot(req.headers['user-agent'] || '')) {
+        res.set('Cache-Control', 'public, max-age=300');
+        return res.send(`<!DOCTYPE html><html lang="it"><head>
+<meta charset="UTF-8"><title>${title}</title>
+<meta name="description" content="${desc.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="${title.replace(/"/g,'&quot;')}">
+<meta property="og:description" content="${desc.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">
+<meta property="og:url" content="https://www.kouverte.com/u/${username}">
+<meta property="og:image" content="https://www.kouverte.com/og-image.png">
+<meta name="twitter:card" content="summary">
+<meta http-equiv="refresh" content="0;url=/u/${username}">
+</head><body><p>${face} ${displayName} — <a href="/app.html">Chatta su Kouverte</a></p></body></html>`);
+    }
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.sendFile(path.join(__dirname, 'profile-public.html'));
+});
+
 // NO-CACHE per HTML/JS/CSS principali: gli update arrivano subito al refresh
 app.use((req, res, next) => {
     const p = req.path;
@@ -853,6 +891,45 @@ app.post('/api/push/subscribe-anon', (req, res) => {
     res.json({ ok: true });
 });
 
+// ── Room alert subscriptions — notifica quando la stanza si anima ──────────────
+DB.room_alert_subs = DB.room_alert_subs || [];
+const roomAlertCooldown = {}; // { "roomId:userId": timestampMs } — in-memory anti-spam
+
+app.post('/api/push/subscribe-room-alert', (req, res) => {
+    const { userId, subscription, roomId } = req.body;
+    if (!userId || !subscription?.endpoint || !roomId) {
+        return res.status(400).json({ error: 'Parametri mancanti' });
+    }
+    if (String(userId).length > 60 || String(roomId).length > 40) {
+        return res.status(400).json({ error: 'Parametri non validi' });
+    }
+    DB.room_alert_subs = DB.room_alert_subs || [];
+    // Rimuovi iscrizione precedente per stessa coppia userId+roomId
+    DB.room_alert_subs = DB.room_alert_subs.filter(
+        s => !(s.userId === userId && s.roomId === roomId)
+    );
+    DB.room_alert_subs.push({ userId, subscription, roomId, createdAt: Date.now() });
+    markDirty();
+    res.json({ ok: true });
+});
+
+app.delete('/api/push/subscribe-room-alert', (req, res) => {
+    const { userId, roomId } = req.body;
+    if (!userId || !roomId) return res.status(400).json({ error: 'Parametri mancanti' });
+    DB.room_alert_subs = (DB.room_alert_subs || []).filter(
+        s => !(s.userId === userId && s.roomId === roomId)
+    );
+    markDirty();
+    res.json({ ok: true });
+});
+
+app.get('/api/push/room-alert-status', (req, res) => {
+    const { userId, roomId } = req.query;
+    if (!userId || !roomId) return res.status(400).json({ error: 'Parametri mancanti' });
+    const sub = (DB.room_alert_subs || []).find(s => s.userId === userId && s.roomId === roomId);
+    res.json({ subscribed: !!sub });
+});
+
 // Invia push a un utente specifico (uso interno/admin)
 app.post('/api/push/send', verifyToken, async (req, res) => {
     const { targetUserId, title, body, url } = req.body;
@@ -1414,16 +1491,43 @@ app.post('/api/me/friends/remove', verifyToken, (req, res) => {
 
 // Get profile by username
 app.get('/api/profile/:username', (req, res) => {
-    const user = DB.users.find(u => u.username === req.params.username.toLowerCase());
+    const username = req.params.username.toLowerCase();
+    const user = DB.users.find(u => u.username === username);
     if (!user) return res.status(404).json({ error: 'Utente non trovato' });
 
-    const userStories = DB.stories.filter(s => s.user_id === user.id && s.expires_at > now());
+    const kv = user.kvData || {};
+    const msgCount = kv.msgCount || 0;
+    const level = Math.max(1, Math.floor(1 + Math.log2(msgCount + 1) * 2.2));
+
+    // Weekly rank for this user
+    const wStats = getWeeklyStats();
+    const sorted = Object.entries(wStats.users)
+        .filter(([, u]) => u.msgs > 0)
+        .sort(([, a], [, b]) => b.msgs - a.msgs);
+    const wIdx = sorted.findIndex(([id, u]) => id === user.id || (kv.name && u.name === kv.name));
+    const weeklyRank = wIdx >= 0 ? wIdx + 1 : null;
+    const weeklyMsgs = wIdx >= 0 ? sorted[wIdx][1].msgs : 0;
+
+    const userStories = (DB.stories || []).filter(s => s.user_id === user.id && s.expires_at > now());
     res.json({
         username: user.username,
-        avatar_letter: user.profile.avatar_letter,
-        bio: user.profile.bio,
+        displayName: kv.name || user.username,
+        avatar_letter: user.profile?.avatar_letter || user.username.charAt(0).toUpperCase(),
+        face: kv.face || '🎭',
+        color: kv.color || '#a855f7',
+        bio: user.profile?.bio || '',
+        statusEmoji: kv.statusEmoji || '',
+        statusText: kv.statusText || '',
+        isPremium: !!(kv.isPremium || user.is_premium),
+        activeFrame: kv.activeFrame || 'none',
+        badges: kv.badges || [],
+        msgCount,
+        level,
+        weeklyRank,
+        weeklyMsgs,
+        joinedAt: user.created_at,
         stats: user.stats,
-        clips: user.profile.clips.map(c => ({
+        clips: (user.profile?.clips || []).map(c => ({
             ...c,
             story_preview: userStories.find(s => s.id === c.audio_id)
         }))
@@ -3851,6 +3955,37 @@ io.on('connection', (socket) => {
         io.emit('global-online', { count: getTotalOnline() });
         // Broadcast lista utenti aggiornata
         broadcastChatUsers(roomId);
+
+        // ── Room alert: notifica utenti che hanno il campanellino attivo ────
+        const ROOM_ALERT_THRESHOLD = 5; // notifica quando si raggiungono 5+ utenti
+        const ROOM_ALERT_COOLDOWN  = 30 * 60 * 1000; // max 1 push ogni 30 min per coppia stanza+utente
+        if (count >= ROOM_ALERT_THRESHOLD) {
+            const joinedUserId = user?.id || '';
+            const subs = (DB.room_alert_subs || []).filter(
+                s => s.roomId === roomId && s.userId !== joinedUserId
+            );
+            for (const sub of subs) {
+                const ck = `${roomId}:${sub.userId}`;
+                const last = roomAlertCooldown[ck] || 0;
+                if (Date.now() - last < ROOM_ALERT_COOLDOWN) continue;
+                roomAlertCooldown[ck] = Date.now();
+                const ogInfo = ROOM_OG[roomId] || { name: roomId, emoji: '💬' };
+                webpush.sendNotification(sub.subscription, JSON.stringify({
+                    title: `${ogInfo.emoji} ${ogInfo.name} è viva — ${count} online!`,
+                    body: `Entra adesso in Chat ${ogInfo.name} su Kouverte`,
+                    url: `/app.html?room=${roomId}`,
+                    tag: 'room-alert-' + roomId,
+                    icon: '/icon-192.png'
+                })).catch(e => {
+                    if (e.statusCode === 410 || e.statusCode === 404) {
+                        DB.room_alert_subs = (DB.room_alert_subs || []).filter(
+                            s => !(s.userId === sub.userId && s.roomId === sub.roomId)
+                        );
+                        markDirty();
+                    }
+                });
+            }
+        }
     });
 
     socket.on('leave-chat-room', ({ roomId }) => {

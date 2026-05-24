@@ -287,6 +287,13 @@ body{position:relative}
 }
 .rc-foot-arrow{display:inline-block;animation:nudge 1.5s ease-in-out infinite}
 @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+.rc-bell-btn{
+  background:none;border:none;cursor:pointer;font-size:13px;
+  padding:2px 4px;border-radius:6px;opacity:.7;transition:opacity .15s,transform .15s;
+  line-height:1;flex-shrink:0
+}
+.rc-bell-btn:hover{opacity:1;transform:scale(1.15)}
+.rc-bell-btn:active{transform:scale(.9)}
 
 /* ═══════════════════════════════
    CHAT SCREEN

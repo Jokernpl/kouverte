@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profilo — Kouverte</title>
+<meta name="robots" content="index, follow">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-KR50WJ2TKY');</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0f1117;color:#fff;font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+a{color:#00d4ff;text-decoration:none}
+/* Nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);max-width:520px;margin:0 auto;width:100%}
+.logo{font-size:17px;font-weight:800;letter-spacing:-.5px}.logo span{color:#00d4ff}
+.btn-enter{background:#00d4ff;color:#0f1117;font-weight:700;font-size:13px;padding:8px 18px;border-radius:10px;display:inline-flex;align-items:center;gap:5px}
+.btn-enter:hover{background:#00b8dd;text-decoration:none}
+/* Main card */
+.card-wrap{max-width:520px;margin:0 auto;padding:24px 20px 48px;flex:1;display:flex;flex-direction:column;gap:20px}
+/* Profile hero */
+.prof-hero{background:rgba(26,31,58,.7);border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden;position:relative}
+.prof-banner{height:110px;background:linear-gradient(135deg,#1a1f3a 0%,#0f1117 100%);position:relative;overflow:hidden}
+.prof-banner canvas{position:absolute;inset:0;width:100%;height:100%}
+.prof-avatar-wrap{position:absolute;bottom:-36px;left:24px}
+.prof-avatar{width:72px;height:72px;border-radius:50%;border:3px solid #0f1117;background:#1a1f3a;font-size:34px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+.prof-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.frame-glow{position:absolute;inset:-2px;border-radius:50%;pointer-events:none}
+.prof-body{padding:44px 24px 24px}
+.prof-name-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+.prof-name{font-size:20px;font-weight:800;letter-spacing:-.3px}
+.prof-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px}
+.badge-premium{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.badge-level{background:rgba(0,212,255,.12);color:#00d4ff;border:1px solid rgba(0,212,255,.25)}
+.prof-username{font-size:13px;color:#6e747d;margin-bottom:10px}
+.prof-status{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#b4bcc8;margin-bottom:12px}
+.prof-bio{font-size:14px;color:#b4bcc8;line-height:1.6;margin-bottom:0}
+/* Stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat-box{background:rgba(26,31,58,.6);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;text-align:center}
+.stat-n{font-size:22px;font-weight:800;color:#00d4ff;line-height:1}
+.stat-l{font-size:11px;color:#6e747d;margin-top:4px;font-weight:500}
+/* Badges */
+.section-label{font-size:11px;font-weight:700;color:#6e747d;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px}
+.badges-grid{display:flex;flex-wrap:wrap;gap:8px}
+.badge-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(26,31,58,.8);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-size:12px;color:#b4bcc8}
+.badge-pill span{font-size:15px}
+/* Weekly rank card */
+.rank-card{background:linear-gradient(135deg,rgba(0,212,255,.07),rgba(0,229,184,.04));border:1px solid rgba(0,212,255,.15);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px}
+.rank-icon{font-size:32px;line-height:1}
+.rank-body{}
+.rank-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:2px}
+.rank-sub{font-size:12px;color:#6e747d}
+/* CTA */
+.cta-box{background:rgba(26,31,58,.6);border:1px solid rgba(255,255,255,.07);border-radius:20px;padding:24px;text-align:center}
+.cta-box p{font-size:13px;color:#b4bcc8;margin-bottom:16px;line-height:1.6}
+.btn-cta{display:inline-flex;align-items:center;gap:8px;background:#00d4ff;color:#0f1117;font-weight:800;font-size:15px;padding:13px 28px;border-radius:12px}
+.btn-cta:hover{background:#00b8dd;text-decoration:none}
+/* Error state */
+.err-state{text-align:center;padding:60px 20px;color:#6e747d}
+.err-state .big{font-size:52px;margin-bottom:12px}
+.err-state h2{font-size:20px;font-weight:700;color:#fff;margin-bottom:8px}
+/* Skeleton */
+.skel{background:linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%);background-size:200% 100%;animation:skel .8s linear infinite;border-radius:8px}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* Footer */
+footer{border-top:1px solid rgba(255,255,255,.05);padding:16px;text-align:center;font-size:11px;color:#6e747d;max-width:520px;margin:0 auto;width:100%}
+footer a{color:#6e747d}footer a:hover{color:#b4bcc8}
+@media(max-width:420px){.prof-body{padding:40px 16px 20px}.card-wrap{padding:16px 12px 40px}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="/" style="font-size:13px;color:#6e747d">← Kouverte</a>
+  <div class="logo">K<span>ouverte</span></div>
+  <a href="/app.html" class="btn-enter">🚀 Entra</a>
+</nav>
+
+<div class="card-wrap" id="cardWrap">
+  <!-- Skeleton caricamento -->
+  <div id="skelBlock">
+    <div style="background:rgba(26,31,58,.7);border:1px solid rgba(255,255,255,.07);border-radius:20px;overflow:hidden">
+      <div class="skel" style="height:110px"></div>
+      <div style="padding:44px 24px 24px">
+        <div class="skel" style="height:24px;width:150px;margin-bottom:10px"></div>
+        <div class="skel" style="height:14px;width:100px;margin-bottom:16px"></div>
+        <div class="skel" style="height:40px;width:100%"></div>
+      </div>
+    </div>
+  </div>
+  <div id="mainContent" style="display:none;display:flex;flex-direction:column;gap:20px"></div>
+  <div id="errState" class="err-state" style="display:none">
+    <div class="big">🔍</div>
+    <h2>Profilo non trovato</h2>
+    <p style="margin-bottom:24px">Questo utente non esiste o ha cancellato il profilo.</p>
+    <a href="/app.html" class="btn-cta">🚀 Entra in Kouverte</a>
+  </div>
+</div>
+
+<footer><p>© 2026 Kouverte &nbsp;·&nbsp; <a href="/privacy.html">Privacy</a> &nbsp;·&nbsp; <a href="/terms.html">Termini</a> &nbsp;·&nbsp; <a href="/about.html">Chi siamo</a></p></footer>
+
+<script>
+const BADGE_META = {
+  welcome:       {emoji:'🎁', name:'Benvenuto'},
+  firstmsg:      {emoji:'💬', name:'Primo messaggio'},
+  verified:      {emoji:'✅', name:'Verificato'},
+  premium:       {emoji:'⭐', name:'Premium'},
+  og:            {emoji:'🥇', name:'OG'},
+  italy:         {emoji:'🇮🇹', name:'Made in Italy'},
+  streak3:       {emoji:'🔥', name:'Streak 3gg'},
+  streak7:       {emoji:'🔥', name:'Streak 7gg'},
+  streak30:      {emoji:'💯', name:'Streak Mese'},
+  nocturnal:     {emoji:'🌙', name:'Nottambulo'},
+  morning:       {emoji:'☀️', name:'Mattiniero'},
+  globetrotter:  {emoji:'✈️', name:'Globetrotter'},
+  legend:        {emoji:'👑', name:'Leggenda'},
+  friendly:      {emoji:'❤️', name:'Amichevole'},
+  social:        {emoji:'🤝', name:'Social'},
+  host:          {emoji:'🎉', name:'Host'},
+  creator:       {emoji:'🎨', name:'Creatore'},
+  video_star:    {emoji:'📹', name:'Video Star'},
+  wheel_winner:  {emoji:'🎰', name:'Ruota Fortuna'},
+  confessor:     {emoji:'🕯️', name:'Confessore'},
+  frame_collector:{emoji:'🖼️', name:'Collezionista'},
+  badge_hunter:  {emoji:'🏆', name:'Cacciatore Badge'},
+  talker100:     {emoji:'💬', name:'100 messaggi'},
+  talker500:     {emoji:'🗣️', name:'500 messaggi'},
+  talker1k:      {emoji:'🔊', name:'1000 messaggi'},
+};
+const FRAME_GLOW = {
+  gold:    '0 0 14px #fbbf24, 0 0 28px rgba(251,191,36,.3)',
+  diamond: '0 0 14px #38bdf8, 0 0 28px rgba(56,189,248,.3)',
+  neon:    '0 0 14px #00ffff, 0 0 28px rgba(0,255,255,.3)',
+  flame:   '0 0 14px #f97316, 0 0 28px rgba(249,115,22,.3)',
+  rainbow: '0 0 14px #ff00ff, 0 0 28px rgba(255,0,255,.3)',
+  galaxy:  '0 0 14px #8b5cf6, 0 0 28px rgba(139,92,246,.3)',
+  ruby:    '0 0 14px #ef4444, 0 0 28px rgba(239,68,68,.3)',
+  royal:   '0 0 14px #fbbf24, 0 0 28px rgba(251,191,36,.2)',
+  emerald: '0 0 14px #10b981, 0 0 28px rgba(16,185,129,.3)',
+  silver:  '0 0 8px #94a3b8',
+  purple:  '0 0 10px #00d4ff',
+};
+function levelLabel(lvl, isPremium){
+  if(isPremium && lvl>=10) return '👑 Anon VIP';
+  if(lvl>=15) return '🌟 Legendary';
+  if(lvl>=10) return '💎 Veteran';
+  if(lvl>=5)  return '🔥 Active';
+  return '🌱 Rookie';
+}
+function fmtNum(n){
+  if(n>=1000) return (n/1000).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(n||0);
+}
+function rankIcon(r){
+  if(r===1) return '🥇';
+  if(r===2) return '🥈';
+  if(r===3) return '🥉';
+  return `#${r}`;
+}
+
+async function loadProfile(){
+  const username = location.pathname.split('/u/')[1]?.split('/')[0]?.toLowerCase();
+  if(!username){ showErr(); return; }
+
+  let data;
+  try {
+    const r = await fetch('/api/profile/' + username);
+    if(!r.ok){ showErr(); return; }
+    data = await r.json();
+  } catch(e){ showErr(); return; }
+
+  // Aggiorna title/meta dinamicamente
+  document.title = `${data.face||'🎭'} ${data.displayName||data.username} — Kouverte`;
+
+  const glow = FRAME_GLOW[data.activeFrame] || '';
+  const frameStyle = glow ? `box-shadow:${glow};border:2px solid rgba(255,255,255,.3)` : '';
+  const lvlText = levelLabel(data.level, data.isPremium);
+
+  // Build badges HTML (mostra max 8)
+  const bList = (data.badges || []).slice(0, 12);
+  const badgesHtml = bList.length > 0
+    ? bList.map(bid=>{
+        const m = BADGE_META[bid] || {emoji:'🏅', name: bid};
+        return `<div class="badge-pill"><span>${m.emoji}</span>${m.name}</div>`;
+      }).join('')
+    : '<div style="color:#6e747d;font-size:13px">Nessun badge ancora</div>';
+
+  // Stats
+  const joinYear = data.joinedAt ? new Date(data.joinedAt).getFullYear() : '—';
+
+  // Weekly rank block
+  let rankHtml = '';
+  if(data.weeklyRank && data.weeklyRank <= 100){
+    const ri = rankIcon(data.weeklyRank);
+    rankHtml = `<div class="rank-card">
+      <div class="rank-icon">${ri}</div>
+      <div class="rank-body">
+        <div class="rank-title">${data.weeklyRank<=3?'Nella top 3 questa settimana!':data.weeklyRank<=10?'Nella top 10 questa settimana':'Classifica settimanale'}</div>
+        <div class="rank-sub">Posizione ${data.weeklyRank} &nbsp;·&nbsp; ${fmtNum(data.weeklyMsgs)} messaggi questa settimana</div>
+      </div>
+    </div>`;
+  }
+
+  // Status
+  const statusHtml = (data.statusEmoji || data.statusText)
+    ? `<div class="prof-status">${data.statusEmoji||''} <span>${data.statusText||''}</span></div>` : '';
+
+  // Bio
+  const bioHtml = data.bio
+    ? `<p class="prof-bio">${data.bio.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>` : '';
+
+  const premBadge = data.isPremium
+    ? `<span class="prof-badge badge-premium">⭐ Premium</span>` : '';
+
+  const html = `
+  <div class="prof-hero">
+    <div class="prof-banner" id="profBanner">
+      <canvas id="bannerCanvas"></canvas>
+    </div>
+    <div class="prof-avatar-wrap">
+      <div class="prof-avatar" style="${frameStyle}">
+        <span style="font-size:34px">${data.face||'🎭'}</span>
+      </div>
+    </div>
+    <div class="prof-body">
+      <div class="prof-name-row">
+        <span class="prof-name">${(data.displayName||data.username).replace(/</g,'&lt;')}</span>
+        ${premBadge}
+        <span class="prof-badge badge-level">Lv.${data.level} ${lvlText.split(' ')[0]}</span>
+      </div>
+      <div class="prof-username">@${data.username}</div>
+      ${statusHtml}
+      ${bioHtml}
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${fmtNum(data.msgCount)}</div><div class="stat-l">Messaggi</div></div>
+    <div class="stat-box"><div class="stat-n">${data.level}</div><div class="stat-l">Livello</div></div>
+    <div class="stat-box"><div class="stat-n">${joinYear}</div><div class="stat-l">Iscritto</div></div>
+  </div>
+
+  ${rankHtml}
+
+  <div>
+    <div class="section-label">Badge sbloccati</div>
+    <div class="badges-grid">${badgesHtml}</div>
+  </div>
+
+  <div class="cta-box">
+    <p>Vuoi chattare con <strong>${(data.displayName||data.username).replace(/</g,'&lt;')}</strong>?<br>Entra in Kouverte — gratis, anonimo, niente registrazione.</p>
+    <a href="/app.html" class="btn-cta">🚀 Entra e chatta</a>
+  </div>`;
+
+  document.getElementById('skelBlock').style.display = 'none';
+  const mc = document.getElementById('mainContent');
+  mc.style.display = 'flex';
+  mc.innerHTML = html;
+
+  // Avvia particelle banner
+  initBannerParticles(data.color || '#a855f7');
+}
+
+function showErr(){
+  document.getElementById('skelBlock').style.display = 'none';
+  document.getElementById('errState').style.display = 'block';
+}
+
+function initBannerParticles(accentColor){
+  const canvas = document.getElementById('bannerCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const COLORS = [accentColor, '#00d4ff', '#00e5b8', 'rgba(255,255,255,.7)'];
+  let raf;
+  function resize(){
+    canvas.width = canvas.offsetWidth || 480;
+    canvas.height = canvas.offsetHeight || 110;
+  }
+  resize();
+  const particles = Array.from({length: 22}, () => spawn());
+  function spawn(fromBottom){
+    const w = canvas.width||480, h = canvas.height||110;
+    return {
+      x: Math.random()*w, y: fromBottom ? h+4 : Math.random()*h,
+      vx:(Math.random()-.5)*.35, vy:-(Math.random()*.5+.15),
+      r: Math.random()*2.2+.8, a: Math.random()*.6+.15,
+      color: COLORS[Math.floor(Math.random()*COLORS.length)]
+    };
+  }
+  function loop(){
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+    for(const p of particles){
+      p.x+=p.vx; p.y+=p.vy; p.a-=.0015;
+      if(p.y<-6||p.a<=0) Object.assign(p, spawn(true));
+      ctx.save();
+      ctx.globalAlpha=Math.max(0,p.a);
+      ctx.shadowBlur=6; ctx.shadowColor=p.color;
+      ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+    raf=requestAnimationFrame(loop);
+  }
+  loop();
+  window.addEventListener('resize', ()=>{ resize(); });
+}
+
+loadProfile();
+</script>
+</body>
+</html>

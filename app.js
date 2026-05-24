@@ -1110,12 +1110,15 @@ function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
   // Mostra @username se l'utente e' registrato
   const uEl = document.getElementById('profUsername');
+  const shareBtn = document.getElementById('profShareBtn');
   if (uEl) {
     if (user.username) {
       uEl.textContent = '@' + user.username;
       uEl.style.display = 'block';
+      if (shareBtn) shareBtn.style.display = 'inline-flex';
     } else {
       uEl.style.display = 'none';
+      if (shareBtn) shareBtn.style.display = 'none';
     }
   }
   document.getElementById('stMsgs').textContent=user.msgCount||0;
@@ -1202,6 +1205,22 @@ function updateProfileUI(){
 function copyRef(){
   const txt=document.getElementById('refLink').textContent;
   navigator.clipboard?.writeText(txt).then(()=>showToast('📋 Link copiato!')).catch(()=>showToast(txt));
+}
+
+function sharePublicProfile(){
+  if(!user.username) return;
+  const url = 'https://www.kouverte.com/u/' + user.username;
+  if(navigator.share){
+    navigator.share({
+      title: (user.name||user.username) + ' su Kouverte',
+      text: 'Vieni a chattare con me su Kouverte 🚀',
+      url
+    }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(url)
+      .then(()=>showToast('🔗 Link profilo copiato!'))
+      .catch(()=>showToast('Profilo: ' + url));
+  }
 }
 
 function isPrem(){ return user.isPremium && Date.now()<(user.premExpiry||0); }
@@ -3208,10 +3227,13 @@ function roomCard(r){
 
     ${previewHtml}
 
-    <!-- Footer: tap-to-enter -->
-    <div class="rc-foot">
-      <span>ENTRA</span>
-      <span class="rc-foot-arrow">→</span>
+    <!-- Footer: tap-to-enter + bell alert -->
+    <div class="rc-foot" style="justify-content:space-between;padding:0 2px">
+      <div style="display:flex;align-items:center;gap:4px">
+        <span>ENTRA</span>
+        <span class="rc-foot-arrow">→</span>
+      </div>
+      <button class="rc-bell-btn" id="bell_${r.id}" onclick="toggleRoomAlert('${r.id}',event)" title="Avvisami quando la stanza si anima">${getRoomAlertIcon(r.id)}</button>
     </div>
   </div>`;
 }
@@ -7355,6 +7377,102 @@ if ('serviceWorker' in navigator) {
       window.location.href = event.data.url;
     }
   });
+}
+
+// ════════════════════════════════════════════════════════
+// ROOM ALERT — campanellino "avvisami quando è viva"
+// ════════════════════════════════════════════════════════
+// Cache locale dei campanellini attivi (persiste in localStorage)
+function getRoomAlerts(){
+  return getLS('kv4_room_alerts') || {};
+}
+function setRoomAlerts(map){
+  setLS('kv4_room_alerts', map);
+}
+function isRoomAlertActive(roomId){
+  return !!(getRoomAlerts()[roomId]);
+}
+function getRoomAlertIcon(roomId){
+  return isRoomAlertActive(roomId) ? '🔔' : '🔕';
+}
+
+async function toggleRoomAlert(roomId, evt){
+  if(evt){ evt.stopPropagation(); evt.preventDefault(); }
+  const userId = user?.id;
+  if(!userId){ showToast('❌ Devi avere un profilo per usare gli alert'); return; }
+
+  const alerts = getRoomAlerts();
+  const isActive = !!alerts[roomId];
+
+  // Se si vuole attivare: assicurarsi che le notifiche push siano abilitate
+  if(!isActive){
+    if(!('Notification' in window) || !('serviceWorker' in navigator)){
+      showToast('❌ Il tuo browser non supporta le notifiche');
+      return;
+    }
+    let perm = Notification.permission;
+    if(perm === 'denied'){
+      showToast('🔕 Le notifiche sono bloccate — abilitale dalle impostazioni del browser');
+      return;
+    }
+    if(perm === 'default'){
+      perm = await Notification.requestPermission();
+      if(perm !== 'granted'){
+        showToast('Notifiche non autorizzate');
+        return;
+      }
+    }
+    // Ottieni subscription push
+    let sub;
+    try {
+      const reg = window._swRegistration || await navigator.serviceWorker.ready;
+      sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+        // Salva subscription generale (per DM/altri push)
+        if(!localStorage.getItem('push_subscribed')){
+          await fetch('/api/push/subscribe-anon', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ userId, subscription: sub.toJSON() })
+          }).catch(()=>{});
+          localStorage.setItem('push_subscribed','1');
+        }
+      }
+    } catch(e){
+      console.warn('[RoomAlert] Subscribe error:', e);
+      showToast('❌ Errore attivazione notifiche');
+      return;
+    }
+    // Registra alert per questa stanza
+    try {
+      await fetch('/api/push/subscribe-room-alert', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ userId, subscription: sub.toJSON(), roomId })
+      });
+    } catch(e){ console.warn('[RoomAlert] save error:', e); }
+    alerts[roomId] = true;
+    setRoomAlerts(alerts);
+    // Aggiorna icona
+    const btn = document.getElementById('bell_' + roomId);
+    if(btn) btn.textContent = '🔔';
+    showToast('🔔 Ti avviseremo quando la stanza si anima!');
+  } else {
+    // Disattiva alert
+    try {
+      await fetch('/api/push/subscribe-room-alert', {
+        method:'DELETE', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ userId, roomId })
+      });
+    } catch(e){ console.warn('[RoomAlert] unsub error:', e); }
+    delete alerts[roomId];
+    setRoomAlerts(alerts);
+    const btn = document.getElementById('bell_' + roomId);
+    if(btn) btn.textContent = '🔕';
+    showToast('🔕 Alert disattivato per questa stanza');
+  }
 }
 
 
