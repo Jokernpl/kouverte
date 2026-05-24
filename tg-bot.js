@@ -295,6 +295,15 @@ function showMenu(chatId){
 }
 bot.onText(/^\/menu$/i, m => showMenu(m.chat.id));
 
+// /myid — restituisce il chat ID per impostare ADMIN_TELEGRAM_ID su Render
+bot.onText(/^\/myid$/i, m => {
+  bot.sendMessage(m.chat.id,
+    `🆔 Il tuo Telegram Chat ID è:\n\n\`${m.chat.id}\`\n\n` +
+    `Copialo e impostalo come variabile d'ambiente \`ADMIN_TELEGRAM_ID\` su Render per ricevere le notifiche delle iscrizioni.`,
+    { parse_mode: 'Markdown' }
+  ).catch(() => {});
+});
+
 // ============================================================
 // /profilo
 // ============================================================

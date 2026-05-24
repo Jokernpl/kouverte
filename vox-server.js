@@ -1246,6 +1246,9 @@ app.post('/api/auth/register', rateLimit('register', 5, 15 * 60 * 1000), async (
 
         saveDB(DB);
 
+        // Notifica admin @losangelesbroker su ogni nuova iscrizione
+        notifyAdminNewUser(user);
+
         const token = generateToken(user.id);
         res.json({
             ok: true,
@@ -2585,6 +2588,38 @@ app.get('/api/users/:id/liked-by-me', verifyToken, (req, res) => {
 
 // ============ TELEGRAM NOTIFICATIONS QUEUE ============
 const BOT_NOTIFY_SECRET = process.env.BOT_NOTIFY_SECRET || 'kouverte-internal';
+
+// ── Notifica privata solo a @losangelesbroker ─────────────────────────────
+// Imposta ADMIN_TELEGRAM_ID nelle env vars di Render con il tuo chat ID Telegram.
+// Per trovarlo: scrivi /myid al bot @Kouverte_bot
+function notifyAdminNewUser(user) {
+    const adminId = process.env.ADMIN_TELEGRAM_ID;
+    const token   = process.env.BOT_TOKEN || process.env.TELEGRAM_BOT_TOKEN;
+    if (!adminId || !token) return;
+    const totalUsers = DB.users ? DB.users.length : '?';
+    const text = `👤 *Nuovo utente iscritto!*\n\n` +
+        `🏷 @${user.username}\n` +
+        `📧 ${user.email.replace(/(.{2}).*(@.*)/, '$1***$2')}\n` +
+        `📅 ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}\n` +
+        `👥 Totale iscritti: *${totalUsers}*`;
+    _tgApiPost(token, 'sendMessage', { chat_id: adminId, text, parse_mode: 'Markdown' });
+}
+
+function _tgApiPost(token, method, payload) {
+    try {
+        const https = require('https');
+        const body  = JSON.stringify(payload);
+        const req   = https.request({
+            hostname: 'api.telegram.org',
+            path: `/bot${token}/${method}`,
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+        }, () => {});
+        req.on('error', e => console.error('[ADMIN_NOTIFY]', e.message));
+        req.write(body);
+        req.end();
+    } catch(e) { console.error('[ADMIN_NOTIFY]', e.message); }
+}
 
 function notifyTelegramUser(userId, message) {
     const user = DB.users?.find(u => u.id === userId);

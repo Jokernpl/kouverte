@@ -77,60 +77,11 @@
 
 <!-- ░░ SPLASH ░░ -->
 <div id="splash" class="screen active">
-  <!-- Sparkles decorativi -->
-  <div class="sparkles">
-    <div class="sp" style="width:8px;height:8px;background:#ff6b9d;top:15%;left:10%;animation-delay:0s"></div>
-    <div class="sp" style="width:6px;height:6px;background:#38bdf8;top:20%;left:80%;animation-delay:.5s"></div>
-    <div class="sp" style="width:10px;height:10px;background:#facc15;top:10%;left:50%;animation-delay:1s"></div>
-    <div class="sp" style="width:5px;height:5px;background:#4ade80;top:70%;left:15%;animation-delay:.3s"></div>
-    <div class="sp" style="width:7px;height:7px;background:#a78bfa;top:75%;left:75%;animation-delay:.7s"></div>
-    <div class="sp" style="width:6px;height:6px;background:#fb923c;top:35%;left:5%;animation-delay:1.2s"></div>
-    <div class="sp" style="width:8px;height:8px;background:#38bdf8;top:40%;left:90%;animation-delay:.9s"></div>
-    <div class="sp" style="width:4px;height:4px;background:#ff6b9d;top:85%;left:40%;animation-delay:.2s"></div>
-    <!-- Stelle a 4 punte -->
-    <div style="position:absolute;top:18%;left:18%;font-size:16px;color:#ff6b9d;animation:spkl 2.5s ease-in-out infinite">✦</div>
-    <div style="position:absolute;top:22%;right:22%;font-size:12px;color:#38bdf8;animation:spkl 2s ease-in-out infinite .4s">✦</div>
-    <div style="position:absolute;top:8%;left:60%;font-size:14px;color:#facc15;animation:spkl 3s ease-in-out infinite .8s">✦</div>
-    <div style="position:absolute;bottom:25%;left:12%;font-size:10px;color:#4ade80;animation:spkl 2.5s ease-in-out infinite .2s">✦</div>
-    <div style="position:absolute;bottom:20%;right:14%;font-size:18px;color:#a78bfa;animation:spkl 2s ease-in-out infinite .6s">✦</div>
-  </div>
-
-  <div class="kv-logo-wrap">
-    <!-- Badge 100% Anonimo -->
-    <div class="anon-badge-big">🔒 100%<br>ANONIMO</div>
-
-    <!-- Mascot SVG: omino con cappuccio -->
-    <div class="mascot">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <!-- Corpo/mantello -->
-        <ellipse cx="50" cy="72" rx="28" ry="22" fill="#2d1b6e"/>
-        <path d="M22 72 Q20 95 50 96 Q80 95 78 72" fill="#1e1050"/>
-        <!-- Testa -->
-        <circle cx="50" cy="44" r="20" fill="#2d1b6e"/>
-        <!-- Cappuccio -->
-        <path d="M28 38 Q30 18 50 16 Q70 18 72 38 Q65 32 50 30 Q35 32 28 38Z" fill="#1e0d50"/>
-        <path d="M28 42 Q26 22 50 18 Q74 22 72 42" fill="none" stroke="#3b1fa8" stroke-width="1"/>
-        <!-- Ombra cappuccio -->
-        <path d="M32 40 Q33 25 50 22 Q67 25 68 40 Q62 34 50 32 Q38 34 32 40Z" fill="#12082a" opacity=".5"/>
-        <!-- Occhi (svegli, carini) -->
-        <circle cx="43" cy="46" r="5" fill="#fff"/>
-        <circle cx="57" cy="46" r="5" fill="#fff"/>
-        <circle cx="44" cy="46" r="2.5" fill="#12082a"/>
-        <circle cx="58" cy="46" r="2.5" fill="#12082a"/>
-        <!-- Riflesso occhi -->
-        <circle cx="45" cy="45" r="1" fill="#fff"/>
-        <circle cx="59" cy="45" r="1" fill="#fff"/>
-        <!-- Picco cappuccio -->
-        <path d="M46 18 Q50 8 54 18" fill="#1e0d50" stroke="#3b1fa8" stroke-width="1"/>
-        <!-- Glow intorno -->
-        <circle cx="50" cy="44" r="22" fill="none" stroke="#00d4ff" stroke-width="1" opacity=".4"/>
-      </svg>
-    </div>
-
-    <!-- Logo text -->
-    <div class="kv-title">KOUVERTE</div>
-    <div class="kv-tagline">CHATTA · CONOSCI · CONDIVIDI · SENZA ESSERE CHI SEI</div>
-    <div class="sp-spinner"></div>
+  <div class="spl-bg"></div>
+  <div class="spl-content">
+    <div class="spl-wordmark">KOU<span>VERTE</span></div>
+    <div class="spl-claim">la chat italiana</div>
+    <div class="spl-bar"><div class="spl-fill"></div></div>
   </div>
 </div>
 
@@ -785,19 +736,19 @@
       <div class="owiz-dot" id="owDot2"></div>
     </div>
 
-    <!-- Step 1: Benvenuto -->
+    <!-- Step 1: Benvenuto — nuovo design -->
     <div class="owiz-step active" id="owStep0">
-      <div class="owiz-icon">👋</div>
-      <div class="owiz-title">Benvenuto su Kouverte</div>
-      <div class="owiz-sub">La chat italiana anonima.<br>Niente registrazione, niente foto obbligatoria.</div>
-      <div class="owiz-pills">
-        <div class="owiz-pill">🎭 100% Anonimo</div>
-        <div class="owiz-pill">📍 Stanze per città</div>
-        <div class="owiz-pill">📹 Video facoltativo</div>
-        <div class="owiz-pill">💸 Gratis</div>
+      <div class="owiz-hero-logo">KOU<span>VERTE</span></div>
+      <div class="owiz-hero-line"></div>
+      <div class="owiz-headline">Chatta in <em>anonimo</em>.<br>Conosci gente vera.</div>
+      <div class="owiz-lead">Stanze per città, video facoltativo, zero registrazione.</div>
+      <div class="owiz-feats">
+        <div class="owiz-feat">🎭 Anonimo</div>
+        <div class="owiz-feat">📍 Per città</div>
+        <div class="owiz-feat">💸 Gratis</div>
       </div>
-      <button class="owiz-cta" onclick="owizNext(1)">Inizia →</button>
-      <div class="owiz-skip" onclick="owizDone()">Salta il tutorial</div>
+      <button class="owiz-cta" onclick="owizNext(1)" style="font-size:17px;padding:18px">Entra subito →</button>
+      <div class="owiz-skip" onclick="owizDone()" style="margin-top:16px;font-size:12px">Ho già un account · Login</div>
     </div>
 
     <!-- Step 2: Scegli nickname -->

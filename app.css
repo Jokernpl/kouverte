@@ -109,55 +109,27 @@ body{position:relative}
   border:1.5px dashed currentColor;animation:aura-rotate 6s linear infinite;opacity:.6}
 
 /* Sparkles */
-.sparkles{position:absolute;inset:0;pointer-events:none}
-.sp{position:absolute;border-radius:50%;animation:spkl 3s ease-in-out infinite}
-@keyframes spkl{0%,100%{transform:scale(1) rotate(0deg);opacity:.8}50%{transform:scale(1.4) rotate(180deg);opacity:1}}
+/* ── SPLASH (nuovo design 2026) ─────────────────────────────── */
+#splash{background:#080c18;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.spl-bg{position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 50% at 50% 60%,rgba(0,212,255,.08) 0%,transparent 70%),
+             radial-gradient(ellipse 40% 30% at 20% 20%,rgba(255,107,157,.05) 0%,transparent 60%);
+  pointer-events:none}
+.spl-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:10px}
+.spl-wordmark{font-family:'Inter',sans-serif;font-size:48px;font-weight:800;letter-spacing:-3px;
+  color:#fff;line-height:1}
+.spl-wordmark span{color:#00d4ff}
+.spl-claim{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35);
+  font-weight:500;margin-top:4px}
+.spl-bar{width:100px;height:2px;background:rgba(255,255,255,.07);border-radius:2px;
+  overflow:hidden;margin-top:36px}
+.spl-fill{height:100%;width:45%;
+  background:linear-gradient(90deg,transparent,#00d4ff,#ff6b9d,transparent);
+  animation:spl-run 1.4s ease-in-out infinite}
+@keyframes spl-run{0%{transform:translateX(-200%)}100%{transform:translateX(350%)}}
 
-/* Logo KOUVERTE stile immagine */
-.kv-logo-wrap{text-align:center;position:relative;z-index:2}
-
-/* Sfondo splash animato */
-#splash{background:linear-gradient(-45deg,#0f1117,#1a1f3a,#16182a,#1a1f3a,#0f1117);
-  background-size:400% 400%;animation:bg-shift 8s ease infinite;}
-
-/* Omino con cappuccio — fluttua e pulsa */
-.mascot{width:96px;height:96px;margin:0 auto 10px;position:relative;animation:float 3s ease-in-out infinite}
-.mascot svg{width:100%;height:100%;animation:glow-pulse 2.5s ease-in-out infinite}
-/* Anello orbitante intorno al mascot */
-.mascot::after{content:'⭐';position:absolute;top:50%;left:50%;font-size:12px;
-  animation:orbit 4s linear infinite;transform-origin:0 0}
-
-/* Testo logo 3D con flickering neon */
-.kv-title{
-  font-size:52px;font-weight:600;letter-spacing:-2px;color:#fff;
-  animation:logo-glow 2s ease-in-out infinite, neon-flicker 8s linear infinite;
-  line-height:1;margin-bottom:6px;
-  -webkit-text-stroke:1px rgba(255,255,255,.3)
-}
-
-/* Tagline banner verde animata */
-.kv-tagline{
-  background:linear-gradient(90deg,#059669,#10b981,#34d399,#10b981,#059669);
-  background-size:200% auto;animation:bg-shift 3s linear infinite;
-  border-radius:20px;padding:6px 18px;font-size:11px;font-weight:600;
-  letter-spacing:1.5px;color:#fff;text-transform:uppercase;
-  box-shadow:0 0 20px rgba(16,185,129,.6),0 0 40px rgba(16,185,129,.3);
-  display:inline-block;margin-top:6px
-}
-
-/* Badge 100% Anonimo pulsante */
-.anon-badge-big{
-  position:absolute;top:10px;right:-10px;
-  background:linear-gradient(135deg,#059669,#10b981);
-  border-radius:16px;padding:6px 12px;font-size:11px;font-weight:600;
-  color:#fff;border:2px solid rgba(255,255,255,.3);line-height:1.2;text-align:center;
-  transform:rotate(3deg);
-  animation:card-glow 2s ease-in-out infinite;
-  box-shadow:0 0 16px rgba(16,185,129,.8),0 0 32px rgba(16,185,129,.4)
-}
-.sp-spinner{width:28px;height:28px;border:3px solid rgba(0,212,255,.2);border-top-color:#00d4ff;
-  border-right-color:#ff6b9d;border-radius:50%;animation:spin .7s linear infinite;margin:24px auto 0}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* legacy selectors still referenced elsewhere — invisible wrappers */
+.sparkles,.sp,.kv-logo-wrap,.mascot,.kv-title,.kv-tagline,.anon-badge-big,.sp-spinner{display:none!important}
 
 /* ═══════════════════════════════
    HOME
@@ -1052,33 +1024,51 @@ body{position:relative}
 }
 .owiz-sheet{
   width:100%;max-width:480px;
-  background:linear-gradient(180deg,#1a1f3a,#0f1117);
-  border:1px solid rgba(255,255,255,.08);
-  border-top:1px solid rgba(0,212,255,.2);
-  border-radius:24px 24px 0 0;
-  padding:24px 24px 40px;
-  animation:slideUp .35s cubic-bezier(.32,1.28,.32,1)
+  background:linear-gradient(180deg,#0f1420,#0a0d16);
+  border:1px solid rgba(255,255,255,.06);
+  border-top:2px solid rgba(0,212,255,.25);
+  border-radius:28px 28px 0 0;
+  padding:20px 24px 44px;
+  animation:slideUp .4s cubic-bezier(.22,1,.36,1)
 }
-.owiz-handle{width:40px;height:4px;background:rgba(255,255,255,.12);
-  border-radius:4px;margin:0 auto 22px}
+/* step 0 occupa più spazio: niente handle, bg hero */
+#owStep0.owiz-step.active{
+  min-height:340px;justify-content:center;padding-top:8px
+}
+.owiz-handle{width:36px;height:4px;background:rgba(255,255,255,.1);
+  border-radius:4px;margin:0 auto 18px}
+/* nasconde handle nello step 0 (ha il suo look) */
+#owStep0 ~ .owiz-handle{display:none}
 .owiz-step{display:none;flex-direction:column;align-items:center;text-align:center}
 .owiz-step.active{display:flex}
-.owiz-icon{font-size:52px;margin-bottom:14px;
-  filter:drop-shadow(0 4px 16px rgba(0,212,255,.3))}
-.owiz-title{font-size:22px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
+
+/* ── Step 0 hero ─── */
+.owiz-hero-logo{font-family:'Inter',sans-serif;font-size:38px;font-weight:800;
+  letter-spacing:-2px;color:#fff;line-height:1;margin-bottom:4px}
+.owiz-hero-logo span{color:#00d4ff}
+.owiz-hero-line{width:40px;height:2px;background:linear-gradient(90deg,#00d4ff,#ff6b9d);
+  border-radius:2px;margin:10px auto 18px}
+.owiz-headline{font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;
+  line-height:1.2;margin-bottom:10px}
+.owiz-headline em{color:#00d4ff;font-style:normal}
+.owiz-lead{font-size:14px;color:rgba(255,255,255,.5);line-height:1.6;max-width:300px;margin-bottom:22px}
+.owiz-feats{display:flex;gap:10px;justify-content:center;margin-bottom:26px;flex-wrap:wrap}
+.owiz-feat{display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;padding:7px 14px;font-size:13px;color:rgba(255,255,255,.7);font-weight:500}
+
+/* legacy pills still used in steps 2+ */
+.owiz-icon{font-size:46px;margin-bottom:12px;
+  filter:drop-shadow(0 4px 16px rgba(0,212,255,.25))}
+.owiz-title{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
 .owiz-sub{font-size:14px;color:#b4bcc8;line-height:1.6;max-width:340px}
 .owiz-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0}
 .owiz-pill{
-  background:rgba(0,212,255,.08);
-  border:1px solid rgba(0,212,255,.18);
-  border-radius:20px;padding:6px 16px;
-  font-size:13px;color:#b4bcc8;cursor:pointer;
-  transition:all .2s;font-weight:500
+  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);
+  border-radius:20px;padding:6px 16px;font-size:13px;color:#b4bcc8;
+  cursor:pointer;transition:all .2s;font-weight:500
 }
-.owiz-pill:hover,.owiz-pill.sel{
-  background:rgba(0,212,255,.2);
-  border-color:#00d4ff;color:#fff
-}
+.owiz-pill:hover,.owiz-pill.sel{background:rgba(0,212,255,.2);border-color:#00d4ff;color:#fff}
 .owiz-input{
   width:100%;background:rgba(255,255,255,.05);
   border:1px solid rgba(255,255,255,.12);
