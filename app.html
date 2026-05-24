@@ -611,6 +611,30 @@ body{position:relative}
   background:#00d4ff;color:#0f1117;font-size:16px;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform .15s;align-self:flex-end}
+/* ── Voice Message Button ── */
+.cvoice{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
+  background:rgba(0,212,255,.12);color:#00d4ff;font-size:18px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .2s;align-self:flex-end;touch-action:none;user-select:none;
+  -webkit-tap-highlight-color:transparent}
+.cvoice:hover{background:rgba(0,212,255,.22)}
+.cvoice.recording{background:#ef4444;color:#fff;animation:voicePulse .6s ease-in-out infinite}
+@keyframes voicePulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(239,68,68,.5)}
+  50%{transform:scale(1.12);box-shadow:0 0 0 8px rgba(239,68,68,0)}}
+/* ── Voice Message Bubble ── */
+.voice-bubble{display:flex;align-items:center;gap:8px;background:rgba(0,212,255,.08);
+  border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:8px 12px;min-width:140px;max-width:220px}
+.voice-play-btn{width:30px;height:30px;border-radius:50%;border:none;flex-shrink:0;
+  background:#00d4ff;color:#0f1117;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.voice-play-btn:hover{transform:scale(1.08)}
+.voice-play-btn.playing{background:#ff6b9d}
+.voice-waveform{flex:1;height:24px;position:relative;overflow:hidden}
+.voice-bars{display:flex;align-items:center;gap:2px;height:100%}
+.voice-bar{width:3px;border-radius:2px;background:rgba(0,212,255,.5);flex-shrink:0;
+  animation:none;transition:background .2s}
+.voice-bar.active{background:#00d4ff}
+.voice-dur{font-size:11px;color:#6e747d;flex-shrink:0;min-width:28px;text-align:right}
 /* ── Virtual Gifts ── */
 .cgift{width:36px;height:36px;border-radius:50%;border:none;flex-shrink:0;
   background:rgba(255,107,157,.15);color:#ff6b9d;font-size:18px;
@@ -2277,6 +2301,7 @@ html[data-theme="light"] body {
   <div class="chat-bar">
     <div class="chat-bar-row">
       <textarea class="cinput" id="msgInput" placeholder="Scrivi a tutti... 👋" rows="1"></textarea>
+      <button class="cvoice" id="voiceRecordBtn" title="Tieni premuto per registrare">🎙️</button>
       <button class="cgift" onclick="openGiftPicker()" title="Invia un regalo">🎁</button>
       <button class="csend" onclick="sendMsg()">➤</button>
     </div>
@@ -3009,7 +3034,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -4059,6 +4084,10 @@ function connectSocket(){
   socket.on('chat-stop-typing',({roomId,userId})=>{
     if(roomId!==room?.id) return;
     delete typingUsers[userId]; renderTyping();
+  });
+  socket.on('voice-msg',({roomId,msg})=>{
+    if(roomId!==room?.id||!msg?.audio||msg.audio==='[voice]') return;
+    appendVoiceMsg(msg, false);
   });
   socket.on('room-online',({roomId,count})=>{
     const prev=roomOnline[roomId]||0;
@@ -9658,6 +9687,167 @@ function dismissPwaInstall() {
   if (banner) banner.classList.remove('visible');
 }
 
+// --- Voice Messages (hold-to-record) ---
+let voiceRecorder = null;
+let voiceChunks = [];
+let voiceRecordStart = 0;
+let voiceRecordTimer = null;
+
+function initVoiceRecordBtn() {
+  const btn = document.getElementById('voiceRecordBtn');
+  if (!btn) return;
+
+  function startRecording(e) {
+    e.preventDefault();
+    if (!room) { showToast('Entra in una stanza prima 🎙️'); return; }
+    if (!navigator.mediaDevices?.getUserMedia) { showToast('Microfono non supportato'); return; }
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        voiceChunks = [];
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : 'audio/mp4';
+        voiceRecorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 24000 });
+        voiceRecorder.ondataavailable = e => { if (e.data.size > 0) voiceChunks.push(e.data); };
+        voiceRecorder.onstop = () => {
+          stream.getTracks().forEach(t => t.stop());
+          const duration = Math.round((Date.now() - voiceRecordStart) / 1000);
+          if (duration < 1) { voiceChunks = []; btn.classList.remove('recording'); return; }
+          const blob = new Blob(voiceChunks, { type: mimeType.split(';')[0] });
+          sendVoiceMsg(blob, mimeType.split(';')[0], duration);
+          voiceChunks = [];
+        };
+        voiceRecorder.start(250);
+        voiceRecordStart = Date.now();
+        btn.classList.add('recording');
+        btn.textContent = '⏹️';
+        // Max 60 secondi
+        voiceRecordTimer = setTimeout(() => stopRecording(), 60000);
+      })
+      .catch(err => {
+        console.warn('[Voice] mic access denied:', err);
+        showToast('🎙️ Accesso al microfono negato');
+      });
+  }
+
+  function stopRecording(e) {
+    if (e) e.preventDefault();
+    clearTimeout(voiceRecordTimer);
+    if (voiceRecorder && voiceRecorder.state === 'recording') {
+      voiceRecorder.stop();
+      btn.classList.remove('recording');
+      btn.textContent = '🎙️';
+    }
+  }
+
+  // Touch events (mobile hold-to-record)
+  btn.addEventListener('touchstart', startRecording, { passive: false });
+  btn.addEventListener('touchend', stopRecording, { passive: false });
+  btn.addEventListener('touchcancel', stopRecording, { passive: false });
+  // Mouse events (desktop hold-to-record)
+  btn.addEventListener('mousedown', startRecording);
+  btn.addEventListener('mouseup', stopRecording);
+  btn.addEventListener('mouseleave', stopRecording);
+}
+
+function sendVoiceMsg(blob, mimeType, duration) {
+  if (!room || !blob) return;
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64 = reader.result.split(',')[1];
+    if (!base64) return;
+    // Render localmente subito
+    appendVoiceMsg({
+      userId: user.id, name: user.name, color: user.color,
+      face: user.face, audio: base64, mimeType, duration, ts: Date.now()
+    }, true);
+    // Invia al server
+    socket.emit('voice-msg', {
+      roomId: room.id, audio: base64, mimeType, duration,
+      userId: user.id, name: user.name, color: user.color, face: user.face
+    });
+  };
+  reader.readAsDataURL(blob);
+}
+
+function appendVoiceMsg(msg, isOwn) {
+  const msgs = document.getElementById('chatMsgs');
+  if (!msgs) return;
+  const wrap = document.createElement('div');
+  wrap.className = 'chat-msg-wrap' + (isOwn ? ' own' : '');
+  // Generiamo barre wave casuali decorative
+  const barsN = 18;
+  let barsHtml = '';
+  for (let i = 0; i < barsN; i++) {
+    const h = 4 + Math.floor(Math.random() * 16);
+    barsHtml += `<div class="voice-bar" style="height:${h}px"></div>`;
+  }
+  const audioSrc = `data:${msg.mimeType};base64,${msg.audio}`;
+  const durLabel = msg.duration >= 60
+    ? Math.floor(msg.duration/60) + ':' + String(msg.duration%60).padStart(2,'0')
+    : '0:' + String(msg.duration).padStart(2,'0');
+  const audioId = 'va_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+  wrap.innerHTML = `
+    <div class="chat-avatar" style="background:${msg.color||'#00d4ff'}33;color:${msg.color||'#00d4ff'};font-size:15px">${msg.face||'🎭'}</div>
+    <div class="chat-msg-inner">
+      <div class="chat-name">${escHtml(msg.name||'Anonimo')}</div>
+      <div class="voice-bubble">
+        <button class="voice-play-btn" id="vpb_${audioId}" onclick="toggleVoicePlay('${audioId}')">▶</button>
+        <div class="voice-waveform"><div class="voice-bars" id="vbars_${audioId}">${barsHtml}</div></div>
+        <span class="voice-dur" id="vdur_${audioId}">${durLabel}</span>
+        <audio id="vaudio_${audioId}" src="${audioSrc}" preload="none" style="display:none"></audio>
+      </div>
+    </div>`;
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function toggleVoicePlay(audioId) {
+  const audio = document.getElementById('vaudio_' + audioId);
+  const btn = document.getElementById('vpb_' + audioId);
+  const durEl = document.getElementById('vdur_' + audioId);
+  const barsEl = document.getElementById('vbars_' + audioId);
+  if (!audio) return;
+  if (audio.paused) {
+    // Pausa tutti gli altri
+    document.querySelectorAll('.voice-bubble audio').forEach(a => {
+      if (a !== audio && !a.paused) {
+        a.pause();
+        const oid = a.id.replace('vaudio_','');
+        const ob = document.getElementById('vpb_' + oid);
+        if (ob) { ob.textContent = '▶'; ob.classList.remove('playing'); }
+      }
+    });
+    audio.play().catch(()=>{});
+    btn.textContent = '⏸'; btn.classList.add('playing');
+    // Aggiorna timer
+    audio.ontimeupdate = () => {
+      const rem = Math.max(0, audio.duration - audio.currentTime);
+      if (!isNaN(rem)) {
+        const s = Math.ceil(rem);
+        durEl.textContent = '0:' + String(s).padStart(2,'0');
+      }
+      // Colora barre proporzionalmente al progresso
+      const bars = barsEl.querySelectorAll('.voice-bar');
+      const prog = audio.duration ? audio.currentTime / audio.duration : 0;
+      bars.forEach((b, i) => {
+        b.classList.toggle('active', i / bars.length <= prog);
+      });
+    };
+    audio.onended = () => {
+      btn.textContent = '▶'; btn.classList.remove('playing');
+      barsEl.querySelectorAll('.voice-bar').forEach(b => b.classList.remove('active'));
+      const tot = Math.round(audio.duration||0);
+      durEl.textContent = '0:' + String(tot).padStart(2,'0');
+    };
+  } else {
+    audio.pause();
+    btn.textContent = '▶'; btn.classList.remove('playing');
+  }
+}
+
 // --- Push Notifications ---
 const VAPID_PUBLIC_KEY = 'BHfw5QpQadjL3KfUbjDUQVdkfWfDi_-zmcufuuRWvDoDJ6gahQ5a5b2aWrwa6QuhhaAyo-5BCHgnOlxT8cxl7nc';
 
@@ -9685,11 +9875,20 @@ async function subscribePushNotifications() {
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
     const token = localStorage.getItem('kv_token');
+    const anonUserId = (typeof user !== 'undefined' && user?.id) ? user.id : null;
     if (token) {
+      // Utente registrato: usa endpoint JWT
       await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ subscription })
+      });
+    } else if (anonUserId) {
+      // Utente anonimo: usa endpoint senza JWT, identifica per userId locale
+      await fetch('/api/push/subscribe-anon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: anonUserId, subscription })
       });
     }
     localStorage.setItem('push_subscribed', '1');
@@ -9706,18 +9905,18 @@ function dismissPushBanner() {
   if (banner) banner.classList.remove('visible');
 }
 
-// Mostra banner push dopo 30s se l'utente è loggato e non ha ancora subscribed
+// Mostra banner push dopo 30s — sia per utenti registrati che anonimi
 setTimeout(() => {
-  const token = localStorage.getItem('kv_token');
   const subscribed = localStorage.getItem('push_subscribed');
   const dismissed = localStorage.getItem('push_banner_dismissed');
   const isInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (token && !subscribed && !dismissed && 'Notification' in window && Notification.permission === 'default') {
+  const hasUserId = (typeof user !== 'undefined' && user?.id);
+  if (!subscribed && !dismissed && hasUserId && 'Notification' in window && Notification.permission === 'default') {
     const banner = document.getElementById('pushNotifyBanner');
     if (banner) banner.classList.add('visible');
   }
   // Se già in modalità PWA, mostra subito il banner push (più utile)
-  if (isInstalled && token && !subscribed && !dismissed) {
+  if (isInstalled && !subscribed && !dismissed && hasUserId) {
     const banner = document.getElementById('pushNotifyBanner');
     if (banner) banner.classList.add('visible');
   }

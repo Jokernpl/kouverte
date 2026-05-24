@@ -773,6 +773,23 @@ app.post('/api/push/subscribe', verifyToken, (req, res) => {
     res.json({ ok: true });
 });
 
+// Salva subscription push per utenti anonimi (senza JWT)
+app.post('/api/push/subscribe-anon', (req, res) => {
+    const { userId, subscription } = req.body;
+    if (!userId || !subscription || !subscription.endpoint) {
+        return res.status(400).json({ error: 'Parametri mancanti' });
+    }
+    // Sanity check: userId deve essere un id Kouverte locale (formato kv_xxx)
+    if (String(userId).length > 60) return res.status(400).json({ error: 'userId non valido' });
+    DB.push_subscriptions = DB.push_subscriptions || [];
+    DB.push_subscriptions = DB.push_subscriptions.filter(
+        s => !(s.userId === userId && s.subscription.endpoint === subscription.endpoint)
+    );
+    DB.push_subscriptions.push({ userId, subscription, createdAt: Date.now(), anon: true });
+    markDirty();
+    res.json({ ok: true });
+});
+
 // Invia push a un utente specifico (uso interno/admin)
 app.post('/api/push/send', verifyToken, async (req, res) => {
     const { targetUserId, title, body, url } = req.body;
@@ -3801,6 +3818,33 @@ io.on('connection', (socket) => {
         if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
         // Broadcast a tutti nella stanza TRANNE chi ha inviato (il mittente si gestisce lato client)
         socket.to('chat-' + roomId).emit('chat-message', { roomId, msg: clean });
+    });
+
+    // Messaggio vocale: trasmette audio base64 a tutti nella stanza
+    socket.on('voice-msg', ({ roomId, audio, mimeType, userId, name, color, face, duration }) => {
+        if (!roomId || !audio || typeof audio !== 'string') return;
+        // Limita dimensione: base64 di 60s audio opus ≈ 200KB → max 400KB
+        if (audio.length > 550000) return;
+        const safeAudio = audio.replace(/[^A-Za-z0-9+/=]/g, '');
+        const safeMime = ['audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg'].includes(mimeType)
+            ? mimeType : 'audio/webm';
+        const msg = {
+            type: 'voice',
+            userId: String(userId || 'anon').slice(0, 40),
+            name: String(name || 'Anonimo').slice(0, 30),
+            color: /^#[0-9a-f]{6}$/i.test(color) ? color : '#a855f7',
+            face: String(face || '🎭').slice(0, 4),
+            audio: safeAudio,
+            mimeType: safeMime,
+            duration: Math.min(60, Math.max(0, parseInt(duration) || 0)),
+            ts: Date.now(),
+            roomId
+        };
+        // Salva in storia (come i messaggi testo)
+        chatRoomHistory[roomId] = chatRoomHistory[roomId] || [];
+        chatRoomHistory[roomId].push({ ...msg, audio: '[voice]' }); // non salvare blob in storia
+        if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
+        socket.to('chat-' + roomId).emit('voice-msg', { roomId, msg });
     });
 
     socket.on('chat-typing', ({ roomId, user }) => {
