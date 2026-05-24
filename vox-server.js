@@ -4048,7 +4048,32 @@ function getTotalOnline() {
 const scopaQueue   = [];          // { socketId, userId, name, face, color }
 const scopaGames   = new Map();   // gameId → gameState
 const scopaPlrGame = new Map();   // socketId → gameId
+const scopaWatchers= new Set();   // socketId di tutti nella lobby scopa
 const SCOPA_WIN    = 11;
+
+function scopaBroadcastLobby(){
+    const tables = [];
+    let tNum = 0;
+    for(const [, game] of scopaGames){
+        if(game.state === 'finished') continue;
+        tNum++;
+        const [a, b] = game.playerOrder;
+        tables.push({
+            tableNum: tNum,
+            players: [
+                { name: game.playerInfo[a].name, face: game.playerInfo[a].face, score: game.totalScore[a] },
+                { name: game.playerInfo[b].name, face: game.playerInfo[b].face, score: game.totalScore[b] }
+            ],
+            round: game.round || 1
+        });
+    }
+    const queue = scopaQueue.map((p, i) => ({ name: p.name, face: p.face, position: i+1 }));
+    const payload = { tables, queue };
+    for(const sid of scopaWatchers){
+        const s = io.sockets.sockets.get(sid);
+        if(s) s.emit('scopa:lobby', payload);
+    }
+}
 
 function scopaDeck() {
     const cards = [];
@@ -4103,6 +4128,7 @@ function scopaRoundScore(game){
     return{[a]:sa,[b]:sb};
 }
 function scopaNewRound(game){
+    game.round = (game.round || 1) + 1;
     const deck=scopaShuffle(scopaDeck());
     const[a,b]=game.playerOrder;
     game.hands={[a]:deck.splice(0,3),[b]:deck.splice(0,3)};
@@ -4172,6 +4198,7 @@ function scopaEndRound(game){
         if(sb) sb.emit('scopa:game-over',payload);
         scopaPlrGame.delete(game.socketIds[a]);
         scopaPlrGame.delete(game.socketIds[b]);
+        setTimeout(scopaBroadcastLobby, 100);
     } else {
         // Nuova mano tra 3 secondi
         const payload={roundScore:rs,totalScore:game.totalScore};
@@ -4209,6 +4236,7 @@ io.on('connection', (socket) => {
     socket.on('scopa:join', ({ userId, name, face, color }) => {
         if(!userId||typeof userId!=='string') return;
         const uid=userId.slice(0,60);
+        scopaWatchers.add(socket.id);
         // Rimuovi da coda se già presente
         const qi=scopaQueue.findIndex(p=>p.userId===uid);
         if(qi!==-1) scopaQueue.splice(qi,1);
@@ -4221,17 +4249,17 @@ io.on('connection', (socket) => {
         const player={socketId:socket.id,userId:uid,name:String(name||'Anonimo').slice(0,30),face:String(face||'🎭').slice(0,8),color:String(color||'#00d4ff').slice(0,20)};
         scopaQueue.push(player);
         if(scopaQueue.length<2){
-            socket.emit('scopa:waiting',{position:1,total:scopaQueue.length});
+            scopaBroadcastLobby();
             return;
         }
         // Match! Prendi i primi 2
         const p1=scopaQueue.shift(), p2=scopaQueue.shift();
         const s1=io.sockets.sockets.get(p1.socketId), s2=io.sockets.sockets.get(p2.socketId);
-        if(!s1||!s2){if(s1)scopaQueue.unshift(p1);if(s2)scopaQueue.unshift(p2);return;}
+        if(!s1||!s2){if(s1)scopaQueue.unshift(p1);if(s2)scopaQueue.unshift(p2);scopaBroadcastLobby();return;}
         const deck=scopaShuffle(scopaDeck());
         const gameId='sc'+Date.now().toString(36);
         const game={
-            gameId, playerOrder:[p1.userId,p2.userId],
+            gameId, round:1, playerOrder:[p1.userId,p2.userId],
             playerInfo:{[p1.userId]:p1,[p2.userId]:p2},
             socketIds:{[p1.userId]:p1.socketId,[p2.userId]:p2.socketId},
             hands:{[p1.userId]:deck.splice(0,3),[p2.userId]:deck.splice(0,3)},
@@ -4247,8 +4275,8 @@ io.on('connection', (socket) => {
         scopaPlrGame.set(p2.socketId,gameId);
         s1.emit('scopa:state',scopaPublic(game,p1.userId));
         s2.emit('scopa:state',scopaPublic(game,p2.userId));
-        // Notifica coda rimanente
-        scopaQueue.forEach((p,i)=>{const s=io.sockets.sockets.get(p.socketId);if(s)s.emit('scopa:waiting',{position:i+1,total:scopaQueue.length});});
+        // Broadcast lobby aggiornato a tutti (coda rimanente + altri watcher)
+        scopaBroadcastLobby();
     });
 
     socket.on('scopa:play-card', ({ gameId, cardId, captureIds }) => {
@@ -4320,6 +4348,8 @@ io.on('connection', (socket) => {
         }
         const qi=scopaQueue.findIndex(p=>p.socketId===socket.id);
         if(qi!==-1) scopaQueue.splice(qi,1);
+        scopaWatchers.delete(socket.id);
+        scopaBroadcastLobby();
     });
 
     // Register user with socket
@@ -5034,6 +5064,8 @@ io.on('connection', (socket) => {
         }
         const qsi=scopaQueue.findIndex(p=>p.socketId===socket.id);
         if(qsi!==-1) scopaQueue.splice(qsi,1);
+        scopaWatchers.delete(socket.id);
+        if(qsi!==-1||scopaGid) scopaBroadcastLobby();
     });
 });
 

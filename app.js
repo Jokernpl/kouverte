@@ -3490,10 +3490,12 @@ async function playProfileVoiceNote(userId){
 // ══════════════════════════════════════════════════════════════
 // ♠  SCOPA — Carte Napoletane (multiplayer 1vs1)
 // ══════════════════════════════════════════════════════════════
-var _sc = null;  // game state
-var _scSelCard = null;  // carta in mano selezionata (id)
-var _scSelCap = [];    // id carte tavolo selezionate per cattura
+var _sc = null;       // game state
+var _scSelCard = null; // carta in mano selezionata (id)
+var _scSelCap = [];   // id carte tavolo selezionate per cattura
 var _scGameId = null;
+var _scLobby = null;  // lobby data { tables, queue }
+var _scMyQPos = 1;    // posizione in coda
 
 const SC_ICON  = {coppe:'♥',denari:'♦',bastoni:'♣',spade:'♠'};
 const SC_COLOR = {coppe:'#f43f5e',denari:'#f59e0b',bastoni:'#22c55e',spade:'#38bdf8'};
@@ -3537,14 +3539,15 @@ function closeScopaGame(){
   const scr=document.getElementById('scopaScreen');
   if(scr){scr.classList.remove('show');setTimeout(()=>scr.remove(),420);}
   if(socket?.connected) socket.emit('scopa:leave');
-  _sc=null; _scSelCard=null; _scSelCap=[]; _scGameId=null;
+  _sc=null; _scSelCard=null; _scSelCap=[]; _scGameId=null; _scLobby=null; _scMyQPos=1;
   window._scopaLR=false;
 }
 
 function registerScopaListeners(){
   if(window._scopaLR||!socket) return;
   window._scopaLR=true;
-  socket.on('scopa:waiting',({position,total})=> scRenderWaiting(position,total));
+  socket.on('scopa:waiting',({position,total})=>{ _scMyQPos=position; scRenderWaiting(position,total); });
+  socket.on('scopa:lobby',(data)=>{ _scLobby=data; if(!_sc){ const myQ=data.queue.find((_,i)=>i+1===_scMyQPos)||data.queue[0]; scRenderWaiting(_scMyQPos, data.queue.length||1); } });
   socket.on('scopa:state',(st)=>{ _sc=st; _scGameId=st.gameId; _scSelCard=null; _scSelCap=[]; scRender(); });
   socket.on('scopa:scopa',({byPlayerId})=>{
     const mine=byPlayerId===(user.serverId||user.id);
@@ -3638,14 +3641,44 @@ function scRenderWaiting(pos, tot){
   const body=document.getElementById('scopaBody');
   if(!body) return;
   document.getElementById('scHdrScore').innerHTML='';
+  const tables=_scLobby?.tables||[];
+  const queueList=_scLobby?.queue||[];
+
+  const tablesHTML=tables.length?`
+    <div class="sc-lobby-wrap">
+      <div class="sc-lobby-hdr">
+        <span class="sc-lobby-dot"></span>
+        ${tables.length} tavolo${tables.length>1?'i':''} attiv${tables.length>1?'i':'o'}
+        <span class="sc-lobby-sep">·</span>
+        ${queueList.length} in coda
+      </div>
+      ${tables.map(t=>`
+        <div class="sc-lobby-table">
+          <div class="sc-lobby-tnum">Tavolo ${t.tableNum} <span class="sc-lobby-mano">Mano ${t.round}</span></div>
+          <div class="sc-lobby-vs">
+            <span class="sc-lobby-plr">${esc(t.players[0].face)}&thinsp;${esc(t.players[0].name)}</span>
+            <span class="sc-lobby-score-box">${t.players[0].score}&thinsp;—&thinsp;${t.players[1].score}</span>
+            <span class="sc-lobby-plr right">${esc(t.players[1].name)}&thinsp;${esc(t.players[1].face)}</span>
+          </div>
+        </div>`).join('')}
+    </div>`:`<div class="sc-lobby-empty">🃏 Nessun tavolo attivo</div>`;
+
+  const queueHTML=queueList.length>1?`
+    <div class="sc-queue-row">
+      ${queueList.map(p=>`<span class="sc-queue-chip">${esc(p.face)}</span>`).join('')}
+    </div>`:'' ;
+
   body.innerHTML=`
   <div class="sc-waiting">
     <div class="sc-wait-deck">
       ${[0,1,2,3].map(i=>`<div class="sc-wait-card" style="transform:rotate(${(i-1.5)*9}deg) translateY(${Math.abs(i-1.5)*6}px)"></div>`).join('')}
     </div>
-    <div class="sc-wait-title">${pos===1&&tot===1?'In attesa di un avversario…':`Coda · Posizione ${pos}`}</div>
-    <div class="sc-wait-sub">${tot===1?'Sei il primo — aspetta un avversario':tot+' giocatori in coda'}</div>
-    <div class="sc-wait-dots"><span></span><span></span><span></span></div>
+    ${tablesHTML}
+    <div class="sc-wait-queue-info">
+      <div class="sc-wait-pos">${pos===1&&tot<=1?'👤 In attesa di avversario…':`⏳ Coda · posizione ${pos} / ${tot}`}</div>
+      ${queueHTML}
+      <div class="sc-wait-dots"><span></span><span></span><span></span></div>
+    </div>
     <div class="sc-rules">
       <div class="sc-rules-title">📜 Regole Scopa</div>
       <div class="sc-rule"><span class="sc-rb">♥♦♣♠</span> Mazzo napoletano 40 carte, 4 semi</div>

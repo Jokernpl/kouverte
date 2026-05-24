@@ -2481,3 +2481,22 @@ html[data-theme="light"] body {
 @keyframes scopa-flash-in{0%{transform:scale(0.4) rotate(-8deg);opacity:0}100%{transform:scale(1) rotate(0deg);opacity:1}}
 @keyframes scopa-trophy{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0deg)}}
 @keyframes sc-dot-pulse{0%,100%{opacity:.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1)}}
+
+/* ── Lobby: tavoli attivi ── */
+.sc-lobby-wrap{width:100%;max-width:320px;display:flex;flex-direction:column;gap:8px}
+.sc-lobby-hdr{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:rgba(0,255,136,0.6);letter-spacing:1px;text-transform:uppercase;padding:0 2px}
+.sc-lobby-dot{width:8px;height:8px;border-radius:50%;background:#00ff88;box-shadow:0 0 8px #00ff88;animation:sc-dot-pulse 1.5s ease-in-out infinite;flex-shrink:0}
+.sc-lobby-sep{color:rgba(255,255,255,0.2)}
+.sc-lobby-table{background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.12);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.sc-lobby-tnum{font-size:10px;font-weight:700;color:rgba(0,255,136,0.45);letter-spacing:1.5px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.sc-lobby-mano{color:rgba(255,255,255,0.2);font-weight:400;letter-spacing:0}
+.sc-lobby-vs{display:flex;align-items:center;gap:6px}
+.sc-lobby-plr{flex:1;font-size:13px;font-weight:700;color:rgba(255,255,255,0.65);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-lobby-plr.right{text-align:right}
+.sc-lobby-score-box{font-size:15px;font-weight:900;color:#fff;letter-spacing:2px;flex-shrink:0;background:rgba(255,255,255,0.06);border-radius:8px;padding:3px 8px;text-align:center;min-width:52px}
+.sc-lobby-empty{font-size:11px;color:rgba(0,255,136,0.2);letter-spacing:1px;font-style:italic;text-align:center}
+/* Coda info */
+.sc-wait-queue-info{display:flex;flex-direction:column;align-items:center;gap:6px}
+.sc-wait-pos{font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);letter-spacing:.5px}
+.sc-queue-row{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.sc-queue-chip{width:28px;height:28px;border-radius:50%;background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.15);display:flex;align-items:center;justify-content:center;font-size:14px}
