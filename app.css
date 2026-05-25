@@ -3598,3 +3598,37 @@ html[data-theme="light"] body {
   background:linear-gradient(135deg,#ec4899,#f43f5e);color:#fff;
   box-shadow:0 8px 24px rgba(236,72,153,.5);transform:scale(1.05)
 }
+
+/* ═══════════════════════════════
+   DESKTOP RESPONSIVE — v1
+   Kouverte è mobile-first ma su
+   schermi grandi non deve sembrare
+   un telefono in mezzo al nulla.
+═══════════════════════════════ */
+@media (min-width: 600px) {
+  /* Background decorativo per i lati vuoti */
+  html, body {
+    background:
+      radial-gradient(ellipse 55% 60% at 8% 50%, rgba(0,212,255,.045) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 45% at 92% 35%, rgba(139,92,246,.055) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 55% at 50% 95%, rgba(255,107,157,.03) 0%, transparent 60%),
+      #0c0e1a;
+  }
+  /* Contenitore leggermente più largo + card glow */
+  .screen {
+    max-width: 520px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.04),
+      0 0 80px rgba(0,0,0,.6),
+      0 0 40px rgba(0,212,255,.04);
+  }
+}
+
+@media (min-width: 1024px) {
+  .screen { max-width: 560px; }
+}
+
+@media (min-width: 1440px) {
+  .screen { max-width: 600px; }
+}
+
