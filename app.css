@@ -3668,31 +3668,50 @@ html[data-theme="light"] body {
     box-shadow:0 0 20px rgba(168,85,247,.12)
   }
 
-  /* ── Full-screen mode ── */
+  /* ── Full-screen mode — tutto ai bordi ── */
   html.kv-full .screen {
     max-width:100% !important;
+    width:100% !important;
+    left:0 !important;
+    right:0 !important;
+    margin:0 !important;
     box-shadow:none !important;
     border:none !important;
   }
+  /* sfondo solido — nessun gradiente visibile ai lati */
+  html.kv-full,
+  html.kv-full body { background:#0f1117 !important }
+
   html.kv-full .home-body {
-    padding:14px 32px 90px;
-    max-width:1600px;
-    margin:0 auto;
+    width:100% !important;
+    max-width:none !important;
+    margin:0 !important;
+    padding:14px 36px 90px !important;
+    box-sizing:border-box !important;
   }
   html.kv-full #roomsList {
-    grid-template-columns:repeat(auto-fill,minmax(195px,1fr));
-    gap:8px;
-  }
-  html.kv-full .live-stats-bar {
-    border-radius:0;
-    margin-left:-32px;
-    margin-right:-32px;
+    grid-template-columns:repeat(4,1fr) !important;
+    gap:10px;
   }
   html.kv-full .home-hdr {
-    padding-left:32px;
-    padding-right:32px;
+    padding-left:36px !important;
+    padding-right:36px !important;
+  }
+  html.kv-full .live-stats-bar {
+    border-radius:0 !important;
+    margin:0 !important;
+    padding-left:36px !important;
+    padding-right:36px !important;
+  }
+  html.kv-full .kv-hero-card {
+    border-radius:0 !important;
+    margin:0 !important;
   }
   html.kv-full .sec-label-row { padding:0 }
+  html.kv-full .code-room-section { padding-left:0; padding-right:0 }
+}
+@media (min-width:1600px){
+  html.kv-full #roomsList { grid-template-columns:repeat(5,1fr) !important; }
 }
 
 
