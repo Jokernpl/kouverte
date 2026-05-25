@@ -3583,6 +3583,16 @@ function registerScopaListeners(){
     if(btn){btn.textContent='✅ Accetta rivincita';btn.style.background='#10b981';}
   });
   socket.on('scopa:error',({msg})=> showToast('❌ '+msg));
+  socket.on('scopa:bot-countdown', ({seconds}) => {
+    const el = document.getElementById('scBotCountdown');
+    if(!el) return;
+    if(seconds > 0){
+      el.style.display = 'block';
+      el.innerHTML = `<span style="color:#94a3b8;font-size:13px">Nessun avversario trovato — </span><span style="color:#f59e0b;font-weight:700">🤖 Bot tra ${seconds}s</span>`;
+    } else {
+      el.innerHTML = `<span style="color:#f59e0b;font-weight:700">🤖 Avvio partita vs Bot…</span>`;
+    }
+  });
   socket.on('scopa:credits-update', ({delta, total, freeGame, remaining, reason}) => {
     if(reason==='free'){
       const leftTxt = remaining > 0 ? ` (${remaining} gratis rimast${remaining===1?'a':'e'})` : ' (ultima gratis!)';
@@ -3710,6 +3720,7 @@ function scRenderWaiting(pos, tot){
     <div class="sc-wait-queue-info">
       <div class="sc-wait-pos">${pos===1&&tot<=1?'👤 In attesa di avversario…':`⏳ Coda · posizione ${pos} / ${tot}`}</div>
       ${queueHTML}
+      <div id="scBotCountdown" style="display:none;text-align:center;margin:6px 0;padding:8px 14px;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:10px;font-size:13px"></div>
       <div class="sc-wait-dots"><span></span><span></span><span></span></div>
     </div>
     <div class="sc-rules">

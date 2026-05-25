@@ -4400,7 +4400,6 @@ function scopaNextTurn(game){
             game.hands[a]=game.deck.splice(0,3);
             game.hands[b]=game.deck.splice(0,3);
         } else {
-            // Fine mano: le carte rimaste sul tavolo vanno all'ultimo che ha preso
             if(game.table.length>0&&game.lastCapBy){
                 game.captured[game.lastCapBy].push(...game.table);
                 game.table=[];
@@ -4409,10 +4408,16 @@ function scopaNextTurn(game){
         }
     }
     scopaEmitBoth(game);
+    // Se è il turno del bot, gioca dopo 1.2 secondi (pausa naturale)
+    if(game.isBot && game.currentTurn && game.currentTurn.startsWith('bot_')){
+        setTimeout(() => scopaBotPlay(game), 1200);
+    }
 }
 const SCOPA_FREE_GAMES  = 3;
 const SCOPA_ENTRY_COST  = 5;
 const SCOPA_WIN_REWARD  = 20; // 10 × 2
+const SCOPA_BOT_WAIT    = 20; // secondi prima di assegnare il bot
+const scopaBotTimers    = new Map(); // userId → { timer, socketId, countdown[] }
 
 function _scopaStats(userId){
     DB.scopa_stats = DB.scopa_stats || {};
@@ -4442,6 +4447,7 @@ function scopaRecordGame(p1Id, p2Id){
     markDirty();
 }
 function scopaAwardWin(winnerId, winnerSocketId){
+    if(winnerId.startsWith('bot_')) return; // bot non riceve crediti
     const cr = _scopaCredits(winnerId);
     cr.credits += SCOPA_WIN_REWARD;
     cr.updated_at = now();
@@ -4449,6 +4455,89 @@ function scopaAwardWin(winnerId, winnerSocketId){
     markDirty();
     const ws = io.sockets.sockets.get(winnerSocketId);
     if(ws) ws.emit('scopa:credits-update', { delta: SCOPA_WIN_REWARD, total: cr.credits, reason:'win' });
+}
+
+// ── BOT AI ──────────────────────────────────────────────────────────────────
+
+function scopaBotChooseMove(hand, table){
+    // Per ogni carta in mano calcola le catture possibili
+    let best = null; // { card, cardIdx, captured, score }
+    for(let i=0;i<hand.length;i++){
+        const card = hand[i];
+        const opts = scopaCaptures(card, table);
+        if(opts.length === 0) continue;
+        // Scegli la cattura ottimale: preferisce scopa, poi più carte, poi valore più alto
+        for(const combo of opts){
+            const isScopa = combo.length === table.length;
+            const score = (isScopa ? 1000 : 0) + combo.reduce((s,c)=>s+c.value,0) + combo.length*5;
+            if(!best || score > best.score) best = { card, cardIdx:i, captured:combo, score };
+        }
+    }
+    if(best) return best;
+    // Nessuna cattura: gioca la carta di valore più basso (strategia difensiva)
+    const minCard = hand.reduce((a,b) => a.value <= b.value ? a : b);
+    return { card: minCard, cardIdx: hand.indexOf(minCard), captured: null, score: 0 };
+}
+
+function scopaBotPlay(game){
+    if(!game || game.state !== 'playing') return;
+    const botId = game.playerOrder.find(id => id.startsWith('bot_'));
+    if(!botId || game.currentTurn !== botId) return;
+    const hand = game.hands[botId];
+    if(!hand || hand.length === 0) return;
+
+    const move = scopaBotChooseMove(hand, game.table);
+    if(move.captured && move.captured.length > 0){
+        scopaExecCapture(game, botId, move.card, move.cardIdx, move.captured);
+    } else {
+        // Metti carta sul tavolo
+        hand.splice(move.cardIdx, 1);
+        game.table.push(move.card);
+        game.lastCapBy = null;
+        scopaNextTurn(game);
+    }
+}
+
+function scopaStartBotMatch(player, socketId){
+    // Rimuovi dalla coda se ancora presente
+    const qi = scopaQueue.findIndex(p => p.userId === player.userId);
+    if(qi !== -1) scopaQueue.splice(qi, 1);
+
+    const s = io.sockets.sockets.get(socketId);
+    if(!s) return;
+
+    // Deduci ingresso per il giocatore umano
+    const fee = scopaDeductEntry(player.userId);
+    if(!fee.ok){
+        s.emit('scopa:error', { msg:`Crediti insufficienti (serve ${SCOPA_ENTRY_COST}, hai ${fee.credits}). Ricarica nello Shop!` });
+        return;
+    }
+    if(fee.freeGame) s.emit('scopa:credits-update',{ delta:0, freeGame:true, remaining:fee.remaining, reason:'free' });
+    else s.emit('scopa:credits-update',{ delta:-SCOPA_ENTRY_COST, total:_scopaCredits(player.userId).credits, reason:'entry' });
+    _scopaStats(player.userId).gamesPlayed++;
+    markDirty();
+
+    const botId = 'bot_' + Date.now().toString(36);
+    const botInfo = { socketId:'BOT', userId:botId, name:'🤖 KouverteBot', face:'🤖', color:'#00d4ff', isBot:true };
+    const deck = scopaShuffle(scopaDeck());
+    const gameId = 'sc' + Date.now().toString(36);
+    const game = {
+        gameId, round:1, playerOrder:[player.userId, botId],
+        playerInfo:{ [player.userId]:player, [botId]:botInfo },
+        socketIds:{ [player.userId]:socketId, [botId]:'BOT' },
+        hands:{ [player.userId]:deck.splice(0,3), [botId]:deck.splice(0,3) },
+        table:deck.splice(0,4), deck,
+        captured:{ [player.userId]:[], [botId]:[] },
+        scope:{ [player.userId]:0, [botId]:0 },
+        totalScore:{ [player.userId]:0, [botId]:0 },
+        currentTurn:player.userId, roundStarter:player.userId,
+        lastCapBy:null, state:'playing', isBot:true, botId
+    };
+    scopaGames.set(gameId, game);
+    scopaPlrGame.set(socketId, gameId);
+    s.emit('scopa:state', scopaPublic(game, player.userId));
+    scopaBroadcastLobby();
+    console.log(`[SCOPA] Bot game avviato: ${player.userId} vs ${botId}`);
 }
 
 function scopaEndRound(game){
@@ -4543,10 +4632,33 @@ io.on('connection', (socket) => {
         }
         const player={socketId:socket.id,userId:uid,name:String(name||'Anonimo').slice(0,30),face:String(face||'🎭').slice(0,8),color:String(color||'#00d4ff').slice(0,20)};
         scopaQueue.push(player);
+
+        // Annulla eventuale timer bot precedente per questo utente
+        if(scopaBotTimers.has(uid)){ clearTimeout(scopaBotTimers.get(uid).timer); scopaBotTimers.delete(uid); }
+
         if(scopaQueue.length<2){
             scopaBroadcastLobby();
+            // Avvia countdown bot: se dopo SCOPA_BOT_WAIT secondi è ancora solo, avvia partita vs bot
+            let secondsLeft = SCOPA_BOT_WAIT;
+            const cdInterval = setInterval(() => {
+                secondsLeft--;
+                const s = io.sockets.sockets.get(socket.id);
+                if(s) s.emit('scopa:bot-countdown', { seconds: secondsLeft });
+                if(secondsLeft <= 0) clearInterval(cdInterval);
+            }, 1000);
+            const botTimer = setTimeout(() => {
+                clearInterval(cdInterval);
+                scopaBotTimers.delete(uid);
+                // Controlla che sia ancora in coda (non matchato nel frattempo)
+                const stillInQueue = scopaQueue.findIndex(p => p.userId === uid) !== -1;
+                if(stillInQueue) scopaStartBotMatch(player, socket.id);
+            }, SCOPA_BOT_WAIT * 1000);
+            scopaBotTimers.set(uid, { timer: botTimer, interval: cdInterval });
             return;
         }
+
+        // Annulla timer bot per entrambi i giocatori matchati
+        for(const p of [uid]) { if(scopaBotTimers.has(p)){ clearTimeout(scopaBotTimers.get(p).timer); clearInterval(scopaBotTimers.get(p).interval); scopaBotTimers.delete(p); } }
         // Match! Prendi i primi 2
         const p1=scopaQueue.shift(), p2=scopaQueue.shift();
         const s1=io.sockets.sockets.get(p1.socketId), s2=io.sockets.sockets.get(p2.socketId);
@@ -4648,15 +4760,26 @@ io.on('connection', (socket) => {
             if(game){
                 const myId=game.playerOrder.find(id=>game.socketIds[id]===socket.id);
                 const oppId=game.playerOrder.find(id=>game.socketIds[id]!==socket.id);
-                const oppSock=oppId?io.sockets.sockets.get(game.socketIds[oppId]):null;
-                if(oppSock) oppSock.emit('scopa:opp-left',{});
+                // Se avversario è bot, termina semplicemente (niente notifica)
+                if(!oppId || !oppId.startsWith('bot_')){
+                    const oppSock=oppId?io.sockets.sockets.get(game.socketIds[oppId]):null;
+                    if(oppSock) oppSock.emit('scopa:opp-left',{});
+                }
                 scopaGames.delete(gid);
                 scopaPlrGame.delete(socket.id);
-                if(oppId) scopaPlrGame.delete(game.socketIds[oppId]);
+                if(oppId && !oppId.startsWith('bot_')) scopaPlrGame.delete(game.socketIds[oppId]);
             }
         }
         const qi=scopaQueue.findIndex(p=>p.socketId===socket.id);
         if(qi!==-1) scopaQueue.splice(qi,1);
+        // Annulla timer bot se presente
+        for(const [uid,bt] of scopaBotTimers){
+            if(io.sockets.sockets.get(bt.timer)?._socketId === socket.id || true){
+                // cerca per socketId nel player
+                const pl = scopaQueue.find(p=>p.socketId===socket.id);
+                if(!pl){ clearTimeout(bt.timer); if(bt.interval) clearInterval(bt.interval); scopaBotTimers.delete(uid); break; }
+            }
+        }
         scopaWatchers.delete(socket.id);
         scopaBroadcastLobby();
     });
