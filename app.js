@@ -4774,7 +4774,7 @@ function tempBadge(cnt){
   if(cnt>=5)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ff6b9d,#00d4ff);color:#0f1117"><span>🔥</span><span>HOT</span></div>`;
   if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#00e5b8,#00d4ff);color:#0f1117"><span>✨</span><span>ATTIVA</span></div>`;
   if(cnt>=1)  return `<div class="rc-flag-pill"><span>💬</span><span>LIVE</span></div>`;
-  return `<div class="rc-flag-pill rc-empty-pill" style="background:linear-gradient(90deg,rgba(251,191,36,.22),rgba(255,107,157,.18));color:#fbbf24;border:1px solid rgba(251,191,36,.35)"><span>✨</span><span>SII IL PRIMO</span></div>`;
+  return `<div class="rc-flag-pill rc-empty-pill" style="background:linear-gradient(90deg,rgba(251,191,36,.22),rgba(255,107,157,.18));color:#fbbf24;border:1px solid rgba(251,191,36,.35);white-space:nowrap;font-size:9px;padding:3px 7px"><span>✨</span><span>1°</span></div>`;
 }
 
 function gameCard(r){

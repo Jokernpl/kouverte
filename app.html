@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260616">
+<link rel="stylesheet" href="/app.css?v=20260617">
 </head>
 <body>
 
@@ -136,8 +136,8 @@
       </div>
     </div>
 
-    <!-- Banner Installa app PWA -->
-    <div id="installBanner" class="install-banner" onclick="triggerInstall()" style="display:none">
+    <!-- Banner Installa app PWA (legacy: nascosto, sostituito dal nuovo #pwaInstallBanner) -->
+    <div id="installBanner" class="install-banner" onclick="triggerInstall()" style="display:none !important">
       <div class="tg-icon" style="background:#00d4ff">📲</div>
       <div class="tg-text">
         <div class="tg-title">Installa l'app</div>
@@ -1239,7 +1239,7 @@
 </div>
 
 
-<script src="/app.js?v=20260616"></script>
+<script src="/app.js?v=20260617"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
