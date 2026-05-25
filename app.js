@@ -3515,11 +3515,12 @@ var _scGameId = null;
 var _scLobby = null;  // lobby data { tables, queue }
 var _scMyQPos = 1;    // posizione in coda
 
-const SC_ICON  = {coppe:'♥',denari:'♦',bastoni:'♣',spade:'♠'};
-const SC_COLOR = {coppe:'#f43f5e',denari:'#f59e0b',bastoni:'#22c55e',spade:'#38bdf8'};
-const SC_VL    = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
-const SC_VN    = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
-const SC_SN    = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
+const SC_ICON      = {coppe:'🏆',denari:'🪙',bastoni:'🪵',spade:'⚔️'};
+const SC_COLOR     = {coppe:'#c01e2e',denari:'#b7790d',bastoni:'#166534',spade:'#1d4ed8'};
+const SC_FACE_ICON = {8:'🧑',9:'🐎',10:'👑'};
+const SC_VL        = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
+const SC_VN        = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
+const SC_SN        = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
 
 function openScopaGame(){
   let scr=document.getElementById('scopaScreen');
@@ -3630,12 +3631,20 @@ function scCardHTML(card, opts={}){
   }
   const icon=SC_ICON[card.suit], color=SC_COLOR[card.suit], lbl=SC_VL[card.value];
   const isFace=card.value>=8;
-  return `<div class="sc-card${isFace?' sc-face':''} ${sel?'sc-selectable':''} ${selected?'sc-selected':''} ${dimmed?'sc-dimmed':''} ${small?'sc-sm':''}"
+  if(small){
+    return `<div class="sc-card sc-sm${isFace?' sc-face':''} ${dimmed?'sc-dimmed':''}"
+      style="--sc:${color}" data-cid="${card.id}">
+      <span class="sc-vt">${lbl}</span>
+      <span class="sc-sm-suit">${icon}</span>
+    </div>`;
+  }
+  const center=isFace?SC_FACE_ICON[card.value]:icon;
+  return `<div class="sc-card${isFace?' sc-face':''} ${sel?'sc-selectable':''} ${selected?'sc-selected':''} ${dimmed?'sc-dimmed':''}"
     style="--sc:${color}" data-cid="${card.id}"
     onclick="${sel?`scCardClick('${card.id}')`:''}">
-    <span class="sc-vt">${lbl}</span>
-    <span class="sc-si">${icon}</span>
-    <span class="sc-vb">${lbl}</span>
+    <div class="sc-corner"><span class="sc-vt">${lbl}</span><span class="sc-mini-suit">${icon}</span></div>
+    <span class="sc-si">${center}</span>
+    <div class="sc-corner sc-flip"><span class="sc-vt">${lbl}</span><span class="sc-mini-suit">${icon}</span></div>
   </div>`;
 }
 
@@ -3725,7 +3734,7 @@ function scRenderWaiting(pos, tot){
     </div>
     <div class="sc-rules">
       <div class="sc-rules-title">📜 Regole Scopa</div>
-      <div class="sc-rule"><span class="sc-rb">♥♦♣♠</span> Mazzo napoletano 40 carte, 4 semi</div>
+      <div class="sc-rule"><span class="sc-rb">🏆🪙🪵⚔️</span> Mazzo napoletano 40 carte, 4 semi</div>
       <div class="sc-rule"><span class="sc-rb">🎯</span> Cattura carte con lo stesso valore</div>
       <div class="sc-rule"><span class="sc-rb">⚡</span> <b>Scopa</b>: prendi tutte le carte del tavolo</div>
       <div class="sc-rule"><span class="sc-rb">🏆</span> <b>Carte</b>: chi ne ha di più (+1pt)</div>
