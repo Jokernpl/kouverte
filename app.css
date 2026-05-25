@@ -3132,24 +3132,26 @@ html[data-theme="light"] body {
   0%,100%{filter:hue-rotate(0deg)}
   50%{filter:hue-rotate(20deg)}
 }
-.kv-hero-wave{
-  display:flex;align-items:center;gap:2.5px;height:24px
+.kv-hero-chat-icon{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  width:30px;height:30px;
+  background:rgba(255,255,255,.18);
+  border-radius:14px 14px 14px 4px;
+  padding:0 6px;
+  box-shadow:inset 0 0 8px rgba(255,255,255,.2)
 }
-.kv-hero-wave span{
-  display:block;width:3px;border-radius:2px;
+.kv-chat-dot{
+  display:block;width:5px;height:5px;border-radius:50%;
   background:#fff;
-  box-shadow:0 0 6px rgba(255,255,255,.6)
+  box-shadow:0 0 4px rgba(255,255,255,.7);
+  animation:chatTyping 1.4s ease-in-out infinite
 }
-.kv-hero-wave span:nth-child(1){height:30%;animation:wave 1.1s ease-in-out infinite;animation-delay:0s}
-.kv-hero-wave span:nth-child(2){height:60%;animation:wave 1.1s ease-in-out infinite;animation-delay:.1s}
-.kv-hero-wave span:nth-child(3){height:90%;animation:wave 1.1s ease-in-out infinite;animation-delay:.2s}
-.kv-hero-wave span:nth-child(4){height:70%;animation:wave 1.1s ease-in-out infinite;animation-delay:.3s}
-.kv-hero-wave span:nth-child(5){height:95%;animation:wave 1.1s ease-in-out infinite;animation-delay:.4s}
-.kv-hero-wave span:nth-child(6){height:50%;animation:wave 1.1s ease-in-out infinite;animation-delay:.5s}
-.kv-hero-wave span:nth-child(7){height:75%;animation:wave 1.1s ease-in-out infinite;animation-delay:.6s}
-@keyframes wave{
-  0%,100%{transform:scaleY(.35)}
-  50%{transform:scaleY(1)}
+.kv-chat-dot:nth-child(1){animation-delay:0s}
+.kv-chat-dot:nth-child(2){animation-delay:.2s}
+.kv-chat-dot:nth-child(3){animation-delay:.4s}
+@keyframes chatTyping{
+  0%,60%,100%{transform:translateY(0);opacity:.5}
+  30%{transform:translateY(-4px);opacity:1}
 }
 .kv-hero-v2 .kv-hero-title{
   font-size:24px !important;font-weight:900 !important;

@@ -262,7 +262,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   initParticles();
   startLiveFeed();
   startLiveStats();
-  loadVoicesFeed();
   // Hook chat modes (ephemeral, effetti, bot)
   setupChatModesHooks();
   // Auto-login: pre-marca "ricordato" se token presente per evitare Login Wall
@@ -4721,7 +4720,7 @@ function updateLiveStats(){
       const hourBoost = Math.floor(new Date().getHours() * 1.5);
       newRooms.textContent = base + hourBoost;
       const lbl = newRooms.parentElement?.querySelector('.live-stat-label');
-      if(lbl) lbl.textContent = 'voci oggi';
+      if(lbl) lbl.textContent = 'chat oggi';
     }
   }
 }

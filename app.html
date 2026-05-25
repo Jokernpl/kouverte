@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260619">
+<link rel="stylesheet" href="/app.css?v=20260620">
 </head>
 <body>
 
@@ -112,7 +112,7 @@
   </div>
 
   <div class="home-body">
-    <!-- K Banner Card — Hero vocale -->
+    <!-- K Banner Card — Hero chat anonima -->
     <div class="kv-hero-card kv-hero-v2">
       <div class="kv-hero-mesh"></div>
       <div class="kv-hero-orbits">
@@ -122,13 +122,15 @@
       </div>
       <div class="kv-hero-content">
         <div class="kv-hero-logo">
-          <div class="kv-hero-wave">
-            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          <div class="kv-hero-chat-icon">
+            <span class="kv-chat-dot"></span>
+            <span class="kv-chat-dot"></span>
+            <span class="kv-chat-dot"></span>
           </div>
         </div>
         <div class="kv-hero-info">
           <div class="kv-hero-title">KOU<span>VERTE</span></div>
-          <div class="kv-hero-sub">La voce dice tutto</div>
+          <div class="kv-hero-sub">Chat anonima mondiale</div>
         </div>
         <div class="kv-hero-live">
           <span class="kv-hero-live-dot"></span><span id="onlineHeroNum">0</span>&nbsp;live
@@ -227,20 +229,6 @@
       </div>
       <button class="push-notify-btn" onclick="subscribePushNotifications()">Attiva</button>
       <button class="push-notify-close" onclick="dismissPushBanner()">✕</button>
-    </div>
-
-    <!-- VOCI IN ASCOLTO — carousel orizzontale -->
-    <div class="voices-section" id="voicesSection" style="display:none">
-      <div class="voices-header">
-        <div class="voices-title">
-          <span class="voices-title-icon">🎙️</span>
-          <span class="voices-title-text">Voci in ascolto</span>
-        </div>
-        <span class="voices-see-all" onclick="openVoicesScreen()">Tutte →</span>
-      </div>
-      <div class="voices-scroll" id="voicesScroll">
-        <div class="voices-loading">Caricamento voci…</div>
-      </div>
     </div>
 
     <!-- REFERRAL BANNER -->
@@ -1276,7 +1264,7 @@
 </div>
 
 
-<script src="/app.js?v=20260619"></script>
+<script src="/app.js?v=20260620"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
