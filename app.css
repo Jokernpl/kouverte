@@ -2984,3 +2984,79 @@ html[data-theme="light"] body {
   font-size:13px;cursor:pointer;margin-top:6px
 }
 .diag-close-btn:hover{color:#9ca3af}
+
+/* ═══════════════════════════════
+   BITCOIN PAYMENT MODAL
+═══════════════════════════════ */
+.btc-topup-btn{
+  width:100%;padding:10px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#f7931a,#e67e00);
+  color:#fff;font-size:14px;font-weight:700;
+  cursor:pointer;margin-top:8px;
+  box-shadow:0 4px 14px rgba(247,147,26,.35);
+  transition:transform .15s,box-shadow .15s;
+  display:flex;align-items:center;justify-content:center;gap:6px
+}
+.btc-topup-btn:active{transform:scale(.97)}
+.btc-modal-box{
+  background:#0f1117;border:1px solid rgba(247,147,26,.3);
+  border-radius:20px;padding:20px 16px;
+  width:100%;max-width:360px;
+  display:flex;flex-direction:column;gap:14px
+}
+.btc-modal-title{font-size:18px;font-weight:800;color:#f7931a;text-align:center}
+.btc-modal-sub{font-size:12px;color:#9ca3af;text-align:center;margin-top:-8px}
+.btc-packs{display:flex;flex-direction:column;gap:8px}
+.btc-pack{
+  border:1.5px solid rgba(255,255,255,.12);border-radius:12px;
+  padding:12px 14px;cursor:pointer;position:relative;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:border-color .2s,background .2s;background:rgba(255,255,255,.03)
+}
+.btc-pack:hover{border-color:rgba(247,147,26,.5);background:rgba(247,147,26,.05)}
+.btc-pack-pop{border-color:#f7931a;background:rgba(247,147,26,.08)}
+.btc-pack-badge{
+  position:absolute;top:-8px;right:10px;
+  background:#f7931a;color:#fff;font-size:10px;font-weight:800;
+  padding:2px 8px;border-radius:20px;text-transform:uppercase
+}
+.btc-pack-info{display:flex;flex-direction:column;gap:2px}
+.btc-pack-label{font-size:15px;font-weight:700;color:#fff}
+.btc-pack-desc{font-size:12px;color:#9ca3af}
+.btc-pack-price{display:flex;flex-direction:column;align-items:flex-end;gap:1px}
+.btc-pack-credits{font-size:16px;font-weight:800;color:#fbbf24}
+.btc-pack-btc{font-size:11px;color:#f7931a;font-weight:600}
+.btc-pack-btn{
+  width:100%;padding:8px;border:none;border-radius:10px;
+  background:linear-gradient(135deg,#f7931a,#e67e00);
+  color:#fff;font-size:13px;font-weight:700;cursor:pointer;
+  transition:transform .15s
+}
+.btc-pack-btn:active{transform:scale(.97)}
+.btc-payment{display:flex;flex-direction:column;align-items:center;gap:12px}
+.btc-pay-amount{font-size:22px;font-weight:900;color:#f7931a}
+.btc-pay-label{font-size:12px;color:#9ca3af}
+.btc-qr{width:180px;height:180px;border-radius:12px;border:3px solid rgba(247,147,26,.4);background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.btc-qr img,.btc-qr canvas{width:100%;height:100%;border-radius:9px}
+.btc-addr-box{
+  width:100%;background:rgba(255,255,255,.06);border-radius:10px;
+  padding:10px 12px;display:flex;align-items:center;gap:8px;
+  border:1px solid rgba(255,255,255,.1)
+}
+.btc-addr{font-size:10px;color:#d1d5db;word-break:break-all;flex:1;font-family:monospace}
+.btc-copy{background:none;border:none;color:#f7931a;font-size:18px;cursor:pointer;flex-shrink:0;padding:2px}
+.btc-pay-note{font-size:11px;color:#6b7280;text-align:center;line-height:1.4}
+.btc-status-wait{display:flex;align-items:center;gap:6px;font-size:12px;color:#fbbf24}
+.btc-status-ok{display:flex;align-items:center;gap:6px;font-size:13px;color:#22c55e;font-weight:700}
+.btc-loading{display:flex;justify-content:center;padding:24px 0}
+.btc-loading::after{
+  content:'';width:32px;height:32px;border-radius:50%;
+  border:3px solid rgba(247,147,26,.25);border-top-color:#f7931a;
+  animation:spin .8s linear infinite
+}
+.btc-error{color:#ef4444;font-size:13px;text-align:center;padding:8px 0}
+.btc-back-btn{
+  background:none;border:none;color:#9ca3af;font-size:13px;
+  cursor:pointer;padding:4px;text-decoration:underline
+}
+.btc-back-btn:hover{color:#d1d5db}

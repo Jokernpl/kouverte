@@ -2862,6 +2862,109 @@ function shopBuy(itemId){
 }
 
 // ══════════════════════════════════════════
+// BITCOIN PAYMENTS — ricarica crediti Scopa
+// ══════════════════════════════════════════
+const BTC_CREDIT_PACKS = [
+  { credits:50,  label:'Mini',     desc:'10 partite' },
+  { credits:200, label:'Standard', desc:'40 partite', popular:true },
+  { credits:500, label:'Pro',      desc:'100 partite' }
+];
+const BTC_RATE_CLIENT = 0.00005; // 1 credito = 0.00005 BTC
+var _btcPollTimer = null;
+
+function openBtcCreditModal(){
+  let m = document.getElementById('btcCreditModal');
+  if(!m){
+    m = document.createElement('div');
+    m.id = 'btcCreditModal';
+    m.className = 'modal-overlay';
+    m.onclick = e => { if(e.target===m) _closeBtcModal(); };
+    document.body.appendChild(m);
+  }
+  _btcRenderPacks(m);
+  m.classList.add('show');
+}
+function _closeBtcModal(){
+  const m = document.getElementById('btcCreditModal');
+  if(m) m.classList.remove('show');
+  if(_btcPollTimer){ clearInterval(_btcPollTimer); _btcPollTimer=null; }
+}
+function _btcRenderPacks(m){
+  const html = BTC_CREDIT_PACKS.map(p=>{
+    const btc = (p.credits*BTC_RATE_CLIENT).toFixed(8);
+    return `<div class="btc-pack${p.popular?' btc-pack-pop':''}" onclick="btcBuyCredits(${p.credits})">
+      ${p.popular?'<div class="btc-pack-badge">⭐ Consigliato</div>':''}
+      <div class="btc-pack-label">${p.label}</div>
+      <div class="btc-pack-credits">🪙 ${p.credits} crediti</div>
+      <div class="btc-pack-desc">${p.desc}</div>
+      <div class="btc-pack-price">₿ ${btc}</div>
+      <button class="btc-pack-btn">Acquista</button>
+    </div>`;
+  }).join('');
+  m.innerHTML = `<div class="modal-box btc-modal-box">
+    <div class="modal-hdr">
+      <div class="modal-title">₿ Ricarica Crediti Scopa</div>
+      <button class="modal-close" onclick="_closeBtcModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="btc-modal-sub">Pagamento on-chain Bitcoin · Verifica blockchain automatica</p>
+      <div class="btc-packs-grid">${html}</div>
+    </div>
+  </div>`;
+}
+async function btcBuyCredits(credits){
+  const m = document.getElementById('btcCreditModal');
+  if(!m) return;
+  m.querySelector('.modal-body').innerHTML = '<div class="btc-loading">⏳ Generazione QR...</div>';
+  try {
+    const r = await fetch('/api/shop/bitcoin-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},
+      body:JSON.stringify({credits})
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error||'Errore server');
+    _btcRenderPayment(m, d, credits);
+  } catch(e){
+    m.querySelector('.modal-body').innerHTML = `<div class="btc-error">❌ ${e.message}</div>
+      <button class="btc-back-btn" onclick="_btcRenderPacks(document.getElementById('btcCreditModal'))">← Torna</button>`;
+  }
+}
+function _btcRenderPayment(m, d, credits){
+  const exp = new Date(d.expiresAt).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  m.querySelector('.modal-body').innerHTML = `<div class="btc-payment">
+    <div class="btc-qr"><img src="${d.qrCodeUrl}" width="170" height="170"/></div>
+    <div class="btc-pay-amount">₿ <b>${d.btcAmount}</b></div>
+    <div class="btc-pay-label">→ ${credits} crediti Scopa</div>
+    <div class="btc-addr-box" onclick="navigator.clipboard?.writeText('${d.btcAddress}').then(()=>showToast('📋 Indirizzo copiato!'))">
+      <span class="btc-addr">${d.btcAddress}</span>
+      <span class="btc-copy">📋</span>
+    </div>
+    <div class="btc-pay-note">Invia <b>esattamente ${d.btcAmount} BTC</b> all'indirizzo sopra · Scade ${exp}</div>
+    <div id="btcPayStatus" class="btc-status-wait">⏳ In attesa del pagamento...</div>
+    <button class="btc-back-btn" onclick="_btcRenderPacks(document.getElementById('btcCreditModal'));clearInterval(_btcPollTimer)">← Cambia importo</button>
+  </div>`;
+  _btcPollTimer = setInterval(()=>_btcPoll(d.paymentId), 30000);
+  setTimeout(()=>_btcPoll(d.paymentId), 15000);
+}
+async function _btcPoll(pid){
+  try{
+    const r = await fetch(`/api/shop/bitcoin-status/${pid}`,{headers:{'Authorization':'Bearer '+authToken}});
+    const d = await r.json();
+    const el = document.getElementById('btcPayStatus');
+    if(!el){ clearInterval(_btcPollTimer); return; }
+    if(d.status==='confirmed'){
+      clearInterval(_btcPollTimer);
+      el.className='btc-status-ok';
+      el.textContent=`✅ Confermato! +${d.credits_added||d.credits} crediti aggiunti.`;
+      setTimeout(()=>{ _closeBtcModal(); showToast(`✅ +${d.credits_added||d.credits} crediti Scopa!`); },2000);
+    } else if(d.confirmations>0){
+      el.textContent=`🔍 Trovato! ${d.confirmations}/4 conferme...`;
+    }
+  }catch(_){}
+}
+
+// ══════════════════════════════════════════
 // STRIPE PAYMENTS — ricarica con carta
 // ══════════════════════════════════════════
 var _stripeModalBuilt = false;
@@ -3594,7 +3697,10 @@ function registerScopaListeners(){
     const btn=document.getElementById('scRematchBtn');
     if(btn){btn.textContent='✅ Accetta rivincita';btn.style.background='#10b981';}
   });
-  socket.on('scopa:error',({msg})=> showToast('❌ '+msg));
+  socket.on('scopa:error',({msg})=>{
+    showToast('❌ '+msg);
+    if(msg.includes('insufficien')) setTimeout(openBtcCreditModal, 800);
+  });
   socket.on('scopa:bot-countdown', ({seconds}) => {
     const el = document.getElementById('scBotCountdown');
     if(!el) return;
@@ -3782,6 +3888,7 @@ function scRenderWaiting(pos, tot){
           <div style="font-size:13px;color:#10b981;font-weight:700">+20 🪙</div>
         </div>
       </div>
+      <button class="btc-topup-btn" onclick="openBtcCreditModal()">₿ Ricarica con Bitcoin</button>
     </div>
   </div>`;
 }
