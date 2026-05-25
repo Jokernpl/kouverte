@@ -71,7 +71,7 @@ const ROOMS = [
   { id:'confessionale', name:'Confessionale', emoji:'🕯️', img:'https://images.unsplash.com/photo-1490127252417-7c393f993ee4?w=600&h=400&fit=crop', desc:'1 messaggio anonimo al giorno. Nessuno saprà chi sei.', tier:'confession', color:'#8b5cf6', dot1:'#8b5cf6',dot2:'#a78bfa',dot3:'#c4b5fd' },
   { id:'flirt',         name:'Flirt 🔞',    emoji:'🌹', img:'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&h=400&fit=crop', desc:'Chat piccante adulti. Solo 18+. Anonima, calda, senza filtri.', tier:'adult', color:'#ff2d6e', dot1:'#ff2d6e',dot2:'#ff6b9d',dot3:'#ff2d6e' },
   { id:'notte',         name:'Kouverte Notte', emoji:'🌙', img:'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=600&h=400&fit=crop', desc:'Evento serale alle 23:00. Una domanda, tutti rispondono.', tier:'notte', color:'#6366f1', dot1:'#6366f1',dot2:'#818cf8',dot3:'#a5b4fc' },
-  { id:'scopa',         name:'Scopa', emoji:'♠', img:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop', desc:'Sfida 1vs1 a carte napoletane. 2 giocatori per tavolo — gli altri in attesa.', tier:'scopa', color:'#00ff88', dot1:'#00ff88',dot2:'#00cc66',dot3:'#00ffaa' },
+  { id:'settemezz', name:'7 e Mezzo', emoji:'🃏', img:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=600&h=400&fit=crop', desc:'Sfida vs Bot — Carte napoletane. Arriva a 7.5 senza sballare!', tier:'settemezz', color:'#f59e0b', dot1:'#f59e0b',dot2:'#fbbf24',dot3:'#fcd34d' },
 ];
 
 function isRoomActiveNow(){ return true; }
@@ -1504,9 +1504,12 @@ function updateProfileUI(){
   const pct=Math.max(0,Math.min(((mc-xpCurr)/(xpNext-xpCurr))*100,100));
   const tier=levelLabel(lvl,isPrem());
   document.getElementById('rankIcon').textContent=tier.split(' ')[0]||'🌱';
-  document.getElementById('rankTitle').textContent=`${user.name} · lvl ${lvl}`;
-  document.getElementById('rankSub').textContent=`${tier} — ${Math.max(0,Math.ceil(xpNext-mc))} msg al lvl ${lvl+1}`;
+  document.getElementById('rankTitle').textContent=`${tier} · Livello ${lvl}`;
+  document.getElementById('rankSub').textContent=`${Math.max(0,Math.ceil(xpNext-mc))} messaggi al livello ${lvl+1}`;
   document.getElementById('rankXp').textContent=mc+' XP';
+  // Pill livello accanto al nome (piccola, compatta)
+  const lvlPill=document.getElementById('profLevelPill');
+  if(lvlPill) lvlPill.textContent=`Lv.${lvl} · ${mc} XP`;
   const bar=document.getElementById('rankBar');
   bar.style.setProperty('--rw',pct+'%');
   setTimeout(()=>{bar.style.width=pct+'%';},50);
@@ -3617,12 +3620,38 @@ var _scGameId = null;
 var _scLobby = null;  // lobby data { tables, queue }
 var _scMyQPos = 1;    // posizione in coda
 
-// Semi napoletani: calice (coppe), moneta (denari), randello (bastoni), spada (spade)
+// Semi napoletani — stile mazzo tradizionale napoletano
 const SC_SUIT_SVG = {
-  coppe:   `<svg viewBox="0 0 20 26" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 2h16l-2.5 7C14 13 12 15 10 15S6 13 4.5 9z"/><rect x="9" y="15" width="2" height="6" rx="1"/><rect x="4" y="21" width="12" height="2.5" rx="1.25"/></svg>`,
-  denari:  `<svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="rgba(255,255,255,0.25)"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>`,
-  bastoni: `<svg viewBox="0 0 16 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5" r="4"/><rect x="7" y="5" width="2" height="18" rx="1"/><ellipse cx="8" cy="14" rx="3" ry="2.5"/><circle cx="8" cy="23" r="4"/></svg>`,
-  spade:   `<svg viewBox="0 0 20 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><polygon points="10,2 7,16 13,16"/><rect x="9" y="16" width="2" height="6" rx="1"/><rect x="3" y="15" width="14" height="2.5" rx="1.25"/><circle cx="10" cy="24.5" r="2.5"/></svg>`
+  // Coppa napoletana: calice largo con anse laterali a loop e base
+  coppe: `<svg viewBox="0 0 24 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 6 Q1 10 3 15 Q5 17 8 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M18 6 Q23 10 21 15 Q19 17 16 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M7 2 Q6 11 9 15 L10 16 L14 16 L15 15 Q18 11 17 2 Z"/>
+    <rect x="11" y="16" width="2" height="5" rx="1"/>
+    <rect x="6" y="21" width="12" height="2.5" rx="1.25"/>
+  </svg>`,
+  // Denaro napoletano: moneta con anelli concentrici
+  denari: `<svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="12" cy="12" r="11" fill="currentColor"/>
+    <circle cx="12" cy="12" r="8" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+    <circle cx="12" cy="12" r="5" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.2"/>
+    <circle cx="12" cy="12" r="2.5" fill="rgba(255,255,255,0.65)"/>
+  </svg>`,
+  // Bastone napoletano: randello nodoso con tre nodi lungo il fusto
+  bastoni: `<svg viewBox="0 0 14 30" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="7" cy="3" rx="3.5" ry="3"/>
+    <rect x="5.5" y="2" width="3" height="26" rx="1.5"/>
+    <ellipse cx="7" cy="9.5" rx="3" ry="2.2"/>
+    <ellipse cx="7" cy="17" rx="2.8" ry="2"/>
+    <ellipse cx="7" cy="25.5" rx="3.5" ry="3"/>
+  </svg>`,
+  // Spada napoletana: lama dritta con elsa a croce e pomo tondo
+  spade: `<svg viewBox="0 0 18 30" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="9,1 7.5,21 10.5,21"/>
+    <rect x="1.5" y="20.5" width="15" height="2.5" rx="1.25"/>
+    <rect x="8" y="23" width="2" height="4" rx="1"/>
+    <circle cx="9" cy="28" r="2.5"/>
+  </svg>`
 };
 // Figure: Fante (persona), Cavallo (cavallo), Re (re con corona)
 const SC_FACE_SVG = {
@@ -3634,6 +3663,177 @@ const SC_COLOR = {coppe:'#c01e2e',denari:'#b7790d',bastoni:'#166534',spade:'#1d4
 const SC_VL    = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
 const SC_VN    = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
 const SC_SN    = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
+
+// ══════════════════════════════════════════
+// SETTE E MEZZO — vs Bot, client-side
+// Mazzo napoletano 40 carte (4 semi × 10)
+// 1–7 = valore nominale · F/C/R = 0.5 pt
+// Obiettivo: arrivare a 7.5 senza sballare
+// ══════════════════════════════════════════
+let _smState = null;
+
+function smCardValue(c){ return c.value<=7 ? c.value : 0.5; }
+function smTotal(hand){ return hand.reduce((s,c)=>s+smCardValue(c),0); }
+function smFmt(n){ return n%1===0 ? String(n) : n.toFixed(1); }
+
+function smBuildDeck(){
+  const suits=['coppe','denari','bastoni','spade'];
+  const deck=[];
+  for(const suit of suits)
+    for(let v=1;v<=10;v++) deck.push({suit,value:v,id:suit[0]+v});
+  for(let i=deck.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [deck[i],deck[j]]=[deck[j],deck[i]];
+  }
+  return deck;
+}
+
+function openSetteMezzoGame(){
+  let scr=document.getElementById('scopaScreen');
+  if(!scr){
+    scr=document.createElement('div');
+    scr.id='scopaScreen';
+    scr.className='scopa-fs';
+    scr.innerHTML=`
+      <div class="scopa-hdr">
+        <button class="scopa-back" onclick="closeSetteMezzoGame()">←</button>
+        <div class="scopa-hdr-mid">
+          <div class="scopa-hdr-title">🃏 SETTE E MEZZO</div>
+          <div class="scopa-hdr-sub">Carte Napoletane · vs Bot</div>
+        </div>
+        <div class="scopa-hdr-score" id="scHdrScore"></div>
+      </div>
+      <div class="scopa-body" id="scopaBody"></div>`;
+    document.body.appendChild(scr);
+  }
+  setTimeout(()=>scr.classList.add('show'),30);
+  smNewGame();
+}
+
+function closeSetteMezzoGame(){
+  const scr=document.getElementById('scopaScreen');
+  if(scr){scr.classList.remove('show');setTimeout(()=>scr.remove(),420);}
+  _smState=null;
+}
+
+function smNewGame(){
+  const deck=smBuildDeck();
+  _smState={
+    deck,
+    player:[deck.pop()],
+    dealer:[deck.pop()],  // 1 carta coperta del bot
+    phase:'playing',      // 'playing'|'dealer'|'over'
+    result:null
+  };
+  smRender();
+}
+
+function smDraw(){
+  if(!_smState||_smState.phase!=='playing') return;
+  _smState.player.push(_smState.deck.pop());
+  if(smTotal(_smState.player)>7.5){
+    _smState.phase='over'; _smState.result='bust';
+  }
+  smRender();
+}
+
+function smStand(){
+  if(!_smState||_smState.phase!=='playing') return;
+  _smState.phase='dealer';
+  smRender();
+  setTimeout(smBotTurn,700);
+}
+
+function smBotTurn(){
+  if(!_smState||_smState.phase!=='dealer') return;
+  const dt=smTotal(_smState.dealer);
+  if(dt<=7.5 && dt<5.5){
+    _smState.dealer.push(_smState.deck.pop());
+    smRender();
+    setTimeout(smBotTurn,650);
+  } else {
+    const pt=smTotal(_smState.player);
+    const bot=smTotal(_smState.dealer);
+    if(bot>7.5)        _smState.result='win';
+    else if(pt>bot)    _smState.result='win';
+    else if(bot>pt)    _smState.result='lose';
+    else               _smState.result='draw';
+    _smState.phase='over';
+    smRender();
+  }
+}
+
+function smCardHTML(card,faceDown=false){
+  if(faceDown) return `<div class="sc-card sc-card-back sm-card"></div>`;
+  const color=SC_COLOR[card.suit], lbl=SC_VL[card.value];
+  const isFace=card.value>=8;
+  const suit=`<span class="sc-mini-suit" style="color:${color}">${SC_SUIT_SVG[card.suit]}</span>`;
+  const center=`<span class="sc-si" style="color:${color}">${isFace?SC_FACE_SVG[card.value]:SC_SUIT_SVG[card.suit]}</span>`;
+  return `<div class="sc-card${isFace?' sc-face':''} sm-card" style="--sc:${color}">
+    <div class="sc-corner">${suit}<span class="sc-vt">${lbl}</span></div>
+    ${center}
+    <div class="sc-corner sc-flip">${suit}<span class="sc-vt">${lbl}</span></div>
+  </div>`;
+}
+
+function smRender(){
+  const body=document.getElementById('scopaBody');
+  if(!body||!_smState) return;
+  const st=_smState;
+  const pt=smTotal(st.player), dt=smTotal(st.dealer);
+  const playerBust=pt>7.5, dealerBust=st.phase==='over'&&dt>7.5;
+
+  // header punteggio
+  const hdr=document.getElementById('scHdrScore');
+  if(hdr){
+    if(st.phase==='over'){
+      const col=st.result==='win'?'#00ff88':st.result==='lose'?'#ff4466':'#f59e0b';
+      const lbl=st.result==='win'?'HAI VINTO 🏆':st.result==='bust'||st.result==='lose'?'HAI PERSO':'PARI';
+      hdr.innerHTML=`<span style="color:${col};font-weight:800;font-size:13px">${lbl}</span>`;
+    } else {
+      hdr.innerHTML=`<span style="color:#6b7280;font-size:11px">${st.phase==='playing'?'🎴 Il tuo turno':'🤖 Bot pensa…'}</span>`;
+    }
+  }
+
+  // Carte dealer: prima coperta se ancora in gioco
+  const dealerHTML=(st.phase==='playing'
+    ? [smCardHTML(st.dealer[0],true),...st.dealer.slice(1).map(c=>smCardHTML(c))]
+    : st.dealer.map(c=>smCardHTML(c))
+  ).join('');
+
+  body.innerHTML=`
+  <div class="sm-game">
+
+    <div class="sm-section">
+      <div class="sm-label">🤖 Bot${st.phase!=='playing'?` <span class="sm-tot${dealerBust?' sm-bust':''}">${smFmt(dt)}${dealerBust?' 💥':''}</span>`:''}</div>
+      <div class="sm-hand">${dealerHTML}</div>
+    </div>
+
+    ${st.phase==='over'?`
+    <div class="sm-result sm-res-${st.result}">
+      <div class="sm-res-icon">${st.result==='win'?'🏆':st.result==='lose'||st.result==='bust'?'💀':'🤝'}</div>
+      <div class="sm-res-txt">${st.result==='win'?'Hai vinto!':st.result==='lose'||st.result==='bust'?'Hai perso!':'Pari!'}</div>
+      <div class="sm-res-scores">Tu: ${smFmt(pt)} · Bot: ${smFmt(dt)}</div>
+      <button class="sm-new-btn" onclick="smNewGame()">🃏 Nuova partita</button>
+    </div>`:''}
+
+    <div class="sm-mid">
+      <div class="sm-deck-pill">🃏 ${st.deck.length} carte rimaste</div>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Tu · <span class="sm-tot${playerBust?' sm-bust':''}">${smFmt(pt)}${playerBust?' 💥 SBALLATO!':''}</span></div>
+      <div class="sm-hand">${st.player.map(c=>smCardHTML(c)).join('')}</div>
+      ${st.phase==='playing'?`
+      <div class="sm-actions">
+        <button class="sm-btn sm-draw" onclick="smDraw()">🃏 Carta!</button>
+        <button class="sm-btn sm-stand" onclick="smStand()">✋ Stai!</button>
+      </div>
+      <div class="sm-hint">1–7 = valore · Fante/Cavallo/Re = 0.5 · Obiettivo: 7.5 senza sballare</div>`:''}
+    </div>
+
+  </div>`;
+}
 
 function openScopaGame(){
   let scr=document.getElementById('scopaScreen');
@@ -4881,8 +5081,8 @@ function vscLike(){
 }
 
 function renderRooms(){
-  const chatRooms = ROOMS.filter(r => r.tier !== 'scopa');
-  const gameRooms = ROOMS.filter(r => r.tier === 'scopa');
+  const chatRooms = ROOMS.filter(r => r.tier !== 'settemezz');
+  const gameRooms = ROOMS.filter(r => r.tier === 'settemezz');
   const gamesSection = gameRooms.length ? `
     <div class="sec-label-row" style="grid-column:1/-1">
       <div class="sec-label" style="margin:0">🎮 Giochi</div>
@@ -5021,7 +5221,7 @@ function roomCard(r){
 
 // ══ ENTER/LEAVE ══
 function enterRoom(roomId){
-  if(roomId==='scopa'){ openScopaGame(); return; }
+  if(roomId==='settemezz'){ openSetteMezzoGame(); return; }
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
 
