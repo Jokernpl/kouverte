@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260615">
+<link rel="stylesheet" href="/app.css?v=20260616">
 </head>
 <body>
 
@@ -112,15 +112,27 @@
   </div>
 
   <div class="home-body">
-    <!-- K Banner Card -->
-    <div class="kv-hero-card">
-      <div class="kv-hero-logo">K</div>
-      <div class="kv-hero-info">
-        <div class="kv-hero-title">KOU<span>VERTE</span></div>
-        <div class="kv-hero-sub">Chat Anonima Italiana</div>
+    <!-- K Banner Card — Hero vocale -->
+    <div class="kv-hero-card kv-hero-v2">
+      <div class="kv-hero-mesh"></div>
+      <div class="kv-hero-orbits">
+        <span class="kv-orbit kv-orbit-1"></span>
+        <span class="kv-orbit kv-orbit-2"></span>
+        <span class="kv-orbit kv-orbit-3"></span>
       </div>
-      <div class="kv-hero-live">
-        <span class="kv-hero-live-dot"></span>Live
+      <div class="kv-hero-content">
+        <div class="kv-hero-logo">
+          <div class="kv-hero-wave">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+        <div class="kv-hero-info">
+          <div class="kv-hero-title">KOU<span>VERTE</span></div>
+          <div class="kv-hero-sub">La voce dice tutto</div>
+        </div>
+        <div class="kv-hero-live">
+          <span class="kv-hero-live-dot"></span><span id="onlineHeroNum">0</span>&nbsp;live
+        </div>
       </div>
     </div>
 
@@ -195,12 +207,12 @@
       <div class="dsb-claim" id="dailyClaimBtn">Ritira</div>
     </div>
 
-    <!-- PWA INSTALL BANNER -->
-    <div class="pwa-install-banner" id="pwaInstallBanner">
+    <!-- PWA INSTALL BANNER (più discreto, glassmorphism) -->
+    <div class="pwa-install-banner pwa-v2" id="pwaInstallBanner">
       <div class="pwa-install-icon">📲</div>
       <div class="pwa-install-info">
-        <div class="pwa-install-title">Aggiungi alla Home</div>
-        <div class="pwa-install-sub">Apri Kouverte come app, senza browser</div>
+        <div class="pwa-install-title">Installa Kouverte sul telefono</div>
+        <div class="pwa-install-sub">Apertura istantanea, niente browser</div>
       </div>
       <button class="pwa-install-btn" onclick="triggerPwaInstall()">Installa</button>
       <button class="pwa-install-close" onclick="dismissPwaInstall()">✕</button>
@@ -1227,7 +1239,7 @@
 </div>
 
 
-<script src="/app.js?v=20260615"></script>
+<script src="/app.js?v=20260616"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

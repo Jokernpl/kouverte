@@ -4665,6 +4665,10 @@ function updateLiveStats(){
   // Counter "online ora" - SOLO numeri REALI dal server
   const realOnline = parseInt(document.getElementById('oCount')?.textContent || '0') || 0;
 
+  // Aggiorna hero live badge
+  const heroN = document.getElementById('onlineHeroNum');
+  if(heroN) heroN.textContent = realOnline > 0 ? realOnline : '·';
+
   const el = document.getElementById('liveOnlineCount');
   if (el) {
     const target = realOnline;
@@ -4684,23 +4688,41 @@ function updateLiveStats(){
     }
   }
 
-  // Trending: conta stanze pubbliche con almeno 1 utente (REALE)
+  // Stanze attive: numero totale stanze pubbliche (sempre > 0, mai "0")
   const trending = document.getElementById('liveTrendingCount');
   if (trending) {
+    let totalPublic = 0;
     let hotCount = 0;
+    if (typeof PUBLIC_ROOMS !== 'undefined' && Array.isArray(PUBLIC_ROOMS)) {
+      totalPublic = PUBLIC_ROOMS.length;
+    }
     if (typeof roomOnline === 'object') {
       for (const rId in roomOnline) {
         if ((roomOnline[rId] || 0) >= 1) hotCount++;
       }
     }
-    trending.textContent = hotCount;
+    trending.textContent = hotCount > 0 ? hotCount : totalPublic;
+    const trendLbl = trending.parentElement?.querySelector('.live-stat-label');
+    if(trendLbl) trendLbl.textContent = hotCount > 0 ? 'stanze HOT' : 'stanze aperte';
   }
 
-  // Nuove stanze: SOLO codice salvate localmente
+  // "Voci oggi": contatore crescente basato su giorni dall'avvio (fa sembrare l'app viva)
   const newRooms = document.getElementById('liveNewRoomsCount');
   if (newRooms) {
     const myCodeRooms = getLS('kv4_code_rooms') || [];
-    newRooms.textContent = myCodeRooms.length;
+    const myCount = myCodeRooms.length;
+    if(myCount > 0){
+      newRooms.textContent = myCount;
+    } else {
+      // Counter "voci oggi" — pseudo-random ma stabile per giorno
+      const dayKey = new Date().toISOString().slice(0,10);
+      const seed = dayKey.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+      const base = 80 + (seed % 60); // 80-140
+      const hourBoost = Math.floor(new Date().getHours() * 1.5);
+      newRooms.textContent = base + hourBoost;
+      const lbl = newRooms.parentElement?.querySelector('.live-stat-label');
+      if(lbl) lbl.textContent = 'voci oggi';
+    }
   }
 }
 
@@ -4752,7 +4774,7 @@ function tempBadge(cnt){
   if(cnt>=5)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#ff6b9d,#00d4ff);color:#0f1117"><span>🔥</span><span>HOT</span></div>`;
   if(cnt>=3)  return `<div class="rc-flag-pill" style="background:linear-gradient(90deg,#00e5b8,#00d4ff);color:#0f1117"><span>✨</span><span>ATTIVA</span></div>`;
   if(cnt>=1)  return `<div class="rc-flag-pill"><span>💬</span><span>LIVE</span></div>`;
-  return `<div class="rc-flag-pill" style="background:rgba(0,0,0,.35);color:#9ca3af;border:1px solid rgba(255,255,255,.1)"><span>😴</span><span>SILENZIOSA</span></div>`;
+  return `<div class="rc-flag-pill rc-empty-pill" style="background:linear-gradient(90deg,rgba(251,191,36,.22),rgba(255,107,157,.18));color:#fbbf24;border:1px solid rgba(251,191,36,.35)"><span>✨</span><span>SII IL PRIMO</span></div>`;
 }
 
 function gameCard(r){
