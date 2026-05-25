@@ -258,6 +258,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
   initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn(); initProfileTilt(); initBannerParticles(); initDesktopViewToggle();
+  // KVC init
+  _kvcUI(); updateMissionBadge(); checkLoginReward();
+  // Disegna socket events (si collega dopo che socket è pronto)
+  setTimeout(_disSetupSocketEvents, 2000);
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -3718,6 +3722,7 @@ function closeSetteMezzoGame(){
 }
 
 function smNewGame(){
+  _missionProg('sette1',1); // KVC missione 7e1/2
   const deck=smBuildDeck();
   _smState={
     deck,
@@ -5289,6 +5294,7 @@ function enterRoom(roomId){
     if(roomId.startsWith('w-')) addBadge('globe','Cittadino del Mondo');
     if(sessionRooms.size>=3) addBadge('explorer','Esploratore');
     saveUser();
+    _missionProg('enter2',1); // KVC missione stanze
   }
 
   // NEW: Render users panel
@@ -5791,9 +5797,10 @@ function sendMsg(){
   inp.value=''; inp.style.height='auto'; stopTyping();
   user.msgCount=(user.msgCount||0)+1;
   if(!isPrem()) user.freeUsed=(user.freeUsed||0)+1;
-  // Economia: +1 KVC per messaggio (x2 se boost attivo)
+  // Economia legacy + KVC
   const coinReward = (Date.now()<(user.boostUntil||0)) ? 2 : 1;
   user.coins=(user.coins||0)+coinReward;
+  addKVC(1,'msg'); // KVC per ogni messaggio
   document.getElementById('stMsgs').textContent=user.msgCount;
   updateFreeBar(); checkBadges(); saveUser(); updateCoinBar();
   if(!isPrem()&&user.freeUsed===80) showToast('⚠️ 20 messaggi gratuiti rimasti!');
@@ -6102,6 +6109,10 @@ function showScreen(name,btn){
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
   _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
   if (name === 'profile') triggerProfileAnimations();
+  if (name === 'clanScr') loadClanScreen();
+  if (name === 'petScr') renderPetScreen();
+  if (name === 'missioniScr') renderMissions();
+  if (name === 'disegnaScr') { document.getElementById('disLobby').style.display='flex'; document.getElementById('disGame').style.display='none'; }
   // GA4: track screen view
   window.trackEvent?.('screen_view', { screen_name: name });
 }
@@ -10215,6 +10226,577 @@ async function verifySubPayment(){
   }catch(e){
     if(st) st.innerHTML='<span style="color:#ff4466">Errore di rete, riprova.</span>';
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+// ██  KVC — KOUVERTE COIN  ██
+// ════════════════════════════════════════════════════════════════
+const KVC_KEY='kvc_bal';
+function getKVC(){return parseInt(localStorage.getItem(KVC_KEY)||'0');}
+function addKVC(n,src=''){
+  localStorage.setItem(KVC_KEY,getKVC()+n);
+  _kvcUI();_spawnCoinAnim(n);
+  if(src==='msg') _missionProg('send5',1);
+  if(src==='room') _missionProg('enter2',1);
+  if(src==='casino') _missionProg('casino1',1);
+  if(src==='sette') _missionProg('sette1',1);
+  if(src==='pet')_missionProg('pet1',1);
+}
+function spendKVC(n){
+  if(getKVC()<n){showToast('❌ KVC insufficienti! Completa missioni per guadagnarne.');return false;}
+  localStorage.setItem(KVC_KEY,getKVC()-n);_kvcUI();return true;
+}
+function _kvcUI(){
+  document.querySelectorAll('.kvc-bal').forEach(el=>el.textContent=getKVC().toLocaleString()+' KVC');
+}
+function _spawnCoinAnim(n){
+  const el=document.createElement('div');
+  el.className='kvc-float';
+  el.textContent=(n>=0?'+':'')+n+' KVC';
+  el.style.left=(20+Math.random()*60)+'%';
+  el.style.top=(25+Math.random()*35)+'%';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1400);
+}
+
+// ── LOGIN REWARD ─────────────────────────────────────────────────
+const LR_REWARDS=[50,65,80,100,120,150,300];
+function checkLoginReward(){
+  const today=new Date().toDateString();
+  const last=localStorage.getItem('kvc_last_login');
+  if(last===today)return;
+  const yest=new Date(Date.now()-86400000).toDateString();
+  let streak=parseInt(localStorage.getItem('kvc_streak')||'0');
+  streak=(last===yest)?Math.min(streak+1,7):1;
+  localStorage.setItem('kvc_last_login',today);
+  localStorage.setItem('kvc_streak',String(streak));
+  _missionProg('login',1);
+  setTimeout(()=>showLoginRewardModal(streak),1000);
+}
+function showLoginRewardModal(streak){
+  const rew=LR_REWARDS[(streak-1)%7];
+  const bar=document.getElementById('lrStreakBar');
+  if(bar){bar.innerHTML=LR_REWARDS.map((r,i)=>`<div class="lr-day ${i<streak?'done':''} ${i===streak-1?'cur':''}">${i+1}</div>`).join('');}
+  const amt=document.getElementById('lrAmount');if(amt)amt.textContent='+'+rew+' KVC';
+  const desc=document.getElementById('lrDesc');if(desc)desc.textContent=`Giorno ${streak} streak!`;
+  const coin=document.getElementById('lrCoinAnim');if(coin)coin.textContent='🪙';
+  const ov=document.getElementById('lrOverlay');
+  if(ov){ov.dataset.rew=rew;ov.classList.add('show');}
+}
+function claimLoginReward(){
+  const ov=document.getElementById('lrOverlay');
+  const n=parseInt(ov?.dataset.rew||'50');
+  addKVC(n,'login');
+  showToast('🎁 Premio ritirato: +'+n+' KVC!');
+  closeLR();
+}
+function closeLR(){document.getElementById('lrOverlay')?.classList.remove('show');}
+
+// ── MISSIONI GIORNALIERE ─────────────────────────────────────────
+const MISS_DEF=[
+  {id:'login', emoji:'☀️', label:'Accedi al sito oggi',      reward:10, target:1},
+  {id:'send5', emoji:'💬', label:'Invia 5 messaggi in chat', reward:25, target:5},
+  {id:'enter2',emoji:'🚪', label:'Entra in 2 stanze diverse',reward:30, target:2},
+  {id:'casino1',emoji:'🎰',label:'Gioca al Casino',           reward:20, target:1},
+  {id:'sette1',emoji:'🃏', label:'Gioca a 7 e Mezzo',         reward:20, target:1},
+  {id:'pet1',  emoji:'🐾', label:'Dai da mangiare al tuo pet',reward:15, target:1},
+];
+function _getMissState(){
+  const today=new Date().toDateString();
+  const s=getLS('kvc_miss');
+  if(!s||s.date!==today){
+    const ns={date:today,progress:{},claimed:{}};
+    MISS_DEF.forEach(m=>{ns.progress[m.id]=0;ns.claimed[m.id]=false;});
+    setLS('kvc_miss',ns);return ns;
+  }return s;
+}
+function _missionProg(id,n){
+  const s=_getMissState();const def=MISS_DEF.find(m=>m.id===id);
+  if(!def||s.claimed[id])return;
+  const prev=s.progress[id]||0;
+  s.progress[id]=Math.min(prev+n,def.target);
+  if(s.progress[id]>=def.target&&!s.claimed[id]){
+    s.claimed[id]=true;
+    addKVC(def.reward,'_internal');
+    showToast('✅ Missione: '+def.emoji+' +'+def.reward+' KVC');
+  }
+  setLS('kvc_miss',s);
+  renderMissions();updateMissionBadge();
+}
+function renderMissions(){
+  const el=document.getElementById('missionsList');if(!el)return;
+  const s=_getMissState();
+  let todayKvc=0;
+  MISS_DEF.forEach(m=>{if(s.claimed[m.id])todayKvc+=m.reward;});
+  const tk=document.getElementById('missTodayKvc');if(tk)tk.textContent=todayKvc+' KVC';
+  el.innerHTML=MISS_DEF.map(m=>{
+    const prog=s.progress[m.id]||0;const done=s.claimed[m.id];
+    const pct=Math.min(100,Math.round(prog/m.target*100));
+    return `<div class="miss-item ${done?'done':''}">
+      <div class="miss-icon">${m.emoji}</div>
+      <div class="miss-info">
+        <div class="miss-label">${m.label}</div>
+        <div class="miss-bar-wrap"><div class="miss-bar" style="width:${pct}%"></div></div>
+        <div class="miss-prog">${prog}/${m.target}</div>
+      </div>
+      <div class="miss-rew ${done?'done':''}">+${m.reward}<br><small>KVC</small></div>
+    </div>`;
+  }).join('');
+  // Countdown to midnight
+  const reset=document.getElementById('missReset');
+  if(reset){
+    const now=new Date();const midnight=new Date(now);midnight.setHours(24,0,0,0);
+    const diff=midnight-now;const h=Math.floor(diff/3600000);const m=Math.floor((diff%3600000)/60000);
+    reset.textContent=`Reset in ${h}h ${m}m`;
+  }
+}
+function updateMissionBadge(){
+  const s=_getMissState();
+  const done=Object.values(s.claimed).filter(Boolean).length;
+  const el=document.getElementById('missionBadge');if(el)el.textContent=done+'/'+MISS_DEF.length+' oggi';
+}
+
+// ── NICK EFFECTS ──────────────────────────────────────────────────
+const NICK_FX=[
+  {id:'none',   label:'Normale',        price:0,   style:'',                               preview:'Normale'},
+  {id:'fire',   label:'🔥 Fuoco',       price:100, style:'background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800'},
+  {id:'rainbow',label:'🌈 Arcobaleno',  price:150, style:'background:linear-gradient(90deg,#ff0,#0f0,#0ff,#00f,#f0f,#f00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800'},
+  {id:'neon',   label:'⚡ Neon Cyan',   price:120, style:'color:#00ffff;text-shadow:0 0 8px #00ffff,0 0 18px #00ffff'},
+  {id:'gold',   label:'👑 Oro Reale',   price:200, style:'background:linear-gradient(90deg,#fbbf24,#f59e0b,#d97706);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800'},
+  {id:'ice',    label:'❄️ Ghiaccio',    price:100, style:'color:#bfefff;text-shadow:0 0 6px #38bdf8,0 0 12px #bfefff'},
+  {id:'purple', label:'💜 Viola Glow',  price:90,  style:'color:#a78bfa;text-shadow:0 0 8px #a78bfa,0 0 16px #8b5cf6'},
+  {id:'matrix', label:'🟢 Matrix',      price:130, style:'color:#00ff00;text-shadow:0 0 6px #00ff00;font-family:monospace;letter-spacing:2px'},
+  {id:'red',    label:'❤️ Fiamma',      price:110, style:'color:#ff4444;text-shadow:0 0 8px #ff2222,0 0 18px #ff4444'},
+  {id:'galaxy', label:'🌌 Galassia',    price:180, style:'background:linear-gradient(90deg,#8b5cf6,#06b6d4,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800'},
+];
+function getMyNickFx(){return localStorage.getItem('kvc_nick_fx')||'none';}
+function applyNickFxStyle(el,fxId){
+  const fx=NICK_FX.find(f=>f.id===fxId)||NICK_FX[0];
+  el.setAttribute('style',fx.style||'');
+}
+function openNickEffectsShop(){
+  const ov=document.getElementById('neOverlay');if(!ov)return;
+  const grid=document.getElementById('neGrid');
+  const prev=document.getElementById('nePreview');
+  const name=user?.name||genNick(Date.now());
+  const myFx=getMyNickFx();
+  const owned=getLS('kvc_nick_owned')||['none'];
+  grid.innerHTML=NICK_FX.map(fx=>{
+    const isOwned=owned.includes(fx.id);const isActive=myFx===fx.id;
+    return `<div class="ne-item ${isActive?'active':''}" onclick="previewNickFx('${fx.id}')">
+      <div class="ne-item-label" style="${fx.style||''}">${name}</div>
+      <div class="ne-item-name">${fx.label}</div>
+      <div class="ne-item-price">${isOwned?(isActive?'✅ Attivo':'✔ Posseduto'):'🪙 '+fx.price+' KVC'}</div>
+    </div>`;
+  }).join('');
+  if(prev){prev.textContent=name;applyNickFxStyle(prev,myFx);}
+  ov.classList.add('show');
+}
+function previewNickFx(id){
+  const fx=NICK_FX.find(f=>f.id===id)||NICK_FX[0];
+  const prev=document.getElementById('nePreview');
+  if(prev)applyNickFxStyle(prev,id);
+  const owned=getLS('kvc_nick_owned')||['none'];
+  if(owned.includes(id)){activateNickFx(id);return;}
+  if(fx.price===0){activateNickFx(id);return;}
+  if(!spendKVC(fx.price))return;
+  owned.push(id);setLS('kvc_nick_owned',owned);
+  activateNickFx(id);
+  showToast('✨ Effetto acquistato: '+fx.label);
+  openNickEffectsShop();
+}
+function activateNickFx(id){
+  localStorage.setItem('kvc_nick_fx',id);
+  openNickEffectsShop();
+}
+function closeNickEffects(){document.getElementById('neOverlay')?.classList.remove('show');}
+
+// ── VIRTUAL PETS ──────────────────────────────────────────────────
+const PETS_DEF=[
+  {id:'cat',    emoji:'🐱', name:'Gatto',    price:100, desc:'Fedele compagno',    color:'#f472b6'},
+  {id:'dog',    emoji:'🐶', name:'Cane',     price:100, desc:'Sempre felice',      color:'#fbbf24'},
+  {id:'fox',    emoji:'🦊', name:'Volpe',    price:150, desc:'Astuto e veloce',    color:'#f97316'},
+  {id:'owl',    emoji:'🦉', name:'Gufo',     price:200, desc:'Saggio e notturno',  color:'#8b5cf6'},
+  {id:'dragon', emoji:'🐲', name:'Drago',    price:300, desc:'Leggendario',        color:'#ef4444'},
+  {id:'unicorn',emoji:'🦄', name:'Unicorno', price:500, desc:'Mitologico',         color:'#a78bfa'},
+];
+function getMyPet(){return getLS('kvc_my_pet');}
+function adoptPet(id){
+  if(getMyPet()){showToast('Hai già un pet! Mandalo via prima.');return;}
+  const def=PETS_DEF.find(p=>p.id===id);if(!def)return;
+  if(!spendKVC(def.price))return;
+  const pet={id,emoji:def.emoji,name:def.name,level:1,xp:0,happiness:100,fed:Date.now(),adoptedAt:Date.now()};
+  setLS('kvc_my_pet',pet);
+  showToast('🎉 Hai adottato '+def.emoji+' '+def.name+'!');
+  renderPetScreen();
+}
+function feedPet(){
+  const pet=getMyPet();if(!pet){showToast('Non hai un pet!');return;}
+  if(!spendKVC(5)){return;}
+  pet.happiness=Math.min(100,pet.happiness+20);
+  pet.xp+=10;pet.fed=Date.now();
+  if(pet.xp>=pet.level*50){pet.level++;pet.xp=0;showToast('🎉 '+pet.emoji+' è salito al livello '+pet.level+'!');}
+  setLS('kvc_my_pet',pet);
+  addKVC(0,'pet'); // trigger pet mission
+  renderPetScreen();
+}
+function releasePet(){
+  if(!confirm('Sei sicuro di voler liberare il tuo pet? 😢'))return;
+  localStorage.removeItem('kvc_my_pet');
+  renderPetScreen();showToast('Il pet è stato liberato...');
+}
+function _petHappinessNow(pet){
+  const elapsed=(Date.now()-pet.fed)/3600000;
+  return Math.max(0,pet.happiness-Math.floor(elapsed*8));
+}
+function renderPetScreen(){
+  const grid=document.getElementById('petShopGrid');
+  const mine=document.getElementById('petMySection');
+  if(!grid||!mine)return;
+  const pet=getMyPet();
+  if(pet){
+    const hap=_petHappinessNow(pet);
+    const hapColor=hap>60?'#10b981':hap>30?'#f59e0b':'#ef4444';
+    const hapEmoji=hap>60?'😄':hap>30?'😐':'😢';
+    mine.innerHTML=`
+      <div class="pet-my-card">
+        <div class="pet-big-emoji">${pet.emoji}</div>
+        <div class="pet-my-name">${pet.name}</div>
+        <div class="pet-lvl-row"><span class="pet-lv">Lv.${pet.level}</span><span class="pet-xp-bar-wrap"><span class="pet-xp-bar" style="width:${Math.min(100,pet.xp/pet.level/50*100)}%"></span></span></div>
+        <div class="pet-hap-row">
+          <span>Felicità</span>
+          <span class="pet-hap-val" style="color:${hapColor}">${hapEmoji} ${hap}%</span>
+        </div>
+        <div class="pet-bar-wrap"><div class="pet-bar" style="width:${hap}%;background:${hapColor}"></div></div>
+        <button class="pet-feed-btn" onclick="feedPet()">🍖 Dai da mangiare (5 KVC)</button>
+        <button class="pet-release-btn" onclick="releasePet()">🔓 Libera il pet</button>
+      </div>`;
+    const sub=document.getElementById('petNavSub');if(sub)sub.textContent=pet.emoji+' Lv.'+pet.level+' ('+hap+'%)';
+  }else{
+    mine.innerHTML=`<div class="pet-no-pet">Non hai ancora un pet 🐾<br><small>Adottane uno dal negozio qui sotto</small></div>`;
+    const sub=document.getElementById('petNavSub');if(sub)sub.textContent='Adotta un pet';
+  }
+  grid.innerHTML=PETS_DEF.map(p=>{
+    const owned=pet&&pet.id===p.id;
+    return `<div class="pet-shop-card ${owned?'owned':''}">
+      <div class="pet-sh-emoji">${p.emoji}</div>
+      <div class="pet-sh-name">${p.name}</div>
+      <div class="pet-sh-desc">${p.desc}</div>
+      <button class="pet-sh-btn" ${owned?'disabled':''} onclick="adoptPet('${p.id}')">
+        ${owned?'✅ Adottato':'🪙 '+p.price+' KVC'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+// ── CLAN SYSTEM ───────────────────────────────────────────────────
+function loadClanScreen(){
+  const body=document.getElementById('clan-body')||document.querySelector('.clan-body');if(!body)return;
+  const myClanId=localStorage.getItem('kvc_my_clan');
+  document.getElementById('myClanSection').innerHTML='<div class="clan-loading">⌛ Caricamento...</div>';
+  document.getElementById('clanListSection').innerHTML='';
+  fetch('/api/clans').then(r=>r.json()).then(data=>{
+    renderClanList(data.clans||[],myClanId);
+    if(myClanId){
+      const mine=(data.clans||[]).find(c=>c.id===myClanId);
+      renderMyClan(mine||null,myClanId);
+    }else{
+      renderNoClan();
+    }
+  }).catch(()=>{renderNoClan();renderClanList([],null);});
+}
+function renderNoClan(){
+  const el=document.getElementById('myClanSection');if(!el)return;
+  el.innerHTML=`<div class="clan-noclan">
+    <div class="clan-nc-icon">⚔️</div>
+    <div class="clan-nc-title">Non sei in nessun clan</div>
+    <div class="clan-nc-sub">Crea il tuo o unisciti a uno esistente</div>
+    <button class="clan-create-btn" onclick="showCreateClanForm()">+ Crea Clan</button>
+    <div id="createClanForm" style="display:none" class="clan-create-form">
+      <input id="clanNameInput" class="clan-input" placeholder="Nome clan (max 20 car.)" maxlength="20">
+      <input id="clanTagInput" class="clan-input" placeholder="Tag [max 4 car.]" maxlength="4" style="width:80px;text-align:center;text-transform:uppercase">
+      <div class="clan-emoji-row" id="clanEmojiRow">${['⚔️','🛡️','🔥','💀','🌟','🐉','🦅','🌙','👑','⚡'].map(e=>`<button class="clan-em-btn" onclick="selectClanEmoji('${e}',this)">${e}</button>`).join('')}</div>
+      <input id="clanEmojiInput" type="hidden" value="⚔️">
+      <button class="clan-create-btn" onclick="submitCreateClan()">Crea!</button>
+    </div>
+  </div>`;
+}
+function showCreateClanForm(){
+  const f=document.getElementById('createClanForm');if(f)f.style.display=f.style.display==='none'?'block':'none';
+}
+function selectClanEmoji(e,btn){
+  document.getElementById('clanEmojiInput').value=e;
+  document.querySelectorAll('.clan-em-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function submitCreateClan(){
+  const name=document.getElementById('clanNameInput')?.value.trim();
+  const tag=document.getElementById('clanTagInput')?.value.trim().toUpperCase();
+  const emoji=document.getElementById('clanEmojiInput')?.value||'⚔️';
+  if(!name||name.length<2){showToast('Nome troppo corto!');return;}
+  if(!tag||tag.length<2){showToast('Tag deve essere 2-4 caratteri!');return;}
+  if(!spendKVC(50)){return;}
+  fetch('/api/clans/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,tag,emoji,userId:user?.id||localStorage.getItem('kv4_uid')})})
+    .then(r=>r.json()).then(d=>{
+      if(d.id){localStorage.setItem('kvc_my_clan',d.id);showToast('⚔️ Clan creato!');loadClanScreen();}
+      else showToast('❌ '+(d.error||'Errore'));
+    }).catch(()=>showToast('Errore rete'));
+}
+function joinClan(clanId){
+  const uid=user?.id||localStorage.getItem('kv4_uid');
+  fetch('/api/clans/join',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clanId,userId:uid})})
+    .then(r=>r.json()).then(d=>{
+      if(d.ok){localStorage.setItem('kvc_my_clan',clanId);showToast('⚔️ Unito al clan!');loadClanScreen();}
+      else showToast('❌ '+(d.error||'Errore'));
+    }).catch(()=>showToast('Errore rete'));
+}
+function leaveClan(){
+  if(!confirm('Vuoi davvero abbandonare il clan?'))return;
+  const uid=user?.id||localStorage.getItem('kv4_uid');
+  fetch('/api/clans/leave',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:uid})})
+    .then(r=>r.json()).then(d=>{
+      localStorage.removeItem('kvc_my_clan');showToast('Hai lasciato il clan');loadClanScreen();
+    }).catch(()=>showToast('Errore rete'));
+}
+function renderMyClan(clan,id){
+  const el=document.getElementById('myClanSection');if(!el)return;
+  if(!clan){el.innerHTML=`<div class="clan-noclan"><div class="clan-nc-icon">⚠️</div><div>Clan non trovato</div><button class="clan-create-btn" onclick="leaveClan()">Esci dal clan</button></div>`;return;}
+  el.innerHTML=`<div class="clan-my-card">
+    <div class="clan-my-emoji">${clan.emoji}</div>
+    <div class="clan-my-name">${clan.name} <span class="clan-tag">[${clan.tag}]</span></div>
+    <div class="clan-my-stats">👥 ${clan.memberCount||1} membri · 🏆 ${clan.xp||0} XP</div>
+    <button class="clan-leave-btn" onclick="leaveClan()">🚪 Lascia</button>
+  </div>`;
+  const sub=document.getElementById('clanNavSub');if(sub)sub.textContent=clan.emoji+' '+clan.name;
+}
+function renderClanList(clans,myClanId){
+  const el=document.getElementById('clanListSection');if(!el)return;
+  if(!clans.length){el.innerHTML='<div class="clan-empty">Nessun clan ancora — sii il primo!</div>';return;}
+  el.innerHTML=`<div class="clan-list-title">🏆 Top Clan</div>`+
+    clans.map(c=>`<div class="clan-list-item">
+      <span class="clan-li-emoji">${c.emoji}</span>
+      <span class="clan-li-name">${c.name} <span class="clan-tag">[${c.tag}]</span></span>
+      <span class="clan-li-stats">👥${c.memberCount||0}</span>
+      ${myClanId!==c.id?`<button class="clan-join-btn" onclick="joinClan('${c.id}')">Unisciti</button>`:'<span class="clan-mine-badge">✅</span>'}
+    </div>`).join('');
+}
+
+// ── CASINO ─────────────────────────────────────────────────────────
+const SLOT_SYM=['🍒','🍋','🍊','🍇','💎','🎰','7️⃣','⚡','🌟','🎴'];
+const SLOT_PAY={'💎💎💎':100,'🎰🎰🎰':50,'7️⃣7️⃣7️⃣':30,'⚡⚡⚡':20,'🌟🌟🌟':15,'2_match':2,'3_match':10};
+let _slotBet=10,_flipBet=10,_slotSpinning=false,_flipChoice='testa';
+function casinoTab(t,btn){
+  document.querySelectorAll('.cas-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('casSlot').style.display=t==='slot'?'block':'none';
+  document.getElementById('casFlip').style.display=t==='flip'?'block':'none';
+  document.getElementById('casScratch').style.display=t==='scratch'?'block':'none';
+  if(t==='scratch')newScratchCard();
+}
+function slotSetBet(d){_slotBet=Math.max(5,Math.min(100,_slotBet+d));document.getElementById('slotBetAmt').textContent=_slotBet;document.getElementById('slotSpinBtn').textContent='🎰 GIRA! ('+_slotBet+' KVC)';}
+function flipSetBet(d){_flipBet=Math.max(5,Math.min(500,_flipBet+d));document.getElementById('flipBetAmt').textContent=_flipBet;}
+function flipChoose(c,btn){_flipChoice=c;document.querySelectorAll('.flip-choice').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function doSlotSpin(){
+  if(_slotSpinning)return;
+  if(!spendKVC(_slotBet))return;
+  _missionProg('casino1',1);
+  _slotSpinning=true;
+  const btn=document.getElementById('slotSpinBtn');btn.disabled=true;
+  const reels=[document.getElementById('sr0'),document.getElementById('sr1'),document.getElementById('sr2')];
+  let ticks=0;const anim=setInterval(()=>{
+    reels.forEach(r=>{r.textContent=SLOT_SYM[Math.floor(Math.random()*SLOT_SYM.length)];});
+    ticks++;if(ticks>15){clearInterval(anim);_slotFinish(reels);}
+  },80);
+}
+function _slotFinish(reels){
+  const sym=reels.map(r=>r.textContent);
+  const key=sym.join('');
+  let mult=0,msg='';
+  if(SLOT_PAY[key]){mult=SLOT_PAY[key];msg='🎉 '+key+' = '+mult+'× !';}
+  else if(sym[0]===sym[1]&&sym[1]===sym[2]){mult=SLOT_PAY['3_match'];msg='🎉 Tre uguali! '+mult+'×';}
+  else if(sym[0]===sym[1]||sym[1]===sym[2]||sym[0]===sym[2]){mult=SLOT_PAY['2_match'];msg='😊 Due uguali! '+mult+'×';}
+  else msg='😞 Ritenta!';
+  const win=Math.floor(_slotBet*mult);
+  if(win>0){addKVC(win,'casino');msg+=' +'+win+' KVC';}
+  const res=document.getElementById('slotResult');if(res)res.textContent=msg;
+  _slotSpinning=false;
+  const btn=document.getElementById('slotSpinBtn');btn.disabled=false;
+}
+function doFlip(){
+  if(!spendKVC(_flipBet))return;
+  _missionProg('casino1',1);
+  const coin=document.getElementById('flipCoin');
+  const res=document.getElementById('flipResult');
+  coin.classList.add('flipping');
+  setTimeout(()=>{
+    coin.classList.remove('flipping');
+    const out=Math.random()<0.5?'testa':'croce';
+    coin.textContent=out==='testa'?'😎':'🔑';
+    if(out===_flipChoice){
+      const win=_flipBet*2;addKVC(win,'casino');
+      res.textContent='✅ '+out.toUpperCase()+'! +'+win+' KVC';res.style.color='#00ff88';
+    }else{res.textContent='❌ '+out.toUpperCase()+'! Hai perso '+_flipBet+' KVC';res.style.color='#ff4466';}
+  },600);
+}
+const SCRATCH_SYMS=['💎','🎰','🌟','🍒','7️⃣','💰','🎁','❓'];
+let _scratchRevealed=[];let _scratchWin=false;
+function newScratchCard(){
+  if(!spendKVC(15))return;
+  _missionProg('casino1',1);
+  const totalSym=9;
+  const winSym=SCRATCH_SYMS[Math.floor(Math.random()*5)];
+  const hasWin=Math.random()<0.3;
+  const cells=[];
+  if(hasWin){const pos=[Math.floor(Math.random()*9),Math.floor(Math.random()*9)];let placed=0;for(let i=0;i<totalSym;i++){if(placed<3&&(i===pos[0]||i===pos[1]||placed<3&&Math.random()<0.5&&placed<3)){cells.push(winSym);placed++;}else cells.push(SCRATCH_SYMS[Math.floor(Math.random()*SCRATCH_SYMS.length)]);}}
+  else{for(let i=0;i<totalSym;i++)cells.push(SCRATCH_SYMS[Math.floor(Math.random()*SCRATCH_SYMS.length)]);}
+  const counts={};cells.forEach(s=>{counts[s]=(counts[s]||0)+1;});
+  const winEntry=Object.entries(counts).find(([s,c])=>c>=3);
+  _scratchWin=!!winEntry;
+  _scratchRevealed=cells.map(s=>({sym:s,revealed:false}));
+  const grid=document.getElementById('scratchGrid');
+  if(!grid)return;
+  grid.innerHTML=_scratchRevealed.map((c,i)=>`<div class="scratch-cell" onclick="revealScratch(${i},this)">❓</div>`).join('');
+  const res=document.getElementById('scratchResult');if(res)res.textContent='';
+}
+function revealScratch(i,el){
+  if(_scratchRevealed[i].revealed)return;
+  _scratchRevealed[i].revealed=true;el.textContent=_scratchRevealed[i].sym;el.classList.add('revealed');
+  const allRev=_scratchRevealed.every(c=>c.revealed);
+  if(allRev){
+    const counts={};_scratchRevealed.forEach(c=>{counts[c.sym]=(counts[c.sym]||0)+1;});
+    const win=Object.entries(counts).find(([s,c])=>c>=3);
+    const res=document.getElementById('scratchResult');
+    const prizes={'💎':150,'🎰':100,'🌟':80,'🍒':50,'7️⃣':60,'💰':120};
+    if(win){const amt=prizes[win[0]]||50;addKVC(amt,'casino');if(res)res.textContent='🎉 Tre '+win[0]+'! +'+amt+' KVC';}
+    else{if(res)res.textContent='😞 Ritenta!';}
+  }
+}
+
+// ── DISEGNA E INDOVINA ────────────────────────────────────────────
+const DIS_WORDS=['acqua','sole','mare','casa','albero','gatto','cane','pizza','fiore','libro','luna','stelle','montagna','fiume','pioggia','neve','vento','fuoco','cuore','mano','occhio','bocca','testa','macchina','bicicletta','telefono','chiave','porta','tavolo','letto','cucina','bagno','giardino','sedia','finestra','cappello','scarpa','borsa','ombrello','aeroplano','barco','orologio','specchio','lampada','bottiglia','matita','forbici','libro','palla','chitarra'];
+const DIS_COLORS=['#fff','#000','#ef4444','#f97316','#facc15','#4ade80','#38bdf8','#818cf8','#f472b6','#a78bfa'];
+let _disDrawing=false,_disCtx=null,_disLast=null,_disBrushColor='#fff',_disBrushSize=4;
+let _disRoomId=null,_disIsDrawer=false,_disCurrentWord=null,_disGuessedCorrect=false;
+
+function disegnaLeave(){
+  if(socket&&_disRoomId)socket.emit('dis_leave',{roomId:_disRoomId});
+  _disRoomId=null;_disIsDrawer=false;
+  document.getElementById('disLobby').style.display='flex';
+  document.getElementById('disGame').style.display='none';
+  showScreen('econHome',null);
+}
+function disegnaQuickJoin(){
+  const code='DIS'+Math.random().toString(36).substr(2,3).toUpperCase();
+  disegnaJoinRoom(code);
+}
+function disegnaJoinCode(){
+  const code=document.getElementById('disCodeInput').value.trim().toUpperCase();
+  if(code.length<3){showToast('Codice troppo corto');return;}
+  disegnaJoinRoom(code);
+}
+function disegnaJoinRoom(roomId){
+  if(!socket){showToast('Connessione non disponibile');return;}
+  _disRoomId=roomId;
+  const uid=user?.id||localStorage.getItem('kv4_uid')||'anon';
+  const name=user?.name||genNick(Date.now());
+  socket.emit('dis_join',{roomId,userId:uid,name});
+  document.getElementById('disLobby').style.display='none';
+  document.getElementById('disGame').style.display='flex';
+  _disInitCanvas();
+  _disInitColors();
+}
+function _disInitColors(){
+  const el=document.getElementById('disColors');if(!el)return;
+  el.innerHTML=DIS_COLORS.map(c=>`<button class="dis-color-btn ${c===_disBrushColor?'active':''}" style="background:${c}" onclick="disSetColor('${c}',this)"></button>`).join('');
+}
+function disSetColor(c,btn){_disBrushColor=c;document.querySelectorAll('.dis-color-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function disSetSize(s,btn){_disBrushSize=s;document.querySelectorAll('.dis-size').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function _disInitCanvas(){
+  const canvas=document.getElementById('disCanvas');if(!canvas)return;
+  _disCtx=canvas.getContext('2d');
+  _disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);
+  function getPos(e){const r=canvas.getBoundingClientRect();const cl=e.touches?e.touches[0]:e;return{x:(cl.clientX-r.left)*(canvas.width/r.width),y:(cl.clientY-r.top)*(canvas.height/r.height)};}
+  function draw(e){
+    if(!_disDrawing||!_disIsDrawer)return;e.preventDefault();
+    const pos=getPos(e);
+    _disCtx.beginPath();_disCtx.arc(pos.x,pos.y,_disBrushSize/2,0,Math.PI*2);_disCtx.fillStyle=_disBrushColor;_disCtx.fill();
+    if(_disLast){_disCtx.beginPath();_disCtx.moveTo(_disLast.x,_disLast.y);_disCtx.lineTo(pos.x,pos.y);_disCtx.strokeStyle=_disBrushColor;_disCtx.lineWidth=_disBrushSize;_disCtx.lineCap='round';_disCtx.stroke();}
+    _disLast=pos;
+    if(socket)socket.emit('dis_stroke',{roomId:_disRoomId,x:pos.x,y:pos.y,color:_disBrushColor,size:_disBrushSize,last:_disLast});
+  }
+  canvas.addEventListener('mousedown',e=>{_disDrawing=true;_disLast=getPos(e);});
+  canvas.addEventListener('mousemove',draw);
+  canvas.addEventListener('mouseup',()=>{_disDrawing=false;_disLast=null;});
+  canvas.addEventListener('touchstart',e=>{_disDrawing=true;_disLast=getPos(e);},{passive:false});
+  canvas.addEventListener('touchmove',draw,{passive:false});
+  canvas.addEventListener('touchend',()=>{_disDrawing=false;_disLast=null;});
+}
+function disClear(){
+  if(!_disCtx)return;
+  const canvas=document.getElementById('disCanvas');
+  _disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);
+  if(socket)socket.emit('dis_clear',{roomId:_disRoomId});
+}
+function disSendGuess(){
+  const inp=document.getElementById('disGuessInput');const val=inp?.value.trim();
+  if(!val||!socket)return;
+  socket.emit('dis_guess',{roomId:_disRoomId,guess:val,userId:user?.id||'anon',name:user?.name||'Anon'});
+  _disAddChat('Tu',val,'#9ca3af');
+  inp.value='';
+}
+function _disAddChat(name,msg,color){
+  const el=document.getElementById('disChat');if(!el)return;
+  const d=document.createElement('div');d.className='dis-chat-msg';
+  d.innerHTML=`<b style="color:${color||'#9ca3af'}">${esc(name)}</b>: ${esc(msg)}`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function _disSetupSocketEvents(){
+  if(!socket)return;
+  socket.on('dis_start',({word,isDrawer,drawer,wordHint})=>{
+    _disIsDrawer=isDrawer;_disCurrentWord=word;_disGuessedCorrect=false;
+    document.getElementById('disRole').textContent=isDrawer?`✏️ Disegna: "${word}"`:'👀 Indovina!';
+    document.getElementById('disWordHint').textContent=wordHint||'_ '.repeat(word?.length||4);
+    document.getElementById('disDrawerTools').style.display=isDrawer?'flex':'none';
+    document.getElementById('disGuessArea').style.display=isDrawer?'none':'flex';
+    const canvas=document.getElementById('disCanvas');if(canvas){_disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);}
+    _disAddChat('🎮','Nuovo round! '+drawer+' disegna.','#f59e0b');
+  });
+  socket.on('dis_stroke_recv',({x,y,color,size,last})=>{
+    if(!_disCtx)return;
+    _disCtx.beginPath();_disCtx.arc(x,y,size/2,0,Math.PI*2);_disCtx.fillStyle=color;_disCtx.fill();
+    if(last){_disCtx.beginPath();_disCtx.moveTo(last.x,last.y);_disCtx.lineTo(x,y);_disCtx.strokeStyle=color;_disCtx.lineWidth=size;_disCtx.lineCap='round';_disCtx.stroke();}
+  });
+  socket.on('dis_clear_recv',()=>{const c=document.getElementById('disCanvas');if(c)_disCtx.fillStyle='#1e2030',_disCtx.fillRect(0,0,c.width,c.height);});
+  socket.on('dis_hint',({hint})=>{document.getElementById('disWordHint').textContent=hint;});
+  socket.on('dis_correct',({name,points,word})=>{
+    _disAddChat('✅',name+' ha indovinato! La parola era: '+word,'#00ff88');
+    if(name===user?.name||name==='Tu'){addKVC(points,'_internal');showToast('🎉 Indovinato! +'+points+' KVC');}
+  });
+  socket.on('dis_wrong',({name,guess})=>{_disAddChat(name,guess,'#9ca3af');});
+  socket.on('dis_scores',({scores})=>{
+    const bar=document.getElementById('disScoresBar');
+    if(bar)bar.innerHTML=scores.map(s=>`<span class="dis-score-chip">${s.name} ${s.points}pt</span>`).join('');
+  });
+  socket.on('dis_players',({players})=>{
+    const bar=document.getElementById('disScoresBar');
+    if(bar)bar.innerHTML=players.map(p=>`<span class="dis-score-chip">${p.name||'?'} ${p.points||0}pt</span>`).join('');
+  });
+  socket.on('dis_timer',({seconds})=>{
+    const t=document.getElementById('disTimer');if(t)t.textContent=seconds+'s';
+  });
+  socket.on('dis_end',({word,scores})=>{
+    _disAddChat('⏰','Tempo scaduto! Parola: '+word,'#f59e0b');
+    document.getElementById('disRole').textContent='⏰ Round finito';
+  });
+}
+
+// ── ECON HUB OPEN ────────────────────────────────────────────────
+function openEconHub(navBtn){
+  showScreen('econHome',navBtn||document.querySelector('[data-sc=econHome]'));
+  _kvcUI();updateMissionBadge();renderPetScreen();
+  // update streak display
+  const streak=parseInt(localStorage.getItem('kvc_streak')||'0');
+  const si=document.getElementById('econStreakIcon');if(si)si.textContent=streak>=7?'🔥':streak>=3?'⚡':'✨';
+  const sl=document.getElementById('econStreakLabel');if(sl)sl.textContent='Streak: '+streak+' giorni';
 }
 
 // ── Desktop View Toggle (mobile ↔ full-screen) ──────────────────────────────

@@ -3352,6 +3352,93 @@ app.get('/api/shop/bitcoin-status/:paymentId', verifyToken, (req, res) => {
     });
 });
 
+// ═══════════════════════════════════════════════���════════════════
+// ██  CLAN API  ██
+// ═══════════════════���═══════════════════════════��════════════════
+function _saveClanDB(){if(!DB.clans)DB.clans=[];saveDB();}
+
+app.get('/api/clans',(req,res)=>{
+    if(!DB.clans)DB.clans=[];
+    const clans=DB.clans.map(c=>({id:c.id,name:c.name,tag:c.tag,emoji:c.emoji,memberCount:(c.members||[]).length,xp:c.xp||0}));
+    clans.sort((a,b)=>b.xp-a.xp);
+    res.json({clans:clans.slice(0,20)});
+});
+
+app.post('/api/clans/create',(req,res)=>{
+    const {name,tag,emoji,userId}=req.body||{};
+    if(!name||!tag||!userId)return res.status(400).json({error:'Dati mancanti'});
+    if(!DB.clans)DB.clans=[];
+    if(DB.clans.find(c=>c.tag.toUpperCase()===tag.toUpperCase()))return res.status(409).json({error:'Tag già in uso'});
+    const existing=DB.clans.find(c=>(c.members||[]).includes(userId));
+    if(existing)return res.status(409).json({error:'Sei già in un clan'});
+    const clan={id:'clan_'+Date.now(),name:name.slice(0,20),tag:tag.slice(0,4).toUpperCase(),emoji:emoji||'⚔️',ownerId:userId,members:[userId],xp:0,createdAt:Date.now()};
+    DB.clans.push(clan);_saveClanDB();
+    res.json({id:clan.id,name:clan.name,tag:clan.tag,emoji:clan.emoji});
+});
+
+app.post('/api/clans/join',(req,res)=>{
+    const {clanId,userId}=req.body||{};
+    if(!clanId||!userId)return res.status(400).json({error:'Dati mancanti'});
+    if(!DB.clans)DB.clans=[];
+    const existing=DB.clans.find(c=>(c.members||[]).includes(userId));
+    if(existing)return res.status(409).json({error:'Sei già in un clan. Esci prima.'});
+    const clan=DB.clans.find(c=>c.id===clanId);
+    if(!clan)return res.status(404).json({error:'Clan non trovato'});
+    clan.members=clan.members||[];
+    clan.members.push(userId);_saveClanDB();
+    res.json({ok:true});
+});
+
+app.post('/api/clans/leave',(req,res)=>{
+    const {userId}=req.body||{};
+    if(!DB.clans||!userId)return res.json({ok:true});
+    DB.clans.forEach(c=>{c.members=(c.members||[]).filter(id=>id!==userId);});
+    // rimuovi clan vuoti
+    DB.clans=DB.clans.filter(c=>(c.members||[]).length>0);
+    _saveClanDB();res.json({ok:true});
+});
+
+// ═════════════��══════════════════════════════���═══════════════════
+// ██  DISEGNA E INDOVINA — Socket.IO  ██
+// ═════��══════════════════════════════════════════════════════════
+const DIS_ROOMS={};
+const DIS_WORDS=['acqua','sole','mare','casa','albero','gatto','cane','pizza','fiore','libro','luna','stelle','montagna','fiume','pioggia','neve','vento','fuoco','cuore','mano','occhio','bocca','testa','macchina','bicicletta','telefono','chiave','porta','tavolo','letto','cucina','bagno','giardino','sedia','finestra','cappello','scarpa','borsa','ombrello','aeroplano','barca','orologio','specchio','lampada','bottiglia','matita','forbici','palla','chitarra','zaino','cane'];
+
+function disGetHint(word,revealCount){
+  const chars=[...word];
+  return chars.map((c,i)=>i<revealCount?' '+c+' ':'_ ').join('').trim();
+}
+function disNextRound(room){
+  if(!room.players.length)return;
+  room.drawerIdx=(room.drawerIdx+1)%room.players.length;
+  const drawer=room.players[room.drawerIdx];
+  const word=DIS_WORDS[Math.floor(Math.random()*DIS_WORDS.length)];
+  room.currentWord=word;room.guessed=[];room.phase='drawing';
+  room.startedAt=Date.now();room.revealCount=1;
+  // notify all
+  room.players.forEach(p=>{
+    const sock=io.sockets.sockets.get(p.socketId);if(!sock)return;
+    const isDrawer=p.socketId===drawer.socketId;
+    sock.emit('dis_start',{word:isDrawer?word:null,isDrawer,drawer:drawer.name||'?',wordHint:disGetHint(word,0)});
+  });
+  // timer
+  if(room.timer)clearInterval(room.timer);
+  let t=60;
+  room.timer=setInterval(()=>{
+    t--;
+    room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_timer',{seconds:t});});
+    if(t<=0||(room.guessed.length>=room.players.length-1)){
+      clearInterval(room.timer);
+      room.phase='ended';
+      room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_end',{word,scores:room.players.map(pl=>({name:pl.name,points:pl.points||0}))});});
+      if(t<=0)setTimeout(()=>disNextRound(room),3000);
+    }
+    // reveal hint at 20s
+    if(t===40){room.revealCount=2;const hint=disGetHint(word,2);room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_hint',{hint});});}
+    if(t===20){room.revealCount=3;const hint=disGetHint(word,3);room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_hint',{hint});});}
+  },1000);
+}
+
 // ── Verifica abbonamento 1€/mese via TxID ────────────────────────────────
 app.post('/api/shop/verify-sub', async (req, res) => {
     const { txid } = req.body || {};
@@ -5606,6 +5693,38 @@ io.on('connection', (socket) => {
         if(qsi!==-1) scopaQueue.splice(qsi,1);
         const wasWatcher=scopaWatchers.delete(socket.id);
         if(qsi!==-1||scopaGid||wasWatcher) scopaBroadcastLobby();
+    });
+
+    // ── Disegna e Indovina ────────────────────────────────────────
+    socket.on('dis_join',({roomId,userId,name})=>{
+        if(!DIS_ROOMS[roomId])DIS_ROOMS[roomId]={id:roomId,players:[],phase:'waiting',drawerIdx:-1,currentWord:null,guessed:[],timer:null,startedAt:0};
+        const room=DIS_ROOMS[roomId];
+        room.players=room.players.filter(p=>p.userId!==userId);
+        room.players.push({socketId:socket.id,userId,name,points:0});
+        socket.join('dis_'+roomId);
+        io.to('dis_'+roomId).emit('dis_players',{players:room.players.map(p=>({name:p.name,points:p.points||0}))});
+        if(room.players.length>=2&&room.phase==='waiting'){setTimeout(()=>disNextRound(room),1500);}
+    });
+    socket.on('dis_stroke',({roomId,x,y,color,size,last})=>{socket.to('dis_'+roomId).emit('dis_stroke_recv',{x,y,color,size,last});});
+    socket.on('dis_clear',({roomId})=>{socket.to('dis_'+roomId).emit('dis_clear_recv');});
+    socket.on('dis_guess',({roomId,guess,userId,name})=>{
+        const room=DIS_ROOMS[roomId];if(!room||room.phase!=='drawing')return;
+        const word=room.currentWord;if(!word)return;
+        if(guess.toLowerCase().trim()===word.toLowerCase()&&!room.guessed.includes(userId)){
+            room.guessed.push(userId);
+            const timeLeft=60-Math.floor((Date.now()-room.startedAt)/1000);
+            const points=Math.max(10,timeLeft);
+            const player=room.players.find(p=>p.userId===userId);if(player)player.points=(player.points||0)+points;
+            const drawer=room.players[room.drawerIdx];if(drawer)drawer.points=(drawer.points||0)+5;
+            io.to('dis_'+roomId).emit('dis_correct',{name,points,word});
+            io.to('dis_'+roomId).emit('dis_scores',{scores:room.players.map(p=>({name:p.name,points:p.points||0}))});
+        }else{io.to('dis_'+roomId).emit('dis_wrong',{name,guess});}
+    });
+    socket.on('dis_leave',({roomId})=>{
+        const room=DIS_ROOMS[roomId];if(!room)return;
+        room.players=room.players.filter(p=>p.socketId!==socket.id);
+        socket.leave('dis_'+roomId);
+        if(!room.players.length&&room.timer){clearInterval(room.timer);room.timer=null;}
     });
 });
 

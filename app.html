@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260525e">
+<link rel="stylesheet" href="/app.css?v=20260526a">
 </head>
 <body>
 
@@ -1154,11 +1154,262 @@
   </div>
 </div>
 
+<!-- ░░ ECONOMIA HUB ░░ -->
+<div id="econHome" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('home',document.querySelector('[data-sc=home]'))">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🪙 Kouverte Coin</span>
+      <div class="hdr-right">
+        <button class="hdr-plain-btn" onclick="openNickEffectsShop()">✨ Nick</button>
+      </div>
+    </div>
+  </div>
+  <div class="econ-body">
+    <div class="econ-bal-card">
+      <div class="econ-bal-label">Il tuo saldo</div>
+      <div class="econ-bal-big kvc-bal">0 KVC</div>
+      <div class="econ-bal-sub">Guadagna completando missioni e giocando</div>
+    </div>
+    <div class="econ-streak-row" id="econStreakRow">
+      <span id="econStreakIcon">🔥</span> <span id="econStreakLabel">Streak: 0 giorni</span>
+    </div>
+    <div class="econ-grid">
+      <div class="econ-card" onclick="showScreen('missioniScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#f59e0b,#d97706)">🎯</div>
+        <div class="econ-card-name">Missioni</div>
+        <div class="econ-card-sub" id="missionBadge">0/6 oggi</div>
+      </div>
+      <div class="econ-card" onclick="showScreen('casinoScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#a855f7,#7c3aed)">🎰</div>
+        <div class="econ-card-name">Casino</div>
+        <div class="econ-card-sub">Slot · Moneta</div>
+      </div>
+      <div class="econ-card" onclick="showScreen('petScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#10b981,#059669)">🐾</div>
+        <div class="econ-card-name">Pet</div>
+        <div class="econ-card-sub" id="petNavSub">Adotta un pet</div>
+      </div>
+      <div class="econ-card" onclick="showScreen('clanScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#ef4444,#b91c1c)">⚔️</div>
+        <div class="econ-card-name">Clan</div>
+        <div class="econ-card-sub" id="clanNavSub">Crea o unisciti</div>
+      </div>
+      <div class="econ-card" onclick="showScreen('disegnaScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#06b6d4,#0284c7)">🎨</div>
+        <div class="econ-card-name">Disegna</div>
+        <div class="econ-card-sub">& Indovina</div>
+      </div>
+      <div class="econ-card" onclick="openNickEffectsShop()">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#ff6b9d,#f97316)">✨</div>
+        <div class="econ-card-name">Effetti Nick</div>
+        <div class="econ-card-sub">Stile in chat</div>
+      </div>
+    </div>
+    <div class="econ-history" id="econHistory"></div>
+  </div>
+</div>
+
+<!-- ░░ MISSIONI ░░ -->
+<div id="missioniScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🎯 Missioni Giornaliere</span>
+      <div class="hdr-right"><span class="miss-reset" id="missReset">⏱</span></div>
+    </div>
+  </div>
+  <div class="miss-body">
+    <div class="miss-top">
+      <div class="miss-today-label">Guadagnato oggi</div>
+      <div class="miss-today-kvc" id="missTodayKvc">0 KVC</div>
+    </div>
+    <div id="missionsList" class="missions-list"></div>
+  </div>
+</div>
+
+<!-- ░░ CASINO ░░ -->
+<div id="casinoScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🎰 Casino</span>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 KVC</span></div>
+    </div>
+  </div>
+  <div class="casino-body">
+    <div class="casino-tabs">
+      <button class="cas-tab active" onclick="casinoTab('slot',this)">🎰 Slot</button>
+      <button class="cas-tab" onclick="casinoTab('flip',this)">🪙 Moneta</button>
+      <button class="cas-tab" onclick="casinoTab('scratch',this)">🎴 Gratta</button>
+    </div>
+    <!-- SLOT -->
+    <div id="casSlot" class="cas-panel">
+      <div class="slot-machine">
+        <div class="slot-screen">
+          <div class="slot-reel" id="sr0">🍒</div>
+          <div class="slot-reel" id="sr1">🍋</div>
+          <div class="slot-reel" id="sr2">🍊</div>
+        </div>
+        <div class="slot-payline"></div>
+      </div>
+      <div class="slot-result" id="slotResult"></div>
+      <div class="slot-bet-row">
+        <button class="slot-bet-btn" onclick="slotSetBet(-5)">−</button>
+        <span class="slot-bet-lbl">Puntata: <b id="slotBetAmt">10</b> KVC</span>
+        <button class="slot-bet-btn" onclick="slotSetBet(5)">+</button>
+      </div>
+      <button class="slot-spin-btn" id="slotSpinBtn" onclick="doSlotSpin()">🎰 GIRA! (10 KVC)</button>
+      <div class="slot-paytable">
+        <div>💎💎💎 = 100×  |  🎰🎰🎰 = 50×  |  7️⃣7️⃣7️⃣ = 20×</div>
+        <div>3 uguali = 10×  |  2 uguali = 2×  |  niente = 0</div>
+      </div>
+    </div>
+    <!-- COIN FLIP -->
+    <div id="casFlip" class="cas-panel" style="display:none">
+      <div class="flip-coin" id="flipCoin">🪙</div>
+      <div class="flip-result" id="flipResult"></div>
+      <div class="flip-choice-row">
+        <button class="flip-choice active" id="btnTesta" onclick="flipChoose('testa',this)">😎 Testa</button>
+        <button class="flip-choice" id="btnCroce" onclick="flipChoose('croce',this)">🔑 Croce</button>
+      </div>
+      <div class="slot-bet-row">
+        <button class="slot-bet-btn" onclick="flipSetBet(-5)">−</button>
+        <span class="slot-bet-lbl">Puntata: <b id="flipBetAmt">10</b> KVC</span>
+        <button class="slot-bet-btn" onclick="flipSetBet(5)">+</button>
+      </div>
+      <button class="slot-spin-btn" id="flipBtn" onclick="doFlip()">🪙 Lancia!</button>
+    </div>
+    <!-- SCRATCH -->
+    <div id="casScratch" class="cas-panel" style="display:none">
+      <div class="scratch-info">Costa 15 KVC. Gratta 3 simboli uguali = vinci!</div>
+      <div class="scratch-grid" id="scratchGrid"></div>
+      <div class="scratch-result" id="scratchResult"></div>
+      <button class="slot-spin-btn" id="scratchBtn" onclick="newScratchCard()">🎴 Nuova Scheda (15 KVC)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ PET ░░ -->
+<div id="petScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🐾 Il Mio Pet</span>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 KVC</span></div>
+    </div>
+  </div>
+  <div class="pet-body">
+    <div id="petMySection"></div>
+    <div class="pet-shop-title">🛒 Adotta un Pet</div>
+    <div class="pet-shop-grid" id="petShopGrid"></div>
+  </div>
+</div>
+
+<!-- ░░ CLAN ░░ -->
+<div id="clanScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">⚔️ Clan</span>
+      <div class="hdr-right"></div>
+    </div>
+  </div>
+  <div class="clan-body">
+    <div id="myClanSection"></div>
+    <div id="clanListSection"></div>
+  </div>
+</div>
+
+<!-- ░░ DISEGNA E INDOVINA ░░ -->
+<div id="disegnaScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="disegnaLeave()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:16px">🎨 Disegna & Indovina</span>
+      <div class="hdr-right"><span id="disTimer" class="dis-timer"></span></div>
+    </div>
+  </div>
+  <div id="disLobby" class="dis-lobby">
+    <div class="dis-lobby-icon">🎨</div>
+    <div class="dis-lobby-title">Disegna & Indovina</div>
+    <div class="dis-lobby-desc">Disegna la parola segreta e fai indovinare gli altri.<br>Guadagna KVC per ogni risposta corretta!</div>
+    <button class="dis-lobby-btn" onclick="disegnaQuickJoin()">⚡ Partita Rapida</button>
+    <div class="dis-or">oppure</div>
+    <div class="dis-code-row">
+      <input id="disCodeInput" class="dis-code-input" placeholder="Codice stanza..." maxlength="6">
+      <button class="dis-join-btn" onclick="disegnaJoinCode()">Entra</button>
+    </div>
+  </div>
+  <div id="disGame" class="dis-game" style="display:none">
+    <div class="dis-top-bar">
+      <div class="dis-word-hint" id="disWordHint">_ _ _ _</div>
+      <div class="dis-scores-bar" id="disScoresBar"></div>
+    </div>
+    <div class="dis-canvas-wrap">
+      <canvas id="disCanvas" width="320" height="260"></canvas>
+      <div id="disDrawerTools" class="dis-tools" style="display:none">
+        <div class="dis-colors" id="disColors"></div>
+        <div class="dis-sizes">
+          <button class="dis-size active" data-s="3" onclick="disSetSize(3,this)">●</button>
+          <button class="dis-size" data-s="8" onclick="disSetSize(8,this)">●</button>
+          <button class="dis-size" data-s="16" onclick="disSetSize(16,this)">●</button>
+        </div>
+        <button class="dis-clear-btn" onclick="disClear()">🗑</button>
+      </div>
+    </div>
+    <div id="disRole" class="dis-role"></div>
+    <div id="disGuessArea" class="dis-guess-area" style="display:none">
+      <input id="disGuessInput" class="dis-guess-input" placeholder="Indovina la parola..." autocomplete="off">
+      <button class="dis-guess-btn" onclick="disSendGuess()">→</button>
+    </div>
+    <div id="disChat" class="dis-chat"></div>
+  </div>
+</div>
+
+<!-- ░░ LOGIN REWARD MODAL ░░ -->
+<div class="lr-overlay" id="lrOverlay" onclick="if(event.target===this)closeLR()">
+  <div class="lr-box">
+    <div class="lr-title">🎁 Premio di Oggi!</div>
+    <div class="lr-streak-bar" id="lrStreakBar"></div>
+    <div class="lr-coin-anim" id="lrCoinAnim">🪙</div>
+    <div class="lr-amount" id="lrAmount">+50 KVC</div>
+    <div class="lr-desc" id="lrDesc">Giorno 1 di streak</div>
+    <button class="lr-claim-btn" id="lrClaimBtn" onclick="claimLoginReward()">✅ Ritira!</button>
+  </div>
+</div>
+
+<!-- ░░ NICK EFFECTS MODAL ░░ -->
+<div class="ne-overlay" id="neOverlay" onclick="if(event.target===this)closeNickEffects()">
+  <div class="ne-box">
+    <button class="pw-close" onclick="closeNickEffects()">✕</button>
+    <div class="ne-title">✨ Effetti Nickname</div>
+    <div class="ne-preview" id="nePreview">Il tuo nome</div>
+    <div class="ne-grid" id="neGrid"></div>
+  </div>
+</div>
+
 <!-- ░░ NAV ░░ -->
 <nav class="bnav">
   <button class="nbtn active" data-sc="home" onclick="showScreen('home',this)">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     <div class="nlbl">Stanze</div>
+  </button>
+  <button class="nbtn" data-sc="econHome" onclick="openEconHub(this)">
+    <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v2m0 8v2M9.5 9.5A2.5 2.5 0 0 1 12 8a2.5 2.5 0 0 1 0 5 2.5 2.5 0 0 0 0 5 2.5 2.5 0 0 0 2.5-1.5"/></svg>
+    <div class="nlbl">Giochi</div>
   </button>
   <button class="nbtn" data-sc="profile" onclick="showScreen('profile',this)">
     <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1265,7 +1516,7 @@
 </div>
 
 
-<script src="/app.js?v=20260525e"></script>
+<script src="/app.js?v=20260526a"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
