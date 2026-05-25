@@ -9417,6 +9417,14 @@ function syncProfVideoCard(){
   }
 }
 
+// Keep-alive: pinga /health ogni 10 minuti per evitare lo sleep del free tier
+(function startKeepAlive() {
+  const INTERVAL = 10 * 60 * 1000; // 10 minuti
+  setInterval(() => {
+    fetch('/health', { method: 'GET', cache: 'no-store' }).catch(() => {});
+  }, INTERVAL);
+})();
+
 // ══════════════════════════════════════════════════════════════
 // PANNELLO DIAGNOSTICO / RISOLVI PROBLEMI
 // ══════════════════════════════════════════════════════════════
@@ -9470,21 +9478,35 @@ async function runDiagnostics() {
     return 'Online ✓';
   }, tips, 'Controlla la connessione Wi-Fi o dati mobili.');
 
-  // 2. Server
+  // 2. Server — timeout lungo per gestire il risveglio del free tier (fino a 60s)
   await _diagCheck('server', async () => {
-    const ctrl = new AbortController();
-    const tid = setTimeout(() => ctrl.abort(), 4000);
+    // Prima prova veloce (5s)
+    const tryFetch = (ms) => {
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), ms);
+      return fetch('/health', { signal: ctrl.signal }).finally(() => clearTimeout(tid));
+    };
+    // Aggiorna badge a "in risveglio" se la prima prova è lenta
+    const wakeTimer = setTimeout(() => {
+      const el = document.getElementById('diag-server');
+      if (el) { el.className = 'diag-check-item checking'; const b = el.querySelector('.diag-badge'); if(b) b.textContent='⏳'; const s = el.querySelector('.diag-status'); if(s) s.textContent='In risveglio… (~50s)'; }
+    }, 5100);
     try {
-      const r = await fetch('/health', { signal: ctrl.signal });
-      clearTimeout(tid);
+      let r;
+      try { r = await tryFetch(5000); }
+      catch(e) {
+        // Seconda prova con timeout 55s (server in sleep su free tier)
+        r = await tryFetch(55000);
+      }
+      clearTimeout(wakeTimer);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return 'Risponde ✓';
     } catch (e) {
-      clearTimeout(tid);
-      if (e.name === 'AbortError') throw new Error('Timeout — server lento');
+      clearTimeout(wakeTimer);
+      if (e.name === 'AbortError') throw new Error('Timeout — server in sleep, ricarica tra 1 minuto');
       throw new Error('Non raggiungibile');
     }
-  }, tips, 'Ricarica la pagina. Se persiste, il server è in manutenzione.');
+  }, tips, 'Il server free va in sleep dopo 15min inattività. Aspetta 60s e riprova, oppure ricarica la pagina.');
 
   // 3. WebSocket / Socket.io
   await _diagCheck('realtime', async () => {
