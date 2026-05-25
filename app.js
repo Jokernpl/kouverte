@@ -263,6 +263,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   initParticles();
   startLiveFeed();
   startLiveStats();
+  loadVoicesFeed();
   // Hook chat modes (ephemeral, effetti, bot)
   setupChatModesHooks();
   // Auto-login: pre-marca "ricordato" se token presente per evitare Login Wall
@@ -4729,6 +4730,156 @@ function updateLiveStats(){
 function startLiveStats(){
   updateLiveStats();
   setInterval(updateLiveStats, 20000); // ogni 20 sec (perf)
+}
+
+// ════════════════════════════════════════════════════════
+//   VOCI — Feed homepage + Screen full-screen
+// ════════════════════════════════════════════════════════
+var _voicesFeed = [];
+var _vscIdx = 0;
+var _vscAudio = null;
+var _vscIsPlaying = false;
+
+async function loadVoicesFeed(){
+  try{
+    const r = await fetch('/api/voices/feed?limit=30');
+    if(!r.ok) return;
+    const data = await r.json();
+    _voicesFeed = data.voices || [];
+    renderVoicesCarousel();
+  }catch(e){ console.warn('voices feed error', e); }
+}
+
+function renderVoicesCarousel(){
+  const sec = document.getElementById('voicesSection');
+  const scroll = document.getElementById('voicesScroll');
+  if(!sec || !scroll) return;
+  if(_voicesFeed.length === 0){
+    sec.style.display = 'none';
+    return;
+  }
+  sec.style.display = 'block';
+  scroll.innerHTML = _voicesFeed.slice(0, 12).map((v, i) => {
+    const firstClip = v.clips[0];
+    const bars = Array.from({length:9}, (_,k) => `<span style="height:${30 + (((i*7+k*3)%70))}%;animation-delay:${k*0.08}s"></span>`).join('');
+    return `<div class="voice-card" onclick="openVoicesScreen(${i})" style="--vc:${v.color}">
+      <div class="vc-glow"></div>
+      <div class="vc-face">${v.face}</div>
+      <div class="vc-name">${esc((v.displayName||'').slice(0,14))}</div>
+      <div class="vc-meta">${v.clips.length} ${v.clips.length===1?'voce':'voci'}${v.city?' · '+esc(v.city.slice(0,10)):''}</div>
+      <div class="vc-wave">${bars}</div>
+      <div class="vc-play"><svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><polygon points="5,3 19,12 5,21"/></svg></div>
+    </div>`;
+  }).join('');
+}
+
+function openVoicesScreen(idx){
+  if(!_voicesFeed.length){ showToast('🎙️ Nessuna voce ancora — registra la tua dal profilo!'); return; }
+  _vscIdx = Math.max(0, Math.min(idx||0, _voicesFeed.length-1));
+  document.getElementById('voicesScreen').classList.add('open');
+  document.getElementById('vscTotal').textContent = _voicesFeed.length;
+  renderVoiceStage();
+}
+
+function closeVoicesScreen(){
+  document.getElementById('voicesScreen').classList.remove('open');
+  if(_vscAudio){ try{ _vscAudio.pause(); }catch(e){} _vscAudio = null; }
+  _vscIsPlaying = false;
+}
+
+function renderVoiceStage(){
+  const stage = document.getElementById('vscStage');
+  const idxEl = document.getElementById('vscIdx');
+  if(!stage) return;
+  const v = _voicesFeed[_vscIdx];
+  if(!v){ stage.innerHTML = '<div class="vsc-empty">Nessuna voce</div>'; return; }
+  if(idxEl) idxEl.textContent = _vscIdx + 1;
+
+  const bars = Array.from({length:24}, (_,k) =>
+    `<span style="height:${20 + Math.sin(k * 0.7) * 35 + (k%3)*15}%;animation-delay:${k*0.04}s"></span>`
+  ).join('');
+
+  stage.innerHTML = `
+    <div class="vsc-bg" style="background:radial-gradient(circle at 50% 30%,${v.color}55 0%,transparent 60%),radial-gradient(circle at 50% 80%,${v.color}33 0%,transparent 60%)"></div>
+    <div class="vsc-face-ring" style="--vc:${v.color}">
+      <div class="vsc-face-pulse"></div>
+      <div class="vsc-face-pulse vsc-face-pulse-2"></div>
+      <div class="vsc-face">${v.face}</div>
+    </div>
+    <div class="vsc-name" style="color:${v.color}">${esc(v.displayName||'')}</div>
+    <div class="vsc-meta">${v.city?esc(v.city)+' · ':''}Livello ${v.level||1}${v.isPremium?' · ⭐ Premium':''}</div>
+    <div class="vsc-wave-big">${bars}</div>
+    <div class="vsc-clips">
+      ${v.clips.map((c,i)=>`<button class="vsc-clip-btn${i===0?' active':''}" data-clip-idx="${i}" onclick="vscPlayClip(${i})">${esc(c.title)}</button>`).join('')}
+    </div>
+    <div class="vsc-hint">Tocca play o un titolo per ascoltare</div>
+  `;
+
+  // auto-play prima clip
+  setTimeout(() => vscPlayClip(0), 100);
+}
+
+function vscPlayClip(clipIdx){
+  const v = _voicesFeed[_vscIdx]; if(!v) return;
+  const clip = v.clips[clipIdx]; if(!clip) return;
+  // segna attivo
+  document.querySelectorAll('.vsc-clip-btn').forEach((b,i) => b.classList.toggle('active', i===clipIdx));
+  if(_vscAudio){ try{ _vscAudio.pause(); }catch(e){} }
+  _vscAudio = new Audio(clip.audio_url);
+  _vscAudio.onended = () => {
+    _vscIsPlaying = false;
+    updateVscPlayBtn();
+    // auto-next clip stessa voce, o auto-skip alla prossima voce
+    if(clipIdx < v.clips.length - 1){
+      vscPlayClip(clipIdx + 1);
+    } else {
+      setTimeout(() => vscSkip(), 600);
+    }
+  };
+  _vscAudio.play().then(() => {
+    _vscIsPlaying = true;
+    updateVscPlayBtn();
+  }).catch(e => {
+    _vscIsPlaying = false;
+    updateVscPlayBtn();
+  });
+}
+
+function vscTogglePlay(){
+  if(!_vscAudio){ vscPlayClip(0); return; }
+  if(_vscIsPlaying){
+    try{ _vscAudio.pause(); }catch(e){}
+    _vscIsPlaying = false;
+  } else {
+    _vscAudio.play().then(()=>{ _vscIsPlaying = true; updateVscPlayBtn(); }).catch(()=>{});
+    return;
+  }
+  updateVscPlayBtn();
+}
+
+function updateVscPlayBtn(){
+  const icon = document.getElementById('vscPlayIcon');
+  if(!icon) return;
+  icon.innerHTML = _vscIsPlaying
+    ? '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>'
+    : '<polygon points="5,3 19,12 5,21"/>';
+}
+
+function vscSkip(){
+  if(_vscIdx < _voicesFeed.length - 1){
+    _vscIdx++;
+    renderVoiceStage();
+  } else {
+    showToast('🎙️ Hai ascoltato tutte le voci!');
+    closeVoicesScreen();
+  }
+}
+
+function vscLike(){
+  const v = _voicesFeed[_vscIdx]; if(!v) return;
+  showToast(`💖 Like a ${v.displayName||v.username}`);
+  if(window.hapticOk) window.hapticOk();
+  setTimeout(() => vscSkip(), 400);
 }
 
 function renderRooms(){

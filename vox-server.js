@@ -1987,6 +1987,52 @@ app.post('/api/profile/update', verifyToken, (req, res) => {
     res.json({ ok: true, profile: user.profile });
 });
 
+// Feed voci pubbliche: lista profili con almeno 1 clip vocale registrata
+// Usato per homepage carousel + schermata Voci full-screen
+app.get('/api/voices/feed', (req, res) => {
+    const limit = Math.min(parseInt(req.query.limit) || 30, 100);
+    const validStories = (DB.stories || []).filter(s => s.expires_at > now() && s.audio_url);
+    const storyById = {};
+    validStories.forEach(s => { storyById[s.id] = s; });
+
+    const voices = [];
+    for (const user of (DB.users || [])) {
+        if (!user.profile?.clips) continue;
+        const kv = user.kvData || {};
+        const clips = user.profile.clips
+            .filter(c => c.audio_id && storyById[c.audio_id])
+            .map(c => ({
+                slot: c.slot,
+                title: c.title,
+                duration: c.duration || 0,
+                audio_url: storyById[c.audio_id].audio_url,
+                mood: storyById[c.audio_id].mood || 'vibe'
+            }));
+        if (clips.length === 0) continue;
+        voices.push({
+            userId: user.id,
+            username: user.username,
+            displayName: kv.name || user.profile?.display_name || user.username,
+            face: kv.face || '🎭',
+            color: kv.color || '#a855f7',
+            city: user.profile?.city || '',
+            gender: user.profile?.gender || 'x',
+            clips,
+            isPremium: !!(kv.isPremium || user.is_premium),
+            level: Math.max(1, Math.floor(1 + Math.log2((kv.msgCount || 0) + 1) * 2.2))
+        });
+    }
+
+    // Ordina per: premium first, poi per ricchezza di clip (3 > 2 > 1), poi shuffle
+    voices.sort((a, b) => {
+        if (a.isPremium !== b.isPremium) return a.isPremium ? -1 : 1;
+        if (a.clips.length !== b.clips.length) return b.clips.length - a.clips.length;
+        return Math.random() - 0.5;
+    });
+
+    res.json({ voices: voices.slice(0, limit), total: voices.length });
+});
+
 // Save voice clip — writes file to /uploads/audio, NOT base64 in DB
 app.post('/api/profile/clip/save', verifyToken, (req, res) => {
     const user = DB.users.find(u => u.id === req.user.userId);
