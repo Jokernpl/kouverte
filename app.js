@@ -3689,6 +3689,7 @@ function smBuildDeck(){
 }
 
 function openSetteMezzoGame(){
+  if(!isSubscribed()){ showPaywall(()=>openSetteMezzoGame()); return; }
   let scr=document.getElementById('scopaScreen');
   if(!scr){
     scr=document.createElement('div');
@@ -4248,6 +4249,7 @@ var MATCH_MODES = [
 ];
 
 function openMatchAnonimo(){
+  if(!isSubscribed()){ showPaywall(()=>openMatchAnonimo()); return; }
   closeContinua();
   if (!MATCH_MODES || !Array.isArray(MATCH_MODES) || MATCH_MODES.length === 0) {
     showToast('⚠️ Modalità match non disponibili');
@@ -5221,6 +5223,7 @@ function roomCard(r){
 
 // ══ ENTER/LEAVE ══
 function enterRoom(roomId){
+  if(!isSubscribed()){ showPaywall(()=>enterRoom(roomId)); return; }
   if(roomId==='settemezz'){ openSetteMezzoGame(); return; }
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
@@ -8085,6 +8088,7 @@ function selectDuration(el) {
 }
 
 function createCodeRoom(){
+  if(!isSubscribed()){ showPaywall(()=>createCodeRoom()); return; }
   const name = document.getElementById('newRoomName').value.trim();
   if (!name) { showToast('⚠️ Inserisci un nome per la stanza'); document.getElementById('newRoomName').focus(); return; }
   if (name.length < 3) { showToast('⚠️ Il nome deve avere almeno 3 caratteri'); return; }
@@ -8167,6 +8171,7 @@ function fallbackCopy(text){
 }
 
 function joinCodeRoom(){
+  if(!isSubscribed()){ showPaywall(()=>joinCodeRoom()); return; }
   const code = document.getElementById('joinRoomCode').value.trim().toUpperCase();
   if (!code || code.length !== 6) { showToast('⚠️ Inserisci un codice di 6 caratteri'); return; }
 
@@ -10106,6 +10111,109 @@ async function _diagCheck(id, fn, tipsArr, errorTip) {
     if (status) status.textContent = e.message;
     if (badge)  badge.textContent  = isWarn ? '⚠' : '✗';
     if (errorTip && tipsArr) tipsArr.push(errorTip);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAYWALL — Abbonamento 1€/mese
+// Gratis: browse homepage + lista stanze
+// Richiede sub: entrare in stanze, creare/unirsi a stanze private,
+//               giochi, match e tutte le funzioni interattive
+// ══════════════════════════════════════════════════════════════
+const SUB_BTC_ADDR   = 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
+const SUB_BTC_AMOUNT = '0.000012'; // ≈ 1€
+
+function isSubscribed(){
+  if(localStorage.getItem('kv_sub_admin')==='1') return true;
+  const until = parseInt(localStorage.getItem('kv_sub_until')||'0');
+  return until > Date.now();
+}
+
+function requireSub(onAllowed){
+  if(isSubscribed()){ onAllowed(); return; }
+  showPaywall(onAllowed);
+}
+
+function showPaywall(onAllowed){
+  window._paywallCb = onAllowed || null;
+  let ov = document.getElementById('paywallOv');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'paywallOv';
+    ov.className = 'pw-overlay';
+    ov.innerHTML = `
+    <div class="pw-box">
+      <button class="pw-close" onclick="closePaywall()">✕</button>
+      <div class="pw-icon">🔐</div>
+      <div class="pw-title">Accesso Completo</div>
+      <div class="pw-desc">Per chattare, creare stanze e giocare<br>serve l'abbonamento mensile.</div>
+      <div class="pw-price-row">
+        <span class="pw-eur">€1</span>
+        <span class="pw-per">/ mese</span>
+      </div>
+      <div class="pw-feats">
+        <div class="pw-f"><span class="pw-ok">✓</span> Tutte le stanze di chat</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Stanze private con codice</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Giochi — 7 e Mezzo</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Match anonimo</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Chat anonima senza limiti</div>
+      </div>
+      <button class="pw-btc-btn" onclick="openSubBtcPanel()">₿ Abbonati con Bitcoin</button>
+      <button class="pw-stripe-btn" disabled>💳 Carta di credito <small>(presto disponibile)</small></button>
+      <div class="pw-sub-panel" id="pwBtcPanel" style="display:none">
+        <div class="pw-addr-label">Invia esattamente <b>₿ ${SUB_BTC_AMOUNT}</b> a:</div>
+        <div class="pw-addr" onclick="navigator.clipboard?.writeText('${SUB_BTC_ADDR}').then(()=>showToast('📋 Indirizzo copiato!'))">
+          ${SUB_BTC_ADDR}<span class="pw-copy">📋</span>
+        </div>
+        <div class="pw-note">Dopo il pagamento incolla il TxID per attivare:</div>
+        <input id="pwTxInput" type="text" class="pw-tx-input" placeholder="TxID transazione Bitcoin…">
+        <button class="pw-verify-btn" onclick="verifySubPayment()">✅ Verifica e attiva</button>
+        <div id="pwStatus" class="pw-status"></div>
+      </div>
+    </div>`;
+    document.body.appendChild(ov);
+  }
+  ov.classList.add('show');
+}
+
+function closePaywall(){
+  document.getElementById('paywallOv')?.classList.remove('show');
+}
+
+function openSubBtcPanel(){
+  const p = document.getElementById('pwBtcPanel');
+  if(p) p.style.display = p.style.display==='none' ? 'block' : 'none';
+}
+
+async function verifySubPayment(){
+  const txid = document.getElementById('pwTxInput')?.value?.trim();
+  const st   = document.getElementById('pwStatus');
+  if(!txid || txid.length < 20){
+    if(st) st.innerHTML='<span style="color:#ff4466">Inserisci un TxID valido</span>';
+    return;
+  }
+  if(st) st.innerHTML='<span style="color:#f59e0b">🔍 Verifica in corso…</span>';
+  try{
+    const res  = await fetch('/api/shop/verify-sub',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({txid})
+    });
+    const data = await res.json();
+    if(data.ok){
+      const until = Date.now() + 30*24*60*60*1000;
+      localStorage.setItem('kv_sub_until', String(until));
+      if(st) st.innerHTML='<span style="color:#00ff88">✅ Abbonamento attivato — 30 giorni!</span>';
+      setTimeout(()=>{
+        closePaywall();
+        showToast('🎉 Abbonamento attivo! Benvenuto.');
+        if(window._paywallCb){ window._paywallCb(); window._paywallCb=null; }
+      }, 1400);
+    } else {
+      if(st) st.innerHTML=`<span style="color:#ff4466">❌ ${data.error||'Pagamento non trovato'}</span>`;
+    }
+  }catch(e){
+    if(st) st.innerHTML='<span style="color:#ff4466">Errore di rete, riprova.</span>';
   }
 }
 

@@ -3352,6 +3352,44 @@ app.get('/api/shop/bitcoin-status/:paymentId', verifyToken, (req, res) => {
     });
 });
 
+// ── Verifica abbonamento 1€/mese via TxID ────────────────────────────────
+app.post('/api/shop/verify-sub', async (req, res) => {
+    const { txid } = req.body || {};
+    if (!txid || txid.length < 20) {
+        return res.status(400).json({ ok: false, error: 'TxID non valido' });
+    }
+    const SUB_ADDRESS = 'bc1qssg5wplzn8a0euf8sp03uthwyuep48k7zw9c00';
+    const SUB_MIN_SAT = 1200; // 0.000012 BTC ≈ 1€
+    try {
+        const txUrl = `https://blockstream.info/api/tx/${txid.trim()}`;
+        const txRes = await fetch(txUrl);
+        if (!txRes.ok) {
+            return res.json({ ok: false, error: 'Transazione non trovata sulla blockchain' });
+        }
+        const tx = await txRes.json();
+        if (!tx.status || !tx.status.confirmed) {
+            return res.json({ ok: false, error: 'Transazione non ancora confermata, riprova tra qualche minuto' });
+        }
+        const out = (tx.vout || []).find(o =>
+            o.scriptpubkey_address === SUB_ADDRESS && o.value >= SUB_MIN_SAT
+        );
+        if (!out) {
+            return res.json({ ok: false, error: `Nessun output per ${SUB_ADDRESS} con importo ≥ ${SUB_MIN_SAT} satoshi` });
+        }
+        // Registra l'uso del txid per prevenire riuso
+        if (!DB.sub_txids) DB.sub_txids = {};
+        if (DB.sub_txids[txid]) {
+            return res.json({ ok: false, error: 'Questa transazione è già stata usata per un abbonamento' });
+        }
+        DB.sub_txids[txid] = { usedAt: Date.now(), address: SUB_ADDRESS };
+        saveDB();
+        return res.json({ ok: true });
+    } catch(e) {
+        console.error('verify-sub error:', e.message);
+        return res.status(500).json({ ok: false, error: 'Errore server durante la verifica' });
+    }
+});
+
 app.post('/api/admin/bitcoin-confirm', verifyAdmin, async (req, res) => {
     const { paymentId } = req.body || {};
 
