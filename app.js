@@ -257,7 +257,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(() => {
     ['home','profile','chatMsgs'].forEach(id => attachTouchScroll(document.getElementById(id)));
   }, 100);
-  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn(); initProfileTilt(); initBannerParticles();
+  initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn(); initProfileTilt(); initBannerParticles(); initDesktopViewToggle();
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -9907,4 +9907,37 @@ async function _diagCheck(id, fn, tipsArr, errorTip) {
     if (badge)  badge.textContent  = isWarn ? '⚠' : '✗';
     if (errorTip && tipsArr) tipsArr.push(errorTip);
   }
+}
+
+// ── Desktop View Toggle (mobile ↔ full-screen) ──────────────────────────────
+function initDesktopViewToggle() {
+  if (window.innerWidth < 1024) return; // solo desktop
+
+  // Ripristina preferenza salvata
+  if (localStorage.getItem('kv-view') === 'full') {
+    document.documentElement.classList.add('kv-full');
+  }
+
+  const btn = document.createElement('button');
+  btn.id = 'kvViewToggle';
+  btn.setAttribute('aria-label', 'Cambia visualizzazione');
+
+  function updateBtn() {
+    const isFull = document.documentElement.classList.contains('kv-full');
+    btn.innerHTML = `
+      <span class="kvt-icon">${isFull ? '📱' : '🖥️'}</span>
+      <span class="kvt-label">${isFull ? 'mobile' : 'full'}</span>
+    `;
+  }
+
+  updateBtn();
+
+  btn.addEventListener('click', () => {
+    const isFull = document.documentElement.classList.toggle('kv-full');
+    localStorage.setItem('kv-view', isFull ? 'full' : 'mobile');
+    updateBtn();
+    window.haptic && haptic('light');
+  });
+
+  document.body.appendChild(btn);
 }

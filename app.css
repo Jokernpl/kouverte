@@ -3600,13 +3600,10 @@ html[data-theme="light"] body {
 }
 
 /* ═══════════════════════════════
-   DESKTOP RESPONSIVE — v1
-   Kouverte è mobile-first ma su
-   schermi grandi non deve sembrare
-   un telefono in mezzo al nulla.
+   DESKTOP RESPONSIVE — v2
+   Toggle mobile ↔ full-screen
 ═══════════════════════════════ */
 @media (min-width: 600px) {
-  /* Background decorativo per i lati vuoti */
   html, body {
     background:
       radial-gradient(ellipse 55% 60% at 8% 50%, rgba(0,212,255,.045) 0%, transparent 65%),
@@ -3614,7 +3611,6 @@ html[data-theme="light"] body {
       radial-gradient(ellipse 40% 55% at 50% 95%, rgba(255,107,157,.03) 0%, transparent 60%),
       #0c0e1a;
   }
-  /* Contenitore leggermente più largo + card glow */
   .screen {
     max-width: 520px;
     box-shadow:
@@ -3623,12 +3619,79 @@ html[data-theme="light"] body {
       0 0 40px rgba(0,212,255,.04);
   }
 }
-
 @media (min-width: 1024px) {
   .screen { max-width: 560px; }
 }
-
 @media (min-width: 1440px) {
   .screen { max-width: 600px; }
+}
+
+/* ── Toggle button (solo ≥1024px) ── */
+#kvViewToggle { display:none }
+
+@media (min-width: 1024px) {
+  #kvViewToggle {
+    display:flex;
+    position:fixed;
+    right:18px;
+    top:50%;
+    transform:translateY(-50%);
+    z-index:9999;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    background:rgba(13,15,23,.9);
+    border:1px solid rgba(255,255,255,.09);
+    border-radius:16px;
+    padding:12px 10px;
+    cursor:pointer;
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    transition:border-color .2s,box-shadow .2s;
+    color:#6b7280;
+    font-family:inherit;
+  }
+  #kvViewToggle .kvt-icon { font-size:20px;line-height:1 }
+  #kvViewToggle .kvt-label {
+    font-size:8px;font-weight:700;letter-spacing:.6px;
+    text-transform:uppercase;line-height:1;color:inherit
+  }
+  #kvViewToggle:hover {
+    border-color:rgba(0,212,255,.35);
+    color:#00d4ff;
+    box-shadow:0 0 20px rgba(0,212,255,.1)
+  }
+  /* stato FULL attivo */
+  html.kv-full #kvViewToggle {
+    color:#a855f7;
+    border-color:rgba(168,85,247,.3);
+    box-shadow:0 0 20px rgba(168,85,247,.12)
+  }
+
+  /* ── Full-screen mode ── */
+  html.kv-full .screen {
+    max-width:100% !important;
+    box-shadow:none !important;
+    border:none !important;
+  }
+  html.kv-full .home-body {
+    padding:14px 32px 90px;
+    max-width:1600px;
+    margin:0 auto;
+  }
+  html.kv-full #roomsList {
+    grid-template-columns:repeat(auto-fill,minmax(195px,1fr));
+    gap:8px;
+  }
+  html.kv-full .live-stats-bar {
+    border-radius:0;
+    margin-left:-32px;
+    margin-right:-32px;
+  }
+  html.kv-full .home-hdr {
+    padding-left:32px;
+    padding-right:32px;
+  }
+  html.kv-full .sec-label-row { padding:0 }
 }
 
