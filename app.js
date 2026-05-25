@@ -3515,12 +3515,23 @@ var _scGameId = null;
 var _scLobby = null;  // lobby data { tables, queue }
 var _scMyQPos = 1;    // posizione in coda
 
-const SC_ICON      = {coppe:'🏆',denari:'🪙',bastoni:'🪵',spade:'⚔️'};
-const SC_COLOR     = {coppe:'#c01e2e',denari:'#b7790d',bastoni:'#166534',spade:'#1d4ed8'};
-const SC_FACE_ICON = {8:'🧑',9:'🐎',10:'👑'};
-const SC_VL        = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
-const SC_VN        = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
-const SC_SN        = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
+// Semi napoletani: calice (coppe), moneta (denari), randello (bastoni), spada (spade)
+const SC_SUIT_SVG = {
+  coppe:   `<svg viewBox="0 0 20 26" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M2 2h16l-2.5 7C14 13 12 15 10 15S6 13 4.5 9z"/><rect x="9" y="15" width="2" height="6" rx="1"/><rect x="4" y="21" width="12" height="2.5" rx="1.25"/></svg>`,
+  denari:  `<svg viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="11" fill="currentColor"/><circle cx="12" cy="12" r="7.5" fill="rgba(255,255,255,0.25)"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>`,
+  bastoni: `<svg viewBox="0 0 16 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="5" r="4"/><rect x="7" y="5" width="2" height="18" rx="1"/><ellipse cx="8" cy="14" rx="3" ry="2.5"/><circle cx="8" cy="23" r="4"/></svg>`,
+  spade:   `<svg viewBox="0 0 20 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><polygon points="10,2 7,16 13,16"/><rect x="9" y="16" width="2" height="6" rx="1"/><rect x="3" y="15" width="14" height="2.5" rx="1.25"/><circle cx="10" cy="24.5" r="2.5"/></svg>`
+};
+// Figure: Fante (persona), Cavallo (cavallo), Re (re con corona)
+const SC_FACE_SVG = {
+  8:  `<svg viewBox="0 0 18 26" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="5" r="3.5"/><path d="M5.5 8.5h7l1.5 9h-10z"/><rect x="7" y="17.5" width="2.5" height="7" rx="1.25"/><rect x="10" y="17.5" width="2.5" height="7" rx="1.25"/><rect x="3" y="10" width="4" height="1.5" rx=".75"/><rect x="11" y="10" width="4" height="1.5" rx=".75"/></svg>`,
+  9:  `<svg viewBox="0 0 24 22" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><ellipse cx="16" cy="11" rx="7" ry="5"/><path d="M9 7Q7 3 9 1Q12 0 13 3Q15 7 12 10Z"/><circle cx="8.5" cy="4.5" r="3.5"/><rect x="10" y="15" width="2" height="6" rx="1"/><rect x="14" y="15" width="2" height="6" rx="1"/><rect x="18" y="15" width="2" height="6" rx="1"/><rect x="20.5" y="14" width="2" height="6" rx="1"/></svg>`,
+  10: `<svg viewBox="0 0 18 28" width="100%" height="100%" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 8L6 4.5l3 2.5 3-2.5 2.5 3.5z"/><rect x="4" y="8" width="10" height="2" rx="1"/><circle cx="9" cy="14" r="4"/><path d="M4 18q0 10 5 10t5-10z"/></svg>`
+};
+const SC_COLOR = {coppe:'#c01e2e',denari:'#b7790d',bastoni:'#166534',spade:'#1d4ed8'};
+const SC_VL    = {1:'A',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'F',9:'C',10:'R'};
+const SC_VN    = {1:'Asso',2:'Due',3:'Tre',4:'Quattro',5:'Cinque',6:'Sei',7:'Sette',8:'Fante',9:'Cavallo',10:'Re'};
+const SC_SN    = {coppe:'Coppe',denari:'Denari',bastoni:'Bastoni',spade:'Spade'};
 
 function openScopaGame(){
   let scr=document.getElementById('scopaScreen');
@@ -3629,22 +3640,23 @@ function scCardHTML(card, opts={}){
     return `<div class="sc-card sc-card-back${small?' sc-sm':''}">
       <div class="sc-back-inner">${count>1?`<div class="sc-cnt">${count}</div>`:''}</div></div>`;
   }
-  const icon=SC_ICON[card.suit], color=SC_COLOR[card.suit], lbl=SC_VL[card.value];
+  const color=SC_COLOR[card.suit], lbl=SC_VL[card.value];
   const isFace=card.value>=8;
+  const suitSVG=`<span class="sc-mini-suit" style="color:${color}">${SC_SUIT_SVG[card.suit]}</span>`;
   if(small){
     return `<div class="sc-card sc-sm${isFace?' sc-face':''} ${dimmed?'sc-dimmed':''}"
       style="--sc:${color}" data-cid="${card.id}">
       <span class="sc-vt">${lbl}</span>
-      <span class="sc-sm-suit">${icon}</span>
+      <span class="sc-sm-suit" style="color:${color}">${SC_SUIT_SVG[card.suit]}</span>
     </div>`;
   }
-  const center=isFace?SC_FACE_ICON[card.value]:icon;
+  const centerSVG=`<span class="sc-si" style="color:${color}">${isFace?SC_FACE_SVG[card.value]:SC_SUIT_SVG[card.suit]}</span>`;
   return `<div class="sc-card${isFace?' sc-face':''} ${sel?'sc-selectable':''} ${selected?'sc-selected':''} ${dimmed?'sc-dimmed':''}"
     style="--sc:${color}" data-cid="${card.id}"
     onclick="${sel?`scCardClick('${card.id}')`:''}">
-    <div class="sc-corner"><span class="sc-vt">${lbl}</span><span class="sc-mini-suit">${icon}</span></div>
-    <span class="sc-si">${center}</span>
-    <div class="sc-corner sc-flip"><span class="sc-vt">${lbl}</span><span class="sc-mini-suit">${icon}</span></div>
+    <div class="sc-corner">${suitSVG}<span class="sc-vt">${lbl}</span></div>
+    ${centerSVG}
+    <div class="sc-corner sc-flip">${suitSVG}<span class="sc-vt">${lbl}</span></div>
   </div>`;
 }
 
@@ -3734,12 +3746,18 @@ function scRenderWaiting(pos, tot){
     </div>
     <div class="sc-rules">
       <div class="sc-rules-title">📜 Regole Scopa</div>
-      <div class="sc-rule"><span class="sc-rb">🏆🪙🪵⚔️</span> Mazzo napoletano 40 carte, 4 semi</div>
+      <div class="sc-rule sc-rule-suits">
+        <span class="sc-rb-suit" style="color:#c01e2e">${SC_SUIT_SVG.coppe}</span>
+        <span class="sc-rb-suit" style="color:#b7790d">${SC_SUIT_SVG.denari}</span>
+        <span class="sc-rb-suit" style="color:#166534">${SC_SUIT_SVG.bastoni}</span>
+        <span class="sc-rb-suit" style="color:#1d4ed8">${SC_SUIT_SVG.spade}</span>
+        Mazzo napoletano 40 carte, 4 semi
+      </div>
       <div class="sc-rule"><span class="sc-rb">🎯</span> Cattura carte con lo stesso valore</div>
       <div class="sc-rule"><span class="sc-rb">⚡</span> <b>Scopa</b>: prendi tutte le carte del tavolo</div>
-      <div class="sc-rule"><span class="sc-rb">🏆</span> <b>Carte</b>: chi ne ha di più (+1pt)</div>
-      <div class="sc-rule"><span class="sc-rb">💰</span> <b>Denari</b>: maggioranza dei denari (+1pt)</div>
-      <div class="sc-rule"><span class="sc-rb">🌟</span> <b>Settebello</b>: il 7 di denari (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb sc-rb-suit" style="color:#c01e2e">${SC_SUIT_SVG.coppe}</span> <b>Carte</b>: chi ne ha di più (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb sc-rb-suit" style="color:#b7790d">${SC_SUIT_SVG.denari}</span> <b>Denari</b>: maggioranza dei denari (+1pt)</div>
+      <div class="sc-rule"><span class="sc-rb sc-rb-suit" style="color:#b7790d">${SC_SUIT_SVG.denari}</span> <b>Settebello</b>: il 7 di denari (+1pt)</div>
       <div class="sc-rule"><span class="sc-rb">🃏</span> <b>Primiera</b>: 7=21, 6=18, A=16… (+1pt)</div>
       <div class="sc-rule"><span class="sc-rb">🎮</span> Prima a <b>11 punti</b> vince la partita!</div>
     </div>
