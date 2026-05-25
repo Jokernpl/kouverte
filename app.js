@@ -165,10 +165,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const isTelegram = !!window.Telegram?.WebApp?.initDataUnsafe?.user || /Telegram/i.test(navigator.userAgent);
   // Mostra banner nella home: SEMPRE se non sei già nella PWA o in Telegram
   function maybeShowInstallBanner() {
+    // Legacy: banner cyan disabilitato, sostituito dal nuovo #pwaInstallBanner glassmorphism
     const banner = document.getElementById('installBanner');
-    if (!banner) return;
-    if (isPWA || isTelegram) { banner.style.display = 'none'; return; }
-    banner.style.display = 'flex';
+    if (banner) banner.style.display = 'none';
   }
   setTimeout(maybeShowInstallBanner, 500);
 
