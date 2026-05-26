@@ -6115,6 +6115,9 @@ function showScreen(name,btn){
   if (name === 'clanScr') loadClanScreen();
   if (name === 'petScr') renderPetScreen();
   if (name === 'missioniScr') renderMissions();
+  if (name === 'shopScr') loadShop();
+  if (name === 'leaderScr') loadLeaderboard();
+  if (name === 'torneoScr') loadTorneo();
   // GA4: track screen view
   window.trackEvent?.('screen_view', { screen_name: name });
 }
@@ -6188,6 +6191,231 @@ function animateStat(id, targetVal){
     el.textContent=cur;
     if(t>=steps){el.textContent=targetVal;clearInterval(tick);}
   }, dur/steps);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// NEGOZIO COIN
+// ══════════════════════════════════════════════════════════════════
+const SHOP_FRAMES=[
+  {id:'sh_fire2',   name:'Fire Ring',     price:200, preview:'🔥', color:'#f97316'},
+  {id:'sh_neon',    name:'Neon Cyan',     price:250, preview:'⚡', color:'#00ffff'},
+  {id:'sh_galaxy2', name:'Galaxy',        price:350, preview:'🌌', color:'#a855f7'},
+  {id:'sh_gold2',   name:'Gold Crown',    price:300, preview:'👑', color:'#fbbf24'},
+  {id:'sh_ice2',    name:'Ice Crystal',   price:200, preview:'❄️', color:'#bfefff'},
+  {id:'sh_rose',    name:'Rose Diamond',  price:400, preview:'💎', color:'#ff6b9d'},
+];
+const SHOP_BADGES=[
+  {id:'badge_og',     name:'OG Kouverte', price:500,  emoji:'🔑', desc:'Prima generazione'},
+  {id:'badge_whale',  name:'Big Whale',   price:1000, emoji:'🐋', desc:'Top spender'},
+  {id:'badge_casino', name:'Casino Boss', price:300,  emoji:'🎰', desc:'Master del casino'},
+  {id:'badge_social', name:'Social Star', price:200,  emoji:'⭐', desc:'100 messaggi inviati'},
+  {id:'badge_coin',   name:'Coin Maker',  price:250,  emoji:'🪙', desc:'500+ Coin guadagnati'},
+];
+const COIN_PACKS=[
+  {id:'pack_300',  coins:300,  price:'2.99€', icon:'🪙', name:'Starter',   desc:'300 Coin',            popular:false},
+  {id:'pack_900',  coins:900,  price:'6.99€', icon:'💰', name:'Popular',   desc:'900 Coin + 10% bonus',popular:true},
+  {id:'pack_2500', coins:2500, price:'16.99€',icon:'💎', name:'Mega',      desc:'2500 Coin + 25% bonus',popular:false},
+];
+let _shopCurrentTab='frames';
+function shopTab(tab, btn){
+  document.querySelectorAll('.shop-tab').forEach(b=>b.classList.remove('active'));
+  btn?.classList.add('active');
+  _shopCurrentTab=tab;
+  renderShopPanel(tab);
+}
+function loadShop(){
+  renderShopPanel(_shopCurrentTab||'frames');
+}
+function renderShopPanel(tab){
+  const el=document.getElementById('shopPanel');
+  if(!el)return;
+  const owned=getLS('kvc_shop_owned')||{frames:[],badges:[]};
+  if(tab==='frames'){
+    el.innerHTML=`<div class="shop-sec-title">🖼️ Cornici Profilo</div><div class="shop-grid">${
+      SHOP_FRAMES.map(f=>{
+        const isOwned=(owned.frames||[]).includes(f.id);
+        return `<div class="shop-item${isOwned?' owned':''}" onclick="buyShopItem('frame','${f.id}','${f.name}',${f.price})">
+          <div class="shop-item-preview" style="color:${f.color}">${f.preview}</div>
+          <div class="shop-item-name">${f.name}</div>
+          <div class="shop-item-price ${isOwned?'owned':''}">${isOwned?'✅ Posseduto':'🪙 '+f.price+' Coin'}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } else if(tab==='badges'){
+    el.innerHTML=`<div class="shop-sec-title">🏅 Badge Esclusivi</div><div class="shop-grid">${
+      SHOP_BADGES.map(b=>{
+        const isOwned=(owned.badges||[]).includes(b.id);
+        return `<div class="shop-item${isOwned?' owned':''}" onclick="buyShopItem('badge','${b.id}','${b.name}',${b.price})">
+          <div class="shop-item-preview">${b.emoji}</div>
+          <div class="shop-item-name">${b.name}</div>
+          <div style="font-size:10px;color:#6b7280;text-align:center">${b.desc}</div>
+          <div class="shop-item-price ${isOwned?'owned':''}">${isOwned?'✅ Posseduto':'🪙 '+b.price+' Coin'}</div>
+        </div>`;
+      }).join('')
+    }</div>`;
+  } else if(tab==='recharge'){
+    el.innerHTML=`<div class="shop-sec-title">💳 Pacchetti Coin</div>${
+      COIN_PACKS.map(p=>`<div class="shop-pack${p.popular?' popular':''}">
+        ${p.popular?'<div class="shop-pack-badge">PIÙ SCELTO</div>':''}
+        <div class="shop-pack-icon">${p.icon}</div>
+        <div class="shop-pack-info">
+          <div class="shop-pack-name">${p.name}</div>
+          <div class="shop-pack-desc">${p.desc}</div>
+          <button class="shop-pack-btn" onclick="openCoinPack('${p.id}',${p.coins})">Acquista ${p.price}</button>
+        </div>
+        <div class="shop-pack-price">${p.price}</div>
+      </div>`).join('')
+    }
+    <div style="font-size:10px;color:#6b7280;text-align:center;margin-top:12px;line-height:1.7">
+      💳 Carta di credito via Stripe<br>₿ Oppure paga in Bitcoin — apri il supporto in <b>Altro → Abbonamento</b>
+    </div>`;
+  }
+}
+function buyShopItem(type, id, name, price){
+  const owned=getLS('kvc_shop_owned')||{frames:[],badges:[]};
+  const list=type==='frame'?(owned.frames||[]):(owned.badges||[]);
+  if(list.includes(id)){showToast('✅ Già nel tuo inventario!');return;}
+  if(!spendKVC(price)){return;}
+  if(type==='frame') (owned.frames=owned.frames||[]).push(id);
+  else (owned.badges=owned.badges||[]).push(id);
+  setLS('kvc_shop_owned',owned);
+  showToast(`🎉 ${name} acquistato!`);
+  renderShopPanel(_shopCurrentTab);
+  // Applica badge al profilo
+  if(type==='badge'){
+    const bDef=SHOP_BADGES.find(b=>b.id===id);
+    if(bDef){
+      const existing=user?.badges||[];
+      if(!existing.includes(id)){
+        if(user){user.badges=[...existing,{id,label:bDef.name,emoji:bDef.emoji}];}
+      }
+    }
+  }
+}
+function openCoinPack(packId, coins){
+  const uid=user?.id||localStorage.getItem('kv4_uid');
+  if(!uid){showToast('❌ Accedi con un account per acquistare Coin');return;}
+  fetch('/api/stripe/create-checkout',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({packId:packId==='pack_300'?'coins_300':packId==='pack_900'?'coins_900':'coins_2500', userId:uid})
+  }).then(r=>r.json()).then(d=>{
+    if(d.url) window.location.href=d.url;
+    else showToast('❌ '+(d.error||'Errore pagamento'));
+  }).catch(()=>showToast('❌ Stripe non disponibile. Usa Bitcoin nella sezione Abbonamento.'));
+}
+// Handle Stripe success redirect
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('stripe_ok')==='1'){
+    showToast('✅ Acquisto completato! Le tue Coin arriveranno a breve.');
+    history.replaceState(null,'',location.pathname);
+  }
+  if(p.get('stripe_cancel')==='1'){
+    showToast('ℹ️ Acquisto annullato');
+    history.replaceState(null,'',location.pathname);
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════
+// LEADERBOARD COIN
+// ══════════════════════════════════════════════════════════════════
+function loadLeaderboard(){
+  const el=document.getElementById('leaderList');
+  if(!el)return;
+  el.innerHTML='<div class="leader-loading">⌛ Caricamento...</div>';
+  // Aggiorna il mio punteggio sul server
+  const uid=user?.id||localStorage.getItem('kv4_uid')||('anon_'+Math.random().toString(36).slice(2,9));
+  const myScore=getKVC();
+  const myName=user?.name||'Anonimo';
+  const myFace=user?.face||'🎭';
+  if(!localStorage.getItem('kv4_uid')) localStorage.setItem('kv4_uid',uid);
+  fetch('/api/coin-score',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:uid,name:myName,face:myFace,score:myScore})
+  }).catch(()=>{});
+  fetch('/api/coin-leaderboard').then(r=>r.json()).then(d=>{
+    renderLeaderboard(d.top||[], uid);
+  }).catch(()=>{el.innerHTML='<div class="leader-empty">❌ Errore caricamento classifica</div>';});
+}
+function renderLeaderboard(top, myUid){
+  const el=document.getElementById('leaderList');
+  if(!el)return;
+  if(!top.length){el.innerHTML='<div class="leader-empty">Nessuno in classifica ancora.<br>Guadagna Coin per entrare!</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  const myPos=top.findIndex(e=>e.userId===myUid);
+  // Update my position display
+  const posEl=document.getElementById('leaderMyPos');
+  if(posEl) posEl.textContent = myPos>=0 ? (medals[myPos]||'#'+(myPos+1)) : '—';
+  el.innerHTML=top.map((e,i)=>{
+    const isMe=e.userId===myUid;
+    const isTop=i<3;
+    return `<div class="leader-row${isTop?' top3':''}${isMe?' me':''}">
+      <div class="leader-pos">${medals[i]||('#'+(i+1))}</div>
+      <div class="leader-face">${e.face||'🎭'}</div>
+      <div class="leader-name">${esc(e.name||'Anonimo')}${isMe?' <span style="font-size:9px;color:#00d4ff">(tu)</span>':''}</div>
+      <div class="leader-score">🪙 ${(e.score||0).toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// TORNEO SETTIMANALE
+// ══════════════════════════════════════════════════════════════════
+let _torneoTimer=null;
+function loadTorneo(){
+  const uid=user?.id||localStorage.getItem('kv4_uid');
+  fetch('/api/torneo'+(uid?'?userId='+encodeURIComponent(uid):''))
+    .then(r=>r.json()).then(d=>renderTorneo(d))
+    .catch(()=>showToast('❌ Errore caricamento torneo'));
+}
+function renderTorneo(d){
+  const partEl=document.getElementById('torneoPartCount');
+  if(partEl) partEl.textContent=d.participantCount||0;
+  const navEl=document.getElementById('torneoNavSub');
+  if(navEl) navEl.textContent=(d.participantCount||0)+' iscritti';
+  const joinBtn=document.getElementById('torneoJoinBtn');
+  const joinMsg=document.getElementById('torneoJoinedMsg');
+  if(d.isJoined){
+    if(joinBtn){joinBtn.style.display='none';}
+    if(joinMsg){joinMsg.style.display='block';}
+  } else {
+    if(joinBtn){joinBtn.style.display='block';}
+    if(joinMsg){joinMsg.style.display='none';}
+  }
+  // Countdown
+  if(_torneoTimer) clearInterval(_torneoTimer);
+  function updateCountdown(){
+    const el=document.getElementById('torneoCountdown');
+    if(!el)return;
+    const rem=Math.max(0,(d.endTime||Date.now())-Date.now());
+    if(rem===0){el.textContent='⏳ 00:00:00';clearInterval(_torneoTimer);return;}
+    const h=Math.floor(rem/3600000);
+    const m=Math.floor((rem%3600000)/60000);
+    const s=Math.floor((rem%60000)/1000);
+    el.textContent=`⏳ ${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  }
+  updateCountdown();
+  _torneoTimer=setInterval(updateCountdown,1000);
+}
+function joinTorneo(){
+  const uid=user?.id||localStorage.getItem('kv4_uid');
+  if(!uid){showToast('❌ Effettua il login per partecipare');return;}
+  if(!spendKVC(50)){return;}
+  fetch('/api/torneo/join',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:uid,name:user?.name||'Anonimo',face:user?.face||'🎭'})
+  }).then(r=>r.json()).then(d=>{
+    if(d.ok){
+      showToast('🎉 Iscritto al torneo! In bocca al lupo 🎲');
+      const joinBtn=document.getElementById('torneoJoinBtn');
+      const joinMsg=document.getElementById('torneoJoinedMsg');
+      const partEl=document.getElementById('torneoPartCount');
+      if(joinBtn) joinBtn.style.display='none';
+      if(joinMsg) joinMsg.style.display='block';
+      if(partEl) partEl.textContent=d.participantCount||0;
+    } else {
+      addKVC(50,'_internal'); // rimborso se errore
+      showToast('❌ Errore iscrizione');
+    }
+  }).catch(()=>{addKVC(50,'_internal');showToast('❌ Errore rete');});
 }
 
 // ══ UTILS ══

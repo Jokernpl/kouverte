@@ -4076,6 +4076,89 @@ html[data-theme="light"] body {
 .scratch-result{font-size:15px;font-weight:700;color:#fbbf24;min-height:22px;text-align:center}
 
 
+/* ══════════════════════════════════════════
+   NEGOZIO / SHOP
+   ══════════════════════════════════════════ */
+.shop-tabs{display:flex;gap:0;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;background:rgba(8,11,20,.97)}
+.shop-tab{flex:1;padding:12px 6px;background:none;border:none;color:#6b7280;font-size:12px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.shop-tab.active{color:#00d4ff;border-bottom-color:#00d4ff}
+.shop-body{flex:1;min-height:0;overflow-y:auto;padding:16px}
+.shop-panel{}
+/* Section header */
+.shop-sec-title{font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1.5px;margin:0 0 12px;display:flex;align-items:center;gap:6px}
+.shop-sec-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.07)}
+/* Frame / Badge grid */
+.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+.shop-item{background:rgba(24,29,48,.85);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:border-color .2s,transform .15s,box-shadow .2s;position:relative}
+.shop-item:active{transform:scale(.95)}
+.shop-item.owned{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.06)}
+.shop-item.owned::after{content:'✅';position:absolute;top:8px;right:10px;font-size:14px}
+.shop-item-preview{font-size:38px;line-height:1}
+.shop-item-name{font-size:12px;font-weight:700;color:#e5e7eb;text-align:center}
+.shop-item-price{font-size:11px;color:#fbbf24;font-weight:600;display:flex;align-items:center;gap:4px}
+.shop-item-price.owned{color:#10b981}
+.shop-item:hover:not(.owned){border-color:rgba(0,212,255,.35);box-shadow:0 4px 16px rgba(0,212,255,.1)}
+/* Coin packs (recharge) */
+.shop-pack{background:rgba(24,29,48,.85);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .2s,box-shadow .2s;position:relative}
+.shop-pack:active{opacity:.85}
+.shop-pack.popular{border-color:rgba(0,212,255,.4);background:rgba(0,212,255,.06)}
+.shop-pack-badge{position:absolute;top:-8px;right:12px;background:#00d4ff;color:#0f1117;font-size:8px;font-weight:700;padding:2px 8px;border-radius:6px;letter-spacing:.5px}
+.shop-pack-icon{font-size:32px;flex-shrink:0}
+.shop-pack-info{flex:1;min-width:0}
+.shop-pack-name{font-size:14px;font-weight:700;color:#fff}
+.shop-pack-desc{font-size:11px;color:#9ca3af;margin-top:2px}
+.shop-pack-price{font-size:20px;font-weight:800;color:#00d4ff;flex-shrink:0}
+.shop-pack-btn{margin-top:8px;width:100%;padding:10px;background:linear-gradient(135deg,#0e7490,#06b6d4);border:none;border-radius:10px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.shop-pack-btn:active{opacity:.8}
+/* Econ card extras */
+.econ-card-featured{border:1px solid rgba(6,182,212,.25)!important;background:rgba(6,182,212,.07)!important}
+.econ-card-hot{border:1px solid rgba(244,63,94,.25)!important;background:rgba(244,63,94,.07)!important;animation:none}
+
+/* ══════════════════════════════════════════
+   LEADERBOARD
+   ══════════════════════════════════════════ */
+.leader-body{flex:1;min-height:0;overflow-y:auto;padding:16px}
+.leader-top-card{background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(249,115,22,.08));border:1px solid rgba(251,191,36,.3);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.leader-my-pos{font-size:32px;font-weight:900;color:#fbbf24;flex-shrink:0;min-width:40px;text-align:center}
+.leader-my-info{flex:1}
+.leader-my-label{font-size:10px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.leader-my-coin{font-size:16px;font-weight:700;color:#fbbf24;margin-top:2px}
+.leader-list{}
+.leader-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(24,29,48,.7);border:1px solid rgba(255,255,255,.06);border-radius:14px;margin-bottom:8px;transition:border-color .2s}
+.leader-row.top3{border-color:rgba(251,191,36,.25);background:rgba(251,191,36,.05)}
+.leader-row.me{border-color:rgba(0,212,255,.3);background:rgba(0,212,255,.06)}
+.leader-pos{font-size:16px;font-weight:800;color:#6b7280;min-width:28px;text-align:center}
+.leader-row.top3 .leader-pos{color:#fbbf24}
+.leader-face{font-size:24px;flex-shrink:0}
+.leader-name{flex:1;font-size:13px;font-weight:600;color:#e5e7eb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.leader-score{font-size:13px;font-weight:700;color:#fbbf24;flex-shrink:0;display:flex;align-items:center;gap:4px}
+.leader-loading{text-align:center;color:#6b7280;font-size:13px;padding:24px 0}
+.leader-empty{text-align:center;padding:32px 0;color:#4b5563}
+
+/* ══════════════════════════════════════════
+   TORNEO SETTIMANALE
+   ══════════════════════════════════════════ */
+.torneo-body{flex:1;min-height:0;overflow-y:auto;padding:16px}
+.torneo-hero{background:linear-gradient(160deg,rgba(244,63,94,.12),rgba(251,191,36,.08),rgba(168,85,247,.08));border:1px solid rgba(244,63,94,.25);border-radius:20px;padding:24px 20px;text-align:center;margin-bottom:16px}
+.torneo-trophy{font-size:54px;line-height:1;margin-bottom:8px;filter:drop-shadow(0 0 16px rgba(251,191,36,.5))}
+.torneo-title{font-size:20px;font-weight:800;color:#fff;margin-bottom:8px}
+.torneo-prize-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+.torneo-prize-label{font-size:12px;color:#9ca3af}
+.torneo-prize-val{font-size:18px;font-weight:800;color:#fbbf24}
+.torneo-countdown{font-size:24px;font-weight:900;color:#00d4ff;font-family:monospace;letter-spacing:2px;margin-bottom:10px;text-shadow:0 0 20px rgba(0,212,255,.4)}
+.torneo-desc{font-size:12px;color:#9ca3af;line-height:1.6}
+.torneo-stats-row{display:flex;gap:8px;margin-bottom:16px}
+.torneo-stat{flex:1;background:rgba(24,29,48,.8);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:12px;text-align:center}
+.torneo-stat-n{font-size:22px;font-weight:800;color:#fff}
+.torneo-stat-l{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.torneo-join-box{text-align:center;margin-bottom:16px}
+.torneo-join-btn{padding:16px 32px;background:linear-gradient(135deg,#f43f5e,#e11d48);border:none;border-radius:14px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;width:100%;transition:opacity .15s,transform .15s;box-shadow:0 8px 24px rgba(244,63,94,.35)}
+.torneo-join-btn:active{transform:scale(.96);opacity:.85}
+.torneo-join-btn:disabled{background:rgba(255,255,255,.1);box-shadow:none;cursor:default}
+.torneo-joined-msg{font-size:14px;font-weight:700;color:#10b981;padding:12px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);border-radius:12px}
+.torneo-rules{display:flex;flex-direction:column;gap:8px}
+.torneo-rule{display:flex;align-items:center;gap:10px;font-size:13px;color:#9ca3af;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 14px}
+
 /* ── Nav 4 buttons ────────────────────────────────────────────── */
 .bnav{gap:0}
 .bnav .nbtn{flex:1;min-width:0;padding:10px 2px 8px}

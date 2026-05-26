@@ -3437,6 +3437,62 @@ app.post('/api/shop/verify-sub', async (req, res) => {
     }
 });
 
+// ── COIN LEADERBOARD ─────────────────────────────────────────────────────────
+app.post('/api/coin-score', (req, res) => {
+    const { userId, name, face, score } = req.body || {};
+    if (!userId || score === undefined) return res.status(400).json({ error: 'userId e score richiesti' });
+    DB.coin_lb = DB.coin_lb || [];
+    const sc = parseInt(score) || 0;
+    const idx = DB.coin_lb.findIndex(e => e.userId === userId);
+    const entry = { userId, name: String(name || 'Anonimo').slice(0, 20), face: String(face || '🎭').slice(0, 4), score: sc, updatedAt: Date.now() };
+    if (idx >= 0) DB.coin_lb[idx] = entry;
+    else DB.coin_lb.push(entry);
+    markDirty();
+    res.json({ ok: true });
+});
+app.get('/api/coin-leaderboard', (req, res) => {
+    DB.coin_lb = DB.coin_lb || [];
+    const top = [...DB.coin_lb].sort((a, b) => b.score - a.score).slice(0, 20);
+    res.json({ ok: true, top });
+});
+
+// ── TORNEO SETTIMANALE ────────────────────────────────────────────────────────
+const TORNEO_PRIZE = 500; // Coin
+const TORNEO_COST  = 50;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+function _torneoReset() {
+    const now = Date.now();
+    DB.torneo = DB.torneo || { participants: [], weekStart: now, prize: TORNEO_PRIZE, cost: TORNEO_COST };
+    if (now - DB.torneo.weekStart > WEEK_MS) {
+        DB.torneo = { participants: [], weekStart: now, prize: TORNEO_PRIZE, cost: TORNEO_COST };
+        markDirty();
+    }
+}
+app.get('/api/torneo', (req, res) => {
+    _torneoReset();
+    const { userId } = req.query;
+    const isJoined = userId ? !!(DB.torneo.participants.find(p => p.userId === userId)) : false;
+    res.json({
+        ok: true,
+        endTime: DB.torneo.weekStart + WEEK_MS,
+        participantCount: DB.torneo.participants.length,
+        prize: TORNEO_PRIZE,
+        cost: TORNEO_COST,
+        isJoined
+    });
+});
+app.post('/api/torneo/join', (req, res) => {
+    _torneoReset();
+    const { userId, name, face } = req.body || {};
+    if (!userId) return res.status(400).json({ error: 'userId richiesto' });
+    if (DB.torneo.participants.find(p => p.userId === userId))
+        return res.json({ ok: true, alreadyJoined: true, participantCount: DB.torneo.participants.length });
+    DB.torneo.participants.push({ userId, name: String(name || 'Anonimo').slice(0, 20), face: String(face || '🎭').slice(0, 4), joinedAt: Date.now() });
+    markDirty();
+    res.json({ ok: true, alreadyJoined: false, participantCount: DB.torneo.participants.length });
+});
+
 app.post('/api/admin/bitcoin-confirm', verifyAdmin, async (req, res) => {
     const { paymentId } = req.body || {};
 

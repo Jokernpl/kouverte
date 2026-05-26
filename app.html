@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260526e">
+<link rel="stylesheet" href="/app.css?v=20260526f">
 </head>
 <body>
 
@@ -1222,6 +1222,21 @@
         <div class="econ-card-name">Effetti Nick</div>
         <div class="econ-card-sub">Stile in chat</div>
       </div>
+      <div class="econ-card econ-card-featured" onclick="showScreen('shopScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#06b6d4,#0e7490)">🛍️</div>
+        <div class="econ-card-name">Negozio</div>
+        <div class="econ-card-sub">Cornici · Badge · Coin</div>
+      </div>
+      <div class="econ-card" onclick="showScreen('leaderScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#fbbf24,#d97706)">🏆</div>
+        <div class="econ-card-name">Classifica</div>
+        <div class="econ-card-sub" id="lbNavSub">Top 10 Coin</div>
+      </div>
+      <div class="econ-card econ-card-hot" onclick="showScreen('torneoScr',null)">
+        <div class="econ-card-icon" style="background:linear-gradient(135deg,#f43f5e,#e11d48)">⚡</div>
+        <div class="econ-card-name">Torneo</div>
+        <div class="econ-card-sub" id="torneoNavSub">500 Coin in palio</div>
+      </div>
     </div>
     <div class="econ-history" id="econHistory"></div>
   </div>
@@ -1346,6 +1361,101 @@
   </div>
 </div>
 
+
+<!-- ░░ NEGOZIO COIN ░░ -->
+<div id="shopScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🛍️ Negozio</span>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 Coin</span></div>
+    </div>
+  </div>
+  <div class="shop-tabs">
+    <button class="shop-tab active" onclick="shopTab('frames',this)">🖼️ Cornici</button>
+    <button class="shop-tab" onclick="shopTab('badges',this)">🏅 Badge</button>
+    <button class="shop-tab" onclick="shopTab('recharge',this)">💳 Ricarica</button>
+  </div>
+  <div class="shop-body">
+    <div id="shopPanel" class="shop-panel"></div>
+  </div>
+</div>
+
+<!-- ░░ CLASSIFICA COIN ░░ -->
+<div id="leaderScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">🏆 Classifica Coin</span>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 Coin</span></div>
+    </div>
+  </div>
+  <div class="leader-body">
+    <div class="leader-top-card" id="leaderMyRank">
+      <div class="leader-my-pos" id="leaderMyPos">—</div>
+      <div class="leader-my-info">
+        <div class="leader-my-label">La tua posizione</div>
+        <div class="leader-my-coin kvc-bal">0 Coin</div>
+      </div>
+    </div>
+    <div class="leader-list" id="leaderList">
+      <div class="leader-loading">⌛ Caricamento classifica...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ TORNEO SETTIMANALE ░░ -->
+<div id="torneoScr" class="screen">
+  <div class="home-hdr">
+    <div class="home-hdr-row">
+      <button class="hdr-plain-btn" onclick="showScreen('econHome',null)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="hdr-app-title" style="font-size:18px">⚡ Torneo</span>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 Coin</span></div>
+    </div>
+  </div>
+  <div class="torneo-body">
+    <div class="torneo-hero">
+      <div class="torneo-trophy">🏆</div>
+      <div class="torneo-title">Torneo Settimanale</div>
+      <div class="torneo-prize-row">
+        <span class="torneo-prize-label">Premio:</span>
+        <span class="torneo-prize-val">🪙 500 Coin</span>
+      </div>
+      <div class="torneo-countdown" id="torneoCountdown">⏳ --:--:--</div>
+      <div class="torneo-desc">Partecipa entro la scadenza. Un vincitore casuale viene estratto ogni lunedì e riceve 500 Coin.</div>
+    </div>
+    <div class="torneo-stats-row">
+      <div class="torneo-stat">
+        <div class="torneo-stat-n" id="torneoPartCount">0</div>
+        <div class="torneo-stat-l">Partecipanti</div>
+      </div>
+      <div class="torneo-stat">
+        <div class="torneo-stat-n">500</div>
+        <div class="torneo-stat-l">Coin in palio</div>
+      </div>
+      <div class="torneo-stat">
+        <div class="torneo-stat-n">50</div>
+        <div class="torneo-stat-l">Costo ingresso</div>
+      </div>
+    </div>
+    <div id="torneoJoinBox" class="torneo-join-box">
+      <button class="torneo-join-btn" id="torneoJoinBtn" onclick="joinTorneo()">⚡ Partecipa — 50 Coin</button>
+      <div class="torneo-joined-msg" id="torneoJoinedMsg" style="display:none">✅ Sei iscritto! In bocca al lupo 🎲</div>
+    </div>
+    <div class="torneo-rules">
+      <div class="torneo-rule">🎲 Estrazione casuale lunedì</div>
+      <div class="torneo-rule">🪙 50 Coin per partecipare</div>
+      <div class="torneo-rule">🏆 1 vincitore = 500 Coin</div>
+      <div class="torneo-rule">📋 Nessun limite di partecipazioni settimanali</div>
+    </div>
+  </div>
+</div>
 
 <!-- ░░ LOGIN REWARD MODAL ░░ -->
 <div class="lr-overlay" id="lrOverlay" onclick="if(event.target===this)closeLR()">
@@ -1484,7 +1594,7 @@
 </div>
 
 
-<script src="/app.js?v=20260526e"></script>
+<script src="/app.js?v=20260526f"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
