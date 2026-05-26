@@ -10240,16 +10240,16 @@ function addKVC(n,src=''){
   if(src==='pet')_missionProg('pet1',1);
 }
 function spendKVC(n){
-  if(getKVC()<n){showToast('❌ KVC insufficienti! Completa missioni per guadagnarne.');return false;}
+  if(getKVC()<n){showToast('❌ Coin insufficienti! Completa missioni per guadagnarne.');return false;}
   localStorage.setItem(KVC_KEY,getKVC()-n);_kvcUI();return true;
 }
 function _kvcUI(){
-  document.querySelectorAll('.kvc-bal').forEach(el=>el.textContent=getKVC().toLocaleString()+' KVC');
+  document.querySelectorAll('.kvc-bal').forEach(el=>el.textContent=getKVC().toLocaleString()+' Coin');
 }
 function _spawnCoinAnim(n){
   const el=document.createElement('div');
   el.className='kvc-float';
-  el.textContent=(n>=0?'+':'')+n+' KVC';
+  el.textContent=(n>=0?'+':'')+n+' Coin';
   el.style.left=(20+Math.random()*60)+'%';
   el.style.top=(25+Math.random()*35)+'%';
   document.body.appendChild(el);
@@ -10274,7 +10274,7 @@ function showLoginRewardModal(streak){
   const rew=LR_REWARDS[(streak-1)%7];
   const bar=document.getElementById('lrStreakBar');
   if(bar){bar.innerHTML=LR_REWARDS.map((r,i)=>`<div class="lr-day ${i<streak?'done':''} ${i===streak-1?'cur':''}">${i+1}</div>`).join('');}
-  const amt=document.getElementById('lrAmount');if(amt)amt.textContent='+'+rew+' KVC';
+  const amt=document.getElementById('lrAmount');if(amt)amt.textContent='+'+rew+' Coin';
   const desc=document.getElementById('lrDesc');if(desc)desc.textContent=`Giorno ${streak} streak!`;
   const coin=document.getElementById('lrCoinAnim');if(coin)coin.textContent='🪙';
   const ov=document.getElementById('lrOverlay');
@@ -10284,7 +10284,7 @@ function claimLoginReward(){
   const ov=document.getElementById('lrOverlay');
   const n=parseInt(ov?.dataset.rew||'50');
   addKVC(n,'login');
-  showToast('🎁 Premio ritirato: +'+n+' KVC!');
+  showToast('🎁 Premio ritirato: +'+n+' Coin!');
   closeLR();
 }
 function closeLR(){document.getElementById('lrOverlay')?.classList.remove('show');}
@@ -10315,7 +10315,7 @@ function _missionProg(id,n){
   if(s.progress[id]>=def.target&&!s.claimed[id]){
     s.claimed[id]=true;
     addKVC(def.reward,'_internal');
-    showToast('✅ Missione: '+def.emoji+' +'+def.reward+' KVC');
+    showToast('✅ Missione: '+def.emoji+' +'+def.reward+' Coin');
   }
   setLS('kvc_miss',s);
   renderMissions();updateMissionBadge();
@@ -10325,7 +10325,7 @@ function renderMissions(){
   const s=_getMissState();
   let todayKvc=0;
   MISS_DEF.forEach(m=>{if(s.claimed[m.id])todayKvc+=m.reward;});
-  const tk=document.getElementById('missTodayKvc');if(tk)tk.textContent=todayKvc+' KVC';
+  const tk=document.getElementById('missTodayKvc');if(tk)tk.textContent=todayKvc+' Coin';
   el.innerHTML=MISS_DEF.map(m=>{
     const prog=s.progress[m.id]||0;const done=s.claimed[m.id];
     const pct=Math.min(100,Math.round(prog/m.target*100));
@@ -10336,7 +10336,7 @@ function renderMissions(){
         <div class="miss-bar-wrap"><div class="miss-bar" style="width:${pct}%"></div></div>
         <div class="miss-prog">${prog}/${m.target}</div>
       </div>
-      <div class="miss-rew ${done?'done':''}">+${m.reward}<br><small>KVC</small></div>
+      <div class="miss-rew ${done?'done':''}">+${m.reward}<br><small>Coin</small></div>
     </div>`;
   }).join('');
   // Countdown to midnight
@@ -10383,7 +10383,7 @@ function openNickEffectsShop(){
     return `<div class="ne-item ${isActive?'active':''}" onclick="previewNickFx('${fx.id}')">
       <div class="ne-item-label" style="${fx.style||''}">${name}</div>
       <div class="ne-item-name">${fx.label}</div>
-      <div class="ne-item-price">${isOwned?(isActive?'✅ Attivo':'✔ Posseduto'):'🪙 '+fx.price+' KVC'}</div>
+      <div class="ne-item-price">${isOwned?(isActive?'✅ Attivo':'✔ Posseduto'):'🪙 '+fx.price+' Coin'}</div>
     </div>`;
   }).join('');
   if(prev){prev.textContent=name;applyNickFxStyle(prev,myFx);}
@@ -10465,7 +10465,7 @@ function renderPetScreen(){
           <span class="pet-hap-val" style="color:${hapColor}">${hapEmoji} ${hap}%</span>
         </div>
         <div class="pet-bar-wrap"><div class="pet-bar" style="width:${hap}%;background:${hapColor}"></div></div>
-        <button class="pet-feed-btn" onclick="feedPet()">🍖 Dai da mangiare (5 KVC)</button>
+        <button class="pet-feed-btn" onclick="feedPet()">🍖 Dai da mangiare (5 Coin)</button>
         <button class="pet-release-btn" onclick="releasePet()">🔓 Libera il pet</button>
       </div>`;
     const sub=document.getElementById('petNavSub');if(sub)sub.textContent=pet.emoji+' Lv.'+pet.level+' ('+hap+'%)';
@@ -10480,7 +10480,7 @@ function renderPetScreen(){
       <div class="pet-sh-name">${p.name}</div>
       <div class="pet-sh-desc">${p.desc}</div>
       <button class="pet-sh-btn" ${owned?'disabled':''} onclick="adoptPet('${p.id}')">
-        ${owned?'✅ Adottato':'🪙 '+p.price+' KVC'}
+        ${owned?'✅ Adottato':'🪙 '+p.price+' Coin'}
       </button>
     </div>`;
   }).join('');
@@ -10588,7 +10588,7 @@ function casinoTab(t,btn){
   document.getElementById('casScratch').style.display=t==='scratch'?'block':'none';
   if(t==='scratch'){const g=document.getElementById('scratchGrid');if(!g||!g.children.length||[...g.children].every(c=>c.classList.contains('revealed')))newScratchCard();}
 }
-function slotSetBet(d){_slotBet=Math.max(5,Math.min(100,_slotBet+d));document.getElementById('slotBetAmt').textContent=_slotBet;document.getElementById('slotSpinBtn').textContent='🎰 GIRA! ('+_slotBet+' KVC)';}
+function slotSetBet(d){_slotBet=Math.max(5,Math.min(100,_slotBet+d));document.getElementById('slotBetAmt').textContent=_slotBet;document.getElementById('slotSpinBtn').textContent='🎰 GIRA! ('+_slotBet+' Coin)';}
 function flipSetBet(d){_flipBet=Math.max(5,Math.min(500,_flipBet+d));document.getElementById('flipBetAmt').textContent=_flipBet;}
 function flipChoose(c,btn){_flipChoice=c;document.querySelectorAll('.flip-choice').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
 function doSlotSpin(){
@@ -10612,7 +10612,7 @@ function _slotFinish(reels){
   else if(sym[0]===sym[1]||sym[1]===sym[2]||sym[0]===sym[2]){mult=SLOT_PAY['2_match'];msg='😊 Due uguali! '+mult+'×';}
   else msg='😞 Ritenta!';
   const win=Math.floor(_slotBet*mult);
-  if(win>0){addKVC(win,'casino');msg+=' +'+win+' KVC';}
+  if(win>0){addKVC(win,'casino');msg+=' +'+win+' Coin';}
   const res=document.getElementById('slotResult');if(res)res.textContent=msg;
   _slotSpinning=false;
   const btn=document.getElementById('slotSpinBtn');btn.disabled=false;
@@ -10629,8 +10629,8 @@ function doFlip(){
     coin.textContent=out==='testa'?'😎':'🔑';
     if(out===_flipChoice){
       const win=_flipBet*2;addKVC(win,'casino');
-      res.textContent='✅ '+out.toUpperCase()+'! +'+win+' KVC';res.style.color='#00ff88';
-    }else{res.textContent='❌ '+out.toUpperCase()+'! Hai perso '+_flipBet+' KVC';res.style.color='#ff4466';}
+      res.textContent='✅ '+out.toUpperCase()+'! +'+win+' Coin';res.style.color='#00ff88';
+    }else{res.textContent='❌ '+out.toUpperCase()+'! Hai perso '+_flipBet+' Coin';res.style.color='#ff4466';}
   },600);
 }
 const SCRATCH_SYMS=['💎','🎰','🌟','🍒','7️⃣','💰','🎁','❓'];
@@ -10664,7 +10664,7 @@ function revealScratch(i,el){
     const win=Object.entries(counts).find(([s,c])=>c>=3);
     const res=document.getElementById('scratchResult');
     const prizes={'💎':150,'🎰':100,'🌟':80,'🍒':50,'7️⃣':60,'💰':120};
-    if(win){const amt=prizes[win[0]]||50;addKVC(amt,'casino');if(res)res.textContent='🎉 Tre '+win[0]+'! +'+amt+' KVC';}
+    if(win){const amt=prizes[win[0]]||50;addKVC(amt,'casino');if(res)res.textContent='🎉 Tre '+win[0]+'! +'+amt+' Coin';}
     else{if(res)res.textContent='😞 Ritenta!';}
   }
 }

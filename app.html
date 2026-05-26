@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260526c">
+<link rel="stylesheet" href="/app.css?v=20260526d">
 </head>
 <body>
 
@@ -728,7 +728,7 @@
     <span class="coin-big-icon">🪙</span>
     <div style="text-align:left">
       <div style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600;letter-spacing:0px;text-transform:uppercase">Monete</div>
-      <div><span class="coin-amount">0</span> KVC</div>
+      <div><span class="coin-amount">0</span> Coin</div>
     </div>
     <div id="streakBadge" style="margin-left:auto;font-size:11px;background:rgba(0,0,0,.3);border-radius:10px;padding:4px 10px;display:none">🔥 <span id="streakDays">0</span>gg</div>
   </div>
@@ -1170,7 +1170,7 @@
   <div class="econ-body">
     <div class="econ-bal-card">
       <div class="econ-bal-label">Il tuo saldo</div>
-      <div class="econ-bal-big kvc-bal">0 KVC</div>
+      <div class="econ-bal-big kvc-bal">0 Coin</div>
       <div class="econ-bal-sub">Guadagna completando missioni e giocando</div>
     </div>
     <div class="econ-streak-row" id="econStreakRow">
@@ -1221,7 +1221,7 @@
   <div class="miss-body">
     <div class="miss-top">
       <div class="miss-today-label">Guadagnato oggi</div>
-      <div class="miss-today-kvc" id="missTodayKvc">0 KVC</div>
+      <div class="miss-today-kvc" id="missTodayKvc">0 Coin</div>
     </div>
     <div id="missionsList" class="missions-list"></div>
   </div>
@@ -1235,7 +1235,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <span class="hdr-app-title" style="font-size:18px">🎰 Casino</span>
-      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 KVC</span></div>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 Coin</span></div>
     </div>
   </div>
   <div class="casino-body">
@@ -1257,10 +1257,10 @@
       <div class="slot-result" id="slotResult"></div>
       <div class="slot-bet-row">
         <button class="slot-bet-btn" onclick="slotSetBet(-5)">−</button>
-        <span class="slot-bet-lbl">Puntata: <b id="slotBetAmt">10</b> KVC</span>
+        <span class="slot-bet-lbl">Puntata: <b id="slotBetAmt">10</b> Coin</span>
         <button class="slot-bet-btn" onclick="slotSetBet(5)">+</button>
       </div>
-      <button class="slot-spin-btn" id="slotSpinBtn" onclick="doSlotSpin()">🎰 GIRA! (10 KVC)</button>
+      <button class="slot-spin-btn" id="slotSpinBtn" onclick="doSlotSpin()">🎰 GIRA! (10 Coin)</button>
       <div class="slot-paytable">
         <div>💎💎💎 = 100×  |  🎰🎰🎰 = 50×  |  7️⃣7️⃣7️⃣ = 20×</div>
         <div>3 uguali = 10×  |  2 uguali = 2×  |  niente = 0</div>
@@ -1276,17 +1276,17 @@
       </div>
       <div class="slot-bet-row">
         <button class="slot-bet-btn" onclick="flipSetBet(-5)">−</button>
-        <span class="slot-bet-lbl">Puntata: <b id="flipBetAmt">10</b> KVC</span>
+        <span class="slot-bet-lbl">Puntata: <b id="flipBetAmt">10</b> Coin</span>
         <button class="slot-bet-btn" onclick="flipSetBet(5)">+</button>
       </div>
       <button class="slot-spin-btn" id="flipBtn" onclick="doFlip()">🪙 Lancia!</button>
     </div>
     <!-- SCRATCH -->
     <div id="casScratch" class="cas-panel" style="display:none">
-      <div class="scratch-info">Costa 15 KVC. Gratta 3 simboli uguali = vinci!</div>
+      <div class="scratch-info">Costa 15 Coin. Gratta 3 simboli uguali = vinci!</div>
       <div class="scratch-grid" id="scratchGrid"></div>
       <div class="scratch-result" id="scratchResult"></div>
-      <button class="slot-spin-btn" id="scratchBtn" onclick="newScratchCard()">🎴 Nuova Scheda (15 KVC)</button>
+      <button class="slot-spin-btn" id="scratchBtn" onclick="newScratchCard()">🎴 Nuova Scheda (15 Coin)</button>
     </div>
   </div>
 </div>
@@ -1299,7 +1299,7 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <span class="hdr-app-title" style="font-size:18px">🐾 Il Mio Pet</span>
-      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 KVC</span></div>
+      <div class="hdr-right"><span class="kvc-badge-hdr kvc-bal">0 Coin</span></div>
     </div>
   </div>
   <div class="pet-body">
@@ -1333,7 +1333,7 @@
     <div class="lr-title">🎁 Premio di Oggi!</div>
     <div class="lr-streak-bar" id="lrStreakBar"></div>
     <div class="lr-coin-anim" id="lrCoinAnim">🪙</div>
-    <div class="lr-amount" id="lrAmount">+50 KVC</div>
+    <div class="lr-amount" id="lrAmount">+50 Coin</div>
     <div class="lr-desc" id="lrDesc">Giorno 1 di streak</div>
     <button class="lr-claim-btn" id="lrClaimBtn" onclick="claimLoginReward()">✅ Ritira!</button>
   </div>
@@ -1464,7 +1464,7 @@
 </div>
 
 
-<script src="/app.js?v=20260526c"></script>
+<script src="/app.js?v=20260526d"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
