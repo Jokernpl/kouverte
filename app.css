@@ -15,8 +15,9 @@ html.tab-hidden *{animation-play-state:paused !important}
 html,body{height:100%;width:100%;overflow:hidden;font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:#0f1117;color:#fff;overscroll-behavior:none}
 body{position:relative}
-.screen{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s;overflow:hidden}
-.screen.active{opacity:1;pointer-events:all}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;width:100%;max-width:480px;margin:0 auto;height:100%;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .26s cubic-bezier(.4,0,.2,1),transform .26s cubic-bezier(.4,0,.2,1);transform:translateY(14px) scale(.983);overflow:hidden}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+.screen.screen-exit{opacity:0;transform:translateY(-8px) scale(.99);pointer-events:none}
 ::-webkit-scrollbar{width:0;height:0}::-webkit-scrollbar-thumb{background:transparent}
 #home::-webkit-scrollbar,#profile::-webkit-scrollbar{width:0;height:0;display:none}
 #home,#profile{scrollbar-width:none;-ms-overflow-style:none}
@@ -267,28 +268,33 @@ body{position:relative}
 #roomsList > .games-grid { grid-column: 1 / -1 }
 
 .room-card{
-  height:108px;
+  height:118px;
   background:linear-gradient(160deg,rgba(26,31,58,.95),rgba(15,17,23,.98));
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:14px;padding:8px 10px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:16px;padding:8px 10px;
   cursor:pointer;
   position:relative;overflow:hidden;
   display:flex;flex-direction:column;justify-content:space-between;
   touch-action:manipulation;
-  transition:border-color .25s,transform .2s,box-shadow .25s
+  transition:border-color .22s,transform .2s,box-shadow .22s
 }
 .room-card::before{
-  content:'';position:absolute;inset:0;border-radius:14px;
-  background:linear-gradient(160deg,rgba(var(--rc-rgb,0,212,255),.06),transparent 60%);
-  pointer-events:none;opacity:0;transition:opacity .25s
+  content:'';position:absolute;inset:0;border-radius:16px;
+  background:linear-gradient(160deg,var(--rc-glow,rgba(0,212,255,.08)),transparent 55%);
+  pointer-events:none;opacity:0;transition:opacity .22s
 }
 .room-card:hover{
-  border-color:rgba(0,212,255,.25);
-  transform:translateY(-3px);
-  box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(0,212,255,.08)
+  border-color:var(--rc-color,rgba(0,212,255,.35));
+  transform:translateY(-4px);
+  box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 20px var(--rc-glow,rgba(0,212,255,.12))
 }
 .room-card:hover::before{opacity:1}
-.room-card:active{transform:scale(.96);opacity:.9}
+.room-card:active{transform:scale(.95);opacity:.88}
+/* Live rooms extra glow */
+.room-card.live-room{
+  border-color:rgba(255,107,157,.3);
+  box-shadow:0 0 12px var(--rc-glow,rgba(255,107,157,.15)) inset
+}
 .room-card::after{
   content:'';position:absolute;top:0;left:0;right:0;height:1px;
   background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
@@ -4073,4 +4079,121 @@ html[data-theme="light"] body {
 /* ── Nav 4 buttons ────────────────────────────────────────────── */
 .bnav{gap:0}
 .bnav .nbtn{flex:1;min-width:0;padding:10px 2px 8px}
+
+/* ══════════════════════════════════════════
+   UI/UX v2 — Animazioni, bolle, emoji bar
+   ══════════════════════════════════════════ */
+
+/* ── Messaggi: bolla per messaggi altrui ── */
+.mrow:not(.self) .mbody{
+  background:rgba(24,29,48,.85);
+  border-radius:4px 16px 16px 16px;
+  padding:7px 12px 5px;
+  position:relative;
+  max-width:75vw;
+  box-shadow:0 2px 8px rgba(0,0,0,.25)
+}
+.mrow:not(.self) .mbody::before{
+  content:'';position:absolute;left:-7px;top:10px;
+  border:7px solid transparent;
+  border-right-color:rgba(24,29,48,.85);
+  border-left:0;border-top:0
+}
+.mrow:not(.self) .mtime{font-size:9px;color:rgba(156,163,175,.7);margin-top:3px}
+.mrow:not(.self) .mline{line-height:1.5}
+/* Rimuovi max-width doppio ora che la bolla è sul .mbody */
+.mbody{max-width:75vw !important}
+
+/* Bolla self con coda più pulita */
+.mrow.self .mbubble-self{
+  position:relative;border-radius:16px 4px 16px 16px
+}
+.mrow.self .mbubble-self::after{
+  content:'';position:absolute;right:-6px;top:10px;
+  border:7px solid transparent;
+  border-left-color:#00d4ff;
+  border-right:0;border-top:0
+}
+/* Aggiusta colore coda per bubble-fx custom */
+.mrow.self .mbubble-self.bubble-gradient::after{border-left-color:#00d4ff}
+.mrow.self .mbubble-self.bubble-fire::after{border-left-color:#ff6b9d}
+.mrow.self .mbubble-self.bubble-galaxy::after{border-left-color:#00d4ff}
+
+/* ── Animazione mrow più fluida ── */
+@keyframes min{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.mrow{animation:min .22s cubic-bezier(.22,1,.36,1)}
+
+/* ── Quick emoji bar ── */
+.quick-emoji-bar{
+  display:flex;align-items:center;gap:4px;
+  padding:4px 10px 4px;
+  background:rgba(8,11,20,.95);
+  border-top:1px solid rgba(255,255,255,.05);
+  overflow-x:auto;scrollbar-width:none;
+  flex-shrink:0;
+  max-height:0;overflow:hidden;
+  transition:max-height .22s cubic-bezier(.4,0,.2,1),padding .22s;
+  padding-top:0;padding-bottom:0
+}
+.quick-emoji-bar::-webkit-scrollbar{display:none}
+.quick-emoji-bar.open{max-height:46px;padding-top:6px;padding-bottom:6px}
+.qe-btn{
+  flex-shrink:0;width:34px;height:34px;border-radius:50%;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:background .15s,transform .12s;line-height:1;
+  user-select:none;-webkit-tap-highlight-color:transparent
+}
+.qe-btn:active{background:rgba(0,212,255,.2);transform:scale(.88)}
+.qe-toggle{
+  width:28px;height:28px;border-radius:8px;
+  background:none;border:none;color:#6b7280;
+  font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color .15s;flex-shrink:0;margin-right:2px
+}
+.qe-toggle.open{color:#00d4ff}
+
+/* ── Profile extras: pet mini + clan badge ── */
+.prof-extras-row{
+  display:flex;gap:10px;padding:0 16px;margin-bottom:4px;flex-wrap:wrap
+}
+.prof-pet-mini{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);
+  border-radius:14px;padding:8px 14px;flex:1;min-width:130px;cursor:pointer
+}
+.prof-pet-mini:active{opacity:.8}
+.prof-pet-emoji{font-size:28px;line-height:1}
+.prof-pet-info{flex:1;min-width:0}
+.prof-pet-name{font-size:11px;font-weight:700;color:#10b981}
+.prof-pet-stats{font-size:10px;color:#6b7280;margin-top:1px}
+.prof-clan-mini{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.25);
+  border-radius:14px;padding:8px 14px;flex:1;min-width:130px;cursor:pointer
+}
+.prof-clan-mini:active{opacity:.8}
+.prof-clan-emoji{font-size:24px;line-height:1}
+.prof-clan-info{flex:1;min-width:0}
+.prof-clan-name{font-size:11px;font-weight:700;color:#a78bfa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prof-clan-sub{font-size:10px;color:#6b7280;margin-top:1px}
+
+/* ── Stats count-up animation ── */
+@keyframes statPop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.stat-n.animating{animation:statPop .5s cubic-bezier(.22,1,.36,1)}
+
+/* ── Room card: stanza in primo piano (first card) ── */
+.room-card:first-child{
+  border-color:rgba(0,212,255,.18);
+}
+
+/* ── Hero card livello 2: glow ambientale ── */
+.kv-hero-v2{
+  background:linear-gradient(155deg,rgba(0,212,255,.06) 0%,rgba(26,31,58,.9) 50%,rgba(255,107,157,.04) 100%);
+  border-color:rgba(0,212,255,.12);
+  transition:box-shadow .3s
+}
+.kv-hero-v2:hover{
+  box-shadow:0 8px 32px rgba(0,212,255,.1)
+}
 

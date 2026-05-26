@@ -6098,20 +6098,96 @@ function renderBadges(){
 var _showScreenTimer = null;
 function showScreen(name,btn){
   clearTimeout(_showScreenTimer);
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  // Exit animation on current active screen
+  const prevActive = document.querySelector('.screen.active');
+  if(prevActive && prevActive.id !== name){
+    prevActive.classList.add('screen-exit');
+    _showScreenTimer = setTimeout(()=>prevActive.classList.remove('active','screen-exit'), 260);
+  }
+  document.querySelectorAll('.screen').forEach(s=>{if(s.id!==name) s.classList.remove('active');});
   document.getElementById(name)?.classList.add('active');
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
   document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
-  _showScreenTimer = setTimeout(()=>_showScreenTimer=null, 300);
-  if (name === 'profile') triggerProfileAnimations();
+  if (name === 'profile') { triggerProfileAnimations(); renderProfExtras(); }
   if (name === 'clanScr') loadClanScreen();
   if (name === 'petScr') renderPetScreen();
   if (name === 'missioniScr') renderMissions();
   // GA4: track screen view
   window.trackEvent?.('screen_view', { screen_name: name });
+}
+
+// ── Quick emoji bar ──────────────────────────────────────────────
+function toggleQuickEmoji(){
+  const bar=document.getElementById('quickEmojiBar');
+  const btn=document.getElementById('qeToggleBtn');
+  if(!bar)return;
+  bar.classList.toggle('open');
+  btn?.classList.toggle('open',bar.classList.contains('open'));
+}
+function insertQuickEmoji(emoji){
+  const inp=document.getElementById('msgInput');
+  if(!inp)return;
+  const s=inp.selectionStart||inp.value.length;
+  const e=inp.selectionEnd||s;
+  inp.value=inp.value.slice(0,s)+emoji+inp.value.slice(e);
+  inp.selectionStart=inp.selectionEnd=s+emoji.length;
+  inp.focus();
+  // Dispatch input event so auto-resize triggers
+  inp.dispatchEvent(new Event('input',{bubbles:true}));
+}
+
+// ── Profile extras: pet + clan mini cards ───────────────────────
+function renderProfExtras(){
+  const row=document.getElementById('profExtrasRow');
+  if(!row)return;
+  const pet=getMyPet();
+  const clanId=localStorage.getItem('kvc_my_clan');
+  let html='';
+  if(pet){
+    const hap=_petHappinessNow(pet);
+    const hapColor=hap>60?'#10b981':hap>30?'#f59e0b':'#ef4444';
+    html+=`<div class="prof-pet-mini" onclick="showScreen('petScr',null)">
+      <div class="prof-pet-emoji">${pet.emoji}</div>
+      <div class="prof-pet-info">
+        <div class="prof-pet-name">${pet.name}</div>
+        <div class="prof-pet-stats">Lv.${pet.level} · <span style="color:${hapColor}">${hap>60?'Felice':'Triste'}</span></div>
+      </div>
+    </div>`;
+  }
+  if(clanId){
+    const clanData=getLS('kvc_clan_cache');
+    const clan=clanData?.name?clanData:(null);
+    html+=`<div class="prof-clan-mini" onclick="showScreen('clanScr',null)">
+      <div class="prof-clan-emoji">${clan?.emoji||'⚔️'}</div>
+      <div class="prof-clan-info">
+        <div class="prof-clan-name">${clan?.name||'Il mio clan'}</div>
+        <div class="prof-clan-sub">Tocca per vedere il clan</div>
+      </div>
+    </div>`;
+  }
+  row.innerHTML=html;
+  row.style.display=(pet||clanId)?'flex':'none';
+}
+
+// ── Stats count-up animation ────────────────────────────────────
+function animateStat(id, targetVal){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const start=parseInt(el.textContent)||0;
+  if(start===targetVal){return;}
+  const dur=600, steps=20;
+  const inc=(targetVal-start)/steps;
+  let cur=start, t=0;
+  el.classList.add('animating');
+  setTimeout(()=>el.classList.remove('animating'), 500);
+  const tick=setInterval(()=>{
+    t++;cur=Math.round(start+inc*t);
+    el.textContent=cur;
+    if(t>=steps){el.textContent=targetVal;clearInterval(tick);}
+  }, dur/steps);
 }
 
 // ══ UTILS ══
@@ -9701,11 +9777,15 @@ function countUpStat(elId, target, duration) {
 }
 
 function triggerProfileAnimations() {
-  // Count-up sulle stat cards
+  // Count-up sulle stat cards + pop animation
   setTimeout(() => {
     const msgs  = (typeof user !== 'undefined' && user) ? (user.msgCount || 0)  : 0;
     const rooms = (typeof user !== 'undefined' && user) ? (user.roomsJoined || 0) : 0;
     const badges = (typeof user !== 'undefined' && user) ? (user.badges?.length || 0) : 0;
+    ['stMsgs','stRooms','stBadges'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el){el.classList.remove('animating');void el.offsetWidth;el.classList.add('animating');setTimeout(()=>el.classList.remove('animating'),520);}
+    });
     countUpStat('stMsgs',   msgs,   900);
     countUpStat('stRooms',  rooms,  750);
     countUpStat('stBadges', badges, 600);
@@ -10495,6 +10575,7 @@ function loadClanScreen(){
     renderClanList(data.clans||[],myClanId);
     if(myClanId){
       const mine=(data.clans||[]).find(c=>c.id===myClanId);
+      if(mine) setLS('kvc_clan_cache',mine); // cache per profilo
       renderMyClan(mine||null,myClanId);
     }else{
       renderNoClan();

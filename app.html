@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260526d">
+<link rel="stylesheet" href="/app.css?v=20260526e">
 </head>
 <body>
 
@@ -593,6 +593,22 @@
   <!-- @Mention autocomplete dropdown -->
   <div id="mentionDropdown" class="mention-dropdown" style="display:none"></div>
 
+  <!-- Barra emoji veloci -->
+  <div class="quick-emoji-bar" id="quickEmojiBar">
+    <button class="qe-btn" onclick="insertQuickEmoji('😂')">😂</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('❤️')">❤️</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('🔥')">🔥</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('😍')">😍</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('👍')">👍</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('😭')">😭</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('🤣')">🤣</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('💀')">💀</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('😊')">😊</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('🥰')">🥰</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('😎')">😎</button>
+    <button class="qe-btn" onclick="insertQuickEmoji('👀')">👀</button>
+  </div>
+
   <div class="chat-bar">
     <div class="chat-bar-row">
       <input type="file" id="imgFileInput" accept="image/*" style="display:none" onchange="handleChatImage(event)">
@@ -601,6 +617,7 @@
       <button class="cvoice" id="voiceRecordBtn" title="Tieni premuto per registrare">🎙️</button>
       <button class="cgift" onclick="openGiftPicker()" title="Invia un regalo">🎁</button>
       <button class="creact" id="reactBtn" onclick="toggleReactionPicker()" title="Reagisci">🎆</button>
+      <button class="qe-toggle" id="qeToggleBtn" onclick="toggleQuickEmoji()" title="Emoji veloci">😊</button>
       <button class="csend" onclick="sendMsg()">➤</button>
     </div>
   </div>
@@ -722,6 +739,9 @@
     <div class="stat-b"><div class="stat-n" id="stRooms">0</div><div class="stat-l">Stanze</div></div>
     <div class="stat-b"><div class="stat-n" id="stBadges">0</div><div class="stat-l">Badge</div></div>
   </div>
+
+  <!-- Pet + Clan mini cards (iniettate da JS) -->
+  <div class="prof-extras-row" id="profExtrasRow" style="display:none"></div>
 
   <!-- Coin balance grande -->
   <div class="coin-big">
@@ -1464,7 +1484,7 @@
 </div>
 
 
-<script src="/app.js?v=20260526d"></script>
+<script src="/app.js?v=20260526e"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
