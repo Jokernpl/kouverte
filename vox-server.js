@@ -3431,7 +3431,7 @@ function disNextRound(room){
       clearInterval(room.timer);
       room.phase='ended';
       room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_end',{word,scores:room.players.map(pl=>({name:pl.name,points:pl.points||0}))});});
-      if(t<=0)setTimeout(()=>disNextRound(room),3000);
+      setTimeout(()=>disNextRound(room),3000); // avanza sempre al prossimo round
     }
     // reveal hint at 20s
     if(t===40){room.revealCount=2;const hint=disGetHint(word,2);room.players.forEach(p=>{io.sockets.sockets.get(p.socketId)?.emit('dis_hint',{hint});});}

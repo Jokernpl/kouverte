@@ -10437,7 +10437,7 @@ function feedPet(){
   pet.xp+=10;pet.fed=Date.now();
   if(pet.xp>=pet.level*50){pet.level++;pet.xp=0;showToast('🎉 '+pet.emoji+' è salito al livello '+pet.level+'!');}
   setLS('kvc_my_pet',pet);
-  addKVC(0,'pet'); // trigger pet mission
+  _missionProg('pet1',1); // missione pet (senza animazione +0)
   renderPetScreen();
 }
 function releasePet(){
@@ -10491,7 +10491,6 @@ function renderPetScreen(){
 
 // ── CLAN SYSTEM ───────────────────────────────────────────────────
 function loadClanScreen(){
-  const body=document.getElementById('clan-body')||document.querySelector('.clan-body');if(!body)return;
   const myClanId=localStorage.getItem('kvc_my_clan');
   document.getElementById('myClanSection').innerHTML='<div class="clan-loading">⌛ Caricamento...</div>';
   document.getElementById('clanListSection').innerHTML='';
@@ -10590,7 +10589,7 @@ function casinoTab(t,btn){
   document.getElementById('casSlot').style.display=t==='slot'?'block':'none';
   document.getElementById('casFlip').style.display=t==='flip'?'block':'none';
   document.getElementById('casScratch').style.display=t==='scratch'?'block':'none';
-  if(t==='scratch')newScratchCard();
+  if(t==='scratch'){const g=document.getElementById('scratchGrid');if(!g||!g.children.length||[...g.children].every(c=>c.classList.contains('revealed')))newScratchCard();}
 }
 function slotSetBet(d){_slotBet=Math.max(5,Math.min(100,_slotBet+d));document.getElementById('slotBetAmt').textContent=_slotBet;document.getElementById('slotSpinBtn').textContent='🎰 GIRA! ('+_slotBet+' KVC)';}
 function flipSetBet(d){_flipBet=Math.max(5,Math.min(500,_flipBet+d));document.getElementById('flipBetAmt').textContent=_flipBet;}
@@ -10638,19 +10637,21 @@ function doFlip(){
   },600);
 }
 const SCRATCH_SYMS=['💎','🎰','🌟','🍒','7️⃣','💰','🎁','❓'];
-let _scratchRevealed=[];let _scratchWin=false;
+let _scratchRevealed=[];
 function newScratchCard(){
   if(!spendKVC(15))return;
   _missionProg('casino1',1);
-  const totalSym=9;
-  const winSym=SCRATCH_SYMS[Math.floor(Math.random()*5)];
   const hasWin=Math.random()<0.3;
-  const cells=[];
-  if(hasWin){const pos=[Math.floor(Math.random()*9),Math.floor(Math.random()*9)];let placed=0;for(let i=0;i<totalSym;i++){if(placed<3&&(i===pos[0]||i===pos[1]||placed<3&&Math.random()<0.5&&placed<3)){cells.push(winSym);placed++;}else cells.push(SCRATCH_SYMS[Math.floor(Math.random()*SCRATCH_SYMS.length)]);}}
-  else{for(let i=0;i<totalSym;i++)cells.push(SCRATCH_SYMS[Math.floor(Math.random()*SCRATCH_SYMS.length)]);}
-  const counts={};cells.forEach(s=>{counts[s]=(counts[s]||0)+1;});
-  const winEntry=Object.entries(counts).find(([s,c])=>c>=3);
-  _scratchWin=!!winEntry;
+  const cells=Array.from({length:9},()=>SCRATCH_SYMS[Math.floor(Math.random()*SCRATCH_SYMS.length)]);
+  if(hasWin){
+    // garantisce esattamente 3 simboli uguali in posizioni casuali distinte
+    const winSym=SCRATCH_SYMS[Math.floor(Math.random()*5)];
+    const positions=[0,1,2,3,4,5,6,7,8].sort(()=>Math.random()-.5).slice(0,3);
+    positions.forEach(p=>cells[p]=winSym);
+    // assicura che nessun altro simbolo appaia 3+ volte
+    const counts={};cells.forEach(s=>{counts[s]=(counts[s]||0)+1;});
+    cells.forEach((s,i)=>{if(s!==winSym&&(counts[s]||0)>=3){cells[i]=SCRATCH_SYMS[5+(i%2)];}});
+  }
   _scratchRevealed=cells.map(s=>({sym:s,revealed:false}));
   const grid=document.getElementById('scratchGrid');
   if(!grid)return;
@@ -10749,15 +10750,20 @@ function _disAddChat(name,msg,color){
   d.innerHTML=`<b style="color:${color||'#9ca3af'}">${esc(name)}</b>: ${esc(msg)}`;
   el.appendChild(d);el.scrollTop=el.scrollHeight;
 }
+let _disEventsSetup=false;
 function _disSetupSocketEvents(){
-  if(!socket)return;
+  if(!socket||_disEventsSetup)return;
+  _disEventsSetup=true;
+  // re-setup on reconnect
+  socket.on('connect',()=>{_disEventsSetup=false;});
   socket.on('dis_start',({word,isDrawer,drawer,wordHint})=>{
     _disIsDrawer=isDrawer;_disCurrentWord=word;_disGuessedCorrect=false;
     document.getElementById('disRole').textContent=isDrawer?`✏️ Disegna: "${word}"`:'👀 Indovina!';
     document.getElementById('disWordHint').textContent=wordHint||'_ '.repeat(word?.length||4);
     document.getElementById('disDrawerTools').style.display=isDrawer?'flex':'none';
     document.getElementById('disGuessArea').style.display=isDrawer?'none':'flex';
-    const canvas=document.getElementById('disCanvas');if(canvas){_disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);}
+    const canvas=document.getElementById('disCanvas');
+    if(canvas&&_disCtx){_disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);}
     _disAddChat('🎮','Nuovo round! '+drawer+' disegna.','#f59e0b');
   });
   socket.on('dis_stroke_recv',({x,y,color,size,last})=>{
