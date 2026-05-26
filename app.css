@@ -4159,6 +4159,48 @@ html[data-theme="light"] body {
 .torneo-rules{display:flex;flex-direction:column;gap:8px}
 .torneo-rule{display:flex;align-items:center;gap:10px;font-size:13px;color:#9ca3af;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 14px}
 
+/* ══════════════════════════════════════════
+   DM INBOX
+   ══════════════════════════════════════════ */
+.dmi-body{flex:1;min-height:0;overflow-y:auto}
+.dmi-list{display:flex;flex-direction:column}
+.dmi-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .15s;position:relative}
+.dmi-row:active{background:rgba(255,255,255,.04)}
+.dmi-row:hover{background:rgba(255,255,255,.03)}
+.dmi-face{font-size:30px;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:rgba(0,212,255,.1);border-radius:50%;flex-shrink:0;border:2px solid rgba(0,212,255,.2)}
+.dmi-info{flex:1;min-width:0}
+.dmi-top-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.dmi-name{font-size:14px;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+.dmi-ts{font-size:11px;color:#4b5563;flex-shrink:0}
+.dmi-preview{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.dmi-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.dmi-time{font-size:10px;color:#4b5563}
+.dmi-badge{background:#ff6b9d;color:#fff;font-size:9px;font-weight:800;border-radius:10px;padding:2px 6px;min-width:18px;text-align:center}
+.dmi-empty{text-align:center;padding:48px 24px;color:#4b5563;font-size:13px;line-height:1.8}
+.dmi-unread .dmi-name{color:#fff}
+.dmi-unread .dmi-preview{color:#9ca3af}
+/* Loading */
+.dmi-loading{text-align:center;padding:32px;color:#6b7280;font-size:13px}
+
+/* DM full-screen chat */
+#dmChatScr{background:#0f1117;flex-direction:column}
+.dm-fullchat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.dm-fullchat-bar{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;background:rgba(8,11,20,.97);border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.dm-fullchat-input{flex:1;background:rgba(26,31,58,.9);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:10px 14px;color:#e5e7eb;font-size:13px;resize:none;max-height:120px;font-family:inherit;line-height:1.4}
+.dm-fullchat-input:focus{outline:none;border-color:rgba(0,212,255,.4)}
+.dm-fullchat-send{width:40px;height:40px;border-radius:50%;background:#00d4ff;border:none;color:#0f1117;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
+.dm-fullchat-send:active{opacity:.75}
+/* DM messages (full screen) */
+.dm-fmsg{display:flex;flex-direction:column;max-width:78vw;animation:min .2s cubic-bezier(.22,1,.36,1)}
+.dm-fmsg.out{align-self:flex-end;align-items:flex-end}
+.dm-fmsg.in{align-self:flex-start;align-items:flex-start}
+.dm-fmsg-text{padding:9px 14px;border-radius:16px;font-size:13px;line-height:1.5;word-break:break-word}
+.dm-fmsg.out .dm-fmsg-text{background:#00d4ff;color:#0f1117;border-radius:16px 4px 16px 16px}
+.dm-fmsg.in .dm-fmsg-text{background:rgba(24,29,48,.9);color:#e5e7eb;border-radius:4px 16px 16px 16px}
+.dm-fmsg-ts{font-size:9px;color:#4b5563;margin-top:2px;padding:0 4px}
+.dm-fmsg-name{font-size:10px;color:#9ca3af;font-weight:600;margin-bottom:2px;padding:0 4px}
+.dm-sys{text-align:center;font-size:10px;color:#4b5563;padding:6px;font-style:italic}
+
 /* ── Nav 4 buttons ────────────────────────────────────────────── */
 .bnav{gap:0}
 .bnav .nbtn{flex:1;min-width:0;padding:10px 2px 8px}

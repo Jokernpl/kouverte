@@ -1615,10 +1615,10 @@ function connectSocket(){
   socket.on('connect',()=>{
     setConnState('online');
     if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
-    // Registra utente per DM — usa sempre serverId come ID canonico
-    if (user) {
-      const canonicalId = user.serverId || user.id;
-      socket.emit('dm-register', { userId: canonicalId, serverId: canonicalId, username: user.username });
+    // Registra utente per DM — anche utenti anonimi con kv4_uid
+    {
+      const canonicalId = (user && (user.serverId || user.id)) || localStorage.getItem('kv4_uid') || '';
+      if(canonicalId) socket.emit('dm-register', { userId: canonicalId, serverId: canonicalId, username: user?.username||'' });
     }
     // Registra DM + friend listeners una volta sola
     if (typeof registerDmListener === 'function' && !window._dmListenerRegistered) {
@@ -7715,11 +7715,7 @@ function openUserMenu(el){
 
 function actionDmFromUserMenu(uid, uname, uface, ucolor){
   document.getElementById('userMenuModal').classList.remove('show');
-  if (!isLoggedIn) {
-    showToast('🔐 Per chat private serve un account. Fai login!');
-    return;
-  }
-  openDmChat(uid, uname, uface, ucolor);
+  openDMFullChat(uid, uname, uface, ucolor);
 }
 
 async function actionAddFriendFromMenu(uid, uname){
@@ -8210,7 +8206,18 @@ function registerDmListener(){
     const fromId = data.from;
     dmHistory[fromId] = dmHistory[fromId] || [];
     dmHistory[fromId].push({ text: data.text, out: false, ts: data.ts, fromName: data.fromName });
-    // Se DM modal aperto su questo utente, mostra in tempo reale
+
+    // ── Full-screen DM chat attiva su questo partner? ──
+    if (_dmCurrentPartner === fromId) {
+      const c = document.getElementById('dmFullMsgs');
+      if (c) {
+        appendDmFullBubble(c, data.text, false, data.fromName, data.ts);
+        c.scrollTop = c.scrollHeight;
+      }
+      return; // già mostrato, niente badge
+    }
+
+    // ── DM modal (vecchio) aperto su questo utente? ──
     const dmModal = document.getElementById('dmModal');
     const currTargetId = document.getElementById('dmTargetId')?.value;
     if (dmModal && dmModal.classList.contains('show') && currTargetId === fromId) {
@@ -8225,7 +8232,22 @@ function registerDmListener(){
   });
 
   socket.on('dm-history', (data) => {
-    // Popola la finestra DM con history dal server
+    // Full-screen chat
+    if (_dmCurrentPartner === data.withUserId) {
+      const c = document.getElementById('dmFullMsgs');
+      if (!c) return;
+      const myId = (user && (user.serverId||user.id)) || localStorage.getItem('kv4_uid') || '';
+      if (data.msgs && data.msgs.length > 0) {
+        c.innerHTML = '';
+        data.msgs.forEach(m => {
+          const isOut = m.from === myId;
+          appendDmFullBubble(c, m.text, isOut, isOut ? null : m.fromName, m.ts);
+        });
+        c.scrollTop = c.scrollHeight;
+      }
+      return;
+    }
+    // Vecchio DM modal
     const dmModal = document.getElementById('dmModal');
     const currTargetId = document.getElementById('dmTargetId')?.value;
     if (!dmModal || !dmModal.classList.contains('show') || currTargetId !== data.withUserId) return;
@@ -8245,7 +8267,8 @@ function registerDmListener(){
 // Badge contatore messaggi non letti per ogni amico
 var dmUnread = {};
 function updateDmBadge(fromId, delta){
-  dmUnread[fromId] = (dmUnread[fromId] || 0) + delta;
+  if (delta > 0) dmUnread[fromId] = (dmUnread[fromId] || 0) + delta;
+  else dmUnread[fromId] = 0;
   // Aggiorna badge nella lista amici se il modal è aperto
   const badge = document.getElementById('dm-badge-' + fromId);
   if (badge) {
@@ -8256,6 +8279,130 @@ function updateDmBadge(fromId, delta){
   const total = Object.values(dmUnread).reduce((a,b)=>a+b,0);
   const tabBadge = document.getElementById('friendsTabDmBadge');
   if (tabBadge) { tabBadge.textContent = total || ''; tabBadge.style.display = total ? 'flex' : 'none'; }
+  // Pallino rosso sull'icona DM in home header
+  const dot = document.getElementById('dmUnreadDot');
+  if (dot) dot.style.display = total > 0 ? 'block' : 'none';
+}
+
+// ── DM INBOX SCREEN ──────────────────────────────────────────────────────────
+let _dmCurrentPartner = null;
+
+function openDMInbox(){
+  showScreen('dmInboxScr', null);
+  loadDMInbox();
+}
+
+function loadDMInbox(){
+  const uid = (user && (user.serverId||user.id)) || localStorage.getItem('kv4_uid');
+  const list = document.getElementById('dmiList');
+  if (!list) return;
+  if (!uid) {
+    list.innerHTML = '<div class="dmi-empty">💬 Nessun messaggio ancora.<br><small>Inizia una conversazione dal profilo di un utente.</small></div>';
+    return;
+  }
+  list.innerHTML = '<div class="dmi-loading" style="text-align:center;padding:32px;color:#9ca3af">⌛ Caricamento...</div>';
+  fetch('/api/dm/inbox?userId=' + encodeURIComponent(uid))
+    .then(r => r.json())
+    .then(d => renderDMInbox(d.convs || []))
+    .catch(() => { list.innerHTML = '<div class="dmi-empty">❌ Errore caricamento messaggi</div>'; });
+}
+
+function renderDMInbox(convs){
+  const list = document.getElementById('dmiList');
+  if (!list) return;
+  if (!convs.length) {
+    list.innerHTML = '<div class="dmi-empty">💬 Nessun messaggio ancora.<br><small>Inizia una conversazione dal profilo di un utente.</small></div>';
+    return;
+  }
+  list.innerHTML = convs.map(c => {
+    const unr = dmUnread[c.partnerId] || 0;
+    const ts = c.lastTs ? new Date(c.lastTs).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) : '';
+    const badge = unr > 0 ? `<div class="dmi-badge">${unr}</div>` : '';
+    return `<div class="dmi-row" onclick="openDMFullChat('${esc(c.partnerId)}','${esc(c.partnerName)}','${esc(c.partnerFace)}','')">
+      <div class="dmi-face">${esc(c.partnerFace||'🎭')}</div>
+      <div class="dmi-info">
+        <div class="dmi-top-row">
+          <span class="dmi-name">${esc(c.partnerName||'Anonimo')}</span>
+          <span class="dmi-ts">${ts}</span>
+        </div>
+        <div class="dmi-preview">${esc((c.lastText||'').slice(0,60))}</div>
+      </div>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+function openDMFullChat(partnerId, partnerName, partnerFace, partnerColor){
+  _dmCurrentPartner = partnerId;
+  // Aggiorna header chat
+  const face = document.getElementById('dmChatFace');
+  const name = document.getElementById('dmChatName');
+  const status = document.getElementById('dmChatStatus');
+  if (face) face.textContent = partnerFace || '🎭';
+  if (name) name.textContent = partnerName || 'Anonimo';
+  if (status) status.textContent = '● Online';
+
+  // Azzera unread per questo partner
+  if (dmUnread[partnerId]) { dmUnread[partnerId] = 0; updateDmBadge(partnerId, 0); }
+
+  // Pulisci e mostra history locale
+  const c = document.getElementById('dmFullMsgs');
+  if (c) {
+    const myId = (user && (user.serverId||user.id)) || localStorage.getItem('kv4_uid') || '';
+    const history = dmHistory[partnerId] || [];
+    if (history.length > 0) {
+      c.innerHTML = '';
+      history.forEach(m => appendDmFullBubble(c, m.text, m.out, m.out ? null : m.fromName, m.ts));
+    } else {
+      c.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:24px;font-size:13px">Inizia la conversazione 👋</div>';
+    }
+    c.scrollTop = c.scrollHeight;
+  }
+
+  // Naviga alla schermata
+  showScreen('dmChatScr', null);
+
+  // Richiedi history dal server
+  if (socket && socket.connected) socket.emit('dm-open', { withUserId: partnerId });
+
+  setTimeout(() => {
+    const inp = document.getElementById('dmFullInput');
+    if (inp) inp.focus();
+  }, 300);
+}
+
+function sendDMFull(){
+  const inp = document.getElementById('dmFullInput');
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text || !_dmCurrentPartner) return;
+  if (!socket || !socket.connected) { showToast('❌ Connessione persa'); return; }
+
+  const myId = (user && (user.serverId||user.id)) || localStorage.getItem('kv4_uid') || '';
+  const myName = (user && (user.name||user.username)) || 'Anonimo';
+  const myFace = (user && user.face) || '🎭';
+  const msg = { from: myId, to: _dmCurrentPartner, text, ts: Date.now(), fromName: myName, fromFace: myFace };
+  socket.emit('dm-send', msg);
+
+  // Aggiorna history locale
+  dmHistory[_dmCurrentPartner] = dmHistory[_dmCurrentPartner] || [];
+  dmHistory[_dmCurrentPartner].push({ text, out: true, ts: msg.ts });
+
+  // Mostra nella UI
+  const c = document.getElementById('dmFullMsgs');
+  if (c) {
+    appendDmFullBubble(c, text, true, null, msg.ts);
+    c.scrollTop = c.scrollHeight;
+  }
+  inp.value = '';
+}
+
+function appendDmFullBubble(container, text, isOut, fromName, ts){
+  const time = ts ? new Date(ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'}) : '';
+  const nameHtml = !isOut && fromName ? `<div class="dm-fmsg-name">${esc(fromName)}</div>` : '';
+  container.insertAdjacentHTML('beforeend',
+    `<div class="dm-fmsg ${isOut?'out':'in'}">${nameHtml}<div class="dm-fmsg-text">${esc(text)}</div><div class="dm-fmsg-ts">${time}</div></div>`
+  );
 }
 
 // ══════════════════════════════════════════
