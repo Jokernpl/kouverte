@@ -260,8 +260,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   initUser(); connectSocket(); loadSavedCodeRooms(); renderRooms(); renderFrames(); renderBadges(); setupInput(); autoJoinFromUrl(); initOnboardingStrip(); initOnboardingWizard(); initResumeBanner(); initBoost(); initVoiceRecordBtn(); initProfileTilt(); initBannerParticles(); initDesktopViewToggle();
   // KVC init
   _kvcUI(); updateMissionBadge(); checkLoginReward();
-  // Disegna socket events (si collega dopo che socket è pronto)
-  setTimeout(_disSetupSocketEvents, 2000);
   // Mondo vivo: particelle + feed live + stats
   initParticles();
   startLiveFeed();
@@ -6112,7 +6110,6 @@ function showScreen(name,btn){
   if (name === 'clanScr') loadClanScreen();
   if (name === 'petScr') renderPetScreen();
   if (name === 'missioniScr') renderMissions();
-  if (name === 'disegnaScr') { document.getElementById('disLobby').style.display='flex'; document.getElementById('disGame').style.display='none'; }
   // GA4: track screen view
   window.trackEvent?.('screen_view', { screen_name: name });
 }
@@ -10672,128 +10669,6 @@ function revealScratch(i,el){
   }
 }
 
-// ── DISEGNA E INDOVINA ────────────────────────────────────────────
-const DIS_WORDS=['acqua','sole','mare','casa','albero','gatto','cane','pizza','fiore','libro','luna','stelle','montagna','fiume','pioggia','neve','vento','fuoco','cuore','mano','occhio','bocca','testa','macchina','bicicletta','telefono','chiave','porta','tavolo','letto','cucina','bagno','giardino','sedia','finestra','cappello','scarpa','borsa','ombrello','aeroplano','barco','orologio','specchio','lampada','bottiglia','matita','forbici','libro','palla','chitarra'];
-const DIS_COLORS=['#fff','#000','#ef4444','#f97316','#facc15','#4ade80','#38bdf8','#818cf8','#f472b6','#a78bfa'];
-let _disDrawing=false,_disCtx=null,_disLast=null,_disBrushColor='#fff',_disBrushSize=4;
-let _disRoomId=null,_disIsDrawer=false,_disCurrentWord=null,_disGuessedCorrect=false;
-
-function disegnaLeave(){
-  if(socket&&_disRoomId)socket.emit('dis_leave',{roomId:_disRoomId});
-  _disRoomId=null;_disIsDrawer=false;
-  document.getElementById('disLobby').style.display='flex';
-  document.getElementById('disGame').style.display='none';
-  showScreen('econHome',null);
-}
-function disegnaQuickJoin(){
-  const code='DIS'+Math.random().toString(36).substr(2,3).toUpperCase();
-  disegnaJoinRoom(code);
-}
-function disegnaJoinCode(){
-  const code=document.getElementById('disCodeInput').value.trim().toUpperCase();
-  if(code.length<3){showToast('Codice troppo corto');return;}
-  disegnaJoinRoom(code);
-}
-function disegnaJoinRoom(roomId){
-  if(!socket){showToast('Connessione non disponibile');return;}
-  _disRoomId=roomId;
-  const uid=user?.id||localStorage.getItem('kv4_uid')||'anon';
-  const name=user?.name||genNick(Date.now());
-  socket.emit('dis_join',{roomId,userId:uid,name});
-  document.getElementById('disLobby').style.display='none';
-  document.getElementById('disGame').style.display='flex';
-  _disInitCanvas();
-  _disInitColors();
-}
-function _disInitColors(){
-  const el=document.getElementById('disColors');if(!el)return;
-  el.innerHTML=DIS_COLORS.map(c=>`<button class="dis-color-btn ${c===_disBrushColor?'active':''}" style="background:${c}" onclick="disSetColor('${c}',this)"></button>`).join('');
-}
-function disSetColor(c,btn){_disBrushColor=c;document.querySelectorAll('.dis-color-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-function disSetSize(s,btn){_disBrushSize=s;document.querySelectorAll('.dis-size').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
-function _disInitCanvas(){
-  const canvas=document.getElementById('disCanvas');if(!canvas)return;
-  _disCtx=canvas.getContext('2d');
-  _disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);
-  function getPos(e){const r=canvas.getBoundingClientRect();const cl=e.touches?e.touches[0]:e;return{x:(cl.clientX-r.left)*(canvas.width/r.width),y:(cl.clientY-r.top)*(canvas.height/r.height)};}
-  function draw(e){
-    if(!_disDrawing||!_disIsDrawer)return;e.preventDefault();
-    const pos=getPos(e);
-    _disCtx.beginPath();_disCtx.arc(pos.x,pos.y,_disBrushSize/2,0,Math.PI*2);_disCtx.fillStyle=_disBrushColor;_disCtx.fill();
-    if(_disLast){_disCtx.beginPath();_disCtx.moveTo(_disLast.x,_disLast.y);_disCtx.lineTo(pos.x,pos.y);_disCtx.strokeStyle=_disBrushColor;_disCtx.lineWidth=_disBrushSize;_disCtx.lineCap='round';_disCtx.stroke();}
-    _disLast=pos;
-    if(socket)socket.emit('dis_stroke',{roomId:_disRoomId,x:pos.x,y:pos.y,color:_disBrushColor,size:_disBrushSize,last:_disLast});
-  }
-  canvas.addEventListener('mousedown',e=>{_disDrawing=true;_disLast=getPos(e);});
-  canvas.addEventListener('mousemove',draw);
-  canvas.addEventListener('mouseup',()=>{_disDrawing=false;_disLast=null;});
-  canvas.addEventListener('touchstart',e=>{_disDrawing=true;_disLast=getPos(e);},{passive:false});
-  canvas.addEventListener('touchmove',draw,{passive:false});
-  canvas.addEventListener('touchend',()=>{_disDrawing=false;_disLast=null;});
-}
-function disClear(){
-  if(!_disCtx)return;
-  const canvas=document.getElementById('disCanvas');
-  _disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);
-  if(socket)socket.emit('dis_clear',{roomId:_disRoomId});
-}
-function disSendGuess(){
-  const inp=document.getElementById('disGuessInput');const val=inp?.value.trim();
-  if(!val||!socket)return;
-  socket.emit('dis_guess',{roomId:_disRoomId,guess:val,userId:user?.id||'anon',name:user?.name||'Anon'});
-  _disAddChat('Tu',val,'#9ca3af');
-  inp.value='';
-}
-function _disAddChat(name,msg,color){
-  const el=document.getElementById('disChat');if(!el)return;
-  const d=document.createElement('div');d.className='dis-chat-msg';
-  d.innerHTML=`<b style="color:${color||'#9ca3af'}">${esc(name)}</b>: ${esc(msg)}`;
-  el.appendChild(d);el.scrollTop=el.scrollHeight;
-}
-let _disEventsSetup=false;
-function _disSetupSocketEvents(){
-  if(!socket||_disEventsSetup)return;
-  _disEventsSetup=true;
-  // re-setup on reconnect
-  socket.on('connect',()=>{_disEventsSetup=false;});
-  socket.on('dis_start',({word,isDrawer,drawer,wordHint})=>{
-    _disIsDrawer=isDrawer;_disCurrentWord=word;_disGuessedCorrect=false;
-    document.getElementById('disRole').textContent=isDrawer?`✏️ Disegna: "${word}"`:'👀 Indovina!';
-    document.getElementById('disWordHint').textContent=wordHint||'_ '.repeat(word?.length||4);
-    document.getElementById('disDrawerTools').style.display=isDrawer?'flex':'none';
-    document.getElementById('disGuessArea').style.display=isDrawer?'none':'flex';
-    const canvas=document.getElementById('disCanvas');
-    if(canvas&&_disCtx){_disCtx.fillStyle='#1e2030';_disCtx.fillRect(0,0,canvas.width,canvas.height);}
-    _disAddChat('🎮','Nuovo round! '+drawer+' disegna.','#f59e0b');
-  });
-  socket.on('dis_stroke_recv',({x,y,color,size,last})=>{
-    if(!_disCtx)return;
-    _disCtx.beginPath();_disCtx.arc(x,y,size/2,0,Math.PI*2);_disCtx.fillStyle=color;_disCtx.fill();
-    if(last){_disCtx.beginPath();_disCtx.moveTo(last.x,last.y);_disCtx.lineTo(x,y);_disCtx.strokeStyle=color;_disCtx.lineWidth=size;_disCtx.lineCap='round';_disCtx.stroke();}
-  });
-  socket.on('dis_clear_recv',()=>{const c=document.getElementById('disCanvas');if(c)_disCtx.fillStyle='#1e2030',_disCtx.fillRect(0,0,c.width,c.height);});
-  socket.on('dis_hint',({hint})=>{document.getElementById('disWordHint').textContent=hint;});
-  socket.on('dis_correct',({name,points,word})=>{
-    _disAddChat('✅',name+' ha indovinato! La parola era: '+word,'#00ff88');
-    if(name===user?.name||name==='Tu'){addKVC(points,'_internal');showToast('🎉 Indovinato! +'+points+' KVC');}
-  });
-  socket.on('dis_wrong',({name,guess})=>{_disAddChat(name,guess,'#9ca3af');});
-  socket.on('dis_scores',({scores})=>{
-    const bar=document.getElementById('disScoresBar');
-    if(bar)bar.innerHTML=scores.map(s=>`<span class="dis-score-chip">${s.name} ${s.points}pt</span>`).join('');
-  });
-  socket.on('dis_players',({players})=>{
-    const bar=document.getElementById('disScoresBar');
-    if(bar)bar.innerHTML=players.map(p=>`<span class="dis-score-chip">${p.name||'?'} ${p.points||0}pt</span>`).join('');
-  });
-  socket.on('dis_timer',({seconds})=>{
-    const t=document.getElementById('disTimer');if(t)t.textContent=seconds+'s';
-  });
-  socket.on('dis_end',({word,scores})=>{
-    _disAddChat('⏰','Tempo scaduto! Parola: '+word,'#f59e0b');
-    document.getElementById('disRole').textContent='⏰ Round finito';
-  });
-}
 
 // ── ECON HUB OPEN ────────────────────────────────────────────────
 function openEconHub(navBtn){

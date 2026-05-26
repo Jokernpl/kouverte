@@ -4069,39 +4069,6 @@ html[data-theme="light"] body {
 @keyframes scratchReveal{0%{transform:scale(.7) rotate(-5deg)}100%{transform:none}}
 .scratch-result{font-size:15px;font-weight:700;color:#fbbf24;min-height:22px;text-align:center}
 
-/* ── Disegna e Indovina ──────────────────────────────────────── */
-.dis-lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:24px 20px;gap:16px;text-align:center}
-.dis-lobby-icon{font-size:56px}
-.dis-lobby-title{font-size:22px;font-weight:800;color:#fff}
-.dis-lobby-desc{font-size:13px;color:#9ca3af;line-height:1.6}
-.dis-lobby-btn{width:100%;max-width:300px;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,#06b6d4,#0284c7);color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit}
-.dis-or{font-size:12px;color:#4b5563}
-.dis-code-row{display:flex;gap:8px;width:100%;max-width:300px}
-.dis-code-input{flex:1;padding:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#e5e7eb;font-size:13px;font-family:monospace;text-transform:uppercase;outline:none}
-.dis-join-btn{padding:12px 16px;border:none;border-radius:10px;background:rgba(255,255,255,.1);color:#e5e7eb;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
-.dis-game{display:none;flex-direction:column;flex:1;overflow:hidden}
-.dis-top-bar{padding:8px 12px;display:flex;flex-direction:column;gap:4px;background:rgba(0,0,0,.3);border-bottom:1px solid rgba(255,255,255,.06)}
-.dis-word-hint{font-size:16px;font-weight:800;letter-spacing:4px;color:#fff;text-align:center;font-family:monospace}
-.dis-scores-bar{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;justify-content:center}
-.dis-score-chip{font-size:10px;padding:2px 8px;background:rgba(255,255,255,.08);border-radius:20px;color:#9ca3af;white-space:nowrap;flex-shrink:0}
-.dis-canvas-wrap{position:relative;background:#1e2030;flex-shrink:0}
-#disCanvas{display:block;width:100%;touch-action:none}
-.dis-tools{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);border-radius:20px;padding:6px 10px;flex-wrap:wrap;justify-content:center}
-.dis-colors{display:flex;gap:4px}
-.dis-color-btn{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .1s;padding:0}
-.dis-color-btn.active{border-color:#fff;transform:scale(1.2)}
-.dis-sizes{display:flex;gap:4px;align-items:center}
-.dis-size{background:none;border:1px solid rgba(255,255,255,.2);border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;padding:0}
-.dis-size:nth-child(2){font-size:14px}.dis-size:nth-child(3){font-size:18px}
-.dis-size.active{border-color:#38bdf8;color:#38bdf8}
-.dis-clear-btn{background:none;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:4px 8px;color:#ef4444;font-size:14px;cursor:pointer}
-.dis-role{font-size:12px;color:#9ca3af;text-align:center;padding:6px}
-.dis-guess-area{display:flex;gap:8px;padding:8px 12px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.06)}
-.dis-guess-input{flex:1;padding:10px 12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:#e5e7eb;font-size:14px;font-family:inherit;outline:none}
-.dis-guess-btn{padding:10px 14px;border:none;border-radius:10px;background:rgba(6,182,212,.2);color:#38bdf8;font-size:16px;cursor:pointer}
-.dis-chat{flex:1;overflow-y:auto;padding:6px 12px;display:flex;flex-direction:column;gap:3px}
-.dis-chat-msg{font-size:12px;color:#d1d5db;line-height:1.4;padding:2px 0}
-.dis-timer{font-size:14px;font-weight:800;color:#f59e0b;padding:2px 8px;background:rgba(245,158,11,.1);border-radius:20px}
 
 /* ── Nav 4 buttons ────────────────────────────────────────────── */
 .bnav{gap:0}

@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260526b">
+<link rel="stylesheet" href="/app.css?v=20260526c">
 </head>
 <body>
 
@@ -1197,11 +1197,6 @@
         <div class="econ-card-name">Clan</div>
         <div class="econ-card-sub" id="clanNavSub">Crea o unisciti</div>
       </div>
-      <div class="econ-card" onclick="showScreen('disegnaScr',null)">
-        <div class="econ-card-icon" style="background:linear-gradient(135deg,#06b6d4,#0284c7)">🎨</div>
-        <div class="econ-card-name">Disegna</div>
-        <div class="econ-card-sub">& Indovina</div>
-      </div>
       <div class="econ-card" onclick="openNickEffectsShop()">
         <div class="econ-card-icon" style="background:linear-gradient(135deg,#ff6b9d,#f97316)">✨</div>
         <div class="econ-card-name">Effetti Nick</div>
@@ -1331,53 +1326,6 @@
   </div>
 </div>
 
-<!-- ░░ DISEGNA E INDOVINA ░░ -->
-<div id="disegnaScr" class="screen">
-  <div class="home-hdr">
-    <div class="home-hdr-row">
-      <button class="hdr-plain-btn" onclick="disegnaLeave()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <span class="hdr-app-title" style="font-size:16px">🎨 Disegna & Indovina</span>
-      <div class="hdr-right"><span id="disTimer" class="dis-timer"></span></div>
-    </div>
-  </div>
-  <div id="disLobby" class="dis-lobby">
-    <div class="dis-lobby-icon">🎨</div>
-    <div class="dis-lobby-title">Disegna & Indovina</div>
-    <div class="dis-lobby-desc">Disegna la parola segreta e fai indovinare gli altri.<br>Guadagna KVC per ogni risposta corretta!</div>
-    <button class="dis-lobby-btn" onclick="disegnaQuickJoin()">⚡ Partita Rapida</button>
-    <div class="dis-or">oppure</div>
-    <div class="dis-code-row">
-      <input id="disCodeInput" class="dis-code-input" placeholder="Codice stanza..." maxlength="6">
-      <button class="dis-join-btn" onclick="disegnaJoinCode()">Entra</button>
-    </div>
-  </div>
-  <div id="disGame" class="dis-game" style="display:none">
-    <div class="dis-top-bar">
-      <div class="dis-word-hint" id="disWordHint">_ _ _ _</div>
-      <div class="dis-scores-bar" id="disScoresBar"></div>
-    </div>
-    <div class="dis-canvas-wrap">
-      <canvas id="disCanvas" width="320" height="260"></canvas>
-      <div id="disDrawerTools" class="dis-tools" style="display:none">
-        <div class="dis-colors" id="disColors"></div>
-        <div class="dis-sizes">
-          <button class="dis-size active" data-s="3" onclick="disSetSize(3,this)">●</button>
-          <button class="dis-size" data-s="8" onclick="disSetSize(8,this)">●</button>
-          <button class="dis-size" data-s="16" onclick="disSetSize(16,this)">●</button>
-        </div>
-        <button class="dis-clear-btn" onclick="disClear()">🗑</button>
-      </div>
-    </div>
-    <div id="disRole" class="dis-role"></div>
-    <div id="disGuessArea" class="dis-guess-area" style="display:none">
-      <input id="disGuessInput" class="dis-guess-input" placeholder="Indovina la parola..." autocomplete="off">
-      <button class="dis-guess-btn" onclick="disSendGuess()">→</button>
-    </div>
-    <div id="disChat" class="dis-chat"></div>
-  </div>
-</div>
 
 <!-- ░░ LOGIN REWARD MODAL ░░ -->
 <div class="lr-overlay" id="lrOverlay" onclick="if(event.target===this)closeLR()">
@@ -1516,7 +1464,7 @@
 </div>
 
 
-<script src="/app.js?v=20260526b"></script>
+<script src="/app.js?v=20260526c"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
