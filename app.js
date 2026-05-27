@@ -6098,6 +6098,9 @@ function renderBadges(){
 var _showScreenTimer = null;
 function showScreen(name,btn){
   clearTimeout(_showScreenTimer);
+  // Clear DM partner tracker when leaving DM chat screen
+  const _prevName = document.querySelector('.screen.active')?.id;
+  if (_prevName === 'dmChatScr' && name !== 'dmChatScr') _dmCurrentPartner = null;
   // Exit animation on current active screen
   const prevActive = document.querySelector('.screen.active');
   if(prevActive && prevActive.id !== name){
@@ -6105,12 +6108,14 @@ function showScreen(name,btn){
     _showScreenTimer = setTimeout(()=>prevActive.classList.remove('active','screen-exit'), 260);
   }
   document.querySelectorAll('.screen').forEach(s=>{if(s.id!==name) s.classList.remove('active');});
-  document.getElementById(name)?.classList.add('active');
+  const targetEl = document.getElementById(name);
+  if(targetEl){ targetEl.classList.remove('screen-exit'); targetEl.classList.add('active'); }
   document.querySelectorAll('.nbtn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   else{const nb=document.querySelector(`[data-sc="${name}"]`);if(nb) nb.classList.add('active');}
   document.getElementById('opill').style.display=name==='home'?'flex':'none';
-  document.querySelector('.bnav').style.display = name==='chat' ? 'none' : 'flex';
+  const HIDE_NAV = ['chat','dmChatScr'];
+  document.querySelector('.bnav').style.display = HIDE_NAV.includes(name) ? 'none' : 'flex';
   if (name === 'profile') { triggerProfileAnimations(); renderProfExtras(); }
   if (name === 'clanScr') loadClanScreen();
   if (name === 'petScr') renderPetScreen();
@@ -6224,7 +6229,13 @@ function shopTab(tab, btn){
   renderShopPanel(tab);
 }
 function loadShop(){
-  renderShopPanel(_shopCurrentTab||'frames');
+  const tab = _shopCurrentTab || 'frames';
+  // Sync tab button active state
+  document.querySelectorAll('.shop-tab').forEach(b => {
+    const t = b.getAttribute('onclick')?.match(/shopTab\('(\w+)'/)?.[1];
+    b.classList.toggle('active', t === tab);
+  });
+  renderShopPanel(tab);
 }
 function renderShopPanel(tab){
   const el=document.getElementById('shopPanel');
@@ -6295,9 +6306,11 @@ function buyShopItem(type, id, name, price){
 function openCoinPack(packId, coins){
   const uid=user?.id||localStorage.getItem('kv4_uid');
   if(!uid){showToast('❌ Accedi con un account per acquistare Coin');return;}
+  const packMap = {pack_300:'coins_300', pack_900:'coins_900', pack_2500:'coins_2500'};
+  const stripePackId = packMap[packId] || packId;
   fetch('/api/stripe/create-checkout',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({packId:packId==='pack_300'?'coins_300':packId==='pack_900'?'coins_900':'coins_2500', userId:uid})
+    body:JSON.stringify({packId:stripePackId, userId:uid})
   }).then(r=>r.json()).then(d=>{
     if(d.url) window.location.href=d.url;
     else showToast('❌ '+(d.error||'Errore pagamento'));
@@ -8300,7 +8313,7 @@ function loadDMInbox(){
     list.innerHTML = '<div class="dmi-empty">💬 Nessun messaggio ancora.<br><small>Inizia una conversazione dal profilo di un utente.</small></div>';
     return;
   }
-  list.innerHTML = '<div class="dmi-loading" style="text-align:center;padding:32px;color:#9ca3af">⌛ Caricamento...</div>';
+  list.innerHTML = '<div class="dmi-loading">⌛ Caricamento...</div>';
   fetch('/api/dm/inbox?userId=' + encodeURIComponent(uid))
     .then(r => r.json())
     .then(d => renderDMInbox(d.convs || []))

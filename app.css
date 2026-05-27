@@ -394,8 +394,7 @@ body{position:relative}
 .chat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:3px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
 /* Message row — stile screenshot */
-.mrow{display:flex;align-items:flex-start;gap:8px;padding:2px 0;animation:min .2s ease-out}
-@keyframes min{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.mrow{display:flex;align-items:flex-start;gap:8px;padding:2px 0;animation:min .22s cubic-bezier(.22,1,.36,1)}
 .mrow.self{flex-direction:row-reverse}
 
 .mavatar{
@@ -4162,7 +4161,7 @@ html[data-theme="light"] body {
 /* ══════════════════════════════════════════
    DM INBOX
    ══════════════════════════════════════════ */
-.dmi-body{flex:1;min-height:0;overflow-y:auto}
+.dmi-body{flex:1;min-height:0;overflow-y:auto;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 .dmi-list{display:flex;flex-direction:column}
 .dmi-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .15s;position:relative}
 .dmi-row:active{background:rgba(255,255,255,.04)}
@@ -4185,7 +4184,7 @@ html[data-theme="light"] body {
 /* DM full-screen chat */
 #dmChatScr{background:#0f1117;flex-direction:column}
 .dm-fullchat-msgs{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:4px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.dm-fullchat-bar{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;background:rgba(8,11,20,.97);border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.dm-fullchat-bar{display:flex;align-items:flex-end;gap:8px;padding:10px 12px;padding-bottom:max(10px,env(safe-area-inset-bottom));background:rgba(8,11,20,.97);border-top:1px solid rgba(255,255,255,.06);flex-shrink:0}
 .dm-fullchat-input{flex:1;background:rgba(26,31,58,.9);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:10px 14px;color:#e5e7eb;font-size:13px;resize:none;max-height:120px;font-family:inherit;line-height:1.4}
 .dm-fullchat-input:focus{outline:none;border-color:rgba(0,212,255,.4)}
 .dm-fullchat-send{width:40px;height:40px;border-radius:50%;background:#00d4ff;border:none;color:#0f1117;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .15s}
