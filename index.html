@@ -27,20 +27,36 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
-<!-- Analytics: defer until after page load to free main thread -->
+<!-- Analytics: defer until first user interaction OR 4s idle (whichever first) -->
 <script>
-addEventListener('load', () => {
-  const ga = document.createElement('script');
-  ga.async = true; ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY';
-  document.head.appendChild(ga);
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){dataLayer.push(arguments);};
-  gtag('js', new Date());
-  gtag('config', 'G-KR50WJ2TKY', {page_title:'Landing Page', send_page_view:true});
-  const cs = document.createElement('script');
-  cs.async = true; cs.src = 'https://t.contentsquare.net/uxa/7e4574ca0b822.js';
-  document.head.appendChild(cs);
-}, {once:true});
+(function(){
+  let loaded = false;
+  function loadAnalytics(){
+    if (loaded) return; loaded = true;
+    // GA4
+    const ga = document.createElement('script');
+    ga.async = true; ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY';
+    document.head.appendChild(ga);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function(){dataLayer.push(arguments);};
+    gtag('js', new Date());
+    gtag('config', 'G-KR50WJ2TKY', {page_title:'Landing Page', send_page_view:true});
+    // ContentSquare
+    const cs = document.createElement('script');
+    cs.async = true; cs.src = 'https://t.contentsquare.net/uxa/7e4574ca0b822.js';
+    document.head.appendChild(cs);
+  }
+  // Trigger on first user interaction
+  ['scroll','pointerdown','keydown','touchstart'].forEach(ev =>
+    addEventListener(ev, loadAnalytics, {once:true, passive:true})
+  );
+  // Fallback: load 4s after page becomes idle (or onload if no requestIdleCallback)
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(() => setTimeout(loadAnalytics, 4000), {timeout: 8000});
+  } else {
+    addEventListener('load', () => setTimeout(loadAnalytics, 4000), {once:true});
+  }
+})();
 </script>
 
 <!-- SVG noise filter -->
