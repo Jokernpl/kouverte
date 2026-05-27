@@ -667,55 +667,17 @@ footer{
   </div>
 
   <div class="video-showcase-phone">
-    <div class="phone-frame" id="phoneFrame" onclick="openVideoLightbox()">
-      <video id="phoneVideo" autoplay muted loop playsinline preload="auto"
-             src="https://cdn.jsdelivr.net/gh/Jokernpl/kouverte@main/kouverte-reel-720.mp4"
-             style="width:100%;height:100%;object-fit:cover;display:block">
-      </video>
+    <a href="/app.html" class="phone-frame" id="phoneFrame" style="text-decoration:none;display:block">
+      <img src="/kouverte-post.png" alt="Kouverte app — stanze di chat anonima"
+           style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit">
       <div class="phone-play-overlay" id="phonePlayOverlay">
-        <button class="phone-play-btn" aria-label="Guarda il video a schermo intero">
+        <button class="phone-play-btn" aria-label="Entra nell'app">
           <svg viewBox="0 0 24 24"><path d="M5 3l14 9-14 9V3z"/></svg>
         </button>
       </div>
-    </div>
+    </a>
   </div>
 </section>
-
-<!-- VIDEO LIGHTBOX -->
-<div class="vid-lightbox" id="vidLightbox" onclick="if(event.target===this)closeVideoLightbox()">
-  <button class="vid-lightbox-close" onclick="closeVideoLightbox()">✕</button>
-  <video id="lightboxVideo" src="https://cdn.jsdelivr.net/gh/Jokernpl/kouverte@main/kouverte-reel-720.mp4" controls playsinline preload="none"></video>
-</div>
-
-<script>
-// Gestisci overlay play: visibile solo su hover (CSS) o se autoplay fallisce
-(function(){
-  const v = document.getElementById('phoneVideo');
-  const o = document.getElementById('phonePlayOverlay');
-  if (!v || !o) return;
-  // Se autoplay fallisce mostra il pulsante play al centro (click → lightbox)
-  v.play().catch(() => o.classList.add('show'));
-  v.addEventListener('error', () => o.classList.add('show'));
-  // Quando riprende a girare (es. dopo click), rimuovi il flag show
-  v.addEventListener('playing', () => o.classList.remove('show'));
-})();
-
-function openVideoLightbox(){
-  const lb = document.getElementById('vidLightbox');
-  const lv = document.getElementById('lightboxVideo');
-  lb.classList.add('open');
-  if (lv) { lv.currentTime = 0; lv.play().catch(()=>{}); }
-  document.body.style.overflow = 'hidden';
-}
-function closeVideoLightbox(){
-  const lb = document.getElementById('vidLightbox');
-  const lv = document.getElementById('lightboxVideo');
-  lb.classList.remove('open');
-  if (lv) lv.pause();
-  document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeVideoLightbox(); });
-</script>
 
 <!-- BENTO FEATURES -->
 <section class="bento-section" id="features">
