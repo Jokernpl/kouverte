@@ -300,11 +300,14 @@ nav{
   border-radius:0 0 14px 14px;z-index:10
 }
 .phone-frame video{width:100%;height:100%;object-fit:cover;display:block}
-/* Overlay play (nascosto mentre il video è in play) */
+/* Overlay play — invisibile di default, appare su hover o errore */
 .phone-play-overlay{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,.25);z-index:5;transition:opacity .3s;border-radius:32px
+  background:rgba(0,0,0,.32);z-index:5;transition:opacity .3s;border-radius:32px;
+  opacity:0;pointer-events:none
 }
+.phone-frame:hover .phone-play-overlay,
+.phone-play-overlay.show{opacity:1;pointer-events:auto}
 .phone-play-overlay.hidden{opacity:0;pointer-events:none}
 .phone-play-btn{
   width:54px;height:54px;border-radius:50%;
@@ -665,9 +668,8 @@ footer{
 
   <div class="video-showcase-phone">
     <div class="phone-frame" id="phoneFrame" onclick="openVideoLightbox()">
-      <video id="phoneVideo" autoplay muted loop playsinline preload="metadata"
+      <video id="phoneVideo" autoplay muted loop playsinline preload="auto"
              src="/kouverte-reel-720.mp4"
-             poster=""
              style="width:100%;height:100%;object-fit:cover;display:block">
       </video>
       <div class="phone-play-overlay" id="phonePlayOverlay">
@@ -686,16 +688,16 @@ footer{
 </div>
 
 <script>
-// Nascondi overlay play quando il video parte
+// Gestisci overlay play: visibile solo su hover (CSS) o se autoplay fallisce
 (function(){
   const v = document.getElementById('phoneVideo');
   const o = document.getElementById('phonePlayOverlay');
   if (!v || !o) return;
-  v.addEventListener('playing', () => o.classList.add('hidden'));
-  v.addEventListener('pause',   () => o.classList.remove('hidden'));
-  // Su mobile autoplay spesso bloccato — mostra overlay
-  v.addEventListener('canplay', () => { if (!v.paused) o.classList.add('hidden'); });
-  v.play().catch(() => o.classList.remove('hidden'));
+  // Se autoplay fallisce mostra il pulsante play al centro (click → lightbox)
+  v.play().catch(() => o.classList.add('show'));
+  v.addEventListener('error', () => o.classList.add('show'));
+  // Quando riprende a girare (es. dopo click), rimuovi il flag show
+  v.addEventListener('playing', () => o.classList.remove('show'));
 })();
 
 function openVideoLightbox(){
