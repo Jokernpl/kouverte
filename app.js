@@ -10364,37 +10364,9 @@ async function toggleRoomAlert(roomId, evt){
 
 
 
-function openAppVideoLightbox(){
-  const lb = document.getElementById('appVidLightbox');
-  const v  = document.getElementById('appLightboxVid');
-  lb.classList.add('open');
-  if (v) { v.currentTime = 0; v.play().catch(()=>{}); }
-  document.body.style.overflow = 'hidden';
-}
-function closeAppVideoLightbox(){
-  const lb = document.getElementById('appVidLightbox');
-  const v  = document.getElementById('appLightboxVid');
-  lb.classList.remove('open');
-  if (v) v.pause();
-  document.body.style.overflow = '';
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAppVideoLightbox(); });
-
-// Mostra/nascondi card video profilo in base all'esperienza utente
-function syncProfVideoCard(){
-  const card = document.getElementById('profVideoCard');
-  if (!card) return;
-  const msgCount = (typeof user !== 'undefined' && user) ? (user.msgCount || 0) : 0;
-  const dismissed = localStorage.getItem('kv_prof_video_dismissed');
-  // Mostra ai nuovi utenti (meno di 10 messaggi) che non hanno dismissato
-  const show = !dismissed && msgCount < 10;
-  card.style.display = show ? 'block' : 'none';
-  if (show) {
-    // Avvia anteprima video silenziosa
-    const v = document.getElementById('profVideoThumb');
-    if (v) v.play().catch(()=>{});
-  }
-}
+function openAppVideoLightbox(){ /* video rimosso */ }
+function closeAppVideoLightbox(){ /* video rimosso */ }
+function syncProfVideoCard(){ /* video rimosso */ }
 
 // Keep-alive: pinga /health ogni 10 minuti per evitare lo sleep del free tier
 (function startKeepAlive() {
