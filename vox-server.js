@@ -252,6 +252,9 @@ app.use(express.static(__dirname, {
             // Mai cache su HTML/JS/CSS — browser verifica sempre col server (ETag)
             res.setHeader('Cache-Control', 'no-cache, must-revalidate');
             res.setHeader('Pragma', 'no-cache');
+        } else if (['.png','.jpg','.jpeg','.webp','.svg','.ico','.gif','.woff','.woff2','.ttf','.otf','.eot'].includes(ext)) {
+            // Static media/font: cache 1 anno (file con hash o updated via deploy)
+            res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
     }
 }));
