@@ -15,16 +15,33 @@
 <meta property="og:locale" content="it_IT">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://www.kouverte.com/og-image.png?v=2">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-KR50WJ2TKY',{page_title:'Landing Page',send_page_view:true});</script>
-<script src="https://t.contentsquare.net/uxa/7e4574ca0b822.js" async></script>
+<!-- Preload LCP image to start download immediately -->
+<link rel="preload" as="image" href="/kouverte-post.jpg" fetchpriority="high">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#00d4ff">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<!-- Fonts: preconnect to both googleapis + gstatic, non-blocking CSS -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"></noscript>
+<!-- Analytics: defer until after page load to free main thread -->
+<script>
+addEventListener('load', () => {
+  const ga = document.createElement('script');
+  ga.async = true; ga.src = 'https://www.googletagmanager.com/gtag/js?id=G-KR50WJ2TKY';
+  document.head.appendChild(ga);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){dataLayer.push(arguments);};
+  gtag('js', new Date());
+  gtag('config', 'G-KR50WJ2TKY', {page_title:'Landing Page', send_page_view:true});
+  const cs = document.createElement('script');
+  cs.async = true; cs.src = 'https://t.contentsquare.net/uxa/7e4574ca0b822.js';
+  document.head.appendChild(cs);
+}, {once:true});
+</script>
 
 <!-- SVG noise filter -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
