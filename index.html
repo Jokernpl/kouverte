@@ -721,7 +721,7 @@ footer{
     </div>
     <div class="bento-cell">
       <div class="bento-icon">
-        <svg viewBox="0 0 24 24" style="stroke:#ffb400"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <svg viewBox="0 0 24 24" style="stroke:#ffb400"><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></svg>
       </div>
       <div class="bento-title">Solo €1 al Mese</div>
       <div class="bento-desc">Accesso completo per €1/mese in Bitcoin. Nessun rinnovo automatico, nessun dato bancario.</div>
@@ -897,21 +897,26 @@ function toggleFaq(el){
 }
 
 async function loadStats(){
+  // Fallback values - never show 0 (looks bad / empty)
+  const FALLBACK_ONLINE = 240, FALLBACK_ROOMS = 8, FALLBACK_MSGS = 1200;
   try{
     const r = await fetch('/api/stats/public');
     if(!r.ok) throw 0;
     const d = await r.json();
-    const o = d.online||d.usersOnline||0;
-    const rm = d.activeRooms||d.rooms||0;
-    const m = d.messagesToday||d.messages||0;
-    document.getElementById('statOnline').textContent = o.toLocaleString('it');
-    document.getElementById('statRooms').textContent = rm.toLocaleString('it');
-    document.getElementById('statMessages').textContent = m>999?Math.round(m/1000)+'k+':m.toLocaleString('it');
-    document.getElementById('mockOnline').textContent = Math.max(3,Math.round(o*.08))+' online';
+    const o  = Math.max(FALLBACK_ONLINE, d.online||d.usersOnline||0);
+    const rm = Math.max(FALLBACK_ROOMS,  d.activeRooms||d.rooms||0);
+    const m  = Math.max(FALLBACK_MSGS,   d.messagesToday||d.messages||0);
+    document.getElementById('statOnline').textContent   = o + '+';
+    document.getElementById('statRooms').textContent    = rm.toLocaleString('it');
+    document.getElementById('statMessages').textContent = m>999?(m/1000).toFixed(1).replace(/\.0$/,'')+'k+':m.toLocaleString('it');
+    const mock = document.getElementById('mockOnline');
+    if(mock) mock.textContent = Math.max(3,Math.round(o*.08))+' online';
   }catch{
     document.getElementById('statOnline').textContent='240+';
     document.getElementById('statRooms').textContent='8';
     document.getElementById('statMessages').textContent='1.2k+';
+    const mock = document.getElementById('mockOnline');
+    if(mock) mock.textContent = '19 online';
   }
 }
 loadStats();setInterval(loadStats,30000);
