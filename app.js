@@ -6316,18 +6316,6 @@ function openCoinPack(packId, coins){
     else showToast('❌ '+(d.error||'Errore pagamento'));
   }).catch(()=>showToast('❌ Stripe non disponibile. Usa Bitcoin nella sezione Abbonamento.'));
 }
-// Handle Stripe success redirect
-(function(){
-  const p=new URLSearchParams(location.search);
-  if(p.get('stripe_ok')==='1'){
-    showToast('✅ Acquisto completato! Le tue Coin arriveranno a breve.');
-    history.replaceState(null,'',location.pathname);
-  }
-  if(p.get('stripe_cancel')==='1'){
-    showToast('ℹ️ Acquisto annullato');
-    history.replaceState(null,'',location.pathname);
-  }
-})();
 
 // ══════════════════════════════════════════════════════════════════
 // LEADERBOARD COIN
@@ -8380,7 +8368,16 @@ function openDMFullChat(partnerId, partnerName, partnerFace, partnerColor){
 
   setTimeout(() => {
     const inp = document.getElementById('dmFullInput');
-    if (inp) inp.focus();
+    if (inp) {
+      inp.focus();
+      // iOS: keyboard push shrinks viewport — scroll to latest message after keyboard opens
+      inp.addEventListener('focus', () => {
+        setTimeout(() => {
+          const mc = document.getElementById('dmFullMsgs');
+          if (mc) mc.scrollTop = mc.scrollHeight;
+        }, 350);
+      }, { once: true });
+    }
   }, 300);
 }
 
@@ -9428,21 +9425,6 @@ function confirmLogout(){
 // ══════════════════════════════════════════
 // LOGO & AVATAR SETTINGS
 // ══════════════════════════════════════════
-const FRAME_STYLES = [
-  { id: 'none', name: 'Nessuna', emoji: '✨', color: '#64748b' },
-  { id: 'silver', name: 'Silver', emoji: '⭐', color: '#94a3b8' },
-  { id: 'purple', name: 'Purple', emoji: '💜', color: '#a855f7' },
-  { id: 'gold', name: 'Gold', emoji: '✨', color: '#fbbf24' },
-  { id: 'flame', name: 'Flame', emoji: '🔥', color: '#f97316' },
-  { id: 'diamond', name: 'Diamond', emoji: '💎', color: '#38bdf8' },
-  { id: 'neon', name: 'Neon', emoji: '⚡', color: '#00ffff' },
-  { id: 'emerald', name: 'Emerald', emoji: '💚', color: '#10b981' },
-  { id: 'ruby', name: 'Ruby', emoji: '❤️', color: '#ef4444' },
-  { id: 'rainbow', name: 'Rainbow', emoji: '🌈', color: '#ff00ff' },
-  { id: 'galaxy', name: 'Galaxy', emoji: '🪐', color: '#8b5cf6' },
-  { id: 'royal', name: 'Royal', emoji: '👑', color: '#fbbf24' },
-  { id: 'skull', name: 'Skull', emoji: '💀', color: '#9ca3af' }
-];
 
 function openLogoSettings(){
   closeContinua();
@@ -9455,7 +9437,7 @@ function openLogoSettings(){
     document.body.appendChild(modal);
   }
 
-  const frameHTML = (window.FRAME_STYLES || FRAME_STYLES).map(f => `
+  const frameHTML = window.FRAME_STYLES.map(f => `
     <button class="frame-selector-btn" onclick="changeFrame('${f.id}')" style="--fc:${f.color}${user.activeFrame === f.id ? ';border:3px solid #fff;transform:scale(1.1)' : ''}">
       <div style="font-size:28px;margin-bottom:4px">${f.emoji}</div>
       <div style="font-size:11px;white-space:nowrap">${f.name}</div>
@@ -10168,7 +10150,7 @@ function triggerProfileAnimations() {
   // Count-up sulle stat cards + pop animation
   setTimeout(() => {
     const msgs  = (typeof user !== 'undefined' && user) ? (user.msgCount || 0)  : 0;
-    const rooms = (typeof user !== 'undefined' && user) ? (user.roomsJoined || 0) : 0;
+    const rooms = (typeof sessionRooms !== 'undefined' ? sessionRooms.size : 0) || ((typeof user !== 'undefined' && user) ? (user.roomsVisited||[]).length : 0);
     const badges = (typeof user !== 'undefined' && user) ? (user.badges?.length || 0) : 0;
     ['stMsgs','stRooms','stBadges'].forEach((id,i)=>{
       const el=document.getElementById(id);
