@@ -104,6 +104,40 @@ app.get('/_version', (req, res) => {
     res.json({ version: BUILD_VERSION, startedAt: new Date().toISOString() });
 });
 
+// ── Video promo: route dedicata con Range request support ────────────────────
+// express.static non garantisce Accept-Ranges su tutti i deploy;
+// i browser richiedono Range bytes per il buffering video HTML5.
+app.get('/kouverte-reel-720.mp4', (req, res) => {
+    const videoPath = path.join(__dirname, 'kouverte-reel-720.mp4');
+    if (!fs.existsSync(videoPath)) return res.status(404).end();
+    const stat = fs.statSync(videoPath);
+    const fileSize = stat.size;
+    const rangeHeader = req.headers['range'];
+    if (rangeHeader) {
+        const parts = rangeHeader.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end   = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        const chunkSize = end - start + 1;
+        const file = fs.createReadStream(videoPath, { start, end });
+        res.writeHead(206, {
+            'Content-Range':  `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges':  'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type':   'video/mp4',
+            'Cache-Control':  'public, max-age=2592000',
+        });
+        file.pipe(res);
+    } else {
+        res.writeHead(200, {
+            'Content-Length': fileSize,
+            'Content-Type':   'video/mp4',
+            'Accept-Ranges':  'bytes',
+            'Cache-Control':  'public, max-age=2592000',
+        });
+        fs.createReadStream(videoPath).pipe(res);
+    }
+});
+
 // Favicon: redirige /favicon.ico al nostro SVG (per crawler Google/Bing vecchi)
 app.get('/favicon.ico', (req, res) => {
     res.set('Cache-Control', 'public, max-age=86400');
@@ -3435,6 +3469,36 @@ app.post('/api/shop/verify-sub', async (req, res) => {
         console.error('verify-sub error:', e.message);
         return res.status(500).json({ ok: false, error: 'Errore server durante la verifica' });
     }
+});
+
+// ── DM INBOX (REST) ──────────────────────────────────────────────────────────
+app.get('/api/dm/inbox', (req, res) => {
+    const { userId } = req.query;
+    if (!userId || typeof userId !== 'string') return res.status(400).json({ error: 'userId richiesto' });
+    const uid = userId.slice(0, 60);
+    DB.dm_messages = DB.dm_messages || [];
+    const mine = DB.dm_messages.filter(m => m.from === uid || m.to === uid);
+    const convMap = {};
+    mine.forEach(m => {
+        const partnerId = m.from === uid ? m.to : m.from;
+        const key = m.key || [uid, partnerId].sort().join('_');
+        if (!convMap[key]) convMap[key] = { partnerId, messages: [] };
+        convMap[key].messages.push(m);
+    });
+    const convs = Object.values(convMap).map(c => {
+        const msgs = c.messages.sort((a, b) => a.ts - b.ts);
+        const last = msgs[msgs.length - 1];
+        const partnerMsg = msgs.find(m => m.from === c.partnerId);
+        return {
+            partnerId: c.partnerId,
+            partnerName: (partnerMsg?.fromName || last?.fromName || 'Anonimo').slice(0, 30),
+            partnerFace: (partnerMsg?.fromFace || last?.fromFace || '🎭').slice(0, 4),
+            lastText: (last?.text || '').slice(0, 80),
+            lastTs: last?.ts || 0,
+            msgCount: msgs.length
+        };
+    }).sort((a, b) => b.lastTs - a.lastTs).slice(0, 50);
+    res.json({ ok: true, convs });
 });
 
 // ── COIN LEADERBOARD ─────────────────────────────────────────────────────────
