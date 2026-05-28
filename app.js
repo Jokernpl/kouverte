@@ -10596,7 +10596,7 @@ function showPaywall(onAllowed){
         <div class="pw-f"><span class="pw-ok">✓</span> Chat anonima senza limiti</div>
       </div>
       <button class="pw-btc-btn" onclick="openSubBtcPanel()">₿ Abbonati con Bitcoin</button>
-      <button class="pw-stripe-btn" disabled>💳 Carta di credito <small>(presto disponibile)</small></button>
+      <button class="pw-stripe-btn" onclick="buyWithStripe('premium_30')">💳 Paga con carta</button>
       <div class="pw-sub-panel" id="pwBtcPanel" style="display:none">
         <div class="pw-addr-label">Invia esattamente <b>₿ ${SUB_BTC_AMOUNT}</b> a:</div>
         <div class="pw-addr" onclick="navigator.clipboard?.writeText('${SUB_BTC_ADDR}').then(()=>showToast('📋 Indirizzo copiato!'))">
