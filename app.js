@@ -1706,7 +1706,9 @@ function connectSocket(){
         el.textContent=count>0?count+' in sala':'Nessuno ora';
         el.classList.toggle('gc-waiting-empty',count===0);
       } else {
-        el.textContent=count;
+        // Room card: 0 online -> stato invitante "Sii il primo!"
+        el.textContent = count>0 ? count : 'Sii il primo!';
+        el.closest('.rc-online-pill')?.classList.toggle('rc-online-empty', count===0);
       }
       if(count>prev){
         // bump animation
@@ -5200,11 +5202,11 @@ function roomCard(r){
 
     <!-- Badge row in alto -->
     <div class="rc-badges">
-      <div class="rc-online-pill">
+      <div class="rc-online-pill${cnt===0?' rc-online-empty':''}">
         <div class="rc-online-dot"></div>
-        <span id="ron_${r.id}" class="rc-num">${cnt}</span>
+        <span id="ron_${r.id}" class="rc-num">${cnt>0?cnt:'Sii il primo!'}</span>
       </div>
-      ${tempBadge(cnt)}
+      ${cnt>0?tempBadge(cnt):''}
     </div>
 
     <!-- Centro: sfondo immagine + nome overlay -->

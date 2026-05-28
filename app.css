@@ -312,6 +312,12 @@ body{position:relative}
   font-size:9px;color:#fff;font-weight:700;letter-spacing:.3px
 }
 .rc-online-dot{width:6px;height:6px;border-radius:50%;background:#10b981}
+/* Stato stanza vuota: invito "Sii il primo!" invece di "0" */
+.rc-online-pill.rc-online-empty{
+  background:linear-gradient(90deg,rgba(251,191,36,.22),rgba(255,107,157,.16));
+  border-color:rgba(251,191,36,.4);color:#fcd34d;white-space:nowrap
+}
+.rc-online-pill.rc-online-empty .rc-online-dot{background:#fbbf24}
 .rc-flag-pill{
   display:flex;align-items:center;gap:4px;
   background:var(--rc-color,#00d4ff);
