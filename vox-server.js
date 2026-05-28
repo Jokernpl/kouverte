@@ -752,11 +752,7 @@ async function withUserLock(userId, fn) {
 
 // Health
 app.get('/api/health', (req, res) => {
-    res.json({ ok: true, service: 'VO✕', version: '1.0',
-        stripe_key_set: !!process.env.STRIPE_SECRET_KEY,
-        stripe_key_len: (process.env.STRIPE_SECRET_KEY||'').length,
-        stripe_obj: !!stripe
-    });
+    res.json({ ok: true, service: 'VO✕', version: '1.0' });
 });
 
 // Register — rate limited 3/15min per IP
