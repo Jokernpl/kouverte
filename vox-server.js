@@ -5149,35 +5149,35 @@ io.on('connection', (socket) => {
     }
 
     socket.on('voice-offer', (data) => {
-        const { to, from, roomId, roomSlug, offer } = data;
+        const { to, toSocketId, from, fromSocketId, roomId, roomSlug, offer } = data;
         const room = roomId || roomSlug;
-        const targetSid = findSocketByUserId(room, to);
-        console.log(`[VOICE-OFFER] from=${from} to=${to} room=${room} targetSid=${targetSid || 'NOT-FOUND'}`);
+        // Usa toSocketId diretto se disponibile (più preciso, funziona anche con userId duplicati)
+        const targetSid = toSocketId || findSocketByUserId(room, to);
+        console.log(`[VOICE-OFFER] from=${from}(${(fromSocketId||'').slice(0,8)}) to=${to}(${(toSocketId||'').slice(0,8)||'lookup'}) targetSid=${(targetSid||'NOT-FOUND').slice(0,8)}`);
         if (targetSid) {
-            io.to(targetSid).emit('voice-offer', { from, to, offer });
+            io.to(targetSid).emit('voice-offer', { from, fromSocketId, to, offer });
         } else {
-            // Fallback legacy: broadcast a chi e' iscritto a 'voice-room-X'
             if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-offer', { from, to, offer });
         }
     });
 
     socket.on('voice-answer', (data) => {
-        const { to, from, roomId, roomSlug, answer } = data;
+        const { to, toSocketId, from, fromSocketId, roomId, roomSlug, answer } = data;
         const room = roomId || roomSlug;
-        const targetSid = findSocketByUserId(room, to);
+        const targetSid = toSocketId || findSocketByUserId(room, to);
         if (targetSid) {
-            io.to(targetSid).emit('voice-answer', { from, to, answer });
+            io.to(targetSid).emit('voice-answer', { from, fromSocketId, to, answer });
         } else {
             if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-answer', { from, to, answer });
         }
     });
 
     socket.on('voice-ice', (data) => {
-        const { to, from, roomId, roomSlug, candidate } = data;
+        const { to, toSocketId, from, fromSocketId, roomId, roomSlug, candidate } = data;
         const room = roomId || roomSlug;
-        const targetSid = findSocketByUserId(room, to);
+        const targetSid = toSocketId || findSocketByUserId(room, to);
         if (targetSid) {
-            io.to(targetSid).emit('voice-ice', { from, to, candidate });
+            io.to(targetSid).emit('voice-ice', { from, fromSocketId, to, candidate });
         } else {
             if (roomSlug) socket.to('voice-room-' + roomSlug).emit('voice-ice', { from, to, candidate });
         }

@@ -1951,7 +1951,7 @@ function toggleCamera() {
   }
 }
 
-async function selectUser(userId) {
+async function selectUser(userId, toSocketId) {
   // ⚠️ CRITICO: Verifica che il video sia pronto
   if (!localStream) {
     console.warn('[WebRTC] ⚠️ localStream non ancora pronto - aspetto...');
@@ -2138,9 +2138,19 @@ function setupPeerConnection(userId) {
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
+      // Recupera socketId del target da chatRoomUsers per routing preciso
+      const roomMap = chatRoomUsers[room?.id];
+      let toSocketId = null;
+      if (roomMap) {
+        for (const [sid, u] of roomMap.entries()) {
+          if (u.id === userId && sid !== socket.id) { toSocketId = sid; break; }
+        }
+      }
       socket.emit('voice-ice', {
         to: userId,
+        toSocketId,
         from: user.id,
+        fromSocketId: socket.id,
         roomId: room.id,
         candidate: event.candidate
       });
@@ -2198,7 +2208,9 @@ async function createPeerConnection(userId) {
 
     socket.emit('voice-offer', {
       to: userId,
+      toSocketId: toSocketId || null,  // socket.id destinatario (per routing preciso)
       from: user.id,
+      fromSocketId: socket.id,
       roomId: room.id,
       offer: pc.localDescription
     });
@@ -2240,8 +2252,8 @@ function registerWebRTCHandlers(sock) {
 
   sock.on('voice-offer', async (data) => {
   try {
-    const { from, offer } = data;
-    console.log(`[WebRTC] Ricevuto offer da ${from}`);
+    const { from, fromSocketId, offer } = data;
+    console.log(`[WebRTC] Ricevuto offer da ${from} (socket: ${(fromSocketId||'').slice(0,8)})`);
 
     // Aggiorna selectedUserId (lato callee)
     if (!selectedUserId) selectedUserId = from;
@@ -2258,7 +2270,9 @@ function registerWebRTCHandlers(sock) {
 
     socket.emit('voice-answer', {
       to: from,
+      toSocketId: fromSocketId || null,  // risponde direttamente al socket del caller
       from: user.id,
+      fromSocketId: socket.id,
       roomId: room.id,
       answer: pc.localDescription
     });
@@ -2406,8 +2420,8 @@ function renderUsersPanel() {
     // Filtra per socket.id (univoco per tab/connessione), non per user.id
     if (mySocketId && socketId === mySocketId) return;
 
-    // Salva il primo utente per auto-select
-    if (!firstOtherUser) firstOtherUser = userObj;
+    // Salva il primo utente per auto-select (con socketId per confronto univoco)
+    if (!firstOtherUser) firstOtherUser = { ...userObj, socketId };
 
     const chip = document.createElement('div');
     chip.className = 'user-chip';
@@ -2444,15 +2458,18 @@ function renderUsersPanel() {
     container.appendChild(chip);
   });
 
-  // AUTO-CONNECT: solo il caller (userId < targetId) fa l'offerta per evitare WebRTC glare
+  // AUTO-CONNECT: usa socket.id (sempre univoco) per determinare caller vs callee
+  // Evita WebRTC glare: solo uno dei due fa l'offerta
   if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
-    const isCaller = user.id < firstOtherUser.id;
+    const mySocketId2 = socket?.id || '';
+    const theirSocketId = firstOtherUser.socketId || '';
+    const isCaller = mySocketId2 < theirSocketId; // confronto lessicografico deterministico
     if (isCaller) {
-      console.log('[WebRTC] Auto-connect (caller) al primo utente:', firstOtherUser.id);
-      setTimeout(() => selectUser(firstOtherUser.id), 800);
+      console.log('[WebRTC] Auto-connect (caller) socketId:', mySocketId2, '< ', theirSocketId);
+      setTimeout(() => selectUser(firstOtherUser.id, theirSocketId), 800);
     } else {
-      console.log('[WebRTC] Auto-connect (callee) — attendo offerta da:', firstOtherUser.id);
-      selectedUserId = firstOtherUser.id; // segna che siamo "connessi" a questo utente (lato callee)
+      console.log('[WebRTC] Auto-connect (callee) attendo offerta, socketId:', mySocketId2, '>', theirSocketId);
+      selectedUserId = firstOtherUser.id;
     }
   }
 }
