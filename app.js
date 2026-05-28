@@ -1857,6 +1857,18 @@ async function initWebRTC() {
     webrtcEnabled = true;
     console.log('[WebRTC] ✅ Inizializzazione completata - pronto per videochat');
 
+    // ── FIX: chiudi connessioni stantie (stabilite senza track locali) e riparti ──
+    if (Object.keys(peerConnections).length > 0) {
+      console.log('[WebRTC] Chiudo connessioni precedenti (stabilite prima della camera)');
+      Object.keys(peerConnections).forEach(uid => {
+        try { peerConnections[uid].close(); } catch(e){}
+        delete peerConnections[uid];
+      });
+      selectedUserId = null;
+    }
+    // Tenta auto-connect con utenti già in stanza (necessario se camera granted dopo entrata)
+    setTimeout(() => { if (typeof renderUsersPanel === 'function') renderUsersPanel(); }, 500);
+
   } catch (err) {
     console.error('[WebRTC] ❌ Errore getUserMedia:', err);
     webrtcEnabled = false;
@@ -2166,8 +2178,18 @@ function setupPeerConnection(userId) {
       console.log('[WebRTC] ✅ Connessione stabilita! I track dovrebbero arrivare ora...');
     }
     
-    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected' || pc.connectionState === 'closed') {
-      console.warn('[WebRTC] ⚠️ Connessione persa, chiudo peer connection');
+    if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+      console.warn('[WebRTC] ⚠️ Connessione persa/fallita — retry in 3s');
+      closePeerConnection(userId);
+      // Retry automatico: reset selectedUserId e rilancia renderUsersPanel
+      setTimeout(() => {
+        if (room && typeof renderUsersPanel === 'function') {
+          if (selectedUserId === userId) selectedUserId = null;
+          renderUsersPanel();
+        }
+      }, 3000);
+    }
+    if (pc.connectionState === 'closed') {
       closePeerConnection(userId);
     }
   };
@@ -2453,7 +2475,13 @@ function renderUsersPanel() {
 
   // AUTO-CONNECT: usa socket.id (sempre univoco) per determinare caller vs callee
   // Evita WebRTC glare: solo uno dei due fa l'offerta
-  if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
+  // FIX: riprova anche se selectedUserId era già settato ma la connessione è morta
+  const _existPc = firstOtherUser && peerConnections[firstOtherUser.id];
+  const _pcAlive = _existPc && ['new','connecting','connected'].includes(_existPc.connectionState);
+  if (webrtcEnabled && localStream && firstOtherUser && !_pcAlive) {
+    // Reset selectedUserId se non c'è connessione attiva → permette nuovo ciclo caller/callee
+    if (selectedUserId === firstOtherUser.id && !_pcAlive) selectedUserId = null;
+
     const mySocketId2 = socket?.id || '';
     const theirSocketId = firstOtherUser.socketId || '';
     const isCaller = mySocketId2 < theirSocketId; // confronto lessicografico deterministico
