@@ -314,6 +314,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   syncPremiumStatus();
   // Controlla ritorno da Stripe (stripe_ok / stripe_cancel query params)
   checkStripeReturn();
+  // Entra direttamente in una stanza se ?room=xxx nell'URL (dalle landing page SEO)
+  checkRoomParam();
   // Inizializza feature nuove
   initCityLeaderboard();
   initKouverteNotte();
@@ -3096,6 +3098,21 @@ async function buyWithStripe(packId){
   } catch(e) {
     showToast('❌ Errore connessione: ' + e.message);
   }
+}
+
+// Entra direttamente in una stanza se ?room=xxx nell'URL (dalle landing page SEO)
+function checkRoomParam(){
+  const params = new URLSearchParams(window.location.search);
+  const roomId = params.get('room');
+  if(!roomId) return;
+  // Rimuovi ?room= dall'URL senza ricaricare
+  history.replaceState({}, '', window.location.pathname);
+  // Aspetta che l'app sia pronta (splash + auth check)
+  setTimeout(() => {
+    if(ROOMS.find(r => r.id === roomId)){
+      enterRoom(roomId);
+    }
+  }, 2500);
 }
 
 // Gestione ritorno da Stripe (success/cancel)
