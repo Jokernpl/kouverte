@@ -5610,11 +5610,14 @@ function appendMsg(msg){
     const myLvl=userLevel(user.msgCount||0);
     const myAuraClass=(isPrem()||myLvl>=10)?'aura-prem':'';
     const myAuraStyle=(isPrem()||myLvl>=10)?`color:${myCol};`:'';
+    const imgHtmlSelf = msg.imgData?.url
+      ? `<img src="${msg.imgData.url}" style="max-width:220px;max-height:220px;border-radius:10px;display:block;margin-top:4px;cursor:pointer" onclick="window.open('${msg.imgData.url}','_blank')" loading="lazy">`
+      : '';
     row.innerHTML=`
       ${avatarHtml(myThumb, myFace, myCol, 36, frameClass, myAuraClass, myAuraStyle, consec, '')}
       <div style="display:flex;flex-direction:column;align-items:flex-end;max-width:75vw">
         ${!consec?`<div style="font-size:11px;color:${myCol};font-weight:700;margin-bottom:3px;text-align:right"><span class="${(nickFxClass||'').trim()}" style="color:${myCol}">${esc(user.name)}</span> <span style="color:#9ca3af;font-weight:600">lvl ${myLvl}</span></div>`:''}
-        <div class="mbubble-self${bubbleFxClass}">${replyBlock}${esc(msg.text)}</div>
+        <div class="mbubble-self${bubbleFxClass}">${replyBlock}${msg.imgData?.url ? imgHtmlSelf : esc(msg.text)}</div>
         <div class="mtime">${time}</div>
       </div>`;
   } else {
@@ -5627,12 +5630,15 @@ function appendMsg(msg){
     const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
     const clickData = `data-uid="${esc(msg.userId||'')}" data-uname="${esc(name)}" data-uface="${esc(face)}" data-ucolor="${col}" data-uframe="${esc(msg.activeFrame||'none')}" onclick="openUserMenu(this)" style="cursor:pointer"`;
     const msgThumb = msg.photoThumb || null;
+    const imgHtmlOther = msg.imgData?.url
+      ? `<img src="${msg.imgData.url}" style="max-width:220px;max-height:220px;border-radius:10px;display:block;margin-top:4px;cursor:pointer" onclick="window.open('${msg.imgData.url}','_blank')" loading="lazy">`
+      : '';
     row.innerHTML=`
       ${avatarHtml(msgThumb, face, col, 36, frameClass, auraClass, auraStyle, consec, clickData)}
       <div class="mbody">
         <div class="mline">
           ${!consec?`<span class="mname${nickFxClass}" ${clickData} style="color:${col}${nameGlow};cursor:pointer" title="Tocca per profilo">${esc(name)}${prem?'<span style="font-size:9px;margin-left:3px">⭐</span>':''}</span>${lvlBadge}<span style="color:${col};margin-right:5px">:</span>`:''}
-          ${replyBlock}<span class="mtext">${esc(msg.text)}</span>
+          ${msg.imgData?.url ? imgHtmlOther : `${replyBlock}<span class="mtext">${esc(msg.text)}</span>`}
         </div>
         ${!consec?`<div class="mtime">${time}</div>`:''}
       </div>`;
