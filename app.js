@@ -1595,8 +1595,11 @@ function updateFreeBar(){
 }
 
 // ══ SOCKET ══
-const BACKEND = window.location.hostname.includes('onrender.com') || window.location.hostname === 'localhost'
-  ? '' : 'https://kouverte-voice.onrender.com';
+// BUGFIX CRITICO: prima puntava a 'https://kouverte-voice.onrender.com' (deploy
+// vecchio/separato) quando il sito girava su www.kouverte.com -> CORS bloccava
+// pagamenti, socket real-time, premium-status. Ora API + socket + frontend sono
+// tutti sullo STESSO dominio: usiamo same-origin (stringa vuota) sempre.
+const BACKEND = '';
 
 function setConnState(state){
   const el = document.getElementById('chatOnline');
