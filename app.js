@@ -1803,8 +1803,24 @@ const RTC_CONFIG = {
   iceServers: [
     { urls: ['stun:stun.l.google.com:19302'] },
     { urls: ['stun:stun1.l.google.com:19302'] },
-    { urls: ['stun:stun2.l.google.com:19302'] }
-  ]
+    // TURN pubblici Open Relay (fallback per NAT simmetrico / reti aziendali)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    }
+  ],
+  iceCandidatePoolSize: 10
 };
 
 async function initWebRTC() {
@@ -2225,6 +2241,9 @@ function registerWebRTCHandlers(sock) {
     const { from, offer } = data;
     console.log(`[WebRTC] Ricevuto offer da ${from}`);
 
+    // Aggiorna selectedUserId (lato callee)
+    if (!selectedUserId) selectedUserId = from;
+
     // CALLEE path: crea il pc SENZA generare offer (era il bug: createPeerConnection
     // creava un offer concorrente causando glare e setRemoteDescription falliva).
     const pc = setupPeerConnection(from);
@@ -2423,10 +2442,16 @@ function renderUsersPanel() {
     container.appendChild(chip);
   });
 
-  // AUTO-CONNECT: se WebRTC ok e nessun utente selezionato, auto-collega al primo
+  // AUTO-CONNECT: solo il caller (userId < targetId) fa l'offerta per evitare WebRTC glare
   if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
-    console.log('[WebRTC] Auto-connect al primo utente:', firstOtherUser.id);
-    setTimeout(() => selectUser(firstOtherUser.id), 800);
+    const isCaller = user.id < firstOtherUser.id;
+    if (isCaller) {
+      console.log('[WebRTC] Auto-connect (caller) al primo utente:', firstOtherUser.id);
+      setTimeout(() => selectUser(firstOtherUser.id), 800);
+    } else {
+      console.log('[WebRTC] Auto-connect (callee) — attendo offerta da:', firstOtherUser.id);
+      selectedUserId = firstOtherUser.id; // segna che siamo "connessi" a questo utente (lato callee)
+    }
   }
 }
 
