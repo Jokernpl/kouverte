@@ -2009,7 +2009,7 @@ async function selectUser(userId, toSocketId) {
     videoTracks: localStream?.getVideoTracks().length
   });
   
-  await createPeerConnection(userId);
+  await createPeerConnection(userId, toSocketId);
 }
 
 function deselectUser() {
@@ -2184,19 +2184,12 @@ function setupPeerConnection(userId) {
 }
 
 // Usata dall'INITIATOR per avviare la connessione (crea offer e lo invia)
-async function createPeerConnection(userId) {
+async function createPeerConnection(userId, toSocketId) {
   try {
     // ⚠️ CRITICO: Verifica che localStream sia ready PRIMA di creare offer
     if (!localStream) {
       console.error('[WebRTC] 🔴 ERRORE: localStream è null - non posso creare offer!');
       showToast('❌ Errore: telecamera non disponibile');
-      return;
-    }
-    
-    // Glare prevention: se entrambi i lati provano a iniziare contemporaneamente,
-    // solo l'utente con id "minore" (lex) inizia. L'altro aspetta l'offer.
-    if (String(user.id) > String(userId)) {
-      console.log(`[WebRTC] ⏳ Glare prevention: aspetto offer da ${userId} (id maggiore)`);
       return;
     }
 
