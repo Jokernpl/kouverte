@@ -3038,9 +3038,11 @@ async function loadUserFromServer(){
       user.coins = d.coins;
       updateCoinBar();
     }
-    if(d.isPremium){
+    if(d.isPremium && d.premExpiry > Date.now()){
       user.isPremium = true;
       user.premExpiry = d.premExpiry;
+      // Sincronizza anche kv_sub_until per isSubscribed()
+      localStorage.setItem('kv_sub_until', String(d.premExpiry));
     }
     saveUser();
     updateProfileUI && updateProfileUI();
@@ -5233,7 +5235,6 @@ function roomCard(r){
 
 // ══ ENTER/LEAVE ══
 function enterRoom(roomId){
-  if(!isSubscribed()){ showPaywall(()=>enterRoom(roomId)); return; }
   if(roomId==='settemezz'){ openSetteMezzoGame(); return; }
   const cfg=ROOMS.find(r=>r.id===roomId);
   if(!cfg) return;
