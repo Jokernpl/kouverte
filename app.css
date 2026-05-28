@@ -4327,3 +4327,235 @@ html[data-theme="light"] body {
   box-shadow:0 8px 32px rgba(0,212,255,.1)
 }
 
+/* ════════════════════════════════════════════════════════════════════════
+   KOUVERTE — TEMA DINAMICO PER STANZA + VISUAL UPGRADE 2026
+   Variabili CSS settate da JS in enterRoom() per ogni stanza
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── Default variables (blu acqua base) ── */
+:root {
+  --room-color:#00d4ff;
+  --room-dot1:#00d4ff;
+  --room-dot2:#ff6b9d;
+  --room-dot3:#e879f9;
+  --room-color-a06:rgba(0,212,255,.06);
+  --room-color-a12:rgba(0,212,255,.12);
+  --room-color-a20:rgba(0,212,255,.20);
+  --room-color-a40:rgba(0,212,255,.40)
+}
+
+/* ── Sfondo chat: glow ambient della stanza ── */
+#chat{
+  background:radial-gradient(ellipse 95% 28% at 50% 0%,var(--room-color-a06) 0%,#0f1117 52%) !important;
+  transition:background .8s cubic-bezier(.4,0,.2,1)
+}
+
+/* ── Chat header: bordo + ombra colorata ── */
+.chat-hdr{
+  border-bottom-color:var(--room-color-a20) !important;
+  box-shadow:0 2px 28px rgba(0,0,0,.6),0 1px 0 var(--room-color-a12) !important;
+  transition:border-color .7s ease,box-shadow .7s ease
+}
+
+/* ── Puntini header: glow ── */
+.chat-hdr-dot2{box-shadow:0 0 7px currentColor}
+.chat-hdr-dot{box-shadow:0 0 8px #10b981}
+.hdr-live-dot{box-shadow:0 0 8px #10b981}
+.rc-online-dot{box-shadow:0 0 5px #10b981}
+
+/* ── Video section: ambient + bordi stanza ── */
+.chat-video-section{
+  position:relative;
+  background:radial-gradient(ellipse at 50% 60%,rgba(5,8,18,.7),#0f0a1e) !important;
+  border-bottom-color:var(--room-color-a20) !important;
+  transition:border-color .7s ease
+}
+.chat-video-section::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 90% 90% at 50% 50%,var(--room-color-a06),transparent 65%);
+  pointer-events:none;z-index:0;
+  animation:ambRoom 6s ease-in-out infinite
+}
+@keyframes ambRoom{0%,100%{opacity:.4}50%{opacity:1}}
+
+/* ── Video wrapper: z-index + bordi colorati ── */
+.video-wrapper{
+  z-index:1;
+  transition:border-color .7s ease,box-shadow .7s ease
+}
+.chat-video-section .video-wrapper:first-child{
+  border-color:var(--room-dot1) !important;
+  box-shadow:0 0 16px var(--room-color-a20),inset 0 0 18px rgba(0,0,0,.45) !important
+}
+.chat-video-section .video-wrapper:last-child{
+  border-color:var(--room-dot2) !important;
+  box-shadow:0 0 14px var(--room-color-a12),inset 0 0 18px rgba(0,0,0,.45) !important
+}
+
+/* ── Sezione utenti online ── */
+.chat-users-section{
+  border-top-color:var(--room-color-a20) !important;
+  transition:border-color .7s ease
+}
+.user-chip:hover{background:var(--room-color-a12) !important;transform:scale(1.07) !important}
+.user-chip.selected{background:var(--room-color) !important;box-shadow:0 0 16px var(--room-color-a40) !important}
+
+/* ── Bubble messaggi self: colore stanza ── */
+.mrow.self .mbubble-self{
+  background:var(--room-color) !important;
+  transition:background .7s ease
+}
+.mrow.self .mbubble-self::after{
+  border-left-color:var(--room-color) !important;
+  transition:border-left-color .7s ease
+}
+
+/* ── Bubble altri: glass migliorato ── */
+.mrow:not(.self) .mbody{
+  background:rgba(18,22,42,.92) !important;
+  border:1px solid rgba(255,255,255,.06) !important;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)
+}
+
+/* ── Input area glass + glow stanza ── */
+.chat-bar{
+  background:rgba(9,11,22,.97) !important;
+  border-top-color:var(--room-color-a20) !important;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:border-color .7s ease
+}
+.chat-bar-row{transition:border-color .25s ease,box-shadow .25s ease}
+.chat-bar-row:focus-within{
+  border-color:var(--room-color-a40) !important;
+  box-shadow:0 0 0 2px var(--room-color-a12) !important
+}
+
+/* ── Bottone invio: colore stanza + glow ── */
+.csend{
+  background:var(--room-color) !important;
+  box-shadow:0 2px 10px var(--room-color-a40);
+  transition:background .7s ease,transform .15s,box-shadow .2s
+}
+.csend:hover{transform:scale(1.08) !important;box-shadow:0 4px 18px var(--room-color-a40) !important}
+
+/* ── Progress bar free messages ── */
+.fb-fill{background:linear-gradient(90deg,var(--room-color),var(--room-dot2)) !important}
+.free-bar{
+  border-top-color:var(--room-color-a12) !important;
+  background:var(--room-color-a06) !important
+}
+
+/* ── Reply bar ── */
+.reply-bar{background:var(--room-color-a06) !important;border-top-color:var(--room-color-a20) !important}
+.reply-bar-line{background:var(--room-color) !important}
+.reply-bar-name{color:var(--room-color) !important}
+.mrow .reply-hint{background:var(--room-color) !important}
+
+/* ── Quote nel messaggio ── */
+.msg-quote{border-left-color:var(--room-color) !important}
+.msg-quote-name{color:var(--room-color) !important}
+
+/* ── Voice button hover ── */
+.cvoice:hover{background:var(--room-color-a20) !important;color:var(--room-color) !important}
+
+/* ── Mic/cam video buttons ── */
+.video-mic-btn:hover,.video-cam-btn:hover{
+  background:var(--room-color-a40) !important;
+  color:#fff !important;transform:scale(1.12) !important
+}
+
+/* ── Flash animazione entrata stanza ── */
+@keyframes roomFlash{
+  0%{opacity:0;filter:brightness(1.6) saturate(1.5)}
+  40%{opacity:1;filter:brightness(1.06)}
+  100%{opacity:1;filter:none}
+}
+#chat.room-entering{animation:roomFlash .55s cubic-bezier(.22,1,.36,1) both}
+
+/* ── Messaggi: animazione più fluida ── */
+@keyframes msgIn{
+  from{opacity:0;transform:translateY(6px) scale(.97)}
+  to{opacity:1;transform:none}
+}
+.mrow{animation:msgIn .22s cubic-bezier(.22,1,.36,1) both !important}
+
+/* ── Room cards: hover più drammatico + shimmer ── */
+.room-card{
+  will-change:transform,box-shadow;
+  transition:border-color .22s,transform .22s cubic-bezier(.22,1,.36,1),box-shadow .25s !important
+}
+.room-card:hover{
+  transform:translateY(-5px) scale(1.015) !important;
+  box-shadow:
+    0 16px 44px rgba(0,0,0,.55),
+    0 0 0 1px var(--rc-color,rgba(0,212,255,.35)),
+    0 0 30px var(--rc-glow,rgba(0,212,255,.15)) !important
+}
+.room-card:hover::before{opacity:1 !important}
+/* Shimmer line top al hover */
+.room-card:hover::after{
+  background:linear-gradient(90deg,transparent,var(--rc-color,rgba(0,212,255,.7)),transparent) !important
+}
+
+/* ── Hero card home ── */
+.kv-hero-logo{box-shadow:0 6px 28px rgba(0,212,255,.35),0 0 0 1px rgba(0,212,255,.2) !important}
+.kv-hero-card{border-color:rgba(0,212,255,.14) !important}
+
+/* ══════════════════════════════════════════
+   EFFETTI SPECIFICI PER STANZA
+   ══════════════════════════════════════════ */
+
+/* MONDO 🌍 — cosmica viola */
+body[data-room="mondo"] #chat{
+  background:radial-gradient(ellipse 80% 30% at 50% 0%,rgba(167,139,250,.12) 0%,rgba(232,121,249,.04) 35%,#0f1117 58%) !important
+}
+
+/* ITALIA 🇮🇹 — verde fresco */
+body[data-room="italia"] #chat{
+  background:radial-gradient(ellipse 80% 28% at 50% 0%,rgba(16,185,129,.10) 0%,#0f1117 55%) !important
+}
+
+/* ROMA 🏛️ — oro antico */
+body[data-room="roma"] .mrow.self .mbubble-self{
+  background:linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%) !important
+}
+body[data-room="roma"] .mrow.self .mbubble-self::after{border-left-color:#f59e0b !important}
+
+/* NAPOLI ⚓ — azzurro mare */
+body[data-room="napoli"] #chat{
+  background:radial-gradient(ellipse 80% 28% at 50% 0%,rgba(6,182,212,.12) 0%,#0f1117 55%) !important
+}
+
+/* PALERMO ☀️ — arancio caldo */
+body[data-room="palermo"] #chat{
+  background:radial-gradient(ellipse 70% 25% at 50% 0%,rgba(249,115,22,.10) 0%,#0f1117 52%) !important
+}
+
+/* CONFESSIONALE 🕯️ — candles caldi */
+body[data-room="confessionale"] #chat{
+  background:
+    radial-gradient(ellipse 60% 25% at 50% 0%,rgba(139,92,246,.14) 0%,#0f1117 50%),
+    radial-gradient(ellipse 25% 15% at 15% 85%,rgba(245,158,11,.07) 0%,transparent 60%) !important
+}
+body[data-room="confessionale"] .msys{color:#a78bfa !important}
+body[data-room="confessionale"] .chat-bar{background:rgba(8,6,18,.98) !important}
+
+/* FLIRT 🌹 — rosa calda */
+body[data-room="flirt"] .mrow.self .mbubble-self{
+  background:linear-gradient(135deg,#ff2d6e 0%,#ff6b9d 100%) !important
+}
+body[data-room="flirt"] .mrow.self .mbubble-self::after{border-left-color:#ff2d6e !important}
+body[data-room="flirt"] #chat{
+  background:radial-gradient(ellipse 80% 28% at 50% 0%,rgba(255,45,110,.12) 0%,#0f1117 55%) !important
+}
+
+/* NOTTE 🌙 — indigo profondo */
+body[data-room="notte"] #chat{
+  background:radial-gradient(ellipse 70% 26% at 50% 0%,rgba(99,102,241,.14) 0%,#0f1117 52%) !important
+}
+
+/* CAMPANIA 🌋 — vulcanico rosso */
+body[data-room="campania"] #chat{
+  background:radial-gradient(ellipse 70% 25% at 50% 0%,rgba(239,68,68,.10) 0%,#0f1117 52%) !important
+}
+

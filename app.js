@@ -5333,6 +5333,28 @@ function enterRoom(roomId){
   }
 
   room=cfg; lastSender=null; typingUsers={};
+
+  // ── Tema stanza: CSS variables + data-room (v2026) ──
+  (function applyRoomTheme(cfg){
+    const el=document.documentElement;
+    const c=cfg.color||'#00d4ff', d1=cfg.dot1||c, d2=cfg.dot2||c, d3=cfg.dot3||c;
+    el.style.setProperty('--room-color',c);
+    el.style.setProperty('--room-dot1',d1);
+    el.style.setProperty('--room-dot2',d2);
+    el.style.setProperty('--room-dot3',d3);
+    try{
+      const h=parseInt(c.replace('#',''),16);
+      const r=(h>>16)&255,g=(h>>8)&255,b=h&255;
+      el.style.setProperty('--room-color-a06',`rgba(${r},${g},${b},.06)`);
+      el.style.setProperty('--room-color-a12',`rgba(${r},${g},${b},.12)`);
+      el.style.setProperty('--room-color-a20',`rgba(${r},${g},${b},.20)`);
+      el.style.setProperty('--room-color-a40',`rgba(${r},${g},${b},.40)`);
+    }catch(_){}
+    document.body.dataset.room=cfg.id;
+    const chatEl=document.getElementById('chat');
+    if(chatEl){ chatEl.classList.remove('room-entering'); void chatEl.offsetWidth; chatEl.classList.add('room-entering'); setTimeout(()=>chatEl.classList.remove('room-entering'),650); }
+  })(cfg);
+
   // Salva ultima stanza per il banner "Riprendi"
   setLS('kv_last_room', roomId);
 
