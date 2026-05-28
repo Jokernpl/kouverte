@@ -2380,8 +2380,10 @@ function renderUsersPanel() {
 
   let firstOtherUser = null;
 
+  const mySocketId = socket?.id;
   usersMap.forEach((userObj, socketId) => {
-    if (userObj.id === user.id) return;
+    // Filtra per socket.id (univoco per tab/connessione), non per user.id
+    if (mySocketId && socketId === mySocketId) return;
 
     // Salva il primo utente per auto-select
     if (!firstOtherUser) firstOtherUser = userObj;
