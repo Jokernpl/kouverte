@@ -4897,8 +4897,10 @@ function updateLiveStats(){
   if (trending) {
     let totalPublic = 0;
     let hotCount = 0;
-    if (typeof PUBLIC_ROOMS !== 'undefined' && Array.isArray(PUBLIC_ROOMS)) {
-      totalPublic = PUBLIC_ROOMS.length;
+    // BUGFIX: era 'PUBLIC_ROOMS' (variabile inesistente) -> sempre 0.
+    // La variabile corretta è ROOMS; contiamo le stanze pubbliche.
+    if (typeof ROOMS !== 'undefined' && Array.isArray(ROOMS)) {
+      totalPublic = ROOMS.filter(r => r.tier === 'public').length;
     }
     if (typeof roomOnline === 'object') {
       for (const rId in roomOnline) {
