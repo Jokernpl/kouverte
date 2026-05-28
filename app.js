@@ -1661,20 +1661,8 @@ function connectSocket(){
     if(roomPreviews[roomId].length>4) roomPreviews[roomId].shift();
 
     if(room?.id===roomId){
-      // NEW: Track user in WebRTC chatRoomUsers
-      if(!chatRoomUsers[roomId]) chatRoomUsers[roomId] = new Map();
-      if(msg.userId && msg.name){
-        chatRoomUsers[roomId].set(msg.userId, {
-          id: msg.userId,
-          name: msg.name,
-          color: msg.color,
-          face: msg.face,
-          isPremium: msg.isPremium,
-          msgCount: msg.msgCount
-        });
-        renderUsersPanel();
-      }
-      
+      // NOTA: NON aggiornare chatRoomUsers qui — usa chiave userId invece di socketId
+      // causando duplicati e self-chip. La fonte corretta è l'evento chat-users.
       if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
     }
   });
@@ -1757,21 +1745,9 @@ function connectSocket(){
     // Init preview dalla storia
     roomPreviews[roomId]=(messages||[]).slice(-4);
     
-    // NEW: Initialize chatRoomUsers from chat history
-    if(!chatRoomUsers[roomId]) chatRoomUsers[roomId] = new Map();
-    (messages||[]).forEach(m=>{
-      if(m.userId && m.name && !chatRoomUsers[roomId].has(m.userId)){
-        chatRoomUsers[roomId].set(m.userId, {
-          id: m.userId,
-          name: m.name,
-          color: m.color,
-          face: m.face,
-          isPremium: m.isPremium,
-          msgCount: m.msgCount
-        });
-      }
-    });
-    
+    // NOTA: NON popolare chatRoomUsers dalla storia — usa solo userId come chiave
+    // e inquina la mappa che deve avere solo socketId. Fonte corretta: evento chat-users.
+
     (messages||[]).forEach(m=>appendMsg(m));
     // Se la stanza ha messaggi reali → mostra solo il sys-msg classico
     // Se è vuota → mostra il welcome card (più accogliente per nuovi utenti)
@@ -2468,26 +2444,31 @@ function renderUsersPanel() {
     chip.appendChild(onlineDot);
     chip.appendChild(camIndicator);
 
-    chip.addEventListener('click', () => selectUser(userObj.id));
+    chip.addEventListener('click', () => {
+      // Passa il socketId per routing preciso senza bisogno di findSocketByUserId
+      if (selectedUserId === userObj.id) { deselectUser(); return; }
+      selectUser(userObj.id, socketId);
+    });
 
     container.appendChild(chip);
   });
 
   // AUTO-CONNECT: usa socket.id (sempre univoco) per determinare caller vs callee
   // Evita WebRTC glare: solo uno dei due fa l'offerta
-  // FIX: riprova anche se selectedUserId era già settato ma la connessione è morta
-  const _existPc = firstOtherUser && peerConnections[firstOtherUser.id];
-  const _pcAlive = _existPc && ['new','connecting','connected'].includes(_existPc.connectionState);
-  if (webrtcEnabled && localStream && firstOtherUser && !_pcAlive) {
-    // Reset selectedUserId se non c'è connessione attiva → permette nuovo ciclo caller/callee
-    if (selectedUserId === firstOtherUser.id && !_pcAlive) selectedUserId = null;
 
+  // Reset se selectedUserId è settato ma la peer connection è morta (retry)
+  if (selectedUserId && !peerConnections[selectedUserId]) selectedUserId = null;
+
+  if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
     const mySocketId2 = socket?.id || '';
     const theirSocketId = firstOtherUser.socketId || '';
     const isCaller = mySocketId2 < theirSocketId; // confronto lessicografico deterministico
     if (isCaller) {
       console.log('[WebRTC] Auto-connect (caller) socketId:', mySocketId2, '< ', theirSocketId);
-      setTimeout(() => selectUser(firstOtherUser.id, theirSocketId), 800);
+      const _tid = firstOtherUser.id, _tsid = theirSocketId;
+      // Previeni chiamate duplicate con selectedUserId come guard
+      selectedUserId = _tid;
+      setTimeout(() => selectUser(_tid, _tsid), 800);
     } else {
       console.log('[WebRTC] Auto-connect (callee) attendo offerta, socketId:', mySocketId2, '>', theirSocketId);
       selectedUserId = firstOtherUser.id;
