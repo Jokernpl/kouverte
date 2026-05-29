@@ -3770,6 +3770,34 @@ app.get('/api/admin/stats', verifyAdmin, (req, res) => {
     res.json({ totalUsers, activeStories, totalReactions, activeBattles, totalRevenue });
 });
 
+// Segnalazioni per moderazione (admin)
+app.get('/api/admin/reports', verifyAdmin, (req, res) => {
+    DB.reports = DB.reports || [];
+    const nameOf = (id) => {
+        const u = DB.users.find(x => x.id === id);
+        return u ? (u.username || u.email || id) : id;
+    };
+    const reports = DB.reports
+        .slice(-200).reverse()
+        .map(r => ({
+            id: r.id, to: r.to, toName: nameOf(r.to),
+            from: r.from, fromName: r.anon ? 'anonimo' : nameOf(r.from),
+            reason: r.reason, roomId: r.roomId || null,
+            status: r.status || 'pending', created_at: r.created_at
+        }));
+    // Conteggio per utente segnalato (per individuare i recidivi)
+    const tally = {};
+    DB.reports.forEach(r => { tally[r.to] = (tally[r.to] || 0) + 1; });
+    res.json({ reports, tally });
+});
+// Segna una segnalazione come gestita
+app.post('/api/admin/reports/:id/resolve', verifyAdmin, (req, res) => {
+    DB.reports = DB.reports || [];
+    const r = DB.reports.find(x => x.id === req.params.id);
+    if (r) { r.status = 'resolved'; r.resolved_at = Date.now(); markDirty(); }
+    res.json({ ok: true });
+});
+
 app.get('/api/admin/users', verifyAdmin, (req, res) => {
     // FIX: NON spreadiamo l'utente intero — leakerebbe password_hash. Whitelist dei campi.
     const users = DB.users.map(u => ({

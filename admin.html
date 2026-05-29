@@ -131,6 +131,7 @@ input.confirm-pid {
 
   <div class="tabs">
     <div class="tab active" data-tab="users" onclick="switchTab('users')">👥 Utenti</div>
+    <div class="tab" data-tab="reports" onclick="switchTab('reports')">🚩 Segnalazioni</div>
     <div class="tab" data-tab="battles" onclick="switchTab('battles')">⚔️ Battles</div>
     <div class="tab" data-tab="stories" onclick="switchTab('stories')">🎙 Storie</div>
     <div class="tab" data-tab="btc" onclick="switchTab('btc')">₿ Pagamenti BTC</div>
@@ -215,9 +216,44 @@ function switchTab(name) {
   const box = document.getElementById('tabContent');
   box.innerHTML = '<div class="loading">Caricamento…</div>';
   if (name === 'users') renderUsers(box);
+  else if (name === 'reports') renderReports(box);
   else if (name === 'battles') renderBattles(box);
   else if (name === 'stories') renderStories(box);
   else if (name === 'btc') renderBtc(box);
+}
+
+async function renderReports(box) {
+  const d = await api('/admin/reports');
+  if (!d?.reports?.length) { box.innerHTML = '<div class="empty">Nessuna segnalazione 🎉</div>'; return; }
+  const tally = d.tally || {};
+  box.innerHTML = `<table>
+    <thead><tr><th>Segnalato</th><th>Motivo</th><th>Stanza</th><th>Da</th><th>Totale</th><th>Stato</th><th>Quando</th><th>Azioni</th></tr></thead>
+    <tbody>${d.reports.map(r => `
+      <tr style="${r.status==='resolved'?'opacity:.5':''}">
+        <td><b>${esc(r.toName)}</b><br><span style="color:var(--text-dim);font-size:11px">${esc(r.to)}</span></td>
+        <td>${esc(r.reason||'—')}</td>
+        <td>${esc(r.roomId||'—')}</td>
+        <td style="color:var(--text-dim)">${esc(r.fromName)}</td>
+        <td>${(tally[r.to]||1) >= 3 ? '<span class="badge admin">⚠️ '+tally[r.to]+'</span>' : (tally[r.to]||1)}</td>
+        <td><span class="badge ${r.status}">${(r.status||'pending').toUpperCase()}</span></td>
+        <td style="font-size:11px">${fmtDate(r.created_at)}</td>
+        <td>
+          <button class="btn-action btn-delete" onclick="banFromReport('${r.to}','${esc(r.toName)}')">🔨 Banna</button>
+          ${r.status!=='resolved'?`<button class="btn-action" onclick="resolveReport('${r.id}')">✓ Gestita</button>`:''}
+        </td>
+      </tr>
+    `).join('')}</tbody>
+  </table>`;
+}
+async function resolveReport(id) {
+  const r = await api('/admin/reports/' + id + '/resolve', { method: 'POST' });
+  if (r?.ok) renderReports(document.getElementById('tabContent'));
+}
+async function banFromReport(userId, name) {
+  if (!confirm('Bannare definitivamente "' + name + '"?')) return;
+  const r = await api('/admin/ban-user', { method: 'POST', body: JSON.stringify({ targetUserId: userId, reason: 'Segnalazioni multiple' }) });
+  if (r?.ok) { alert('Utente bannato ✓'); renderReports(document.getElementById('tabContent')); }
+  else alert(r?.error || 'Errore ban');
 }
 
 function fmtDate(ts) { return ts ? new Date(ts).toLocaleString('it-IT') : '—'; }
