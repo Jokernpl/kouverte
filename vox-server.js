@@ -752,7 +752,21 @@ async function withUserLock(userId, fn) {
 
 // Health
 app.get('/api/health', (req, res) => {
-    res.json({ ok: true, service: 'VO✕', version: '1.0' });
+    // Stato persistenza (per diagnostica — nessuna credenziale esposta)
+    const hasRedisEnv = !!((process.env.UPSTASH_REDIS_REST_URL||'').trim() && (process.env.UPSTASH_REDIS_REST_TOKEN||'').trim());
+    const hasGistEnv = !!(process.env.GITHUB_GIST_TOKEN && process.env.GITHUB_GIST_ID);
+    res.json({
+        ok: true,
+        service: 'Kouverte',
+        version: '1.0',
+        persistence: {
+            redis: hasRedisEnv,
+            gist: hasGistEnv,
+            // true = i dati sopravvivono ai riavvii; false = DB si perde ad ogni deploy
+            safe: hasRedisEnv || hasGistEnv
+        },
+        users: (DB.users || []).length
+    });
 });
 
 // Register — rate limited 3/15min per IP
