@@ -11130,7 +11130,7 @@ async function runDiagnostics() {
     const tryFetch = (ms) => {
       const ctrl = new AbortController();
       const tid = setTimeout(() => ctrl.abort(), ms);
-      return fetch('/health', { signal: ctrl.signal }).finally(() => clearTimeout(tid));
+      return fetch('/api/health', { signal: ctrl.signal }).finally(() => clearTimeout(tid));
     };
     // Aggiorna badge a "in risveglio" se la prima prova è lenta
     const wakeTimer = setTimeout(() => {
@@ -11169,7 +11169,7 @@ async function runDiagnostics() {
     const devs = await navigator.mediaDevices.enumerateDevices();
     const cams = devs.filter(d => d.kind === 'videoinput');
     if (!cams.length) throw new Error('Nessuna fotocamera trovata');
-    return `${cams.length} fotocamera${cams.length > 1 ? 'e' : ''} trovata${cams.length > 1 ? 'e' : ''} ✓`;
+    return `${cams.length} ${cams.length > 1 ? 'fotocamere trovate' : 'fotocamera trovata'} ✓`;
   }, tips, 'Collega una webcam e concedi i permessi quando richiesto dal browser.');
 
   // 5. Microfono
@@ -11179,7 +11179,7 @@ async function runDiagnostics() {
     const devs = await navigator.mediaDevices.enumerateDevices();
     const mics = devs.filter(d => d.kind === 'audioinput');
     if (!mics.length) throw new Error('Nessun microfono trovato');
-    return `${mics.length} microfono${mics.length > 1 ? 'i' : ''} trovato${mics.length > 1 ? 'i' : ''} ✓`;
+    return `${mics.length} ${mics.length > 1 ? 'microfoni trovati' : 'microfono trovato'} ✓`;
   }, tips, 'Controlla che il microfono sia collegato e i permessi browser siano concessi.');
 
   // 6. WebRTC
