@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260529e">
+<link rel="stylesheet" href="/app.css?v=20260529f">
 </head>
 <body>
 
@@ -556,6 +556,30 @@
     </div>
   </div>
 
+  <!-- ═══ MENU SICUREZZA (Segnala / Blocca) ═══ -->
+  <div id="safetyMenu" class="safety-menu" style="display:none" onclick="if(event.target===this)closeSafetyMenu()">
+    <div class="safety-menu-box">
+      <div class="safety-menu-title"><span id="safetyMenuName">Utente</span></div>
+      <button class="safety-menu-item report" onclick="safetyMenuReport()">⚑ Segnala utente</button>
+      <button class="safety-menu-item block" onclick="safetyMenuBlock()">⛔ Blocca utente</button>
+      <button class="safety-menu-item cancel" onclick="closeSafetyMenu()">Annulla</button>
+    </div>
+  </div>
+
+  <!-- ═══ MODALE SEGNALAZIONE (motivo) ═══ -->
+  <div id="reportModal" class="safety-menu" style="display:none" onclick="if(event.target===this)closeReportModal()">
+    <div class="safety-menu-box">
+      <div class="safety-menu-title">⚑ Segnala <span id="reportTargetName">Utente</span></div>
+      <div class="safety-menu-sub">Perché lo segnali? La segnalazione è anonima.</div>
+      <button class="safety-menu-item" onclick="submitReport('nudità/contenuto sessuale')">🔞 Nudità / contenuto sessuale</button>
+      <button class="safety-menu-item" onclick="submitReport('molestie/offese')">😠 Molestie / offese</button>
+      <button class="safety-menu-item" onclick="submitReport('minore')">🚸 Sembra un minore</button>
+      <button class="safety-menu-item" onclick="submitReport('spam/pubblicità')">📢 Spam / pubblicità</button>
+      <button class="safety-menu-item" onclick="submitReport('altro')">❓ Altro</button>
+      <button class="safety-menu-item cancel" onclick="closeReportModal()">Annulla</button>
+    </div>
+  </div>
+
   <div class="chat-hdr">
     <button class="chat-back" onclick="leaveRoom()">←</button>
     <div class="chat-hdr-icon" id="chatIcon"></div>
@@ -577,6 +601,8 @@
     <div id="sdTimer" style="display:none;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);border-radius:8px;padding:4px 8px;font-size:11px;font-weight:700;color:#00d4ff;cursor:pointer;flex-shrink:0" title="Speed Dating - tempo rimanente" onclick="sdTimerClick()">⚡ <span id="sdTimerVal">3:00</span></div>
     <!-- Boost button -->
     <button class="chat-share-btn" onclick="openBoostModal()" title="Boost visibilità" id="chatBoostBtn" style="font-size:14px">⚡</button>
+    <!-- Cam privacy toggle: aperta 🌐 / privata 🔒 -->
+    <button class="chat-share-btn" onclick="onTogglePrivBtn()" title="Cam: aperta o privata" id="camPrivBtn">🌐</button>
     <!-- Share room button -->
     <button class="chat-share-btn" onclick="shareRoom()" title="Condividi questa stanza" id="chatShareBtn">↗</button>
     <div class="coin-widget" title="Le tue monete KOUVERTE">
@@ -607,9 +633,16 @@
     <div class="rp-camview" id="rpCamView">
       <video id="rpRemoteVideo" autoplay playsinline></video>
       <div class="rp-cam-placeholder" id="rpCamPlaceholder">👈 Tocca un nome<br>per vedere la cam</div>
+      <!-- Watermark anti-registrazione (nome di chi guarda) -->
+      <div class="rp-watermark" id="rpWatermark" style="display:none"></div>
       <div class="rp-cam-label" id="rpCamLabel"></div>
       <video id="rpMyVideo" class="rp-pip" autoplay muted playsinline></video>
       <button class="rp-cam-close" id="rpCamClose" onclick="closeInlineCam()" style="display:none">✕</button>
+      <!-- Azioni sicurezza sulla cam che guardi -->
+      <div class="rp-cam-actions" id="rpCamActions" style="display:none">
+        <button class="rp-act-btn report" onclick="reportCurrentCam()" title="Segnala">⚑</button>
+        <button class="rp-act-btn block" onclick="blockCurrentCam()" title="Blocca">⛔</button>
+      </div>
     </div>
   </div>
 
@@ -1664,7 +1697,7 @@
 
 
 
-<script src="/app.js?v=20260529e"></script>
+<script src="/app.js?v=20260529f"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

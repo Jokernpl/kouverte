@@ -1798,6 +1798,95 @@ function broadcastCamState(){
   });
 }
 
+// ════════════════════════════════════════════
+// SAFETY PACK — blocco utenti, segnalazioni, cam privata
+// ════════════════════════════════════════════
+function getBlockedSet(){
+  try { return new Set(JSON.parse(localStorage.getItem('kv4_blocked')||'[]')); } catch(_){ return new Set(); }
+}
+function saveBlockedSet(s){ try { localStorage.setItem('kv4_blocked', JSON.stringify([...s])); } catch(_){} }
+function isBlocked(userId){ return getBlockedSet().has(userId); }
+
+function blockUser(userId, name){
+  if (!userId || userId===user.id) return;
+  const s = getBlockedSet(); s.add(userId); saveBlockedSet(s);
+  // Se sto guardando/connesso con lui → chiudi
+  if (_vcallPartnerId===userId || selectedUserId===userId) { try{ endPrivateVideoCall(); }catch(e){} }
+  delete roomCamStates[userId];
+  showToast('⛔ ' + (name||'Utente') + ' bloccato');
+  if (typeof renderUsersPanel==='function') renderUsersPanel();
+  // Ripulisci eventuali messaggi suoi già a schermo
+  document.querySelectorAll('.mrow[data-uid="'+CSS.escape(userId)+'"]').forEach(el=>el.remove());
+}
+function unblockUser(userId){
+  const s = getBlockedSet(); s.delete(userId); saveBlockedSet(s);
+  showToast('✅ Sbloccato');
+  if (typeof renderUsersPanel==='function') renderUsersPanel();
+}
+
+// Cam privata: se attiva, le richieste di visione richiedono il tuo OK (no auto-accetta)
+function isCamPrivate(){ return localStorage.getItem('kv4_cam_private')==='1'; }
+function toggleCamPrivate(){
+  const v = !isCamPrivate();
+  localStorage.setItem('kv4_cam_private', v?'1':'0');
+  showToast(v ? '🔒 Cam privata: approvi tu chi guarda' : '🌐 Cam aperta: chi vuole può guardarti');
+  return v;
+}
+// Aggiorna l'icona del bottone privacy nell'header (🌐 aperta / 🔒 privata)
+function refreshCamPrivBtn(){
+  const b = document.getElementById('camPrivBtn');
+  if (!b) return;
+  const priv = isCamPrivate();
+  b.textContent = priv ? '🔒' : '🌐';
+  b.title = priv ? 'Cam PRIVATA — approvi tu chi guarda (tocca per aprirla)' : 'Cam APERTA — chi vuole può guardarti (tocca per renderla privata)';
+}
+function onTogglePrivBtn(){ toggleCamPrivate(); refreshCamPrivBtn(); }
+
+// Segnala un utente (apre scelta motivo, poi invia via socket)
+var _reportTarget = null;
+function reportUser(userId, name){
+  if (!userId || userId===user.id) return;
+  _reportTarget = { userId, name: name||'Utente' };
+  const m = document.getElementById('reportModal');
+  if (m){
+    const lbl = document.getElementById('reportTargetName');
+    if (lbl) lbl.textContent = name||'Utente';
+    m.style.display='flex';
+  }
+}
+function submitReport(reason){
+  const m = document.getElementById('reportModal');
+  if (m) m.style.display='none';
+  if (!_reportTarget) return;
+  socket.emit('report-user', {
+    reportedId: _reportTarget.userId,
+    reporterId: user.id,
+    roomId: room?.id,
+    reason: reason,
+    name: _reportTarget.name
+  });
+  showToast('⚑ Segnalazione inviata. Grazie per averci aiutato.');
+  _reportTarget = null;
+}
+function closeReportModal(){ const m=document.getElementById('reportModal'); if(m) m.style.display='none'; _reportTarget=null; }
+
+// Menu rapido sicurezza per un utente (Segnala / Blocca)
+var _safetyTarget = null;
+function openUserSafetyMenu(userId, name){
+  _safetyTarget = { userId, name };
+  const m = document.getElementById('safetyMenu');
+  if (!m) return;
+  const lbl = document.getElementById('safetyMenuName');
+  if (lbl) lbl.textContent = name || 'Utente';
+  m.style.display = 'flex';
+}
+function closeSafetyMenu(){ const m=document.getElementById('safetyMenu'); if(m) m.style.display='none'; _safetyTarget=null; }
+function safetyMenuReport(){ const t=_safetyTarget; closeSafetyMenu(); if(t) reportUser(t.userId, t.name); }
+function safetyMenuBlock(){ const t=_safetyTarget; closeSafetyMenu(); if(t) blockUser(t.userId, t.name); }
+// Segnala/blocca la persona che sto guardando in cam
+function reportCurrentCam(){ if(_vcallPartnerId) reportUser(_vcallPartnerId, _vcallPartnerName||'Utente'); }
+function blockCurrentCam(){ if(_vcallPartnerId) blockUser(_vcallPartnerId, _vcallPartnerName||'Utente'); }
+
 const RTC_CONFIG = {
   iceServers: [
     { urls: ['stun:stun.l.google.com:19302'] },
@@ -2275,20 +2364,33 @@ function registerWebRTCHandlers(sock) {
   // ── CAM APERTE: qualcuno annuncia stato cam ─────────
   sock.on('cam-state', (data) => {
     if (!data || !data.userId) return;
+    if (isBlocked(data.userId)) { delete roomCamStates[data.userId]; return; } // ignora bloccati
     if (data.on) roomCamStates[data.userId] = true;
     else delete roomCamStates[data.userId];
     if (typeof renderUsersPanel === 'function') renderUsersPanel();
   });
 
-  // ── VIDEO: richiesta di visione cam (modello aperto) ─
+  // ── SAFETY: sei stato rimosso per troppe segnalazioni ──
+  sock.on('safety-kicked', (data) => {
+    showToast('🚫 Sei stato rimosso dalla stanza: ' + (data?.reason || 'segnalazioni'));
+    try { if (typeof leaveRoom === 'function') leaveRoom(); } catch(e){}
+  });
+
+  // ── VIDEO: richiesta di visione cam ─────────────────
   sock.on('video-request', (data) => {
     console.log('[VCall] Richiesta visione da', data.fromName);
-    // Già in una call → ignora (P2P: una visione attiva alla volta)
-    if (document.getElementById('vcallOverlay')?.style.display !== 'none') return;
-    // MODELLO CAM APERTE: auto-accetta (la cam accesa è già il consenso).
-    // Avvisa che qualcuno ti sta guardando, poi accetta automaticamente.
-    showToast(`👁 ${data.fromName||'Qualcuno'} si è collegato alla tua cam`);
+    // SAFETY: ignora richieste da utenti bloccati
+    if (isBlocked(data.from)) { console.log('[VCall] Bloccato → ignoro'); return; }
+    // Già in una visione attiva → ignora (P2P: una alla volta)
+    if (_vcallPartnerId) return;
     _vcallPendingFrom = data;
+    // CAM PRIVATA: richiede il tuo OK (no auto-accetta)
+    if (isCamPrivate()) {
+      showIncomingVideoRequest(data);
+      return;
+    }
+    // CAM APERTA: auto-accetta (cam accesa = consenso) + avviso
+    showToast(`👁 ${data.fromName||'Qualcuno'} si è collegato alla tua cam`);
     acceptVideoCall();
   });
 
@@ -2474,6 +2576,7 @@ function renderUsersPanel() {
 
   // Mostra l'anteprima della propria cam nell'angolo dell'area cam
   if (typeof setupSelfPip === 'function') setupSelfPip();
+  if (typeof refreshCamPrivBtn === 'function') refreshCamPrivBtn();
 
   container.innerHTML = '';
 
@@ -2492,6 +2595,8 @@ function renderUsersPanel() {
   usersMap.forEach((userObj, socketId) => {
     // Filtra per socket.id (univoco per tab/connessione), non per user.id
     if (mySocketId && socketId === mySocketId) return;
+    // SAFETY: nascondi utenti bloccati
+    if (isBlocked(userObj.id)) return;
 
     // Salva il primo utente per auto-select (con socketId per confronto univoco)
     if (!firstOtherUser) firstOtherUser = { ...userObj, socketId };
@@ -2531,11 +2636,22 @@ function renderUsersPanel() {
       sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
     });
 
-    // Riga: avatar | nome | stato cam | 👁
+    // SAFETY: bottone blocca/segnala (menu rapido)
+    const safeBtn = document.createElement('button');
+    safeBtn.className = 'chip-safe-btn';
+    safeBtn.textContent = '⋮';
+    safeBtn.title = 'Segnala / Blocca';
+    safeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openUserSafetyMenu(userObj.id, userObj.name || 'Anonimo', e.currentTarget);
+    });
+
+    // Riga: avatar | nome | stato cam | 👁 | ⋮
     chip.appendChild(avatar);
     chip.appendChild(name);
     chip.appendChild(camStatus);
     chip.appendChild(videoBtn);
+    chip.appendChild(safeBtn);
 
     // Tocca la riga di un utente in onda → guarda la sua cam (modello aperto)
     chip.addEventListener('click', () => {
@@ -2560,6 +2676,7 @@ var _vcallStartTs = 0;
 var _vcallPendingFrom = null; // { userId, socketId, name, face }
 var _vcallPipFlipped = false;
 var _vcallPartnerId = null; // id partner della call in corso (affidabile per chiusura)
+var _vcallPartnerName = null; // nome partner (per segnala/blocca dalla cam)
 
 // ── INVIO RICHIESTA ──────────────────────────────────
 function sendVideoRequest(toUserId, toSocketId, toName, toFace) {
@@ -2666,6 +2783,13 @@ function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) 
   // NON settare selectedUserId qui: per il caller lo fa selectUser(),
   // per il callee lo fa l'handler voice-offer.
   _vcallPartnerId = userId;
+  _vcallPartnerName = userName || 'Anonimo';
+  // Watermark anti-registrazione: il MIO nome sulla cam che guardo
+  const wm = document.getElementById('rpWatermark');
+  if (wm) { wm.textContent = 'Kouverte · ' + (user.name||'anon'); wm.style.display='block'; }
+  // Mostra i controlli sicurezza (segnala/blocca) nell'area cam
+  const sa = document.getElementById('rpCamActions');
+  if (sa) sa.style.display = 'flex';
 
   const remoteVid = document.getElementById('rpRemoteVideo');
   const placeholder = document.getElementById('rpCamPlaceholder');
@@ -2739,6 +2863,9 @@ function endPrivateVideoCall(silent) {
   if (label) { label.classList.remove('show'); label.textContent = ''; }
   const closeBtn = document.getElementById('rpCamClose');
   if (closeBtn) closeBtn.style.display = 'none';
+  // Nascondi watermark + azioni sicurezza
+  const wm = document.getElementById('rpWatermark'); if (wm) wm.style.display='none';
+  const sa = document.getElementById('rpCamActions'); if (sa) sa.style.display='none';
 
   // Reset chip calling
   document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
@@ -2747,6 +2874,7 @@ function endPrivateVideoCall(silent) {
   if (partner) closePeerConnection(partner);
   selectedUserId = null;
   _vcallPartnerId = null;
+  _vcallPartnerName = null;
 }
 
 // ── CONTROLLI IN-CALL ────────────────────────────────
@@ -5932,6 +6060,8 @@ function shareRoomFromEmpty(){
 // ══ MESSAGES (stile screenshot) ══
 function appendMsg(msg){
   if(!msg?.text) return;
+  // SAFETY: non mostrare messaggi di utenti bloccati
+  if(msg.userId && msg.userId!==user.id && typeof isBlocked==='function' && isBlocked(msg.userId)) return;
   const c=document.getElementById('chatMsgs');
   if(msg.type==='system'){
     const d=document.createElement('div'); d.className='msys'; d.textContent=msg.text;
@@ -5947,6 +6077,7 @@ function appendMsg(msg){
   const prem=msg.isPremium&&!isSelf;
 
   const row=document.createElement('div');
+  if(msg.userId) row.setAttribute('data-uid', msg.userId);
 
   // Cornice attiva mittente: per me uso user.activeFrame, per altri msg.activeFrame
   const senderFrame = isSelf ? (user.activeFrame || 'none') : (msg.activeFrame || 'none');

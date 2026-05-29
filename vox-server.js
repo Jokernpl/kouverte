@@ -5156,6 +5156,41 @@ io.on('connection', (socket) => {
         socket.to('chat-' + roomId).emit('cam-state', { userId, socketId, on, name, face });
     });
 
+    // ── SAFETY: segnalazione utente (funziona anche per anonimi) ──
+    socket.on('report-user', (data) => {
+        const { reportedId, reporterId, roomId, reason, name } = data || {};
+        if (!reportedId || !reporterId || reportedId === reporterId) return;
+        // Persisti per moderazione
+        DB.reports = DB.reports || [];
+        DB.reports.push({
+            id: genId('rep'), from: reporterId, to: reportedId,
+            reason: String(reason || '').replace(/[<>]/g, '').slice(0, 200),
+            roomId: roomId || null, anon: true, created_at: Date.now(), status: 'pending'
+        });
+        markDirty();
+        // Conta segnalatori DISTINTI (in memoria, per sessione server)
+        global.reportTally = global.reportTally || {};
+        const tally = (global.reportTally[reportedId] = global.reportTally[reportedId] || new Set());
+        tally.add(reporterId);
+        console.log(`[REPORT] ${name || reportedId} segnalato da ${reporterId} (${reason}) — distinti: ${tally.size}`);
+        // Soglia: 3 segnalatori distinti → rimuovi dalla stanza (kick soft)
+        if (tally.size >= 3 && roomId && chatRoomUsers[roomId]) {
+            const map = chatRoomUsers[roomId];
+            for (const [sid, u] of [...map.entries()]) {
+                if (u.id === reportedId) {
+                    io.to(sid).emit('safety-kicked', { reason: 'Troppe segnalazioni dalla community' });
+                    const s = io.sockets.sockets.get(sid);
+                    if (s) s.leave('chat-' + roomId);
+                    map.delete(sid);
+                }
+            }
+            broadcastChatUsers(roomId);
+            io.to('chat-' + roomId).emit('room-online', { roomId, count: map.size });
+            delete global.reportTally[reportedId];
+            console.log(`[REPORT] ${reportedId} rimosso da ${roomId} (soglia raggiunta)`);
+        }
+    });
+
     // ── VIDEO PRIVATO: routing richieste ──────────────────
     socket.on('video-request', (data) => {
         const { to, toSocketId, from, fromSocketId, fromName, fromFace, roomId } = data;
