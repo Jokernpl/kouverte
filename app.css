@@ -4627,3 +4627,144 @@ body[data-room="campania"] #chat{
   background:radial-gradient(ellipse 70% 25% at 50% 0%,rgba(239,68,68,.10) 0%,#0f1117 52%) !important
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ROOMS SCREEN v3 — card più grandi, belle e interattive
+   (Appeso in fondo: vince sulla cascata. Desktop kv-full intatto)
+═══════════════════════════════════════════════════════════════ */
+
+/* Griglia: da 3 colonne strette → 2 colonne ampie + gap maggiore */
+#roomsList{
+  grid-template-columns:repeat(2,1fr) !important;
+  gap:14px !important;
+}
+
+/* Card più alta, immagine a tutta superficie */
+.room-card{
+  height:178px !important;
+  border-radius:22px !important;
+  padding:11px !important;
+  justify-content:flex-start !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 6px 22px rgba(0,0,0,.35) !important;
+}
+
+/* Prima stanza = HERO a tutta larghezza */
+.room-card.rc-hero{
+  grid-column:1 / -1 !important;
+  height:210px !important;
+}
+
+/* Immagine di sfondo che riempie l'intera card (layer 0) */
+.room-card .rc-center{
+  position:absolute !important;
+  inset:0 !important;
+  border-radius:22px !important;
+  z-index:0 !important;
+  flex:none !important;
+  transition:transform .55s cubic-bezier(.22,1,.36,1) !important;
+}
+/* Zoom morbido dell'immagine al hover */
+.room-card:hover .rc-center{ transform:scale(1.07) !important; }
+
+/* Overlay gradiente: foto più viva in alto, leggibile in basso */
+.room-card .rc-image-overlay{
+  background:linear-gradient(180deg,
+    rgba(0,0,0,.05) 0%,
+    rgba(0,0,0,.12) 38%,
+    rgba(8,10,20,.62) 78%,
+    rgba(8,10,20,.86) 100%) !important;
+  border-radius:22px !important;
+}
+/* Velo colorato a tema stanza al hover */
+.room-card::before{
+  background:linear-gradient(155deg,var(--rc-glow,rgba(0,212,255,.16)),transparent 60%) !important;
+  border-radius:22px !important;
+  z-index:1 !important;
+}
+
+/* Layer contenuti sopra l'immagine */
+.room-card .rc-badges,
+.room-card .rc-name-block,
+.room-card .rc-foot,
+.room-card .rc-preview,
+.room-card .fomo-tag{ z-index:3 !important; position:relative; }
+
+/* Badge online più grande e leggibile */
+.room-card .rc-online-pill{
+  font-size:11px !important;
+  padding:5px 10px !important;
+  background:rgba(0,0,0,.55) !important;
+}
+.room-card .rc-online-dot{ width:7px !important; height:7px !important; box-shadow:0 0 8px #10b981; }
+.room-card .rc-flag-pill{ font-size:11px !important; padding:4px 10px !important; }
+
+/* Blocco nome: spinto in basso, grande, con emoji */
+.room-card .rc-name-block{
+  margin-top:auto !important;
+  display:flex; align-items:center; gap:7px;
+  margin-bottom:8px;
+}
+.room-card .rc-room-emoji{ font-size:22px; line-height:1; filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)); }
+.room-card .rc-tile-name-overlay{
+  font-size:19px !important;
+  font-weight:800 !important;
+  letter-spacing:-.3px !important;
+  text-align:left !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.9) !important;
+  white-space:nowrap;
+}
+.room-card.rc-hero .rc-room-emoji{ font-size:30px; }
+.room-card.rc-hero .rc-tile-name-overlay{ font-size:27px !important; }
+
+/* Footer: pill "ENTRA" luminoso a tema */
+.room-card .rc-foot{ opacity:1 !important; }
+.room-card .rc-enter-pill{
+  display:flex; align-items:center; gap:6px;
+  font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase;
+  color:#fff;
+  background:linear-gradient(135deg,var(--rc-color,#00d4ff),rgba(255,255,255,.08));
+  padding:6px 13px; border-radius:30px;
+  box-shadow:0 3px 14px var(--rc-glow,rgba(0,212,255,.35)), inset 0 0 0 1px rgba(255,255,255,.22);
+  transition:transform .2s, box-shadow .25s;
+}
+.room-card:hover .rc-enter-pill{
+  transform:translateX(3px);
+  box-shadow:0 5px 22px var(--rc-color,rgba(0,212,255,.5)), inset 0 0 0 1px rgba(255,255,255,.35);
+}
+.room-card .rc-bell-btn{ font-size:16px !important; }
+
+/* Anteprima ultimo messaggio: chip glass più visibile */
+.room-card .rc-preview{
+  background:rgba(0,0,0,.5) !important;
+  backdrop-filter:blur(6px);
+  border-radius:10px; padding:4px 8px; margin-bottom:6px;
+  font-size:10px;
+}
+
+/* Hover card: lift + bordo a tema + glow */
+.room-card:hover{
+  transform:translateY(-6px) !important;
+  border-color:var(--rc-color,rgba(0,212,255,.5)) !important;
+  box-shadow:0 18px 46px rgba(0,0,0,.55),0 0 28px var(--rc-glow,rgba(0,212,255,.22)) !important;
+}
+
+/* Shimmer luminoso che scorre sul bordo superiore al hover */
+.room-card::after{
+  height:2px !important;
+  background:linear-gradient(90deg,transparent,var(--rc-color,rgba(255,255,255,.6)),transparent) !important;
+  opacity:0; transition:opacity .3s; z-index:4 !important;
+}
+.room-card:hover::after{ opacity:1 !important; }
+
+/* Sezione "Stanze in evidenza": label più grande */
+#roomsList .sec-label{ font-size:15px !important; font-weight:800 !important; }
+
+/* Desktop full-view: ripristina griglia ampia (la mia 2-col non deve vincere lì) */
+@media (min-width:1100px){
+  html.kv-full #roomsList{ grid-template-columns:repeat(4,1fr) !important; }
+  html.kv-full .room-card.rc-hero{ grid-column:span 2 !important; }
+}
+@media (min-width:1600px){
+  html.kv-full #roomsList{ grid-template-columns:repeat(5,1fr) !important; }
+}
+

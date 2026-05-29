@@ -5446,7 +5446,7 @@ function renderRooms(){
       <div class="sec-label" style="margin:0">✦ Stanze in evidenza</div>
       <span class="sec-label-link" onclick="openContinua()">Vedi tutte ›</span>
     </div>
-    ${chatRooms.map(roomCard).join('')}
+    ${chatRooms.map((r,i)=>roomCard(r,i)).join('')}
   ` : '';
   document.getElementById('roomsList').innerHTML = gamesSection + chatSection;
 }
@@ -5503,8 +5503,10 @@ function gameCard(r){
   </div>`;
 }
 
-function roomCard(r){
+function roomCard(r, idx){
   const cnt=roomOnline[r.id]??0;
+  // Prima stanza = hero card grande a tutta larghezza
+  const heroCls = (idx===0) ? ' rc-hero' : '';
   // Nome stanza pulito: rimuovo l'emoji/bandiera dal nome se già presente (es. "🇮🇹 Italia" → "Italia")
   const cleanName=r.name.replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name;
 
@@ -5540,8 +5542,13 @@ function roomCard(r){
     ? '<div class="fomo-tag adult">🔞 18+</div>' : fomoIndicator;
 
   return `
-  <div class="room-card${liveCls}${adultCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
+  <div class="room-card${liveCls}${adultCls}${heroCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
     ${adultBadge}
+
+    <!-- Sfondo immagine a tutta card -->
+    <div class="rc-center" style="background-image: url('${r.img||''}'); background-size: cover; background-position: center;">
+      <div class="rc-image-overlay"></div>
+    </div>
 
     <!-- Badge row in alto -->
     <div class="rc-badges">
@@ -5552,17 +5559,17 @@ function roomCard(r){
       ${cnt>0?tempBadge(cnt):''}
     </div>
 
-    <!-- Centro: sfondo immagine + nome overlay -->
-    <div class="rc-center" style="background-image: url('${r.img||''}'); background-size: cover; background-position: center;">
-      <div class="rc-image-overlay"></div>
-      <div class="rc-tile-name-overlay">${esc(cleanName)}</div>
+    <!-- Nome stanza (overlay sopra immagine) -->
+    <div class="rc-name-block">
+      <span class="rc-room-emoji">${r.emoji||''}</span>
+      <span class="rc-tile-name-overlay">${esc(cleanName)}</span>
     </div>
 
     ${previewHtml}
 
     <!-- Footer: tap-to-enter + bell alert -->
     <div class="rc-foot" style="justify-content:space-between;padding:0 2px">
-      <div style="display:flex;align-items:center;gap:4px">
+      <div class="rc-enter-pill">
         <span>ENTRA</span>
         <span class="rc-foot-arrow">→</span>
       </div>
