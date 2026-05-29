@@ -5174,6 +5174,14 @@ io.on('connection', (socket) => {
         }
     });
 
+    socket.on('video-call-ended', (data) => {
+        const { to, toSocketId, from, roomId } = data;
+        const targetSid = toSocketId || findSocketByUserId(roomId, to);
+        if (targetSid) {
+            io.to(targetSid).emit('video-call-ended', { from });
+        }
+    });
+
     socket.on('voice-offer', (data) => {
         const { to, toSocketId, from, fromSocketId, roomId, roomSlug, offer } = data;
         const room = roomId || roomSlug;

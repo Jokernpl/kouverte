@@ -2271,6 +2271,12 @@ function registerWebRTCHandlers(sock) {
     showToast('❌ Videochiamata rifiutata');
   });
 
+  sock.on('video-call-ended', (data) => {
+    console.log('[VCall] Terminata dal partner', data.from);
+    // Chiusura "silent" — non re-inviare l'evento (eviti loop)
+    endPrivateVideoCall(true);
+  });
+
   sock.on('voice-offer', async (data) => {
   try {
     const { from, fromSocketId, offer } = data;
@@ -2495,6 +2501,7 @@ var _vcallTimerInterval = null;
 var _vcallStartTs = 0;
 var _vcallPendingFrom = null; // { userId, socketId, name, face }
 var _vcallPipFlipped = false;
+var _vcallPartnerId = null; // id partner della call in corso (affidabile per chiusura)
 
 // ── INVIO RICHIESTA ──────────────────────────────────
 function sendVideoRequest(toUserId, toSocketId, toName, toFace) {
@@ -2549,18 +2556,28 @@ function acceptVideoCall() {
   if (toast) { toast.style.display = 'none'; clearTimeout(toast._autoTimeout); }
   if (!_vcallPendingFrom) return;
 
-  socket.emit('video-request-accepted', {
-    to: _vcallPendingFrom.from,
-    toSocketId: _vcallPendingFrom.fromSocketId,
-    from: user.id,
-    fromSocketId: socket.id,
-    roomId: room?.id
-  });
-
-  // Avvia la chiamata come callee
-  openPrivateVideoCall(_vcallPendingFrom.from, _vcallPendingFrom.fromSocketId,
-    _vcallPendingFrom.fromName, _vcallPendingFrom.fromFace, false);
+  const data = _vcallPendingFrom;
   _vcallPendingFrom = null;
+
+  const proceed = () => {
+    // Emette "accepted" SOLO quando la camera è pronta, così il caller
+    // invia l'offerta quando il callee può già rispondere coi propri track.
+    socket.emit('video-request-accepted', {
+      to: data.from,
+      toSocketId: data.fromSocketId,
+      from: user.id,
+      fromSocketId: socket.id,
+      roomId: room?.id
+    });
+    openPrivateVideoCall(data.from, data.fromSocketId, data.fromName, data.fromFace, false);
+  };
+
+  if (!localStream) {
+    showToast('📷 Attivo la camera…');
+    initWebRTC().then(() => setTimeout(proceed, 600)).catch(() => proceed());
+  } else {
+    proceed();
+  }
 }
 
 function declineVideoCall() {
@@ -2578,7 +2595,10 @@ function declineVideoCall() {
 
 // ── APERTURA OVERLAY ─────────────────────────────────
 function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) {
-  selectedUserId = userId;
+  // NON settare selectedUserId qui: per il caller lo fa selectUser(),
+  // per il callee lo fa l'handler voice-offer. Settarlo qui farebbe scattare
+  // il toggle deselect dentro selectUser (selectedUserId===userId → deselect).
+  _vcallPartnerId = userId;
 
   // Popola header
   const overlay = document.getElementById('vcallOverlay');
@@ -2634,25 +2654,36 @@ function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) 
 }
 
 // ── CHIUSURA ─────────────────────────────────────────
-function endPrivateVideoCall() {
-  clearInterval(_vcallTimerInterval);
-  clearInterval(document.getElementById('vcallOverlay')?._syncInterval);
+function endPrivateVideoCall(silent) {
   const overlay = document.getElementById('vcallOverlay');
-  if (overlay) overlay.style.display = 'none';
+  // Se non c'è una call attiva, non fare nulla (evita toast spuri)
+  if (overlay && overlay.style.display === 'none' && !_vcallPartnerId) return;
+
+  clearInterval(_vcallTimerInterval);
+  if (overlay) { clearInterval(overlay._syncInterval); overlay.style.display = 'none'; }
+
+  // Notifica l'altro peer (a meno che la chiusura sia stata richiesta da lui)
+  const partner = _vcallPartnerId || selectedUserId;
+  if (!silent && partner) {
+    socket.emit('video-call-ended', {
+      to: partner, from: user.id, roomId: room?.id
+    });
+  }
 
   // Reset video remoto overlay
   const remoteVid = document.getElementById('vcallTheirVideo');
   if (remoteVid) remoteVid.srcObject = null;
+  // Reset filtro PiP
+  const pip = document.getElementById('vcallMyVideo');
+  if (pip) pip.style.filter = 'none';
 
   // Reset chip calling
   document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
 
   // Chiude WebRTC
-  if (selectedUserId) {
-    closePeerConnection(selectedUserId);
-    selectedUserId = null;
-  }
-  deselectUser && deselectUser();
+  if (partner) closePeerConnection(partner);
+  selectedUserId = null;
+  _vcallPartnerId = null;
   showToast('📵 Videochiamata terminata');
 }
 
