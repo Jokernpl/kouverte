@@ -5148,6 +5148,14 @@ io.on('connection', (socket) => {
         return null;
     }
 
+    // ── CAM APERTE: annuncio stato cam a tutta la stanza ──
+    socket.on('cam-state', (data) => {
+        const { roomId, userId, socketId, on, name, face } = data || {};
+        if (!roomId) return;
+        // Inoltra a tutti gli altri nella stanza chat
+        socket.to('chat-' + roomId).emit('cam-state', { userId, socketId, on, name, face });
+    });
+
     // ── VIDEO PRIVATO: routing richieste ──────────────────
     socket.on('video-request', (data) => {
         const { to, toSocketId, from, fromSocketId, fromName, fromFace, roomId } = data;

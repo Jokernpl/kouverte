@@ -1729,14 +1729,20 @@ function connectSocket(){
   socket.on('chat-users', ({ roomId, users }) => {
     if (!room || room.id !== roomId) return;
     chatRoomUsers[roomId] = new Map();
+    const presentIds = new Set();
     users.forEach(u => {
+      presentIds.add(u.id);
       chatRoomUsers[roomId].set(u.socketId || u.id, {
         id: u.id, name: u.name, face: u.face, color: u.color,
         frame: u.frame, activeFrame: u.activeFrame || u.frame,
         isPremium: u.isPremium
       });
     });
+    // Pulisci stati cam di utenti usciti
+    Object.keys(roomCamStates).forEach(uid => { if (!presentIds.has(uid)) delete roomCamStates[uid]; });
     renderUsersPanel();
+    // Ri-annuncia la mia cam così chi è appena entrato sa che sono in onda
+    if (myCamOn && localStream) setTimeout(broadcastCamState, 300);
   });
   socket.on('chat-history',({roomId,messages})=>{
     if(roomId!==room?.id) return;
@@ -1776,6 +1782,21 @@ var localStream = null;
 var peerConnections = {};
 var selectedUserId = null;
 var webrtcEnabled = false;
+var roomCamStates = {}; // userId -> true se ha la cam accesa (modello cam aperte)
+var myCamOn = true;      // la mia cam è accesa? (default on all'ingresso)
+
+// Annuncia alla stanza se la mia cam è accesa/spenta (modello "cam aperte")
+function broadcastCamState(){
+  if (!room || !socket?.connected) return;
+  socket.emit('cam-state', {
+    userId: user.id,
+    socketId: socket.id,
+    roomId: room.id,
+    on: !!(myCamOn && localStream && localStream.getVideoTracks()[0]?.enabled),
+    name: user.name || 'Anonimo',
+    face: user.face || '👤'
+  });
+}
 
 const RTC_CONFIG = {
   iceServers: [
@@ -1842,8 +1863,12 @@ async function initWebRTC() {
       });
       selectedUserId = null;
     }
-    // Tenta auto-connect con utenti già in stanza (necessario se camera granted dopo entrata)
-    setTimeout(() => { if (typeof renderUsersPanel === 'function') renderUsersPanel(); }, 500);
+    // Cam accesa di default → annuncia "in onda" alla stanza + aggiorna pannello
+    myCamOn = true;
+    setTimeout(() => {
+      broadcastCamState();
+      if (typeof renderUsersPanel === 'function') renderUsersPanel();
+    }, 500);
 
   } catch (err) {
     console.error('[WebRTC] ❌ Errore getUserMedia:', err);
@@ -1921,22 +1946,26 @@ function toggleCamera() {
   const camBtn = document.getElementById('myCamBtn');
   const overlay = document.getElementById('myCamOffOverlay');
 
+  myCamOn = newState;
   if (camBtn) {
     if (newState) {
       camBtn.classList.remove('off');
       camBtn.textContent = '📹';
       camBtn.title = 'Camera ON';
       if (overlay) overlay.classList.remove('show');
-      showToast('📹 Camera ON');
+      showToast('📹 Sei in onda — gli altri possono vederti');
       window.trackEvent?.('camera_on', { method: 'toggle' });
     } else {
       camBtn.classList.add('off');
       camBtn.textContent = '📷';
       camBtn.title = 'Camera OFF';
       if (overlay) overlay.classList.add('show');
-      showToast('📷 Camera OFF');
+      showToast('📷 Camera OFF — non sei più visibile');
     }
   }
+  // Annuncia il nuovo stato alla stanza + aggiorna i chip
+  broadcastCamState();
+  if (typeof renderUsersPanel === 'function') renderUsersPanel();
 }
 
 async function selectUser(userId, toSocketId) {
@@ -2241,12 +2270,24 @@ async function flushPendingIce(pc, userId) {
 function registerWebRTCHandlers(sock) {
   console.log('[WebRTC] Registering socket handlers su socket', sock.id || '(not-connected-yet)');
 
-  // ── VIDEO PRIVATO: richiesta in arrivo ──────────────
+  // ── CAM APERTE: qualcuno annuncia stato cam ─────────
+  sock.on('cam-state', (data) => {
+    if (!data || !data.userId) return;
+    if (data.on) roomCamStates[data.userId] = true;
+    else delete roomCamStates[data.userId];
+    if (typeof renderUsersPanel === 'function') renderUsersPanel();
+  });
+
+  // ── VIDEO: richiesta di visione cam (modello aperto) ─
   sock.on('video-request', (data) => {
-    console.log('[VCall] Richiesta ricevuta da', data.fromName);
-    // Ignora se già in chiamata
+    console.log('[VCall] Richiesta visione da', data.fromName);
+    // Già in una call → ignora (P2P: una visione attiva alla volta)
     if (document.getElementById('vcallOverlay')?.style.display !== 'none') return;
-    showIncomingVideoRequest(data);
+    // MODELLO CAM APERTE: auto-accetta (la cam accesa è già il consenso).
+    // Avvisa che qualcuno ti sta guardando, poi accetta automaticamente.
+    showToast(`👁 ${data.fromName||'Qualcuno'} si è collegato alla tua cam`);
+    _vcallPendingFrom = data;
+    acceptVideoCall();
   });
 
   sock.on('video-request-accepted', (data) => {
@@ -2469,11 +2510,23 @@ function renderUsersPanel() {
     const onlineDot = document.createElement('div');
     onlineDot.className = 'user-chip-online-dot';
 
-    // Bottone 📹 per richiedere video privato
+    // Stato cam: questo utente è "in onda"?
+    const camOn = !!roomCamStates[userObj.id];
+    if (camOn) chip.classList.add('chip-live');
+
+    // Badge "IN ONDA" sul chip se la cam è accesa
+    if (camOn) {
+      const liveBadge = document.createElement('div');
+      liveBadge.className = 'chip-live-badge';
+      liveBadge.innerHTML = '<span class="chip-live-dot"></span>LIVE';
+      chip.appendChild(liveBadge);
+    }
+
+    // Bottone: 👁 Guarda (se in onda) oppure 📹 Invita (se cam spenta)
     const videoBtn = document.createElement('button');
-    videoBtn.className = 'chip-video-btn';
-    videoBtn.textContent = '📹';
-    videoBtn.title = 'Richiedi videochiamata privata';
+    videoBtn.className = 'chip-video-btn' + (camOn ? ' watch' : '');
+    videoBtn.textContent = camOn ? '👁' : '📹';
+    videoBtn.title = camOn ? 'Guarda la sua cam' : 'Invita a videochiamata';
     videoBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
@@ -2484,13 +2537,16 @@ function renderUsersPanel() {
     chip.appendChild(onlineDot);
     chip.appendChild(videoBtn);
 
+    // Tocca il chip di un utente in onda → guarda la sua cam (modello aperto)
     chip.addEventListener('click', () => {
-      // Solo evidenzia il chip, non lancia video automatico
+      if (roomCamStates[userObj.id]) {
+        sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
+      }
     });
 
     container.appendChild(chip);
   });
-  // Auto-connect rimosso — il video si avvia solo su richiesta esplicita (sendVideoRequest)
+  // Modello cam aperte: clicchi un utente in onda e vedi subito la sua cam (no accetta)
 }
 
 // ══════════════════════════════════════════════════════
@@ -5691,6 +5747,8 @@ function enterRoom(roomId){
 }
 function leaveRoom(){
   stopSpeedDatingTimer();
+  // Chiudi eventuale video privato aperto
+  if (typeof endPrivateVideoCall === 'function') { try { endPrivateVideoCall(); } catch(e){} }
   // Chiudi solo le peer connections (NON fermare la webcam, evita re-prompt permessi)
   Object.keys(peerConnections).forEach(uid => closePeerConnection(uid));
   selectedUserId = null;
@@ -5698,6 +5756,9 @@ function leaveRoom(){
   const tl = document.getElementById('theirVideoLabel'); if (tl) tl.textContent = 'Seleziona utente';
 
   if(room){
+    // Annuncia cam OFF e azzera stati cam della stanza
+    try { socket.emit('cam-state', { userId:user.id, socketId:socket.id, roomId:room.id, on:false }); } catch(e){}
+    roomCamStates = {};
     socket.emit('leave-chat-room',{roomId:room.id});
     // Cleanup memory: rimuovi i dati di questa stanza
     if (chatRoomUsers[room.id]) delete chatRoomUsers[room.id];

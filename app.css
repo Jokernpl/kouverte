@@ -4768,3 +4768,41 @@ body[data-room="campania"] #chat{
   html.kv-full #roomsList{ grid-template-columns:repeat(5,1fr) !important; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   CAM APERTE — indicatore "IN ONDA" sui chip utenti + bottone Guarda
+═══════════════════════════════════════════════════════════════ */
+/* Chip di un utente con cam accesa: bordo che pulsa */
+.user-chip.chip-live{
+  border-color:rgba(255,68,68,.55) !important;
+  box-shadow:0 0 0 1px rgba(255,68,68,.35), 0 0 14px rgba(255,68,68,.25);
+  animation:chipLivePulse 1.8s ease-in-out infinite;
+}
+@keyframes chipLivePulse{
+  0%,100%{box-shadow:0 0 0 1px rgba(255,68,68,.35),0 0 12px rgba(255,68,68,.2)}
+  50%{box-shadow:0 0 0 1px rgba(255,68,68,.55),0 0 20px rgba(255,68,68,.4)}
+}
+/* Badge "LIVE" in alto sul chip */
+.chip-live-badge{
+  position:absolute; top:-6px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:4px;
+  background:linear-gradient(135deg,#ff4444,#cc1f1f);
+  color:#fff; font-size:8px; font-weight:800; letter-spacing:.6px;
+  padding:2px 7px; border-radius:20px;
+  box-shadow:0 2px 8px rgba(255,68,68,.5);
+  white-space:nowrap; z-index:5;
+}
+.chip-live-dot{
+  width:5px; height:5px; border-radius:50%; background:#fff;
+  animation:livePulse 1.2s ease-in-out infinite;
+}
+/* Bottone "Guarda" (👁) per utenti in onda: verde acceso, invitante */
+.chip-video-btn.watch{
+  background:linear-gradient(135deg,rgba(34,197,94,.35),rgba(16,185,129,.25)) !important;
+  border-color:#22c55e !important; color:#4ade80 !important;
+  box-shadow:0 0 10px rgba(34,197,94,.35);
+}
+.chip-video-btn.watch:hover{
+  background:linear-gradient(135deg,rgba(34,197,94,.6),rgba(16,185,129,.45)) !important;
+  transform:scale(1.15);
+}
+
