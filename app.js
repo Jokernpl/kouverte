@@ -1209,6 +1209,23 @@ function sendGift(){
     });
   }
   showToast(`${g.icon} Regalo inviato! -${g.cost} 🪙`);
+  if(typeof spawnCamGift==='function') spawnCamGift(g.icon);
+}
+
+// Animazione regalo flottante sopra l'area cam (più emoji che salgono)
+function spawnCamGift(icon){
+  const stage = document.getElementById('rpCamView');
+  if(!stage) return;
+  for(let i=0;i<5;i++){
+    const e=document.createElement('div');
+    e.className='cam-gift-float';
+    e.textContent=icon||'🎁';
+    e.style.left=(15+Math.random()*70)+'%';
+    e.style.animationDelay=(i*0.12)+'s';
+    e.style.fontSize=(22+Math.random()*16)+'px';
+    stage.appendChild(e);
+    setTimeout(()=>e.remove(), 2200);
+  }
 }
 
 function renderGiftMessage({ gift, from, face, self }){
@@ -1640,6 +1657,7 @@ function connectSocket(){
         if(!data||!data.giftId) return;
         const g=GIFTS.find(x=>x.id===data.giftId)||{icon:data.giftIcon||'🎁',name:data.giftName||'Regalo'};
         renderGiftMessage({ gift:g, from:data.from||'Qualcuno', face:data.face||'🎭', self:false });
+        if(typeof spawnCamGift==='function') spawnCamGift(g.icon); // animazione sulla cam
       });
       window._giftListenerRegistered = true;
     }

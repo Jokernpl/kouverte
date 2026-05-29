@@ -4904,6 +4904,18 @@ body[data-room="campania"] #chat{
 .rp-act-btn:active{ transform:scale(.9) }
 .rp-act-btn.report:hover{ background:rgba(251,146,60,.85) }
 .rp-act-btn.block:hover{ background:rgba(239,68,68,.85) }
+.rp-act-btn.gift:hover{ background:rgba(236,72,153,.85) }
+/* Regalo flottante che sale sopra la cam */
+.cam-gift-float{
+  position:absolute; bottom:10px; z-index:7; pointer-events:none;
+  animation:camGiftRise 2s ease-out forwards;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));
+}
+@keyframes camGiftRise{
+  0%{ transform:translateY(0) scale(.6); opacity:0 }
+  20%{ opacity:1; transform:translateY(-20px) scale(1.1) }
+  100%{ transform:translateY(-130px) scale(1); opacity:0 }
+}
 /* Bottone ⋮ sulla riga utente */
 .chip-safe-btn{
   position:static !important; flex-shrink:0;

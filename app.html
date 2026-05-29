@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260529f">
+<link rel="stylesheet" href="/app.css?v=20260529g">
 </head>
 <body>
 
@@ -638,8 +638,9 @@
       <div class="rp-cam-label" id="rpCamLabel"></div>
       <video id="rpMyVideo" class="rp-pip" autoplay muted playsinline></video>
       <button class="rp-cam-close" id="rpCamClose" onclick="closeInlineCam()" style="display:none">✕</button>
-      <!-- Azioni sicurezza sulla cam che guardi -->
+      <!-- Azioni sulla cam che guardi -->
       <div class="rp-cam-actions" id="rpCamActions" style="display:none">
+        <button class="rp-act-btn gift" onclick="openGiftPicker()" title="Manda un regalo">🎁</button>
         <button class="rp-act-btn report" onclick="reportCurrentCam()" title="Segnala">⚑</button>
         <button class="rp-act-btn block" onclick="blockCurrentCam()" title="Blocca">⛔</button>
       </div>
@@ -1697,7 +1698,7 @@
 
 
 
-<script src="/app.js?v=20260529f"></script>
+<script src="/app.js?v=20260529g"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>
