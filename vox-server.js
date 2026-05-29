@@ -5191,6 +5191,47 @@ io.on('connection', (socket) => {
         }
     });
 
+    // ── CAM ROULETTE: matchmaking casuale ──────────────────
+    socket.on('roulette-join', (data) => {
+        const { userId, name, face } = data || {};
+        if (!userId) return;
+        global.rouletteQueue = global.rouletteQueue || [];
+        global.roulettePairs = global.roulettePairs || new Map();
+        // Sgancia da un eventuale abbinamento precedente (il vecchio partner si ri-accoda)
+        const oldPartner = global.roulettePairs.get(socket.id);
+        if (oldPartner) {
+            global.roulettePairs.delete(socket.id);
+            global.roulettePairs.delete(oldPartner);
+            io.to(oldPartner).emit('roulette-partner-left', {});
+        }
+        // Togli da coda (evita duplicati)
+        global.rouletteQueue = global.rouletteQueue.filter(e => e.sid !== socket.id);
+        // Cerca un partner libero (diverso da me)
+        const partner = global.rouletteQueue.find(e => e.userId !== userId);
+        if (partner) {
+            global.rouletteQueue = global.rouletteQueue.filter(e => e.sid !== partner.sid);
+            global.roulettePairs.set(socket.id, partner.sid);
+            global.roulettePairs.set(partner.sid, socket.id);
+            const iAmCaller = socket.id < partner.sid; // deterministico, evita glare
+            io.to(socket.id).emit('roulette-matched', { partnerId: partner.userId, partnerSocketId: partner.sid, partnerName: partner.name, partnerFace: partner.face, isCaller: iAmCaller });
+            io.to(partner.sid).emit('roulette-matched', { partnerId: userId, partnerSocketId: socket.id, partnerName: name, partnerFace: face, isCaller: !iAmCaller });
+            console.log(`[ROULETTE] match ${name} ↔ ${partner.name}`);
+        } else {
+            global.rouletteQueue.push({ sid: socket.id, userId, name, face });
+            io.to(socket.id).emit('roulette-waiting', {});
+        }
+    });
+    socket.on('roulette-leave', () => {
+        global.rouletteQueue = (global.rouletteQueue || []).filter(e => e.sid !== socket.id);
+        global.roulettePairs = global.roulettePairs || new Map();
+        const partnerSid = global.roulettePairs.get(socket.id);
+        if (partnerSid) {
+            global.roulettePairs.delete(socket.id);
+            global.roulettePairs.delete(partnerSid);
+            io.to(partnerSid).emit('roulette-partner-left', {});
+        }
+    });
+
     // ── VIDEO PRIVATO: routing richieste ──────────────────
     socket.on('video-request', (data) => {
         const { to, toSocketId, from, fromSocketId, fromName, fromFace, roomId } = data;
@@ -5730,6 +5771,12 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
+        // Pulizia roulette: togli da coda + sgancia partner
+        if (global.rouletteQueue) global.rouletteQueue = global.rouletteQueue.filter(e => e.sid !== socket.id);
+        if (global.roulettePairs) {
+            const rp = global.roulettePairs.get(socket.id);
+            if (rp) { global.roulettePairs.delete(socket.id); global.roulettePairs.delete(rp); io.to(rp).emit('roulette-partner-left', {}); }
+        }
         // Rimuovi dalle chat rooms
         for (const [rid, users] of Object.entries(chatRoomUsers)) {
             if (users.has(socket.id)) {

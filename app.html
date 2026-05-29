@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260529g">
+<link rel="stylesheet" href="/app.css?v=20260529h">
 </head>
 <body>
 
@@ -579,6 +579,30 @@
       <button class="safety-menu-item cancel" onclick="closeReportModal()">Annulla</button>
     </div>
   </div>
+
+  <!-- ═══ CAM ROULETTE (fullscreen) ═══ -->
+  <div id="rouletteScreen" class="roulette-screen" style="display:none">
+    <div class="rlt-bg"></div>
+    <video id="rltRemote" class="rlt-remote" autoplay playsinline></video>
+    <div class="rlt-searching" id="rltSearching">
+      <div class="rlt-dice">🎲</div>
+      <div id="rltStatus">🔍 Cerco qualcuno…</div>
+    </div>
+    <div class="rlt-header">
+      <div class="rlt-title">🎲 Roulette</div>
+      <button class="rlt-x" onclick="stopRoulette()" title="Esci">✕</button>
+    </div>
+    <video id="rltMyVideo" class="rlt-pip" autoplay muted playsinline></video>
+    <div class="rlt-actions">
+      <button class="rlt-btn small" onclick="reportRoulette()" title="Segnala">⚑</button>
+      <button class="rlt-btn small" onclick="blockRoulette()" title="Blocca">⛔</button>
+      <button class="rlt-btn gift" onclick="openGiftPicker()" title="Regalo">🎁</button>
+      <button class="rlt-btn next" onclick="nextRoulette()">Prossimo →</button>
+    </div>
+  </div>
+
+  <!-- FAB lancio Roulette -->
+  <button id="rouletteFab" class="roulette-fab" onclick="openRoulette()" title="Cam Roulette — match casuale">🎲</button>
 
   <div class="chat-hdr">
     <button class="chat-back" onclick="leaveRoom()">←</button>
@@ -1698,7 +1722,7 @@
 
 
 
-<script src="/app.js?v=20260529g"></script>
+<script src="/app.js?v=20260529h"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

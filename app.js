@@ -2394,6 +2394,39 @@ function registerWebRTCHandlers(sock) {
     try { if (typeof leaveRoom === 'function') leaveRoom(); } catch(e){}
   });
 
+  // ── CAM ROULETTE ──────────────────────────────────
+  sock.on('roulette-waiting', () => {
+    _roulettePartner = null;
+    const st = document.getElementById('rltStatus');
+    if (st) st.textContent = '🔍 Cerco qualcuno…';
+    const rv = document.getElementById('rltRemote');
+    if (rv) { rv.srcObject = null; rv.classList.remove('live'); }
+  });
+  sock.on('roulette-matched', (data) => {
+    if (!_rouletteActive) return;
+    _roulettePartner = { id: data.partnerId, socketId: data.partnerSocketId, name: data.partnerName, face: data.partnerFace };
+    selectedUserId = data.partnerId;
+    const st = document.getElementById('rltStatus');
+    if (st) st.textContent = '🟢 ' + (data.partnerName || 'Sconosciuto');
+    startRouletteMirror();
+    if (data.isCaller) {
+      console.log('[ROULETTE] CALLER →', data.partnerId);
+      setTimeout(() => createPeerConnection(data.partnerId, data.partnerSocketId), 300);
+    } else {
+      console.log('[ROULETTE] CALLEE, attendo offerta');
+    }
+  });
+  sock.on('roulette-partner-left', () => {
+    if (!_rouletteActive) return;
+    const st = document.getElementById('rltStatus');
+    if (st) st.textContent = '👋 Se n\'è andato… cerco un altro';
+    if (_roulettePartner) { closePeerConnection(_roulettePartner.id); _roulettePartner = null; }
+    const rv = document.getElementById('rltRemote');
+    if (rv) { rv.srcObject = null; rv.classList.remove('live'); }
+    // Ri-accodati automaticamente
+    setTimeout(() => { if (_rouletteActive) socket.emit('roulette-join', roulettePubUser()); }, 600);
+  });
+
   // ── VIDEO: richiesta di visione cam ─────────────────
   sock.on('video-request', (data) => {
     console.log('[VCall] Richiesta visione da', data.fromName);
@@ -2856,6 +2889,69 @@ function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) 
 
 // Chiusura cam inline (bottone ✕)
 function closeInlineCam() { endPrivateVideoCall(); }
+
+// ══════════════════════════════════════════════════════
+// CAM ROULETTE — match casuale "Prossimo →"
+// ══════════════════════════════════════════════════════
+var _rouletteActive = false;
+var _roulettePartner = null;
+var _rltMirror = null;
+function roulettePubUser(){ return { userId: user.id, name: user.name||'Anonimo', face: user.face||'🎭' }; }
+
+function startRouletteMirror(){
+  const remote = document.getElementById('rltRemote');
+  const myv = document.getElementById('rltMyVideo');
+  if (myv && localStream && myv.srcObject!==localStream){ myv.srcObject=localStream; myv.play().catch(()=>{}); }
+  const their = document.getElementById('theirVideo');
+  clearInterval(_rltMirror);
+  _rltMirror = setInterval(()=>{
+    if (their?.srcObject && remote && remote.srcObject!==their.srcObject){
+      remote.srcObject = their.srcObject; remote.play().catch(()=>{});
+    }
+    if (remote?.srcObject) remote.classList.add('live');
+  }, 400);
+}
+
+async function openRoulette(){
+  if (!localStream){
+    showToast('📷 Attivo la camera…');
+    try { await initWebRTC(); } catch(e){}
+    if (!localStream){ showToast('❌ Serve la webcam per la Roulette'); return; }
+  }
+  // Esci da eventuale stanza/cam inline attiva
+  if (room && typeof leaveRoom==='function'){ try{ leaveRoom(); }catch(e){} }
+  _rouletteActive = true;
+  const scr = document.getElementById('rouletteScreen');
+  if (scr) scr.style.display='flex';
+  const myv = document.getElementById('rltMyVideo');
+  if (myv && localStream){ myv.srcObject=localStream; myv.play().catch(()=>{}); }
+  document.getElementById('rltStatus').textContent='🔍 Cerco qualcuno…';
+  socket.emit('roulette-join', roulettePubUser());
+  window.trackEvent?.('roulette_start', {});
+}
+
+function nextRoulette(){
+  if (!_rouletteActive) return;
+  if (_roulettePartner){ closePeerConnection(_roulettePartner.id); _roulettePartner=null; }
+  selectedUserId=null;
+  const rv=document.getElementById('rltRemote'); if(rv){ rv.srcObject=null; rv.classList.remove('live'); }
+  document.getElementById('rltStatus').textContent='🔍 Cerco qualcuno…';
+  socket.emit('roulette-join', roulettePubUser()); // server sgancia + ri-accoda
+}
+
+function stopRoulette(){
+  _rouletteActive=false;
+  clearInterval(_rltMirror);
+  socket.emit('roulette-leave');
+  if (_roulettePartner){ closePeerConnection(_roulettePartner.id); _roulettePartner=null; }
+  selectedUserId=null;
+  const rv=document.getElementById('rltRemote'); if(rv) rv.srcObject=null;
+  const scr=document.getElementById('rouletteScreen'); if(scr) scr.style.display='none';
+}
+
+// Segnala/blocca il partner roulette
+function reportRoulette(){ if(_roulettePartner) reportUser(_roulettePartner.id, _roulettePartner.name); }
+function blockRoulette(){ if(_roulettePartner){ blockUser(_roulettePartner.id, _roulettePartner.name); nextRoulette(); } }
 
 // ── CHIUSURA cam inline ───────────────────────────────
 function endPrivateVideoCall(silent) {
