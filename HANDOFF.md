@@ -1,8 +1,42 @@
 # 🎭 KOUVERTE — Handoff per il prossimo Claude
 
-**Ultimo update**: 2026-05-21
-**Stato**: ✅ Production live · scroll fixed · PWA pronta · bot Telegram con `/installa`
-**Ultimo commit**: `9559eb6` su branch `main`
+**Ultimo update**: 2026-05-29
+**Stato**: ✅ Production live · Video/cam rifatti · Cam Roulette · Regali · Safety pack · Admin moderazione
+**Ultimo commit**: `05ebdba` su branch `main` (push su ENTRAMBI i remote: `origin`+`live`)
+**Versione cache live**: `app.js?v=20260529i` / `app.css?v=20260529i` (in `app.html`)
+**Comunicazione utente: ITALIANO**, azioni concrete e dirette.
+
+---
+
+## 🆕 SESSIONE 2026-05-29 — cosa è stato fatto (LEGGI QUESTO PRIMA)
+
+Tema: sistemare il video ("non vedo gli utenti") + rendere il sito divertente e sicuro, stile ciaoamigos.
+
+**⚠️ CACHE BUSTING:** ad ogni modifica di `app.js`/`app.css` bumpa `v=...` in `app.html`
+(es. `sed -i 's/v=20260529i/v=20260529j/g' app.html`) o gli utenti non ricevono le modifiche.
+
+**Feature aggiunte (in ordine, con commit):**
+1. `e94ce3d` **Stanze v3**: griglia 2 colonne grandi, prima stanza HERO, foto zoom-hover, pill ENTRA. `#roomsList` 2col (desktop `html.kv-full` resta 4-5).
+2. `76f296b` **Cam aperte** (modello ciaoamigos): cam accesa = "in onda" (`cam-state` broadcast), clic = vedi subito, no accetta. Vars `roomCamStates`, `myCamOn`, fn `broadcastCamState`.
+3. `295f6bf` **Layout utenti ciaoamigos**: tolta riga orizzontale "sotto". Pannello in alto `#roomPeople` = lista nomi verticale (`#usersScrollContainer`, render in `renderUsersPanel`) + area cam affianco (`#rpCamView`,`#rpRemoteVideo`,`#rpMyVideo`). Video INLINE nel pannello: `openPrivateVideoCall` (mostra inline) / `closeInlineCam` / `endPrivateVideoCall`. Mirror `#theirVideo`→`#rpRemoteVideo`.
+4. `e3ca8ff` **Safety pack**: ⛔ Blocca (`blockUser`/`isBlocked`, localStorage `kv4_blocked`) · ⚑ Segnala (socket `report-user`, anonimi ok, modale 6 motivi) · server salva `DB.reports` e a 3 segnalatori distinti → `safety-kicked` (rimosso dalla stanza) · menu ⋮ riga (`openUserSafetyMenu`) · 💧 watermark `#rpWatermark` · 🔒 cam privata (`#camPrivBtn`, `kv4_cam_private`, `isCamPrivate`).
+5. `8446e8a` **Regali sulla cam**: sistema regali già esistente (GIFTS, `openGiftPicker`, `sendGift`, socket 'gift'); aggiunto bottone 🎁 + `spawnCamGift()` (emoji che volano).
+6. `a296df9`+`77a904a` **🎲 Cam Roulette**: match casuale "Prossimo →". Server: `global.rouletteQueue`/`global.roulettePairs`, handler `roulette-join`/`roulette-leave`, pairing per socket.id, cleanup disconnect. Client: `#rouletteScreen`, `openRoulette`/`nextRoulette`/`stopRoulette`, FAB `#rouletteFab`, riusa WebRTC, mirror `#theirVideo`→`#rltRemote`. **FIX**: WebRTC usava `room.id` (null fuori stanza)→crash; ora `room?.id||null` + routing ICE via `pc._toSocketId` (settato in `createPeerConnection` e nel handler `voice-offer`).
+7. `05ebdba` **Admin Segnalazioni**: `GET /api/admin/reports` + `POST /api/admin/reports/:id/resolve` (verifyAdmin) + tab "🚩 Segnalazioni" in `admin.html` (azioni Banna via `/api/admin/ban-user` body `{targetUserId,reason}`, e Gestita).
+
+**WebRTC — note tecniche importanti:**
+- Signaling via socket: `voice-offer`/`voice-answer`/`voice-ice`, routing per `toSocketId` (preciso, funziona anche con userId duplicati / fuori stanza).
+- `setupPeerConnection(userId)` (listeners+track) → caller usa `createPeerConnection(userId,toSocketId)` (crea offer), callee risponde nel handler `voice-offer`. Stream remoto arriva su `#theirVideo` (nascosto) e viene specchiato nell'elemento visibile (inline cam o roulette).
+- STUN Google + TURN Open Relay già configurati (`RTC_CONFIG`).
+
+**Verificato dal vivo** (2 tab Chrome via MCP Claude-in-Chrome): cam aperte, layout, blocco, segnala+auto-kick, cam privata, roulette (match+video bidirezionale 1280×720+Prossimo). Admin: endpoint protetto 401 + UI ok (NON testato loggato: serve password bob2015 che inserisce l'utente).
+
+**🔐 ADMIN:** kouverte.com/admin.html → `bob2015` / `bob2015.gc@gmail.com` / password in `vox-server.js` riga ~574 (`BOB_PASSWORD`).
+⚠️ **Sicurezza nota (utente ha rimandato — opzione B):** password admin HARDCODED in chiaro nel codice pushato su GitHub. Se repo pubblici = vulnerabilità grave. Fix futuro: env var Render + ruota password + repo privati.
+
+**Possibili prossimi passi (proposti, non fatti):** multi-cam in griglia (serve SFU tipo LiveKit, P2P regge ~3-4) · filtri AR · classifiche/eventi · fix password admin.
+
+**Vincoli Claude rispettati:** non inserire password/dati finanziari (li mette l'utente) · non cambiare visibilità repo · Chrome "read tier" → interazione solo via Claude-in-Chrome MCP (se si scollega, l'utente riapre Chrome su profilo Giorgio + clicca l'estensione).
 
 ---
 
