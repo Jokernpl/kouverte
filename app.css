@@ -4806,3 +4806,84 @@ body[data-room="campania"] #chat{
   transform:scale(1.15);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PANNELLO PERSONE (stile ciaoamigos): lista nomi + cam affianco
+═══════════════════════════════════════════════════════════════ */
+.room-people{
+  display:flex; gap:8px;
+  height:188px; flex-shrink:0;
+  padding:8px; margin:8px 8px 4px;
+  background:linear-gradient(160deg,rgba(22,26,50,.6),rgba(10,13,22,.7));
+  border:1px solid rgba(255,255,255,.08); border-radius:16px;
+  backdrop-filter:blur(8px);
+}
+/* Lista nomi verticale (sx) */
+.room-people .rp-list{
+  flex:0 0 44%; max-width:44%;
+  display:flex; flex-direction:column; gap:5px;
+  overflow-y:auto; overflow-x:hidden;
+  padding-right:3px;
+}
+.room-people .rp-list::-webkit-scrollbar{width:4px}
+.room-people .rp-list::-webkit-scrollbar-thumb{background:var(--room-color,#00d4ff);border-radius:2px}
+.room-people .rp-list:empty::before{
+  content:'Nessuno in stanza'; font-size:11px; color:#6b7280; padding:8px; display:block;
+}
+/* Riga utente (override del chip verticale → riga orizzontale) */
+.room-people .user-chip{
+  flex-direction:row !important; align-items:center !important;
+  gap:8px !important; width:100% !important; min-width:0 !important;
+  padding:6px 8px !important; border-radius:10px !important;
+  background:rgba(255,255,255,.04) !important;
+  border:1px solid rgba(255,255,255,.06);
+}
+.room-people .user-chip:hover{ background:rgba(255,255,255,.10) !important; transform:none !important; }
+.room-people .user-chip.chip-live{ border-color:rgba(255,68,68,.5) !important; }
+.room-people .user-chip-avatar{ width:34px !important; height:34px !important; font-size:17px !important; flex-shrink:0 }
+.room-people .user-chip-name{
+  font-size:13px !important; font-weight:700 !important; color:#fff !important;
+  text-align:left !important; max-width:none !important; flex:1; min-width:0;
+}
+.room-people .user-chip-online-dot{ position:static !important; flex-shrink:0; border:none !important; width:8px !important; height:8px !important; }
+/* Stato cam testuale nella riga */
+.rp-cam-status{ font-size:10px; font-weight:700; white-space:nowrap; flex-shrink:0 }
+.rp-cam-status.on{ color:#4ade80 }
+.rp-cam-status.off{ color:#6b7280 }
+/* Badge live assoluto → nascosto nella lista (usiamo il testo) */
+.room-people .chip-live-badge{ display:none !important; }
+.room-people .chip-video-btn{ position:static !important; flex-shrink:0; width:30px !important; height:30px !important; font-size:15px !important; }
+
+/* Area cam affianco (dx) */
+.rp-camview{
+  flex:1; position:relative; min-width:0;
+  background:#0a0d16; border-radius:12px; overflow:hidden;
+  border:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center;
+}
+#rpRemoteVideo{ width:100%; height:100%; object-fit:cover; display:none; background:#0a0d16 }
+#rpRemoteVideo.live{ display:block }
+.rp-cam-placeholder{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  text-align:center; font-size:12px; color:#7c8598; line-height:1.5; padding:10px; font-weight:600;
+}
+.rp-cam-label{
+  position:absolute; bottom:6px; left:8px; z-index:3;
+  font-size:12px; font-weight:800; color:#fff; text-shadow:0 1px 6px rgba(0,0,0,.9);
+  display:none;
+}
+.rp-cam-label.show{ display:block }
+/* PiP: la mia cam in piccolo nell'angolo */
+.rp-pip{
+  position:absolute; top:6px; right:6px; z-index:4;
+  width:54px; height:72px; border-radius:8px; object-fit:cover;
+  border:2px solid rgba(255,255,255,.35); box-shadow:0 4px 14px rgba(0,0,0,.5);
+  transform:scaleX(-1); background:#1a1a2e; display:none;
+}
+.rp-pip.show{ display:block }
+.rp-cam-close{
+  position:absolute; top:6px; left:6px; z-index:5;
+  width:26px; height:26px; border-radius:50%; border:none; cursor:pointer;
+  background:rgba(0,0,0,.6); color:#fff; font-size:13px; backdrop-filter:blur(4px);
+}
+.rp-cam-close:hover{ background:rgba(239,68,68,.8) }
+

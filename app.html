@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260529d">
+<link rel="stylesheet" href="/app.css?v=20260529e">
 </head>
 <body>
 
@@ -599,6 +599,20 @@
   </div>
   <div id="fireOverlay" style="display:none;position:absolute;inset:0;z-index:35;pointer-events:none;background:linear-gradient(180deg,rgba(255,80,0,.08),rgba(255,30,0,.04));animation:fireGlow 1s ease-in-out infinite alternate"></div>
 
+  <!-- ░ PANNELLO PERSONE (stile ciaoamigos): lista nomi + cam affianco ░ -->
+  <div class="room-people" id="roomPeople">
+    <!-- Lista nomi verticale (renderUsersPanel scrive qui) -->
+    <div class="rp-list" id="usersScrollContainer"><!-- .user-chip rows --></div>
+    <!-- Area cam affianco -->
+    <div class="rp-camview" id="rpCamView">
+      <video id="rpRemoteVideo" autoplay playsinline></video>
+      <div class="rp-cam-placeholder" id="rpCamPlaceholder">👈 Tocca un nome<br>per vedere la cam</div>
+      <div class="rp-cam-label" id="rpCamLabel"></div>
+      <video id="rpMyVideo" class="rp-pip" autoplay muted playsinline></video>
+      <button class="rp-cam-close" id="rpCamClose" onclick="closeInlineCam()" style="display:none">✕</button>
+    </div>
+  </div>
+
   <div class="chat-msgs" id="chatMsgs"></div>
 
   <div class="free-bar" id="freeBar">
@@ -607,12 +621,7 @@
     <span class="fb-lbl" id="fbCount">0/100</span>
   </div>
 
-  <!-- NEW: Users list (bottom) -->
-  <div class="chat-users-section">
-    <div class="users-scroll" id="usersScrollContainer">
-      <!-- dynamic: .user-chip per ogni utente online -->
-    </div>
-  </div>
+  <!-- (Lista utenti spostata in alto: vedi .room-people / #roomPeople) -->
 
   <!-- Reply Bar (slide-up sopra input quando si risponde) -->
   <div id="replyBar" class="reply-bar" style="display:none">
@@ -1655,7 +1664,7 @@
 
 
 
-<script src="/app.js?v=20260529d"></script>
+<script src="/app.js?v=20260529e"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

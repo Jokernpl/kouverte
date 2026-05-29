@@ -1865,8 +1865,10 @@ async function initWebRTC() {
     }
     // Cam accesa di default → annuncia "in onda" alla stanza + aggiorna pannello
     myCamOn = true;
+    if (typeof setupSelfPip === 'function') setupSelfPip(); // anteprima propria cam nel pannello
     setTimeout(() => {
       broadcastCamState();
+      if (typeof setupSelfPip === 'function') setupSelfPip();
       if (typeof renderUsersPanel === 'function') renderUsersPanel();
     }, 500);
 
@@ -2470,6 +2472,9 @@ function renderUsersPanel() {
   const container = document.getElementById('usersScrollContainer');
   if (!container || !room) return;
 
+  // Mostra l'anteprima della propria cam nell'angolo dell'area cam
+  if (typeof setupSelfPip === 'function') setupSelfPip();
+
   container.innerHTML = '';
 
   const usersMap = chatRoomUsers[room.id];
@@ -2507,20 +2512,14 @@ function renderUsersPanel() {
     name.className = 'user-chip-name';
     name.textContent = (userObj.name || 'Anonimo').substring(0, 10);
 
-    const onlineDot = document.createElement('div');
-    onlineDot.className = 'user-chip-online-dot';
-
     // Stato cam: questo utente è "in onda"?
     const camOn = !!roomCamStates[userObj.id];
     if (camOn) chip.classList.add('chip-live');
 
-    // Badge "IN ONDA" sul chip se la cam è accesa
-    if (camOn) {
-      const liveBadge = document.createElement('div');
-      liveBadge.className = 'chip-live-badge';
-      liveBadge.innerHTML = '<span class="chip-live-dot"></span>LIVE';
-      chip.appendChild(liveBadge);
-    }
+    // Stato cam testuale beside the name (acceso/spento)
+    const camStatus = document.createElement('div');
+    camStatus.className = 'rp-cam-status ' + (camOn ? 'on' : 'off');
+    camStatus.textContent = camOn ? '🔴 in onda' : '📷 off';
 
     // Bottone: 👁 Guarda (se in onda) oppure 📹 Invita (se cam spenta)
     const videoBtn = document.createElement('button');
@@ -2532,15 +2531,18 @@ function renderUsersPanel() {
       sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
     });
 
+    // Riga: avatar | nome | stato cam | 👁
     chip.appendChild(avatar);
     chip.appendChild(name);
-    chip.appendChild(onlineDot);
+    chip.appendChild(camStatus);
     chip.appendChild(videoBtn);
 
-    // Tocca il chip di un utente in onda → guarda la sua cam (modello aperto)
+    // Tocca la riga di un utente in onda → guarda la sua cam (modello aperto)
     chip.addEventListener('click', () => {
       if (roomCamStates[userObj.id]) {
         sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
+      } else {
+        showToast('📷 ' + (userObj.name||'Utente') + ' ha la cam spenta');
       }
     });
 
@@ -2649,55 +2651,56 @@ function declineVideoCall() {
   _vcallPendingFrom = null;
 }
 
-// ── APERTURA OVERLAY ─────────────────────────────────
+// Mostra la mia cam come PiP nell'angolo dell'area cam (sempre, mentre sono in stanza)
+function setupSelfPip() {
+  const pip = document.getElementById('rpMyVideo');
+  if (pip && localStream) {
+    if (pip.srcObject !== localStream) pip.srcObject = localStream;
+    pip.play().catch(() => {});
+    pip.classList.add('show');
+  }
+}
+
+// ── APERTURA CAM INLINE (pannello, stile ciaoamigos) ──
 function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) {
   // NON settare selectedUserId qui: per il caller lo fa selectUser(),
-  // per il callee lo fa l'handler voice-offer. Settarlo qui farebbe scattare
-  // il toggle deselect dentro selectUser (selectedUserId===userId → deselect).
+  // per il callee lo fa l'handler voice-offer.
   _vcallPartnerId = userId;
 
-  // Popola header
-  const overlay = document.getElementById('vcallOverlay');
-  document.getElementById('vcallUserName').textContent = userName || 'Anonimo';
-  document.getElementById('vcallAvatar').textContent = userFace || '👤';
-  document.getElementById('vcallConnecting').style.display = 'flex';
+  const remoteVid = document.getElementById('rpRemoteVideo');
+  const placeholder = document.getElementById('rpCamPlaceholder');
+  const label = document.getElementById('rpCamLabel');
+  const closeBtn = document.getElementById('rpCamClose');
+  const camView = document.getElementById('rpCamView');
 
-  // Collega il proprio video al PiP
-  const pipVid = document.getElementById('vcallMyVideo');
-  if (pipVid && localStream) {
-    pipVid.srcObject = localStream;
-    pipVid.play().catch(() => {});
-  }
+  if (label) { label.textContent = '🔴 ' + (userName || 'Anonimo'); label.classList.add('show'); }
+  if (closeBtn) closeBtn.style.display = 'block';
+  if (placeholder) placeholder.textContent = 'Connessione…';
+  setupSelfPip();
 
-  // Collega il video remoto all'elemento dell'overlay
-  const remoteVid = document.getElementById('vcallTheirVideo');
-  // Sync: se theirVideo ha già un stream (es. callee riceve prima), copialo
+  // Lo stream remoto arriva su #theirVideo (ontrack) → specchialo inline in #rpRemoteVideo
   const oldTheirVideo = document.getElementById('theirVideo');
-  if (oldTheirVideo?.srcObject) remoteVid.srcObject = oldTheirVideo.srcObject;
-
-  // Override ontrack per usare l'elemento dell'overlay
-  // (il setup peer connection usa ancora #theirVideo — sincronizziamo)
+  if (oldTheirVideo?.srcObject && remoteVid) remoteVid.srcObject = oldTheirVideo.srcObject;
   const syncRemote = () => {
-    if (oldTheirVideo?.srcObject && remoteVid.srcObject !== oldTheirVideo.srcObject) {
+    if (oldTheirVideo?.srcObject && remoteVid && remoteVid.srcObject !== oldTheirVideo.srcObject) {
       remoteVid.srcObject = oldTheirVideo.srcObject;
       remoteVid.play().catch(() => {});
-      document.getElementById('vcallConnecting').style.display = 'none';
+    }
+    if (remoteVid && remoteVid.srcObject) {
+      remoteVid.classList.add('live');
+      if (placeholder) placeholder.style.display = 'none';
     }
   };
-  overlay._syncInterval = setInterval(syncRemote, 400);
+  if (camView) { clearInterval(camView._syncInterval); camView._syncInterval = setInterval(syncRemote, 400); }
 
-  overlay.style.display = 'flex';
-  overlay.style.flexDirection = 'column';
-
-  // Timer
+  // Timer mostrato nella label
   _vcallStartTs = Date.now();
   clearInterval(_vcallTimerInterval);
   _vcallTimerInterval = setInterval(() => {
     const s = Math.floor((Date.now() - _vcallStartTs) / 1000);
     const mm = String(Math.floor(s / 60)).padStart(2, '0');
     const ss = String(s % 60).padStart(2, '0');
-    const el = document.getElementById('vcallTimer');
-    if (el) el.textContent = mm + ':' + ss;
+    if (label) label.textContent = '🔴 ' + (userName || 'Anonimo') + ' · ' + mm + ':' + ss;
   }, 1000);
 
   // Avvia WebRTC se siamo il caller
@@ -2709,29 +2712,33 @@ function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) 
   }
 }
 
-// ── CHIUSURA ─────────────────────────────────────────
+// Chiusura cam inline (bottone ✕)
+function closeInlineCam() { endPrivateVideoCall(); }
+
+// ── CHIUSURA cam inline ───────────────────────────────
 function endPrivateVideoCall(silent) {
-  const overlay = document.getElementById('vcallOverlay');
   // Se non c'è una call attiva, non fare nulla (evita toast spuri)
-  if (overlay && overlay.style.display === 'none' && !_vcallPartnerId) return;
+  if (!_vcallPartnerId && !selectedUserId) return;
 
   clearInterval(_vcallTimerInterval);
-  if (overlay) { clearInterval(overlay._syncInterval); overlay.style.display = 'none'; }
+  const camView = document.getElementById('rpCamView');
+  if (camView) clearInterval(camView._syncInterval);
 
   // Notifica l'altro peer (a meno che la chiusura sia stata richiesta da lui)
   const partner = _vcallPartnerId || selectedUserId;
   if (!silent && partner) {
-    socket.emit('video-call-ended', {
-      to: partner, from: user.id, roomId: room?.id
-    });
+    socket.emit('video-call-ended', { to: partner, from: user.id, roomId: room?.id });
   }
 
-  // Reset video remoto overlay
-  const remoteVid = document.getElementById('vcallTheirVideo');
-  if (remoteVid) remoteVid.srcObject = null;
-  // Reset filtro PiP
-  const pip = document.getElementById('vcallMyVideo');
-  if (pip) pip.style.filter = 'none';
+  // Reset area cam inline
+  const remoteVid = document.getElementById('rpRemoteVideo');
+  if (remoteVid) { remoteVid.srcObject = null; remoteVid.classList.remove('live'); }
+  const placeholder = document.getElementById('rpCamPlaceholder');
+  if (placeholder) { placeholder.style.display = 'flex'; placeholder.innerHTML = '👈 Tocca un nome<br>per vedere la cam'; }
+  const label = document.getElementById('rpCamLabel');
+  if (label) { label.classList.remove('show'); label.textContent = ''; }
+  const closeBtn = document.getElementById('rpCamClose');
+  if (closeBtn) closeBtn.style.display = 'none';
 
   // Reset chip calling
   document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
@@ -2740,7 +2747,6 @@ function endPrivateVideoCall(silent) {
   if (partner) closePeerConnection(partner);
   selectedUserId = null;
   _vcallPartnerId = null;
-  showToast('📵 Videochiamata terminata');
 }
 
 // ── CONTROLLI IN-CALL ────────────────────────────────
