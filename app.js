@@ -2264,9 +2264,9 @@ function setupPeerConnection(userId) {
 
   pc.onicecandidate = (event) => {
     if (event.candidate) {
-      // Recupera socketId del target da chatRoomUsers per routing preciso
-      const roomMap = chatRoomUsers[room?.id];
-      let toSocketId = null;
+      // Socket target: prima quello memorizzato sul pc (roulette/cam), poi lookup stanza
+      let toSocketId = pc._toSocketId || null;
+      const roomMap = !toSocketId ? chatRoomUsers[room?.id] : null;
       if (roomMap) {
         for (const [sid, u] of roomMap.entries()) {
           if (u.id === userId && sid !== socket.id) { toSocketId = sid; break; }
@@ -2277,7 +2277,7 @@ function setupPeerConnection(userId) {
         toSocketId,
         from: user.id,
         fromSocketId: socket.id,
-        roomId: room.id,
+        roomId: room?.id || null,
         candidate: event.candidate
       });
     }
@@ -2331,6 +2331,7 @@ async function createPeerConnection(userId, toSocketId) {
 
     console.log(`[WebRTC] 📤 Sto creando offer per ${userId}...`);
     const pc = setupPeerConnection(userId);
+    if (pc) pc._toSocketId = toSocketId || null; // per routing ICE (anche fuori da una stanza)
 
     const offer = await pc.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
     await pc.setLocalDescription(offer);
@@ -2340,7 +2341,7 @@ async function createPeerConnection(userId, toSocketId) {
       toSocketId: toSocketId || null,  // socket.id destinatario (per routing preciso)
       from: user.id,
       fromSocketId: socket.id,
-      roomId: room.id,
+      roomId: room?.id || null,
       offer: pc.localDescription
     });
 
@@ -2484,6 +2485,7 @@ function registerWebRTCHandlers(sock) {
     // CALLEE path: crea il pc SENZA generare offer (era il bug: createPeerConnection
     // creava un offer concorrente causando glare e setRemoteDescription falliva).
     const pc = setupPeerConnection(from);
+    if (pc) pc._toSocketId = fromSocketId || null; // per routing ICE (anche in roulette)
 
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     await flushPendingIce(pc, from);
@@ -2496,7 +2498,7 @@ function registerWebRTCHandlers(sock) {
       toSocketId: fromSocketId || null,  // risponde direttamente al socket del caller
       from: user.id,
       fromSocketId: socket.id,
-      roomId: room.id,
+      roomId: room?.id || null,
       answer: pc.localDescription
     });
 
