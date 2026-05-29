@@ -5148,6 +5148,32 @@ io.on('connection', (socket) => {
         return null;
     }
 
+    // ── VIDEO PRIVATO: routing richieste ──────────────────
+    socket.on('video-request', (data) => {
+        const { to, toSocketId, from, fromSocketId, fromName, fromFace, roomId } = data;
+        const targetSid = toSocketId || findSocketByUserId(roomId, to);
+        console.log(`[VIDEO-REQ] ${fromName}(${(fromSocketId||'').slice(0,8)}) → ${to}(${(toSocketId||'').slice(0,8)||'lookup'})`);
+        if (targetSid) {
+            io.to(targetSid).emit('video-request', { from, fromSocketId, fromName, fromFace, roomId });
+        }
+    });
+
+    socket.on('video-request-accepted', (data) => {
+        const { to, toSocketId, from, fromSocketId, roomId } = data;
+        const targetSid = toSocketId || findSocketByUserId(roomId, to);
+        if (targetSid) {
+            io.to(targetSid).emit('video-request-accepted', { from, fromSocketId });
+        }
+    });
+
+    socket.on('video-request-declined', (data) => {
+        const { to, toSocketId, from, roomId } = data;
+        const targetSid = toSocketId || findSocketByUserId(roomId, to);
+        if (targetSid) {
+            io.to(targetSid).emit('video-request-declined', { from });
+        }
+    });
+
     socket.on('voice-offer', (data) => {
         const { to, toSocketId, from, fromSocketId, roomId, roomSlug, offer } = data;
         const room = roomId || roomSlug;

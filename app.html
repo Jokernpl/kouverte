@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260528n">
+<link rel="stylesheet" href="/app.css?v=20260529a">
 </head>
 <body>
 
@@ -477,43 +477,80 @@
 
 <!-- ░░ CHAT ░░ -->
 <div id="chat" class="screen">
-  <!-- NEW: Video section (top) -->
-  <div class="chat-video-section">
-    <div class="video-wrapper" style="position:relative">
-      <video id="myVideo" autoplay muted playsinline></video>
-      <div class="video-cam-off-overlay" id="myCamOffOverlay">
-        <div class="cam-off-icon">📷</div>
-        <div>Camera OFF</div>
+  <!-- Video elements nascosti — usati da WebRTC, visibili nell'overlay privato -->
+  <div style="display:none">
+    <video id="myVideo" autoplay muted playsinline></video>
+    <video id="theirVideo" autoplay playsinline muted></video>
+    <div id="vfActiveLabel"></div>
+    <div id="theirVideoLabel"></div>
+    <div id="myCamOffOverlay"></div>
+    <div id="vfPanel"><div id="vfList"></div></div>
+    <div id="myCamBtn"></div>
+    <div id="myMicBtn"></div>
+    <div id="qualityBtn"></div>
+    <div id="qualityMenu"></div>
+    <div id="blurBtn"></div>
+  </div>
+
+  <!-- ═══ OVERLAY VIDEO PRIVATO ═══ -->
+  <div id="vcallOverlay" class="vcall-overlay" style="display:none">
+    <!-- Sfondo animato -->
+    <div class="vcall-bg-blur"></div>
+
+    <!-- Video remoto (grande) -->
+    <video id="vcallTheirVideo" class="vcall-remote-video" autoplay playsinline></video>
+
+    <!-- Stato connessione -->
+    <div class="vcall-connecting" id="vcallConnecting">
+      <div class="vcall-spinner"></div>
+      <div>Connessione in corso…</div>
+    </div>
+
+    <!-- Header con nome e stato -->
+    <div class="vcall-header">
+      <div class="vcall-user-info">
+        <div class="vcall-avatar" id="vcallAvatar">👤</div>
+        <div>
+          <div class="vcall-user-name" id="vcallUserName">—</div>
+          <div class="vcall-live-badge"><span class="vcall-live-dot"></span> LIVE</div>
+        </div>
       </div>
-      <div class="video-label" id="vfActiveLabel"></div>
-      <!-- Video Filter Panel -->
-      <div class="vf-panel" id="vfPanel">
-        <div class="vf-list" id="vfList"><!-- JS --></div>
-      </div>
-      <div class="video-controls">
-        <div class="video-cam-btn" id="myCamBtn" onclick="toggleCamera()" title="Camera ON/OFF">📹</div>
-        <div class="video-mic-btn" id="myMicBtn" onclick="toggleMicrophone()" title="Microfono ON/OFF">🎤</div>
-        <button class="vf-btn" id="vfToggleBtn" onclick="toggleVfPanel()" title="Filtri video">🎨</button>
+      <div class="vcall-timer" id="vcallTimer">00:00</div>
+    </div>
+
+    <!-- PiP — il mio video (piccolo, in basso a destra) -->
+    <div class="vcall-pip-wrap" id="vcallPipWrap">
+      <video id="vcallMyVideo" class="vcall-pip-video" autoplay muted playsinline></video>
+      <div class="vcall-cam-off-pip" id="vcallCamOffPip" style="display:none">
+        <span>📷</span>
       </div>
     </div>
 
-    <div class="video-wrapper">
-      <video id="theirVideo" autoplay playsinline muted></video>
-      <div class="video-label" id="theirVideoLabel">Seleziona utente</div>
-      <div class="video-controls">
-        <div style="position:relative">
-          <button style="width:28px;height:28px;border-radius:50%;background:rgba(0,212,255,0.2);border:none;color:#00d4ff;cursor:pointer;font-size:12px;font-weight:700" id="qualityBtn" onclick="toggleQualityMenu()" title="Qualità video">HD</button>
-          <div id="qualityMenu" style="position:absolute;top:30px;right:0;background:#0f1117;border:1px solid #00d4ff;border-radius:8px;padding:4px;min-width:100px;display:none;z-index:50">
-            <div style="padding:4px 8px;font-size:10px;color:#6b7280;cursor:pointer;border-radius:4px" onclick="setVideoQuality('auto')">Auto</div>
-            <div style="padding:4px 8px;font-size:10px;color:#6b7280;cursor:pointer;border-radius:4px" onclick="setVideoQuality('1080')">1080p</div>
-            <div style="padding:4px 8px;font-size:10px;color:#6b7280;cursor:pointer;border-radius:4px" onclick="setVideoQuality('720')">720p</div>
-            <div style="padding:4px 8px;font-size:10px;color:#6b7280;cursor:pointer;border-radius:4px" onclick="setVideoQuality('480')">480p</div>
-          </div>
-        </div>
-        <div class="video-cam-indicator">🎥</div>
-        <button style="width:28px;height:28px;border-radius:50%;background:rgba(0,212,255,0.2);border:none;color:#00d4ff;cursor:pointer;font-size:14px" onclick="screenshotVideo()" title="Scatta foto">📸</button>
-        <button style="width:28px;height:28px;border-radius:50%;background:rgba(0,212,255,0.2);border:none;color:#00d4ff;cursor:pointer;font-size:14px" id="blurBtn" onclick="toggleVideoBlur()" title="Sfocatura sfondo">🌫️</button>
-      </div>
+    <!-- Filtri video (mini-panel) -->
+    <div class="vcall-filters" id="vcallFilterPanel" style="display:none">
+      <div class="vcall-filter-scroll" id="vcallFilterList"><!-- JS --></div>
+    </div>
+
+    <!-- Controlli call in basso -->
+    <div class="vcall-controls">
+      <button class="vcall-btn vcall-btn-filter" onclick="toggleVcallFilters()" title="Filtri">🎨</button>
+      <button class="vcall-btn" id="vcallMicBtn" onclick="vcallToggleMic()" title="Microfono">🎤</button>
+      <button class="vcall-btn vcall-btn-end" onclick="endPrivateVideoCall()" title="Termina">📵</button>
+      <button class="vcall-btn" id="vcallCamBtn" onclick="vcallToggleCam()" title="Camera">📹</button>
+      <button class="vcall-btn vcall-btn-flip" onclick="vcallFlipPip()" title="Scambia">⇄</button>
+    </div>
+  </div>
+
+  <!-- ═══ TOAST RICHIESTA VIDEO INCOMING ═══ -->
+  <div id="vcallIncomingToast" class="vcall-incoming-toast" style="display:none">
+    <div class="vcall-incoming-avatar" id="vcallIncomingAvatar">👤</div>
+    <div class="vcall-incoming-text">
+      <div class="vcall-incoming-name" id="vcallIncomingName">Utente</div>
+      <div class="vcall-incoming-sub">vuole una videochiamata con te</div>
+    </div>
+    <div class="vcall-incoming-actions">
+      <button class="vcall-accept-btn" onclick="acceptVideoCall()">✅ Accetta</button>
+      <button class="vcall-decline-btn" onclick="declineVideoCall()">✖ Rifiuta</button>
     </div>
   </div>
 
@@ -1616,7 +1653,7 @@
 
 
 
-<script src="/app.js?v=20260528n"></script>
+<script src="/app.js?v=20260529a"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

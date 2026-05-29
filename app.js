@@ -2241,6 +2241,36 @@ async function flushPendingIce(pc, userId) {
 function registerWebRTCHandlers(sock) {
   console.log('[WebRTC] Registering socket handlers su socket', sock.id || '(not-connected-yet)');
 
+  // ── VIDEO PRIVATO: richiesta in arrivo ──────────────
+  sock.on('video-request', (data) => {
+    console.log('[VCall] Richiesta ricevuta da', data.fromName);
+    // Ignora se già in chiamata
+    if (document.getElementById('vcallOverlay')?.style.display !== 'none') return;
+    showIncomingVideoRequest(data);
+  });
+
+  sock.on('video-request-accepted', (data) => {
+    console.log('[VCall] Accettata da', data.from);
+    // Rimuovi "calling" dai chip
+    document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
+    showToast('✅ Videochiamata accettata!');
+    // Trova nome/face dell'utente dalla mappa
+    const roomMap = chatRoomUsers[room?.id];
+    let uName = 'Anonimo', uFace = '👤';
+    if (roomMap) {
+      for (const [sid, u] of roomMap.entries()) {
+        if (u.id === data.from) { uName = u.name || uName; uFace = u.face || uFace; break; }
+      }
+    }
+    openPrivateVideoCall(data.from, data.fromSocketId, uName, uFace, true);
+  });
+
+  sock.on('video-request-declined', (data) => {
+    console.log('[VCall] Rifiutata da', data.from);
+    document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
+    showToast('❌ Videochiamata rifiutata');
+  });
+
   sock.on('voice-offer', async (data) => {
   try {
     const { from, fromSocketId, offer } = data;
@@ -2433,47 +2463,261 @@ function renderUsersPanel() {
     const onlineDot = document.createElement('div');
     onlineDot.className = 'user-chip-online-dot';
 
-    const camIndicator = document.createElement('div');
-    camIndicator.className = 'user-chip-cam-indicator';
-    camIndicator.textContent = '🎥';
-    camIndicator.style.display = webrtcEnabled ? 'flex' : 'none';
-    camIndicator.title = 'Tocca per video chat';
+    // Bottone 📹 per richiedere video privato
+    const videoBtn = document.createElement('button');
+    videoBtn.className = 'chip-video-btn';
+    videoBtn.textContent = '📹';
+    videoBtn.title = 'Richiedi videochiamata privata';
+    videoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sendVideoRequest(userObj.id, socketId, userObj.name || 'Anonimo', userObj.face || '👤');
+    });
 
     chip.appendChild(avatar);
     chip.appendChild(name);
     chip.appendChild(onlineDot);
-    chip.appendChild(camIndicator);
+    chip.appendChild(videoBtn);
 
     chip.addEventListener('click', () => {
-      // Passa il socketId per routing preciso senza bisogno di findSocketByUserId
-      if (selectedUserId === userObj.id) { deselectUser(); return; }
-      selectUser(userObj.id, socketId);
+      // Solo evidenzia il chip, non lancia video automatico
     });
 
     container.appendChild(chip);
   });
+  // Auto-connect rimosso — il video si avvia solo su richiesta esplicita (sendVideoRequest)
+}
 
-  // AUTO-CONNECT: usa socket.id (sempre univoco) per determinare caller vs callee
-  // Evita WebRTC glare: solo uno dei due fa l'offerta
+// ══════════════════════════════════════════════════════
+// SISTEMA VIDEO PRIVATO — richiesta, ricezione, overlay
+// ══════════════════════════════════════════════════════
 
-  // Reset se selectedUserId è settato ma la peer connection è morta (retry)
-  if (selectedUserId && !peerConnections[selectedUserId]) selectedUserId = null;
+var _vcallTimerInterval = null;
+var _vcallStartTs = 0;
+var _vcallPendingFrom = null; // { userId, socketId, name, face }
+var _vcallPipFlipped = false;
 
-  if (webrtcEnabled && localStream && firstOtherUser && !selectedUserId) {
-    const mySocketId2 = socket?.id || '';
-    const theirSocketId = firstOtherUser.socketId || '';
-    const isCaller = mySocketId2 < theirSocketId; // confronto lessicografico deterministico
-    if (isCaller) {
-      console.log('[WebRTC] Auto-connect (caller) socketId:', mySocketId2, '< ', theirSocketId);
-      const _tid = firstOtherUser.id, _tsid = theirSocketId;
-      // Previeni chiamate duplicate con selectedUserId come guard
-      selectedUserId = _tid;
-      setTimeout(() => selectUser(_tid, _tsid), 800);
-    } else {
-      console.log('[WebRTC] Auto-connect (callee) attendo offerta, socketId:', mySocketId2, '>', theirSocketId);
-      selectedUserId = firstOtherUser.id;
-    }
+// ── INVIO RICHIESTA ──────────────────────────────────
+function sendVideoRequest(toUserId, toSocketId, toName, toFace) {
+  if (!room) return showToast('Entra in una stanza prima');
+  if (!localStream) {
+    // Inizializza webcam se non è ancora attiva
+    initWebRTC().then(() => {
+      setTimeout(() => sendVideoRequest(toUserId, toSocketId, toName, toFace), 800);
+    });
+    return;
   }
+  // Evita doppia richiesta
+  if (selectedUserId === toUserId) return;
+
+  socket.emit('video-request', {
+    to: toUserId,
+    toSocketId,
+    from: user.id,
+    fromSocketId: socket.id,
+    fromName: user.name || 'Anonimo',
+    fromFace: user.face || '👤',
+    roomId: room.id
+  });
+  showToast(`📹 Richiesta inviata a ${toName}…`);
+
+  // Marca il chip come "calling"
+  document.querySelectorAll('.chip-video-btn').forEach(btn => {
+    const chip = btn.closest('.user-chip, [class*="chip"]');
+    const chipUserId = chip?.dataset?.userId;
+    if (chipUserId === toUserId || !chipUserId) btn.classList.add('calling');
+  });
+
+  console.log('[VCall] Richiesta inviata a', toName, toUserId);
+}
+
+// ── RICEZIONE RICHIESTA (incoming) ──────────────────
+function showIncomingVideoRequest(data) {
+  _vcallPendingFrom = data;
+  const toast = document.getElementById('vcallIncomingToast');
+  if (!toast) return;
+  document.getElementById('vcallIncomingAvatar').textContent = data.fromFace || '👤';
+  document.getElementById('vcallIncomingName').textContent = data.fromName || 'Anonimo';
+  toast.style.display = 'flex';
+  toast.style.flexDirection = 'column';
+  // Auto-dismiss dopo 25s
+  clearTimeout(toast._autoTimeout);
+  toast._autoTimeout = setTimeout(() => declineVideoCall(), 25000);
+}
+
+function acceptVideoCall() {
+  const toast = document.getElementById('vcallIncomingToast');
+  if (toast) { toast.style.display = 'none'; clearTimeout(toast._autoTimeout); }
+  if (!_vcallPendingFrom) return;
+
+  socket.emit('video-request-accepted', {
+    to: _vcallPendingFrom.from,
+    toSocketId: _vcallPendingFrom.fromSocketId,
+    from: user.id,
+    fromSocketId: socket.id,
+    roomId: room?.id
+  });
+
+  // Avvia la chiamata come callee
+  openPrivateVideoCall(_vcallPendingFrom.from, _vcallPendingFrom.fromSocketId,
+    _vcallPendingFrom.fromName, _vcallPendingFrom.fromFace, false);
+  _vcallPendingFrom = null;
+}
+
+function declineVideoCall() {
+  const toast = document.getElementById('vcallIncomingToast');
+  if (toast) { toast.style.display = 'none'; clearTimeout(toast._autoTimeout); }
+  if (!_vcallPendingFrom) return;
+
+  socket.emit('video-request-declined', {
+    to: _vcallPendingFrom.from,
+    toSocketId: _vcallPendingFrom.fromSocketId,
+    from: user.id
+  });
+  _vcallPendingFrom = null;
+}
+
+// ── APERTURA OVERLAY ─────────────────────────────────
+function openPrivateVideoCall(userId, toSocketId, userName, userFace, isCaller) {
+  selectedUserId = userId;
+
+  // Popola header
+  const overlay = document.getElementById('vcallOverlay');
+  document.getElementById('vcallUserName').textContent = userName || 'Anonimo';
+  document.getElementById('vcallAvatar').textContent = userFace || '👤';
+  document.getElementById('vcallConnecting').style.display = 'flex';
+
+  // Collega il proprio video al PiP
+  const pipVid = document.getElementById('vcallMyVideo');
+  if (pipVid && localStream) {
+    pipVid.srcObject = localStream;
+    pipVid.play().catch(() => {});
+  }
+
+  // Collega il video remoto all'elemento dell'overlay
+  const remoteVid = document.getElementById('vcallTheirVideo');
+  // Sync: se theirVideo ha già un stream (es. callee riceve prima), copialo
+  const oldTheirVideo = document.getElementById('theirVideo');
+  if (oldTheirVideo?.srcObject) remoteVid.srcObject = oldTheirVideo.srcObject;
+
+  // Override ontrack per usare l'elemento dell'overlay
+  // (il setup peer connection usa ancora #theirVideo — sincronizziamo)
+  const syncRemote = () => {
+    if (oldTheirVideo?.srcObject && remoteVid.srcObject !== oldTheirVideo.srcObject) {
+      remoteVid.srcObject = oldTheirVideo.srcObject;
+      remoteVid.play().catch(() => {});
+      document.getElementById('vcallConnecting').style.display = 'none';
+    }
+  };
+  overlay._syncInterval = setInterval(syncRemote, 400);
+
+  overlay.style.display = 'flex';
+  overlay.style.flexDirection = 'column';
+
+  // Timer
+  _vcallStartTs = Date.now();
+  clearInterval(_vcallTimerInterval);
+  _vcallTimerInterval = setInterval(() => {
+    const s = Math.floor((Date.now() - _vcallStartTs) / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    const el = document.getElementById('vcallTimer');
+    if (el) el.textContent = mm + ':' + ss;
+  }, 1000);
+
+  // Avvia WebRTC se siamo il caller
+  if (isCaller) {
+    console.log('[VCall] Avvio come CALLER verso', userId);
+    setTimeout(() => selectUser(userId, toSocketId), 300);
+  } else {
+    console.log('[VCall] Avvio come CALLEE, attendo offerta da', userId);
+  }
+}
+
+// ── CHIUSURA ─────────────────────────────────────────
+function endPrivateVideoCall() {
+  clearInterval(_vcallTimerInterval);
+  clearInterval(document.getElementById('vcallOverlay')?._syncInterval);
+  const overlay = document.getElementById('vcallOverlay');
+  if (overlay) overlay.style.display = 'none';
+
+  // Reset video remoto overlay
+  const remoteVid = document.getElementById('vcallTheirVideo');
+  if (remoteVid) remoteVid.srcObject = null;
+
+  // Reset chip calling
+  document.querySelectorAll('.chip-video-btn.calling').forEach(b => b.classList.remove('calling'));
+
+  // Chiude WebRTC
+  if (selectedUserId) {
+    closePeerConnection(selectedUserId);
+    selectedUserId = null;
+  }
+  deselectUser && deselectUser();
+  showToast('📵 Videochiamata terminata');
+}
+
+// ── CONTROLLI IN-CALL ────────────────────────────────
+function vcallToggleMic() {
+  if (!localStream) return;
+  const btn = document.getElementById('vcallMicBtn');
+  localStream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+  const muted = !localStream.getAudioTracks()[0]?.enabled;
+  if (btn) { btn.textContent = muted ? '🔇' : '🎤'; btn.classList.toggle('muted', muted); }
+}
+
+function vcallToggleCam() {
+  if (!localStream) return;
+  const btn = document.getElementById('vcallCamBtn');
+  const pip = document.getElementById('vcallCamOffPip');
+  localStream.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
+  const off = !localStream.getVideoTracks()[0]?.enabled;
+  if (btn) { btn.textContent = off ? '🚫' : '📹'; btn.classList.toggle('cam-off', off); }
+  if (pip) pip.style.display = off ? 'flex' : 'none';
+}
+
+function vcallFlipPip() {
+  const pip = document.getElementById('vcallPipWrap');
+  if (!pip) return;
+  _vcallPipFlipped = !_vcallPipFlipped;
+  if (_vcallPipFlipped) {
+    pip.style.left = '14px'; pip.style.right = '';
+  } else {
+    pip.style.right = '14px'; pip.style.left = '';
+  }
+}
+
+function toggleVcallFilters() {
+  const panel = document.getElementById('vcallFilterPanel');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open && !panel._populated) {
+    // Popola filtri dal VF esistente
+    const filterList = document.getElementById('vcallFilterList');
+    const filters = [
+      { id: 'none', label: '✨ Nessuno' }, { id: 'warm', label: '🌅 Caldo' },
+      { id: 'cool', label: '❄️ Freddo' }, { id: 'noir', label: '🎬 B&N' },
+      { id: 'glow', label: '💫 Glow' }, { id: 'retro', label: '📼 Retro' }
+    ];
+    filterList.innerHTML = filters.map(f =>
+      `<div class="vcall-filter-item${f.id==='none'?' active':''}" onclick="applyVcallFilter('${f.id}',this)">${f.label}</div>`
+    ).join('');
+    panel._populated = true;
+  }
+}
+
+function applyVcallFilter(filterId, el) {
+  const pip = document.getElementById('vcallMyVideo');
+  if (!pip) return;
+  const filters = {
+    none: 'none', warm: 'sepia(0.4) saturate(1.4) brightness(1.05)',
+    cool: 'hue-rotate(180deg) saturate(0.8) brightness(1.1)',
+    noir: 'grayscale(1) contrast(1.2)', glow: 'brightness(1.15) saturate(1.5)',
+    retro: 'sepia(0.6) contrast(1.1) brightness(0.95)'
+  };
+  pip.style.filter = filters[filterId] || 'none';
+  document.querySelectorAll('.vcall-filter-item').forEach(i => i.classList.remove('active'));
+  if (el) el.classList.add('active');
 }
 
 // ══ ROOMS ══
