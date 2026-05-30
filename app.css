@@ -4992,3 +4992,91 @@ body[data-room="campania"] #chat{
 body.in-room .roulette-fab{ display:none; }
 @keyframes rltFabPulse{ 0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.45),0 0 0 0 rgba(236,72,153,.5)} 50%{box-shadow:0 8px 28px rgba(236,72,153,.6),0 0 0 10px rgba(236,72,153,0)} }
 
+/* ═══════════════════════════════════════════════════════════════
+   AMBIENT SCENE HD — aurora animata viva dietro tutta l'app
+═══════════════════════════════════════════════════════════════ */
+/* body/html trasparenti → l'ambient (fixed, z-index -1) è l'unico sfondo,
+   nessun layer opaco (splash/body) lo copre più */
+html,body{background:transparent !important}
+#kvAmbient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+  background:
+    radial-gradient(90% 55% at 18% 8%, rgba(0,170,255,.42), transparent 60%),
+    radial-gradient(85% 50% at 88% 22%, rgba(255,70,150,.36), transparent 58%),
+    radial-gradient(95% 60% at 30% 95%, rgba(150,90,255,.42), transparent 62%),
+    radial-gradient(80% 50% at 85% 80%, rgba(20,210,170,.26), transparent 60%),
+    radial-gradient(70% 45% at 55% 45%, rgba(99,102,241,.22), transparent 65%),
+    linear-gradient(180deg,#0b0e1f,#080714 55%,#0a0818)}
+.amb-orb{position:absolute;border-radius:50%;filter:blur(64px);will-change:transform;mix-blend-mode:screen}
+.amb-orb-1{width:90vw;height:90vw;left:-25vw;top:-30vw;background:radial-gradient(circle,rgba(0,200,255,.6),transparent 62%);animation:ambDrift1 24s ease-in-out infinite}
+.amb-orb-2{width:95vw;height:95vw;right:-35vw;top:6%;background:radial-gradient(circle,rgba(255,70,150,.5),transparent 62%);animation:ambDrift2 30s ease-in-out infinite}
+.amb-orb-3{width:85vw;height:85vw;left:-10vw;bottom:-30vw;background:radial-gradient(circle,rgba(150,90,255,.58),transparent 62%);animation:ambDrift3 27s ease-in-out infinite}
+.amb-orb-4{width:60vw;height:60vw;right:-5vw;bottom:18%;background:radial-gradient(circle,rgba(20,220,170,.35),transparent 66%);animation:ambDrift1 34s ease-in-out infinite reverse}
+.amb-beam{position:absolute;top:-28%;left:50%;width:150%;height:60%;transform:translateX(-50%) rotate(-12deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);filter:blur(34px);animation:ambBeam 20s linear infinite}
+.amb-grain{position:absolute;inset:0;opacity:.05;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@keyframes ambDrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(9vw,7vh) scale(1.18)}}
+@keyframes ambDrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8vw,5vh) scale(1.12)}}
+@keyframes ambDrift3{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(6vw,-7vh) scale(1.22)}}
+@keyframes ambBeam{0%{transform:translateX(-70%) rotate(-12deg);opacity:0}50%{opacity:1}100%{transform:translateX(-25%) rotate(-12deg);opacity:0}}
+@media (prefers-reduced-motion:reduce){.amb-orb,.amb-beam{animation:none}}
+
+/* Aurora HD a piena copertura come sfondo schermate (colore ovunque, no centro spento) */
+#home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr{
+  background:
+    radial-gradient(120% 75% at 12% 4%, rgba(0,180,255,.50), transparent 78%),
+    radial-gradient(120% 75% at 95% 16%, rgba(255,60,140,.42), transparent 76%),
+    radial-gradient(130% 80% at 25% 100%, rgba(150,80,255,.48), transparent 80%),
+    radial-gradient(110% 70% at 92% 88%, rgba(20,210,170,.30), transparent 78%),
+    radial-gradient(95% 60% at 55% 50%, rgba(99,110,255,.28), transparent 82%),
+    linear-gradient(180deg,#10132a,#0b0a1d 55%,#0d0a20) !important;
+  background-attachment:fixed !important;
+  background-size:150% 150% !important;
+  animation:kvAuroraDrift 26s ease-in-out infinite !important;
+}
+@keyframes kvAuroraDrift{
+  0%,100%{background-position:0% 0%}
+  33%{background-position:100% 30%}
+  66%{background-position:30% 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  #home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr{animation:none !important}
+}
+
+/* ═══ GLASS HD — card semi-trasparenti: l'aurora glowa attraverso ═══ */
+.live-stats-bar, .install-banner, .telegram-banner, .pwa-v2, .pwa-install-banner,
+.game-card, .econ-card, .stat-b, .empty-room-card, .referral-banner,
+.miss-row, .leader-top-card, .leader-row, .shop-card, .gift-item,
+.daily-streak-banner, .onb-card, .home-card, .kv-card, .onboarding-strip,
+.resume-banner, .push-notify-banner, .feed-card, .live-feed-item, .obs-step,
+.notte-banner, .stat-pill, .sec-card{
+  background:linear-gradient(160deg, rgba(20,25,44,.40), rgba(11,14,28,.52)) !important;
+  backdrop-filter:blur(16px) saturate(145%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(145%) !important;
+  border:1px solid rgba(255,255,255,.10) !important;
+  box-shadow:0 8px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+/* Nav inferiore di vetro */
+.bnav{
+  background:linear-gradient(180deg, rgba(10,12,24,.55), rgba(7,8,18,.78)) !important;
+  backdrop-filter:blur(20px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(20px) saturate(140%) !important;
+  border-top:1px solid rgba(255,255,255,.08) !important;
+}
+/* Titolo KOUVERTE: gradiente animato premium */
+.kv-hero-title{
+  background:linear-gradient(90deg,#00e0ff,#a78bfa,#ff6bd5,#00e0ff) !important;
+  background-size:300% 100% !important;
+  -webkit-background-clip:text !important;background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;color:transparent !important;
+  animation:kvTitleShimmer 6s linear infinite;
+}
+@keyframes kvTitleShimmer{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+/* Hero: vetro premium + bordo gradiente luminoso */
+.kv-hero-card{
+  background:linear-gradient(150deg, rgba(30,24,60,.55), rgba(14,16,32,.55)) !important;
+  backdrop-filter:blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter:blur(16px) saturate(140%) !important;
+  box-shadow:0 14px 50px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.08), inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+/* le schermate stanno sopra l'ambient */
+#home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr,#chat{position:absolute;z-index:1}
+
