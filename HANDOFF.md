@@ -8,6 +8,31 @@
 
 ---
 
+## ⚠️ PROBLEMA APERTO — persistenza DB del sito pubblico (NON risolto, l'utente ha scelto di lasciare così)
+
+**Sintomo:** i dati su **www.kouverte.com** si cancellano (DB = `vox-data.json` su filesystem **effimero** di Render free → si resetta ad ogni restart/deploy).
+
+**Topologia scoperta (verificata):**
+- DNS: dominio su **Cloudflare**, account **Sosaluigi94@gmail.com** (profilo Chrome "Luigi Sosa"). Record: `www` CNAME → **`kouverte-main.onrender.com`** (Proxied).
+- **kouverte-main** = servizio Render **SENZA Redis** → `/api/health` dà `redis:false, safe:false` → **cancella i dati**. È il servizio dietro www.
+- **kouverte-voice.onrender.com** = servizio Render **CON Redis** (account **bob**, login Google `bob2015.gc@gmail.com`, workspace "My Workspace") → `/api/health` dà `redis:true, safe:true` → **persistente**. Stesso identico codice (entrambi deploy da `Jokernpl/kouverte` main).
+
+**Fix (2 strade, entrambe bloccate sullo STESSO punto):**
+- **A)** Spostare il dominio su kouverte-voice → **BLOCCATO**: aggiungendo `www.kouverte.com` ai Custom Domains di kouverte-voice, Render dà *"This domain already exists on another site. Please delete it from that site and try again"* (è legato a kouverte-main).
+- **B)** Aggiungere Redis (env `REDIS_URL`) a kouverte-main → serve comunque l'account di kouverte-main.
+
+**IL BLOCCO:** l'account Render che possiede **kouverte-main** è sconosciuto. Il workspace di bob ("My Workspace") contiene SOLO kouverte-voice. kouverte-main è su un altro workspace/account.
+
+**Per sbloccare (azioni che può fare solo l'utente):**
+1. Render → in alto a sx **"My Workspace ▾"** → vedere se c'è un **secondo workspace** con kouverte-main.
+2. Oppure ricordare con quale **email/login** è stato creato il PRIMO Kouverte su Render.
+3. Fallback se l'account è perso: **Render Support** può staccare il dominio da kouverte-main provando la proprietà via Cloudflare DNS.
+
+**Poi (5 min):** togli www.kouverte.com da kouverte-main → su kouverte-voice aggiungi `kouverte.com`+`www.kouverte.com` (Settings→Custom Domains) → su Cloudflare cambia il CNAME `www` (e il record radice) da `kouverte-main.onrender.com` → `kouverte-voice.onrender.com` → verifica: `curl https://www.kouverte.com/api/health` deve dire `redis:true, safe:true`.
+**ORDINE:** prima aggiungi il dominio su Render, POI cambia il DNS su Cloudflare (altrimenti il sito va offline qualche minuto).
+
+---
+
 ## 🆕 SESSIONE 2026-05-29 — cosa è stato fatto (LEGGI QUESTO PRIMA)
 
 Tema: sistemare il video ("non vedo gli utenti") + rendere il sito divertente e sicuro, stile ciaoamigos.
