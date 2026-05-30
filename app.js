@@ -5948,6 +5948,7 @@ function enterRoom(roomId){
       el.style.setProperty('--room-color-a40',`rgba(${r},${g},${b},.40)`);
     }catch(_){}
     document.body.dataset.room=cfg.id;
+    document.body.classList.add('in-room');
     const chatEl=document.getElementById('chat');
     if(chatEl){ chatEl.classList.remove('room-entering'); void chatEl.offsetWidth; chatEl.classList.add('room-entering'); setTimeout(()=>chatEl.classList.remove('room-entering'),650); }
   })(cfg);
@@ -6015,6 +6016,8 @@ function leaveRoom(){
     if (typingUsers) typingUsers = {};
     room=null;
   }
+  document.body.classList.remove('in-room');
+  delete document.body.dataset.room;
   showScreen('home',document.querySelector('[data-sc="home"]'));
 }
 

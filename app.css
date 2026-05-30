@@ -4974,16 +4974,19 @@ body[data-room="campania"] #chat{
 .rlt-btn.gift{ width:50px; height:50px; border-radius:50%; font-size:20px; background:rgba(236,72,153,.6); }
 .rlt-btn.next{ flex:1; max-width:240px; height:54px; font-size:17px; background:linear-gradient(135deg,#8b5cf6,#ec4899); box-shadow:0 6px 22px rgba(139,92,246,.5); }
 
-/* FAB lancio roulette */
+/* FAB lancio roulette — impilato SOPRA il diag-fab (no sovrapposizione) */
 .roulette-fab{
-  position:fixed; right:16px; bottom:84px; z-index:60;
-  width:58px; height:58px; border-radius:50%; border:none; cursor:pointer;
-  font-size:26px; color:#fff;
+  position:fixed; right:14px; bottom:130px; z-index:60;
+  width:50px; height:50px; border-radius:50%; border:none; cursor:pointer;
+  font-size:23px; color:#fff;
   background:linear-gradient(135deg,#8b5cf6,#ec4899);
-  box-shadow:0 8px 24px rgba(236,72,153,.5), 0 0 0 1px rgba(255,255,255,.15) inset;
+  box-shadow:0 6px 18px rgba(236,72,153,.45), 0 0 0 1px rgba(255,255,255,.15) inset;
   animation:rltFabPulse 2.4s ease-in-out infinite;
   transition:transform .15s;
+  display:flex; align-items:center; justify-content:center;
 }
 .roulette-fab:active{ transform:scale(.9); }
+/* Nascondi il FAB dentro una stanza (chat già affollata da pannello cam + input) */
+body.in-room .roulette-fab{ display:none; }
 @keyframes rltFabPulse{ 0%,100%{box-shadow:0 8px 24px rgba(236,72,153,.45),0 0 0 0 rgba(236,72,153,.5)} 50%{box-shadow:0 8px 28px rgba(236,72,153,.6),0 0 0 10px rgba(236,72,153,0)} }
 
