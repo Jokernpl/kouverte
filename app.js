@@ -2674,10 +2674,11 @@ function renderUsersPanel() {
     const camOn = !!roomCamStates[userObj.id];
     if (camOn) chip.classList.add('chip-live');
 
-    // Stato cam testuale beside the name (acceso/spento)
+    // Stato cam (icona compatta: evita traboccamento nella lista stretta)
     const camStatus = document.createElement('div');
     camStatus.className = 'rp-cam-status ' + (camOn ? 'on' : 'off');
-    camStatus.textContent = camOn ? '🔴 in onda' : '📷 off';
+    camStatus.textContent = camOn ? '🔴' : '📷';
+    camStatus.title = camOn ? 'In onda' : 'Cam spenta';
 
     // Bottone: 👁 Guarda (se in onda) oppure 📹 Invita (se cam spenta)
     const videoBtn = document.createElement('button');

@@ -3715,7 +3715,7 @@ html[data-theme="light"] body {
     right:18px;
     top:50%;
     transform:translateY(-50%);
-    z-index:9999;
+    z-index:450;
     flex-direction:column;
     align-items:center;
     gap:5px;
