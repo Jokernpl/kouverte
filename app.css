@@ -962,7 +962,9 @@ body{position:relative}
 /* ═══════════════════════════════
    PROFILE
 ═══════════════════════════════ */
-#profile{background:#0f1117;overflow-y:scroll;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
+/* display:block override del flex-column di .screen → i figli NON vengono
+   compressi (era il bug: rank-wrap schiacciata a 34px e tagliata da overflow) */
+#profile{display:block;background:#0f1117;overflow-y:scroll;overflow-x:hidden;padding-bottom:80px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;will-change:scroll-position}
 .prof-hero{padding:20px 20px 16px;text-align:center;position:relative;
   background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.07),transparent 70%)}
 .prof-mascot{width:80px;height:80px;margin:0 auto 10px;position:relative;

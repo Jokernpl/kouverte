@@ -18,13 +18,32 @@ if (!BOT_TOKEN || BOT_TOKEN.length < 30) {
   return;
 }
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-console.log('🎭 Kouverte Bot avviato · @' + BOT_USERNAME);
+// IMPORTANTE: NON avviare il polling subito. Prima puliamo il webhook,
+// altrimenti getUpdates va in conflitto ("can't use getUpdates while webhook
+// is active") e il bot resta muto su TUTTI i comandi.
+const bot = new TelegramBot(BOT_TOKEN, { polling: false });
+console.log('🎭 Kouverte Bot · @' + BOT_USERNAME);
 console.log('   WebApp: ' + WEBAPP_URL);
 
-bot.deleteWebHook({ drop_pending_updates: false })
-   .then(() => console.log('   Webhook: cleared (polling mode)'))
-   .catch(()=>{});
+(async () => {
+  try {
+    const me = await bot.getMe();
+    console.log('   ✅ Bot connesso: @' + (me.username || BOT_USERNAME));
+  } catch (e) {
+    console.error('   ❌ getMe fallito (token errato?):', e.message);
+    return;
+  }
+  // 1) pulisci eventuale webhook attivo (e update pendenti) PRIMA del polling
+  try {
+    await bot.deleteWebHook({ drop_pending_updates: true });
+    console.log('   Webhook: cleared (polling mode)');
+  } catch (e) { console.error('   deleteWebHook:', e.message); }
+  // 2) ora avvia il polling
+  try {
+    await bot.startPolling({ restart: true });
+    console.log('   ✅ Polling avviato — pronto a ricevere comandi');
+  } catch (e) { console.error('   ❌ startPolling:', e.message); }
+})();
 
 // Registra comandi ufficiali del bot (compare il menù "/" in Telegram)
 bot.setMyCommands([
@@ -1046,8 +1065,19 @@ async function notifyReferralEarned(inviterId, newUserName){
 // ============================================================
 // ERROR HANDLING
 // ============================================================
-bot.on('polling_error', e => console.error('Polling error:', e.message));
-bot.on('error',         e => console.error('Bot error:', e.message));
+bot.on('polling_error', e => {
+  const m = (e && e.message) || String(e);
+  if (/409|conflict/i.test(m)) {
+    console.error('⚠️ POLLING 409 CONFLICT: un\'altra istanza usa lo STESSO BOT_TOKEN (getUpdates).');
+    console.error('   → Assicurati che il bot giri su UN SOLO servizio Render. Imposta BOT_TOKEN solo lì (toglilo dal doppione).');
+  } else if (/webhook is active|can't use getUpdates/i.test(m)) {
+    console.error('⚠️ Webhook ancora attivo: riprovo a pulirlo…');
+    bot.deleteWebHook({ drop_pending_updates: true }).catch(()=>{});
+  } else {
+    console.error('Polling error:', m);
+  }
+});
+bot.on('error', e => console.error('Bot error:', (e && e.message) || e));
 
 process.on('SIGINT', () => { saveDB(); console.log('\n💾 DB salvato.'); process.exit(0); });
 
