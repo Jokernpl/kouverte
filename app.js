@@ -237,6 +237,69 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   };
 
+  // ───── SCIA DI STARDUST REATTIVA (segue tocco/mouse) ─────
+  (function(){
+    let lastT=0, lastX=0, lastY=0;
+    function spark(x,y){
+      try{
+        const s=(typeof getLS==='function')?getLS('kv4_settings'):null;
+        if(s && s.animations===false) return;
+        if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+        const d=document.createElement('span');
+        const sz=4+Math.random()*5;
+        const hue=190+Math.random()*120;              // ciano → viola → rosa
+        d.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;border-radius:50%;pointer-events:none;z-index:99990;background:radial-gradient(circle, hsla(${hue},100%,76%,.95), hsla(${hue},100%,60%,0));transform:translate(-50%,-50%);will-change:transform,opacity;`;
+        document.body.appendChild(d);
+        const dx=(Math.random()*2-1)*14, dy=8+Math.random()*16;
+        try{ d.animate([
+          {transform:'translate(-50%,-50%) scale(1)', opacity:.85},
+          {transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)`, opacity:0}
+        ],{duration:600+Math.random()*250, easing:'ease-out', fill:'forwards'}); }catch(e){}
+        setTimeout(()=>d.remove(), 900);
+      }catch(e){}
+    }
+    window.addEventListener('pointermove', (e)=>{
+      const now=performance.now();
+      if(now-lastT < 45) return;                       // throttle ~22/s
+      const dist=Math.hypot(e.clientX-lastX, e.clientY-lastY);
+      if(dist < 8) return;                             // solo movimento reale
+      lastT=now; lastX=e.clientX; lastY=e.clientY;
+      spark(e.clientX, e.clientY);
+    }, {passive:true});
+  })();
+
+  // ───── REGALO SPETTACOLARE: reveal centrale + anello d'onda + esplosione ─────
+  window.spawnGiftHero = (icon) => {
+    try{
+      const s=(typeof getLS==='function')?getLS('kv4_settings'):null;
+      if(s && s.animations===false) return;
+      if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+      const cx=window.innerWidth/2, cy=window.innerHeight*0.42;
+      // Anello d'onda che si espande
+      const ring=document.createElement('div');
+      ring.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;width:40px;height:40px;border-radius:50%;border:3px solid rgba(255,255,255,.75);box-shadow:0 0 46px rgba(168,139,250,.85), inset 0 0 24px rgba(255,255,255,.4);transform:translate(-50%,-50%);z-index:99997;pointer-events:none;`;
+      document.body.appendChild(ring);
+      try{ ring.animate([
+        {transform:'translate(-50%,-50%) scale(.2)', opacity:.95},
+        {transform:'translate(-50%,-50%) scale(6.5)', opacity:0}
+      ],{duration:950, easing:'cubic-bezier(.16,1,.3,1)', fill:'forwards'}); }catch(e){}
+      // Emoji gigante che fa il "reveal"
+      const hero=document.createElement('div');
+      hero.textContent=icon||'🎁';
+      hero.style.cssText=`position:fixed;left:${cx}px;top:${cy}px;font-size:96px;transform:translate(-50%,-50%);z-index:99998;pointer-events:none;filter:drop-shadow(0 12px 34px rgba(0,0,0,.5));`;
+      document.body.appendChild(hero);
+      try{ hero.animate([
+        {transform:'translate(-50%,-50%) scale(.2) rotate(-18deg)', opacity:0},
+        {transform:'translate(-50%,-50%) scale(1.25) rotate(7deg)', opacity:1, offset:.34},
+        {transform:'translate(-50%,-50%) scale(1) rotate(0deg)', opacity:1, offset:.7},
+        {transform:'translate(-50%,-56%) scale(.9) rotate(0deg)', opacity:0}
+      ],{duration:1650, easing:'cubic-bezier(.22,1,.36,1)', fill:'forwards'}); }catch(e){}
+      // Esplosione di particelle intorno
+      window.kvBurst && window.kvBurst(cx, cy, {emojis:['✨','💖','⭐','💫',icon||'🎁'], count:22, spread:175, rise:20, size:20, dur:1300});
+      setTimeout(()=>{ ring.remove(); hero.remove(); }, 1750);
+    }catch(e){}
+  };
+
   // ───── PWA: Service Worker DISATTIVATO ─────
   // SW rimosso perché causava problemi di cache (HTML/JS vecchi serviti dopo deploy).
   // sw.js attuale è un "killer" che disinstalla eventuali SW residui dei browser
@@ -1350,8 +1413,9 @@ function renderGiftMessage({ gift, from, face, self }){
   `;
   msgs.appendChild(div);
   msgs.scrollTop=msgs.scrollHeight;
-  // Effetto particelle + suono regalo (vale per invio e ricezione)
+  // Effetto particelle + reveal spettacolare + suono regalo (invio e ricezione)
   spawnGiftParticles(gift.icon);
+  try{ window.spawnGiftHero && window.spawnGiftHero(gift.icon); }catch(e){}
   try{ window.kvSound && window.kvSound('gift'); }catch(e){}
 }
 
@@ -11478,7 +11542,29 @@ function spendKVC(n){
   localStorage.setItem(KVC_KEY,getKVC()-n);_kvcUI();return true;
 }
 function _kvcUI(){
-  document.querySelectorAll('.kvc-bal').forEach(el=>el.textContent=getKVC().toLocaleString()+' Coin');
+  const target=getKVC();
+  document.querySelectorAll('.kvc-bal').forEach(el=>{
+    const cur=parseInt(String(el.dataset.val!=null?el.dataset.val:(el.textContent||'0')).replace(/[^\d-]/g,''))||0;
+    _countUp(el, cur, target);
+  });
+}
+// Conteggio animato (rolling) del saldo monete
+function _countUp(el, from, to){
+  const s=(typeof getLS==='function')?getLS('kv4_settings'):null;
+  if((s && s.animations===false) || from===to || typeof requestAnimationFrame==='undefined'){
+    el.dataset.val=to; el.textContent=to.toLocaleString()+' Coin'; return;
+  }
+  const id=(el._cuId=(el._cuId||0)+1);   // invalida eventuali conteggi precedenti
+  const dur=650, t0=performance.now();
+  function step(now){
+    if(el._cuId!==id) return;            // superato da un nuovo aggiornamento
+    const k=Math.min(1,(now-t0)/dur);
+    const e=1-Math.pow(1-k,3);           // easeOutCubic
+    const v=Math.round(from+(to-from)*e);
+    el.textContent=v.toLocaleString()+' Coin'; el.dataset.val=v;
+    if(k<1) requestAnimationFrame(step); else { el.dataset.val=to; el.textContent=to.toLocaleString()+' Coin'; }
+  }
+  requestAnimationFrame(step);
 }
 function _spawnCoinAnim(n){
   const el=document.createElement('div');

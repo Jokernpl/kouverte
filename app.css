@@ -5211,3 +5211,18 @@ body[data-room="notte"] #chat{ background:radial-gradient(130% 70% at 30% 0%,rgb
   100%{ opacity:1; transform:none; filter:none; }
 }
 @media (prefers-reduced-motion:reduce){ #chat.room-entering{ animation:none !important } .kv-ripple{ display:none } }
+
+/* ═══ MICRO-ANIMAZIONE PRESSIONE: i pulsanti si schiacciano al tocco ═══ */
+.nbtn:active,.modal-btn:active,.csend:active,.btn-p:active,.wheel-btn:active,
+.chip-video-btn:active,.rc-enter-pill:active,.cat-btn:active,.code-room-btn:active,
+.hdr-plain-btn:active,.creact:active,.qe-toggle:active,.chat-share-btn:active,
+.vcall-btn:active,.vsc-control-btn:active{
+  transform:scale(.92);
+  transition:transform .07s ease;
+}
+@media (prefers-reduced-motion:reduce){
+  .nbtn:active,.modal-btn:active,.csend:active,.btn-p:active,.wheel-btn:active,
+  .chip-video-btn:active,.rc-enter-pill:active,.cat-btn:active,.code-room-btn:active,
+  .hdr-plain-btn:active,.creact:active,.qe-toggle:active,.chat-share-btn:active,
+  .vcall-btn:active,.vsc-control-btn:active{ transform:none; }
+}
