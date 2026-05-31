@@ -7299,11 +7299,9 @@ function initOnboardingWizard(){
         <span>${(r.name||'').replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name}</span>
       </div>`).join('');
   }
-  // Mostra dopo breve delay (non interrompere il caricamento)
-  setTimeout(()=>{
-    const wiz = document.getElementById('onboardingWizard');
-    if(wiz) wiz.style.display='flex';
-  }, 800);
+  // ONBOARDING SNELLITO: il wizard NON si apre più in automatico all'avvio
+  // (prima si impilava su login-wall + premio = 3 popup di fila per i nuovi utenti).
+  // Il login-wall fa già da intro. Il wizard resta definito e richiamabile a mano.
 }
 
 function owizNext(step){
@@ -7711,6 +7709,11 @@ function showLoginWall(){
 function closeLoginWall(){
   const w = document.getElementById('loginWall');
   if (w) w.classList.remove('show');
+  // ONBOARDING SNELLITO: ora che il wall è chiuso, mostra il premio differito (se c'è)
+  if(window._lrPendingStreak!=null){
+    const s=window._lrPendingStreak; window._lrPendingStreak=null;
+    setTimeout(()=>{ try{ showLoginRewardModal(s); }catch(e){} }, 550);
+  }
 }
 
 function continueAsGuest(){
@@ -11568,9 +11571,27 @@ function checkLoginReward(){
   localStorage.setItem('kvc_last_login',today);
   localStorage.setItem('kvc_streak',String(streak));
   _missionProg('login',1);
+  // ONBOARDING SNELLITO: se sta per comparire il login-wall (ospite, primo accesso
+  // della sessione), NON mostrare subito il premio sopra al wall. Lo mostrerà
+  // closeLoginWall appena l'utente sceglie. Per utenti già loggati: premio normale.
+  const wallWillShow = !getLS('kv4_auth_token') && sessionStorage.getItem('kv_welcome_shown')!=='1';
+  if(wallWillShow){
+    window._lrPendingStreak=streak;
+    // Sicurezza: se il wall non compare/chiude entro 8s e non è aperto, mostra comunque
+    setTimeout(()=>{
+      if(window._lrPendingStreak!=null){
+        const w=document.getElementById('loginWall');
+        if(!(w && w.classList.contains('show'))){ const s=window._lrPendingStreak; window._lrPendingStreak=null; showLoginRewardModal(s); }
+      }
+    }, 8000);
+    return;
+  }
   setTimeout(()=>showLoginRewardModal(streak),1000);
 }
 function showLoginRewardModal(streak){
+  // ONBOARDING SNELLITO: non impilare mai il premio sopra al login-wall aperto
+  const _w=document.getElementById('loginWall');
+  if(_w && _w.classList.contains('show')){ window._lrPendingStreak=streak; return; }
   const rew=LR_REWARDS[(streak-1)%7];
   const bar=document.getElementById('lrStreakBar');
   if(bar){bar.innerHTML=LR_REWARDS.map((r,i)=>`<div class="lr-day ${i<streak?'done':''} ${i===streak-1?'cur':''}">${i+1}</div>`).join('');}
