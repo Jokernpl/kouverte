@@ -5194,3 +5194,20 @@ body[data-room="notte"] #chat{ background:radial-gradient(130% 70% at 30% 0%,rgb
   animation:kvBorderRotate 5s linear infinite;
 }
 @media (prefers-reduced-motion:reduce){ .frame-diamond::after,.frame-galaxy::after,.frame-rainbow::after,.frame-royal::after,.frame-neon::after{animation:none} }
+
+/* ═══ RIPPLE premium al tocco ═══ */
+.kv-ripple{
+  position:absolute; border-radius:50%; pointer-events:none; z-index:6;
+  background:radial-gradient(circle, rgba(255,255,255,.42), rgba(180,210,255,.18) 45%, rgba(255,255,255,0) 70%);
+  transform:scale(0); opacity:.9; animation:kvRipple .62s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes kvRipple{ to{ transform:scale(1); opacity:0 } }
+
+/* ═══ ENTRATA STANZA CINEMATOGRAFICA (warp/zoom + flash) ═══ */
+#chat.room-entering{ animation:kvRoomEnter .7s cubic-bezier(.22,1,.36,1) !important; }
+@keyframes kvRoomEnter{
+  0%{ opacity:0; transform:scale(1.07) translateY(12px); filter:saturate(1.5) brightness(1.25); }
+  60%{ opacity:1; }
+  100%{ opacity:1; transform:none; filter:none; }
+}
+@media (prefers-reduced-motion:reduce){ #chat.room-entering{ animation:none !important } .kv-ripple{ display:none } }

@@ -146,8 +146,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Haptic feedback helper (Telegram Mini App)
   window.haptic = (type='light') => {
     try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(type); } catch(e){}
+    // Fallback browser/PWA: vibrazione nativa (durata in base all'intensità)
+    try { if(navigator.vibrate){ navigator.vibrate(type==='heavy'?16:type==='medium'?11:7); } } catch(e){}
   };
-  window.hapticOk = () => { try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch(e){} };
+  window.hapticOk = () => {
+    try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred?.('success'); } catch(e){}
+    try { if(navigator.vibrate){ navigator.vibrate([12,40,18]); } } catch(e){}
+  };
 
   // ───── PWA: Service Worker DISATTIVATO ─────
   // SW rimosso perché causava problemi di cache (HTML/JS vecchi serviti dopo deploy).
@@ -209,6 +214,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click', (e) => {
     const t = e.target.closest('.nbtn,.room-card,.code-room-btn,.btn-p,.csend,.chat-back,.cat-btn,.user-chip,.frame-c,.modal-btn,.wheel-btn,.coin-widget');
     if (t) window.haptic('light');
+  }, true);
+  // Ripple premium al tocco su elementi interattivi
+  document.addEventListener('pointerdown', (e) => {
+    const t = e.target.closest('button,.room-card,.game-card,.econ-card,.stat-b,.nbtn,.wheel-btn,.modal-btn,.chip-video-btn,.user-chip,.rc-enter-pill,.install-banner,.telegram-banner,.kv-hero-card');
+    if (!t) return;
+    const r = t.getBoundingClientRect();
+    const rip = document.createElement('span');
+    rip.className = 'kv-ripple';
+    const size = Math.max(r.width, r.height) * 1.4;
+    rip.style.width = rip.style.height = size + 'px';
+    rip.style.left = (e.clientX - r.left - size/2) + 'px';
+    rip.style.top = (e.clientY - r.top - size/2) + 'px';
+    const prevPos = getComputedStyle(t).position;
+    if (prevPos === 'static') t.style.position = 'relative';
+    const prevOv = getComputedStyle(t).overflow;
+    if (prevOv === 'visible') t.style.overflow = 'hidden';
+    t.appendChild(rip);
+    setTimeout(() => rip.remove(), 650);
   }, true);
   // Pausa animazioni quando tab nascosto (risparmio batteria)
   document.addEventListener('visibilitychange', () => {
