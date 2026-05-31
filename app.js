@@ -237,36 +237,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   };
 
-  // ───── SCIA DI STARDUST REATTIVA (segue tocco/mouse) ─────
-  (function(){
-    let lastT=0, lastX=0, lastY=0;
-    function spark(x,y){
-      try{
-        const s=(typeof getLS==='function')?getLS('kv4_settings'):null;
-        if(s && s.animations===false) return;
-        if(window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
-        const d=document.createElement('span');
-        const sz=4+Math.random()*5;
-        const hue=190+Math.random()*120;              // ciano → viola → rosa
-        d.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${sz}px;height:${sz}px;border-radius:50%;pointer-events:none;z-index:99990;background:radial-gradient(circle, hsla(${hue},100%,76%,.95), hsla(${hue},100%,60%,0));transform:translate(-50%,-50%);will-change:transform,opacity;`;
-        document.body.appendChild(d);
-        const dx=(Math.random()*2-1)*14, dy=8+Math.random()*16;
-        try{ d.animate([
-          {transform:'translate(-50%,-50%) scale(1)', opacity:.85},
-          {transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(.2)`, opacity:0}
-        ],{duration:600+Math.random()*250, easing:'ease-out', fill:'forwards'}); }catch(e){}
-        setTimeout(()=>d.remove(), 900);
-      }catch(e){}
-    }
-    window.addEventListener('pointermove', (e)=>{
-      const now=performance.now();
-      if(now-lastT < 45) return;                       // throttle ~22/s
-      const dist=Math.hypot(e.clientX-lastX, e.clientY-lastY);
-      if(dist < 8) return;                             // solo movimento reale
-      lastT=now; lastX=e.clientX; lastY=e.clientY;
-      spark(e.clientX, e.clientY);
-    }, {passive:true});
-  })();
+  // (Scia stardust RIMOSSA su richiesta: ad ogni scroll riempiva lo schermo di
+  //  scintille e intralciava l'interfaccia.)
 
   // ───── REGALO SPETTACOLARE: reveal centrale + anello d'onda + esplosione ─────
   window.spawnGiftHero = (icon) => {
