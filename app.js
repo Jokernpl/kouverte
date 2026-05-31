@@ -154,6 +154,89 @@ document.addEventListener('DOMContentLoaded',()=>{
     try { if(navigator.vibrate){ navigator.vibrate([12,40,18]); } } catch(e){}
   };
 
+  // ───── MOTORE AUDIO PREMIUM (Web Audio sintetizzato, nessun file) ─────
+  window._kvAC = null;
+  window._kvAudio = () => {
+    try {
+      if (!window._kvAC) { const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return null; window._kvAC = new AC(); }
+      if (window._kvAC.state === 'suspended') window._kvAC.resume();
+      return window._kvAC;
+    } catch(e){ return null; }
+  };
+  // Prepara l'audio al primo tocco (sblocca l'autoplay policy)
+  document.addEventListener('pointerdown', () => { try { window._kvAudio(); } catch(e){} }, { passive:true });
+  window._kvTone = (freq, dur, opt={}) => {
+    const ac = window._kvAudio(); if(!ac) return;
+    const t0 = ac.currentTime + (opt.delay||0);
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = opt.type || 'triangle';
+    o.frequency.setValueAtTime(freq, t0);
+    if (opt.slideTo) { try { o.frequency.exponentialRampToValueAtTime(opt.slideTo, t0+dur); } catch(e){} }
+    const peak = (opt.gain!=null) ? opt.gain : 0.07;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(peak, t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    o.connect(g); g.connect(ac.destination);
+    o.start(t0); o.stop(t0+dur+0.03);
+  };
+  window.kvSound = (type) => {
+    try {
+      const s = (typeof getLS==='function') ? getLS('kv4_settings') : null;
+      if (s && s.uiSound === false) return;       // rispetta il toggle nelle Impostazioni
+      const T = window._kvTone;
+      switch(type){
+        case 'coin':   T(1046,0.08,{gain:0.05}); T(1568,0.10,{gain:0.045,delay:0.06}); break;
+        case 'reward': [523,659,784,1047].forEach((f,i)=>T(f,0.16,{gain:0.06,delay:i*0.075})); T(1568,0.45,{type:'sine',gain:0.035,delay:0.32}); break;
+        case 'gift':   T(700,0.09,{type:'sine',gain:0.05,slideTo:1100}); T(1320,0.12,{gain:0.035,delay:0.07}); break;
+        case 'enter':  T(300,0.24,{type:'sine',gain:0.05,slideTo:680}); break;
+        case 'win':    [659,784,988,1319].forEach((f,i)=>T(f,0.18,{gain:0.06,delay:i*0.08})); break;
+        case 'tap':    T(180,0.03,{type:'square',gain:0.012}); break;
+      }
+    } catch(e){}
+  };
+
+  // ───── BURST DI PARTICELLE (monete/scintille/coriandoli) ─────
+  window.kvBurst = (x, y, opt={}) => {
+    try {
+      const s = (typeof getLS==='function') ? getLS('kv4_settings') : null;
+      if (s && s.animations === false) return;    // rispetta il toggle Animazioni
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+      const emojis = opt.emojis || ['🪙','✨','💫'];
+      const count  = opt.count  || 14;
+      const spread = opt.spread || 120;
+      const rise   = (opt.rise!=null) ? opt.rise : 38;
+      const dur    = opt.dur || 1100;
+      const layer = document.createElement('div');
+      layer.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:99999;pointer-events:none;`;
+      document.body.appendChild(layer);
+      for (let i=0;i<count;i++){
+        const p = document.createElement('span');
+        p.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        p.style.cssText = `position:absolute;left:0;top:0;font-size:${opt.size||(14+Math.random()*14)}px;will-change:transform,opacity;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));`;
+        layer.appendChild(p);
+        const ang  = Math.random()*Math.PI*2;
+        const dist = spread*(0.45+Math.random()*0.75);
+        const dx   = Math.cos(ang)*dist;
+        const dy   = Math.sin(ang)*dist - rise;
+        const rot  = (Math.random()*2-1)*220;
+        const d    = dur*(0.7+Math.random()*0.5);
+        try {
+          p.animate([
+            { transform:'translate(-50%,-50%) scale(.25) rotate(0deg)', opacity:1 },
+            { transform:`translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${opt.endScale||1.05}) rotate(${rot}deg)`, opacity:0 }
+          ], { duration:d, easing:'cubic-bezier(.16,1,.3,1)', fill:'forwards' });
+        } catch(e){}
+      }
+      setTimeout(()=>layer.remove(), dur+400);
+    } catch(e){}
+  };
+  // Coriandoli celebrativi dal centro-alto schermo
+  window.kvConfetti = () => {
+    window.kvBurst(window.innerWidth/2, window.innerHeight*0.34, {
+      emojis:['🎉','🎊','⭐','💎','🪙','✨'], count:30, spread:230, rise:10, size:22, dur:1500, endScale:1.2
+    });
+  };
+
   // ───── PWA: Service Worker DISATTIVATO ─────
   // SW rimosso perché causava problemi di cache (HTML/JS vecchi serviti dopo deploy).
   // sw.js attuale è un "killer" che disinstalla eventuali SW residui dei browser
@@ -1267,8 +1350,9 @@ function renderGiftMessage({ gift, from, face, self }){
   `;
   msgs.appendChild(div);
   msgs.scrollTop=msgs.scrollHeight;
-  // Effetto particelle
+  // Effetto particelle + suono regalo (vale per invio e ricezione)
   spawnGiftParticles(gift.icon);
+  try{ window.kvSound && window.kvSound('gift'); }catch(e){}
 }
 
 function spawnGiftParticles(icon){
@@ -5975,6 +6059,7 @@ function enterRoom(roomId){
     document.body.classList.add('in-room');
     const chatEl=document.getElementById('chat');
     if(chatEl){ chatEl.classList.remove('room-entering'); void chatEl.offsetWidth; chatEl.classList.add('room-entering'); setTimeout(()=>chatEl.classList.remove('room-entering'),650); }
+    try{ window.kvSound && window.kvSound('enter'); }catch(e){}
   })(cfg);
 
   // Salva ultima stanza per il banner "Riprendi"
@@ -9803,6 +9888,10 @@ function createSettingsModal(){
             <input type="checkbox" id="setSound" onchange="updateSetting('sound', this.checked)">
           </label>
           <label class="settings-row">
+            <span>✨ Effetti sonori premium (monete, regali, premi)</span>
+            <input type="checkbox" id="setUiSound" onchange="updateSetting('uiSound', this.checked)">
+          </label>
+          <label class="settings-row">
             <span>Vibrazione (mobile)</span>
             <input type="checkbox" id="setVibrate" onchange="updateSetting('vibrate', this.checked)">
           </label>
@@ -9895,6 +9984,7 @@ function createSettingsModal(){
 function loadSettingsValues(){
   const s = getLS('kv4_settings') || getDefaultSettings();
   document.getElementById('setSound').checked = s.sound;
+  const _us=document.getElementById('setUiSound'); if(_us) _us.checked = s.uiSound !== false;
   document.getElementById('setVibrate').checked = s.vibrate;
   document.getElementById('setJoinNotify').checked = s.joinNotify;
   document.getElementById('setAnimations').checked = s.animations;
@@ -9912,7 +10002,7 @@ function loadSettingsValues(){
 
 function getDefaultSettings(){
   return {
-    sound: true, vibrate: true, joinNotify: false,
+    sound: true, uiSound: true, vibrate: true, joinNotify: false,
     animations: true, emojis: true,
     camAutostart: false, micAutostart: false, videoConfirm: true,
     showOnline: true, allowDM: true,
@@ -11398,6 +11488,14 @@ function _spawnCoinAnim(n){
   el.style.top=(25+Math.random()*35)+'%';
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),1400);
+  // Premium: suono moneta + burst di scintille verso il saldo
+  if(n>0){
+    try{
+      window.kvSound && window.kvSound('coin');
+      const bal=document.querySelector('.kvc-bal');
+      if(bal && window.kvBurst){ const r=bal.getBoundingClientRect(); window.kvBurst(r.left+r.width/2, r.top+r.height/2, {count:12, spread:85, size:16}); }
+    }catch(e){}
+  }
 }
 
 // ── LOGIN REWARD ─────────────────────────────────────────────────
@@ -11428,6 +11526,7 @@ function claimLoginReward(){
   const ov=document.getElementById('lrOverlay');
   const n=parseInt(ov?.dataset.rew||'50');
   addKVC(n,'login');
+  try{ window.kvSound && window.kvSound('reward'); window.kvConfetti && window.kvConfetti(); }catch(e){}
   showToast('🎁 Premio ritirato: +'+n+' Coin!');
   closeLR();
 }
