@@ -5022,12 +5022,12 @@ html,body{background:transparent !important}
 /* Aurora HD a piena copertura come sfondo schermate (colore ovunque, no centro spento) */
 #home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr{
   background:
-    radial-gradient(120% 75% at 12% 4%, rgba(0,180,255,.50), transparent 78%),
-    radial-gradient(120% 75% at 95% 16%, rgba(255,60,140,.42), transparent 76%),
-    radial-gradient(130% 80% at 25% 100%, rgba(150,80,255,.48), transparent 80%),
-    radial-gradient(110% 70% at 92% 88%, rgba(20,210,170,.30), transparent 78%),
-    radial-gradient(95% 60% at 55% 50%, rgba(99,110,255,.28), transparent 82%),
-    linear-gradient(180deg,#10132a,#0b0a1d 55%,#0d0a20) !important;
+    radial-gradient(120% 75% at 12% 4%, rgba(0,190,255,.72), transparent 72%),
+    radial-gradient(120% 75% at 95% 14%, rgba(255,50,150,.64), transparent 70%),
+    radial-gradient(130% 80% at 22% 100%, rgba(160,80,255,.70), transparent 74%),
+    radial-gradient(110% 70% at 92% 86%, rgba(20,230,180,.46), transparent 72%),
+    radial-gradient(95% 60% at 55% 48%, rgba(120,110,255,.40), transparent 78%),
+    linear-gradient(180deg,#0d1130,#0a0920 55%,#0c0a24) !important;
   background-attachment:fixed !important;
   background-size:150% 150% !important;
   animation:kvAuroraDrift 26s ease-in-out infinite !important;
@@ -5048,11 +5048,11 @@ html,body{background:transparent !important}
 .daily-streak-banner, .onb-card, .home-card, .kv-card, .onboarding-strip,
 .resume-banner, .push-notify-banner, .feed-card, .live-feed-item, .obs-step,
 .notte-banner, .stat-pill, .sec-card{
-  background:linear-gradient(160deg, rgba(20,25,44,.40), rgba(11,14,28,.52)) !important;
-  backdrop-filter:blur(16px) saturate(145%) !important;
-  -webkit-backdrop-filter:blur(16px) saturate(145%) !important;
-  border:1px solid rgba(255,255,255,.10) !important;
-  box-shadow:0 8px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  background:linear-gradient(160deg, rgba(16,20,38,.34), rgba(9,11,24,.46)) !important;
+  backdrop-filter:blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter:blur(18px) saturate(150%) !important;
+  border:1px solid rgba(255,255,255,.14) !important;
+  box-shadow:0 8px 32px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.10), 0 0 0 0.5px rgba(120,180,255,.10) !important;
 }
 /* Nav inferiore di vetro */
 .bnav{

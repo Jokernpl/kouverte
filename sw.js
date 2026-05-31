@@ -1,11 +1,11 @@
 // ============================================================
 // Kouverte Service Worker — Production PWA
-// Versione: 2.0.0
-// Strategia: Network-first per API, Cache-first per assets
+// Versione: 3.0.0
+// Strategia: Network-first per API+HTML, Cache-first per immagini
 // ============================================================
 
-const CACHE_NAME = 'kouverte-v2';
-const STATIC_CACHE = 'kouverte-static-v2';
+const CACHE_NAME = 'kouverte-v3';
+const STATIC_CACHE = 'kouverte-static-v3';
 
 // Assets da cachare al primo avvio
 const PRECACHE_ASSETS = [
@@ -78,10 +78,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first per HTML (app.html, index.html)
+  // Network-first per HTML (app.html, index.html) — force-fresh (bypassa HTTP cache)
   if (url.pathname.endsWith('.html') || url.pathname === '/') {
     event.respondWith(
-      fetch(event.request).then(response => {
+      fetch(event.request, { cache: 'reload' }).then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
