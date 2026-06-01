@@ -493,7 +493,12 @@ function hideSplash(){
 // ══ USER ══
 function initUser(){
   const tgU=window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const stored=getLS('kv4_user');
+  // Carica utente; se la chiave principale manca/è corrotta, recupera dal backup ridondante
+  let stored=getLS('kv4_user');
+  if(!stored){
+    const bak=getLS('kv4_user_bak');
+    if(bak && bak.id){ stored=bak; try{ setLS('kv4_user',bak); }catch(e){} console.log('[Persist] Dati ripristinati dal backup locale'); }
+  }
   let isNewUser=false;
   if(stored){
     user=stored;
@@ -7421,12 +7426,13 @@ var _saveUserTimer = null;
 function saveUser(){
   // Debounce: scrivi al massimo ogni 300ms (localStorage è sincrono e bloccante)
   if (_saveUserTimer) clearTimeout(_saveUserTimer);
-  _saveUserTimer = setTimeout(() => { setLS('kv4_user', user); _saveUserTimer = null; }, 300);
+  _saveUserTimer = setTimeout(() => { setLS('kv4_user', user); setLS('kv4_user_bak', user); _saveUserTimer = null; }, 300);
 }
 // Forza scrittura immediata (es. prima di unload)
 function saveUserNow(){
   if (_saveUserTimer) { clearTimeout(_saveUserTimer); _saveUserTimer = null; }
   setLS('kv4_user', user);
+  setLS('kv4_user_bak', user); // backup ridondante: se la chiave principale si corrompe/perde, si recupera da qui
 }
 window.addEventListener('pagehide', saveUserNow);
 window.addEventListener('beforeunload', saveUserNow);
