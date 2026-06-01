@@ -10864,6 +10864,7 @@ let _tiltCurrentX = 0, _tiltCurrentY = 0;
 let _particlesRaf = null;
 
 function initProfileTilt() {
+  return; // DISABILITATO per performance: loop 3D continuo (giroscopio) = scatti su GPU deboli
   const scene = document.getElementById('profTiltScene');
   const card  = document.getElementById('profTiltCard');
   if (!scene || !card) return;
@@ -10926,6 +10927,7 @@ function initProfileTilt() {
 }
 
 function initBannerParticles() {
+  return; // DISABILITATO per performance: canvas particelle continuo con shadowBlur ad ogni frame = scroll a scatti su GPU deboli
   const canvas = document.getElementById('bannerParticles');
   if (!canvas) return;
   const banner = canvas.parentElement;

@@ -5253,3 +5253,18 @@ body[data-room="notte"] #chat{ background:radial-gradient(130% 70% at 30% 0%,rgb
 .screen.active{ transform:none !important; }
 /* Strato ambient (orb/beam che pulsano): fermo */
 #kvAmbient, #kvAmbient *{ animation:none !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   PERFORMANCE SCROLL — fix scroll che si blocca/scatta (GPU deboli).
+   Tolgo le 2 cause principali: sfondo "fixed" e vetro sfocato.
+═══════════════════════════════════════════════════════════════ */
+/* 1) background-attachment:fixed = ridisegna tutto lo sfondo ad ogni scroll → via */
+html,body,
+#home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr{
+  background-attachment:scroll !important;
+}
+/* 2) backdrop-filter (vetro sfocato) = ricalcola la sfocatura ad ogni frame → via ovunque */
+*{ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+/* Senza la sfocatura, rendo le card e la nav un filo più piene così restano nitide e leggibili */
+.bnav{ background:linear-gradient(180deg, rgba(10,12,24,.92), rgba(7,8,18,.96)) !important; }
+.modal-overlay, .overlay{ background:rgba(6,8,16,.78) !important; }
