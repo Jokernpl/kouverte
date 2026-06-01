@@ -173,7 +173,7 @@ app.get('/app.html', (req, res, next) => {
 });
 
 // ── Clean URL per pagine città ──────────────────────────────────────────────
-const CITY_PAGES = ['napoli','roma','milano','palermo','sicilia','italia'];
+const CITY_PAGES = ['napoli','roma','milano','palermo','sicilia','italia','torino','bologna','firenze','bari','genova','catania','verona','venezia'];
 CITY_PAGES.forEach(city => {
     app.get(`/${city}`, (req, res) => {
         res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
