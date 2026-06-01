@@ -5226,3 +5226,30 @@ body[data-room="notte"] #chat{ background:radial-gradient(130% 70% at 30% 0%,rgb
   .hdr-plain-btn:active,.creact:active,.qe-toggle:active,.chat-share-btn:active,
   .vcall-btn:active,.vsc-control-btn:active{ transform:none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   STABILITÀ GRAFICA — stop a TUTTE le animazioni continue/flash che
+   sfarfallano (richiesta utente: "lampeggia ovunque, problemi grafica").
+   Colori e gradienti RESTANO (look premium), ma tutto è FERMO e stabile.
+═══════════════════════════════════════════════════════════════ */
+/* Sfondo aurora: FERMO (niente drift dietro al vetro sfocato = niente flicker) */
+#home,#profile,#econHome,#casinoScr,#shopScr,#leaderScr,#missioniScr,#petScr,#clanScr,#torneoScr{
+  animation:none !important; background-position:0% 0% !important;
+}
+/* Bordi gradiente ROTANTI (hero card + cornici avatar olografiche) = causa n.1 sfarfallio */
+.kv-hero-card{ animation:none !important; }
+.frame-diamond::after,.frame-galaxy::after,.frame-rainbow::after,.frame-royal::after,.frame-neon::after{ animation:none !important; }
+/* Titolo KOUVERTE shimmer: fermo */
+.kv-hero-title{ animation:none !important; background-position:0% 50% !important; }
+/* Riflesso che scorre sui pulsanti: rimosso */
+.modal-btn-primary::after,.csend::after,.rc-enter-pill::after,.wheel-btn::after,
+.vcall-accept-btn::after,button.btn-p::after,.lr-claim-btn::after{ animation:none !important; display:none !important; }
+/* Card home in cascata: appaiono subito, ferme */
+#home.active .home-body > *{ animation:none !important; opacity:1 !important; transform:none !important; }
+/* Flash cinematografico ingresso stanza: rimosso */
+#chat.room-entering{ animation:none !important; filter:none !important; }
+/* Transizioni cinematografiche schermate: niente zoom/slide → stabile */
+.screen{ transform:none !important; transition:opacity .14s linear !important; }
+.screen.active{ transform:none !important; }
+/* Strato ambient (orb/beam che pulsano): fermo */
+#kvAmbient, #kvAmbient *{ animation:none !important; }
