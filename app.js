@@ -768,8 +768,11 @@ function setSwipeFilter(city, btn) {
 }
 
 function openSwipeScreen(){
+  // RIFORMULATO (tutto reale): lo swipe mostrava 8 profili DEMO finti + match a caso → DISATTIVATO.
+  // Reindirizza a OneShot (entra in una stanza reale casuale, con utenti veri).
   closeContinua && closeContinua();
-  // Build queue mixing demo + online users (deduped)
+  return (typeof oneshot==='function') ? oneshot() : (typeof openRoulette==='function' ? openRoulette() : null);
+  /* ── vecchio swipe con profili finti: DISATTIVATO (codice morto) ── */
   swipeQueue = [...DEMO_SWIPE_USERS].sort(()=>Math.random()-.5);
   // Aggiungi utenti online reali dalle stanze (se disponibili)
   if(window.roomUsers && Array.isArray(window.roomUsers)){
@@ -5052,7 +5055,11 @@ var MATCH_MODES = [
 ];
 
 function openMatchAnonimo(){
-  if(!isSubscribed()){ showPaywall(()=>openMatchAnonimo()); return; }
+  // RIFORMULATO (tutto reale): niente più "match finti / ricerca utenti compatibili" simulata.
+  // Apre la Roulette VERA → match casuale con utenti REALI online (video).
+  closeContinua && closeContinua();
+  return openRoulette();
+  /* ── vecchio sistema match simulato: DISATTIVATO (codice morto) ── */
   closeContinua();
   if (!MATCH_MODES || !Array.isArray(MATCH_MODES) || MATCH_MODES.length === 0) {
     showToast('⚠️ Modalità match non disponibili');
@@ -5284,7 +5291,7 @@ function showLootReward(reward, rarity){
 // ACHIEVEMENTS & MISSIONI + LEADERBOARD
 // ══════════════════════════════════════════
 
-// Leaderboard globale simulata (top players statici + utente corrente)
+// Leaderboard chat settimanale — dati REALI dal server (/api/leaderboard/chat), nessun dato finto
 // Carica il leaderboard chat settimanale dal server e lo renderizza nel container
 async function loadWeeklyLeaderboard(containerId) {
   const el = document.getElementById(containerId);
@@ -5712,20 +5719,22 @@ function updateLiveStats(){
     if(trendLbl) trendLbl.textContent = hotCount > 0 ? 'stanze HOT' : 'stanze aperte';
   }
 
-  // "Voci oggi": contatore crescente basato su giorni dall'avvio (fa sembrare l'app viva)
+  // "chat oggi": numero REALE di messaggi nelle ultime 24h dal server (niente più pseudo-casuale)
   const newRooms = document.getElementById('liveNewRoomsCount');
   if (newRooms) {
     const myCodeRooms = getLS('kv4_code_rooms') || [];
-    const myCount = myCodeRooms.length;
-    if(myCount > 0){
-      newRooms.textContent = myCount;
+    if(myCodeRooms.length > 0){
+      newRooms.textContent = myCodeRooms.length;
     } else {
-      // Counter "voci oggi" — pseudo-random ma stabile per giorno
-      const dayKey = new Date().toISOString().slice(0,10);
-      const seed = dayKey.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-      const base = 80 + (seed % 60); // 80-140
-      const hourBoost = Math.floor(new Date().getHours() * 1.5);
-      newRooms.textContent = base + hourBoost;
+      const now = Date.now();
+      if(window._kvStats && (now - (window._kvStatsAt||0) < 20000)){
+        newRooms.textContent = window._kvStats.messages_today || 0;
+      } else {
+        fetch('/api/stats/public').then(r=>r.json()).then(d=>{
+          window._kvStats = d; window._kvStatsAt = Date.now();
+          newRooms.textContent = (d && typeof d.messages_today==='number') ? d.messages_today : 0;
+        }).catch(()=>{ if(!newRooms.textContent || newRooms.textContent==='0') newRooms.textContent='0'; });
+      }
       const lbl = newRooms.parentElement?.querySelector('.live-stat-label');
       if(lbl) lbl.textContent = 'chat oggi';
     }
