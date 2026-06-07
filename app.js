@@ -1610,6 +1610,8 @@ function getRank(mc){
 
 function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
+  // Upsell Premium: nascondi il bottone se l'utente è già Premium
+  const _pb=document.getElementById('profPremiumBtn'); if(_pb) _pb.style.display=(typeof isPrem==='function'&&isPrem())?'none':'flex';
   // Aggiorna subtitle header profilo
   const profHeaderSub=document.getElementById('profHeaderSub');
   if(profHeaderSub) profHeaderSub.textContent=user.username?('@'+user.username):'Personalizza il tuo avatar';
@@ -3764,8 +3766,8 @@ const STRIPE_PACKS_CLIENT = [
   { id:'coins_300',   type:'coins',   coins:300,  eur:'2.99', label:'Starter',      desc:'300 monete',                icon:'🪙', popular:false },
   { id:'coins_900',   type:'coins',   coins:900,  eur:'6.99', label:'Popular',      desc:'900 monete · +10% bonus',   icon:'💰', popular:true  },
   { id:'coins_2500',  type:'coins',   coins:2500, eur:'16.99',label:'Mega',         desc:'2500 monete · +25% bonus',  icon:'💎', popular:false },
-  { id:'premium_30',  type:'premium', days:30,    eur:'4.99', label:'Premium 30gg', desc:'Frame · Badge VIP · No limiti',icon:'👑', popular:false },
-  { id:'premium_365', type:'premium', days:365,   eur:'39.99',label:'VIP Annuale',  desc:'Un anno completo · Miglior valore',icon:'🌟', popular:false }
+  { id:'premium_30',  type:'premium', days:30,    eur:'2.99', label:'Premium 30gg', desc:'Messaggi illimitati · badge ⭐',icon:'⭐', popular:true },
+  { id:'premium_365', type:'premium', days:365,   eur:'24.99',label:'Premium Annuale',  desc:'Un anno · risparmi 30%',icon:'🌟', popular:false }
 ];
 
 function openStripeModal(){
@@ -7629,13 +7631,13 @@ function showLoginWall(){
         <div style="font-size:64px;margin-bottom:12px">🎭</div>
         <div style="font-size:22px;font-weight:600;color:#fff;margin-bottom:6px">Benvenuto su KOUVERTE</div>
         <div style="font-size:13px;color:#9ca3af;margin-bottom:24px;line-height:1.5">
-          La <strong style="color:#00d4ff">chat mondiale anonima</strong> con video, stanze a codice e amici.
+          La <strong style="color:#00d4ff">chat mondiale anonima</strong> con video facoltativo e messaggi privati.
         </div>
 
         <div style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:12px;padding:14px;margin-bottom:20px;text-align:left">
           <div style="font-size:12px;color:#00d4ff;font-weight:700;margin-bottom:6px">🎁 Crea un account (gratis):</div>
           <div style="font-size:11px;color:#cbd5e1;line-height:1.6">
-            ✅ Salva monete, XP, livello, badge<br>
+            ✅ Tieni il tuo nome e i tuoi amici<br>
             ✅ Accedi da qualsiasi dispositivo<br>
             ✅ Sistema amici e chat private<br>
             ✅ 100% Anonimo (nessuno vede l'email)
@@ -7729,7 +7731,7 @@ function createAuthModal(){
 
         <div id="authInfo" style="background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.3);border-radius:8px;padding:12px;margin-top:14px;font-size:11px;color:#cbd5e1;line-height:1.5">
           <strong style="color:#00d4ff">🔒 Perché registrarsi?</strong><br>
-          ✅ Mantieni il tuo nome, monete, XP, badge<br>
+          ✅ Mantieni il tuo nome e i tuoi amici<br>
           ✅ Accedi da qualsiasi dispositivo<br>
           ✅ Recovery in caso di reset del browser<br>
           ✅ I dati sono sempre 100% anonimi
@@ -11381,29 +11383,29 @@ function requireSub(onAllowed){
 function showPaywall(onAllowed){
   window._paywallCb = onAllowed || null;
   let ov = document.getElementById('paywallOv');
-  if(!ov){
-    ov = document.createElement('div');
+  if(ov) ov.remove();        // rimuovo l'eventuale paywall statico/vecchio
+  ov = document.createElement('div');
+  {
     ov.id = 'paywallOv';
     ov.className = 'pw-overlay';
     ov.innerHTML = `
     <div class="pw-box">
       <button class="pw-close" onclick="closePaywall()">✕</button>
-      <div class="pw-icon">🔐</div>
-      <div class="pw-title">Accesso Completo</div>
-      <div class="pw-desc">Per chattare, creare stanze e giocare<br>serve l'abbonamento mensile.</div>
+      <div class="pw-icon">⭐</div>
+      <div class="pw-title">Kouverte Premium</div>
+      <div class="pw-desc">Hai usato i 100 messaggi gratuiti.<br>Passa a Premium e chatta senza limiti.</div>
       <div class="pw-price-row">
-        <span class="pw-eur">€1</span>
+        <span class="pw-eur">€2,99</span>
         <span class="pw-per">/ mese</span>
       </div>
       <div class="pw-feats">
-        <div class="pw-f"><span class="pw-ok">✓</span> Tutte le stanze di chat</div>
-        <div class="pw-f"><span class="pw-ok">✓</span> Stanze private con codice</div>
-        <div class="pw-f"><span class="pw-ok">✓</span> Giochi — 7 e Mezzo</div>
-        <div class="pw-f"><span class="pw-ok">✓</span> Match anonimo</div>
-        <div class="pw-f"><span class="pw-ok">✓</span> Chat anonima senza limiti</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Messaggi <b>illimitati</b></div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Badge <b>⭐ Premium</b> accanto al nome</div>
+        <div class="pw-f"><span class="pw-ok">✓</span> Sostieni Kouverte, senza pubblicità</div>
       </div>
-      <button class="pw-btc-btn" onclick="openSubBtcPanel()">₿ Abbonati con Bitcoin</button>
-      <button class="pw-stripe-btn" onclick="buyWithStripe('premium_30')">💳 Paga con carta</button>
+      <button class="pw-stripe-btn" onclick="buyWithStripe('premium_30')" style="background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:800">💳 Abbonati con carta</button>
+      <button class="pw-btc-btn" onclick="openSubBtcPanel()" style="background:transparent;border:1px solid rgba(255,255,255,.18);color:#cbd5e1;font-weight:600">₿ oppure paga in Bitcoin</button>
+      <div class="pw-note" style="margin-top:10px;font-size:11px;opacity:.85">Per abbonarti serve un account gratuito (lo crei dal Profilo).</div>
       <div class="pw-sub-panel" id="pwBtcPanel" style="display:none">
         <div class="pw-addr-label">Invia esattamente <b>₿ ${SUB_BTC_AMOUNT}</b> a:</div>
         <div class="pw-addr" onclick="navigator.clipboard?.writeText('${SUB_BTC_ADDR}').then(()=>showToast('📋 Indirizzo copiato!'))">
@@ -11417,7 +11419,7 @@ function showPaywall(onAllowed){
     </div>`;
     document.body.appendChild(ov);
   }
-  ov.classList.add('show');
+  requestAnimationFrame(()=>ov.classList.add('show'));
 }
 
 function closePaywall(){
