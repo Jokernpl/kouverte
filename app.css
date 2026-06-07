@@ -5338,4 +5338,9 @@ html,body,
 /* 6) Sfondo piatto e calmo (niente gradiente viola acceso) */
 html, body{ background:#0f1117 !important; background-image:linear-gradient(180deg,#12151d,#0b0d14) !important; background-attachment:scroll !important; }
 .screen, .home-body, #home, #chat, #profile{ background:transparent !important; background-image:none !important; }
+
+/* 7) Banner pubblicitario (utenti gratis) — i Premium non lo vedono */
+.ad-slot{ margin:14px 4px 4px; }
+.ad-label{ font-size:9px; color:#5a6478; text-transform:uppercase; letter-spacing:.5px; margin:0 2px 4px; }
+.house-ad{ display:flex; align-items:center; gap:12px; padding:13px 15px; border-radius:13px; cursor:pointer; background:linear-gradient(135deg,#7c3aed,#db2777); box-shadow:0 4px 16px rgba(124,58,237,.3); }
 .modal-overlay, .overlay{ background:rgba(6,8,16,.78) !important; }

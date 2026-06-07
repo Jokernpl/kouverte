@@ -49,8 +49,8 @@ const STRIPE_PACKS = {
     coins_300:  { id: 'coins_300',  type: 'coins',   coins: 300,  eur: 299,   label: 'Starter',   desc: '300 monete', icon: '🪙' },
     coins_900:  { id: 'coins_900',  type: 'coins',   coins: 900,  eur: 699,   label: 'Popular',   desc: '900 monete + 10% bonus', icon: '💰', popular: true },
     coins_2500: { id: 'coins_2500', type: 'coins',   coins: 2500, eur: 1699,  label: 'Mega',      desc: '2500 monete + 25% bonus', icon: '💎' },
-    premium_30: { id: 'premium_30', type: 'premium', days: 30,    eur: 299,   label: 'Premium 30gg', desc: 'Messaggi illimitati + badge ⭐ Premium', icon: '⭐' },
-    premium_365:{ id: 'premium_365',type: 'premium', days: 365,   eur: 2499,  label: 'Premium Annuale',  desc: 'Un anno di Premium — risparmi', icon: '🌟' }
+    premium_30: { id: 'premium_30', type: 'premium', days: 30,    eur: 199,   label: 'Premium 30gg', desc: 'Niente pubblicità + messaggi illimitati + badge ⭐', icon: '⭐' },
+    premium_365:{ id: 'premium_365',type: 'premium', days: 365,   eur: 1499,  label: 'Premium Annuale',  desc: 'Un anno di Premium — risparmi', icon: '🌟' }
 };
 
 // Bitcoin Payment Config

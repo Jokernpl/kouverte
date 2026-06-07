@@ -19,6 +19,12 @@ window.FRAME_STYLES = [
 // ══ CONFIG ══
 const FREE_LIMIT = 100;
 
+// ── PUBBLICITÀ (rete a scelta, es. Google AdSense) ─────────────────
+// Attivazione: metti enabled:true e incolla client/slot della TUA rete.
+// I Premium NON vedono pubblicità. Finché non è attiva, lo spazio mostra
+// un invito a Premium (così converte comunque).
+const AD_CONFIG = { enabled:false, adsenseClient:'', adsenseSlot:'' };
+
 const NEON = [
   '#e879f9','#38bdf8','#4ade80','#fb923c',
   '#facc15','#f472b6','#a78bfa','#34d399',
@@ -3766,8 +3772,8 @@ const STRIPE_PACKS_CLIENT = [
   { id:'coins_300',   type:'coins',   coins:300,  eur:'2.99', label:'Starter',      desc:'300 monete',                icon:'🪙', popular:false },
   { id:'coins_900',   type:'coins',   coins:900,  eur:'6.99', label:'Popular',      desc:'900 monete · +10% bonus',   icon:'💰', popular:true  },
   { id:'coins_2500',  type:'coins',   coins:2500, eur:'16.99',label:'Mega',         desc:'2500 monete · +25% bonus',  icon:'💎', popular:false },
-  { id:'premium_30',  type:'premium', days:30,    eur:'2.99', label:'Premium 30gg', desc:'Messaggi illimitati · badge ⭐',icon:'⭐', popular:true },
-  { id:'premium_365', type:'premium', days:365,   eur:'24.99',label:'Premium Annuale',  desc:'Un anno · risparmi 30%',icon:'🌟', popular:false }
+  { id:'premium_30',  type:'premium', days:30,    eur:'1.99', label:'Premium 30gg', desc:'Niente pubblicità · illimitati · badge ⭐',icon:'⭐', popular:true },
+  { id:'premium_365', type:'premium', days:365,   eur:'14.99',label:'Premium Annuale',  desc:'Un anno · risparmi',icon:'🌟', popular:false }
 ];
 
 function openStripeModal(){
@@ -5906,6 +5912,30 @@ function renderRooms(){
   document.getElementById('roomsList').innerHTML =
     `<div class="sec-label rooms-head">Stanze</div>
      <div class="rooms-simple">${rooms.map(r=>roomCard(r)).join('')}</div>`;
+  renderAd();
+}
+
+// ── Banner pubblicitario: ads ai gratis · invito Premium se rete non attiva · niente per i Premium ──
+function renderAd(){
+  const slot = document.getElementById('adSlotHome');
+  if(!slot) return;
+  if(typeof isPrem==='function' && isPrem()){ slot.style.display='none'; return; }
+  slot.style.display='block';
+  if(typeof AD_CONFIG!=='undefined' && AD_CONFIG.enabled && AD_CONFIG.adsenseClient){
+    if(!document.getElementById('adsenseLib')){
+      const s=document.createElement('script'); s.id='adsenseLib'; s.async=true; s.crossOrigin='anonymous';
+      s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client='+encodeURIComponent(AD_CONFIG.adsenseClient);
+      document.head.appendChild(s);
+    }
+    if(slot.dataset.mode!=='ads'){
+      slot.dataset.mode='ads';
+      slot.innerHTML='<div class="ad-label">Pubblicità</div><ins class="adsbygoogle" style="display:block" data-ad-client="'+AD_CONFIG.adsenseClient+'" data-ad-slot="'+AD_CONFIG.adsenseSlot+'" data-ad-format="auto" data-full-width-responsive="true"></ins>';
+      try{ (window.adsbygoogle=window.adsbygoogle||[]).push({}); }catch(e){}
+    }
+  } else if(slot.dataset.mode!=='house'){
+    slot.dataset.mode='house';
+    slot.innerHTML='<div class="house-ad" onclick="showPaywall()"><span style="font-size:22px">⭐</span><div style="flex:1"><div style="font-weight:800;color:#fff;font-size:14px">Togli le pubblicità — passa a Premium</div><div style="font-size:12px;color:rgba(255,255,255,.82)">Niente ads + messaggi illimitati · €1,99/mese</div></div><span style="color:#fff;font-size:18px">→</span></div>';
+  }
 }
 
 // ── Age Gate 18+ ──────────────────────────────────────────────────────────────
@@ -11395,13 +11425,13 @@ function showPaywall(onAllowed){
       <div class="pw-title">Kouverte Premium</div>
       <div class="pw-desc">Hai usato i 100 messaggi gratuiti.<br>Passa a Premium e chatta senza limiti.</div>
       <div class="pw-price-row">
-        <span class="pw-eur">€2,99</span>
+        <span class="pw-eur">€1,99</span>
         <span class="pw-per">/ mese</span>
       </div>
       <div class="pw-feats">
+        <div class="pw-f"><span class="pw-ok">✓</span> <b>Niente pubblicità</b></div>
         <div class="pw-f"><span class="pw-ok">✓</span> Messaggi <b>illimitati</b></div>
         <div class="pw-f"><span class="pw-ok">✓</span> Badge <b>⭐ Premium</b> accanto al nome</div>
-        <div class="pw-f"><span class="pw-ok">✓</span> Sostieni Kouverte, senza pubblicità</div>
       </div>
       <button class="pw-stripe-btn" onclick="buyWithStripe('premium_30')" style="background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:800">💳 Abbonati con carta</button>
       <button class="pw-btc-btn" onclick="openSubBtcPanel()" style="background:transparent;border:1px solid rgba(255,255,255,.18);color:#cbd5e1;font-weight:600">₿ oppure paga in Bitcoin</button>
