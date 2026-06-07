@@ -1868,9 +1868,10 @@ function connectSocket(){
         el.textContent=count>0?count+' in sala':'Nessuno ora';
         el.classList.toggle('gc-waiting-empty',count===0);
       } else {
-        // Room card: 0 online -> stato invitante "Sii il primo!"
-        el.textContent = count>0 ? count : 'Sii il primo!';
+        // Riga stanza semplice: numero reale + pallino online live
+        el.textContent = count;
         el.closest('.rc-online-pill')?.classList.toggle('rc-online-empty', count===0);
+        el.closest('.room-row')?.querySelector('.rl-dot')?.classList.toggle('on', count>0);
       }
       if(count>prev){
         // bump animation
@@ -5897,22 +5898,12 @@ function vscLike(){
 }
 
 function renderRooms(){
-  const chatRooms = ROOMS.filter(r => r.tier !== 'settemezz');
-  const gameRooms = ROOMS.filter(r => r.tier === 'settemezz');
-  const gamesSection = gameRooms.length ? `
-    <div class="sec-label-row" style="grid-column:1/-1">
-      <div class="sec-label" style="margin:0">🎮 Giochi</div>
-    </div>
-    <div class="games-grid">${gameRooms.map(gameCard).join('')}</div>
-  ` : '';
-  const chatSection = chatRooms.length ? `
-    <div class="sec-label-row" style="grid-column:1/-1;margin-top:${gameRooms.length?'16px':'0'}">
-      <div class="sec-label" style="margin:0">✦ Stanze in evidenza</div>
-      <span class="sec-label-link" onclick="openContinua()">Vedi tutte ›</span>
-    </div>
-    ${chatRooms.map((r,i)=>roomCard(r,i)).join('')}
-  ` : '';
-  document.getElementById('roomsList').innerHTML = gamesSection + chatSection;
+  // ── MODALITÀ SEMPLICE (stile Ciao Amigos): solo stanze di chat in lista di testo ──
+  // Niente giochi, niente locandine/immagini: si legge al volo e carica istantaneo.
+  const rooms = ROOMS.filter(r => !['settemezz','notte'].includes(r.tier));
+  document.getElementById('roomsList').innerHTML =
+    `<div class="sec-label rooms-head">Stanze</div>
+     <div class="rooms-simple">${rooms.map(r=>roomCard(r)).join('')}</div>`;
 }
 
 // ── Age Gate 18+ ──────────────────────────────────────────────────────────────
@@ -5967,79 +5958,23 @@ function gameCard(r){
   </div>`;
 }
 
-function roomCard(r, idx){
-  const cnt=roomOnline[r.id]??0;
-  // Prima stanza = hero card grande a tutta larghezza
-  const heroCls = (idx===0) ? ' rc-hero' : '';
-  // Nome stanza pulito: rimuovo l'emoji/bandiera dal nome se già presente (es. "🇮🇹 Italia" → "Italia")
-  const cleanName=r.name.replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim()||r.name;
-
-  // FOMO indicators (basati su utenti REALI)
-  const MAX_CAPACITY = 30;
-  const pctFull = (cnt / MAX_CAPACITY) * 100;
-  let fomoIndicator = '';
-  if (pctFull >= 80 && cnt > 0) {
-    fomoIndicator = '<div class="fomo-tag almost-full">⚡ QUASI PIENA</div>';
-  } else if (cnt >= 15) {
-    fomoIndicator = '<div class="fomo-tag trending">🔥 TRENDING</div>';
-  } else if (cnt >= 5) {
-    fomoIndicator = '<div class="fomo-tag live">🔴 LIVE</div>';
-  }
-
-  // Live preview: mostra ultimo messaggio (se disponibile)
-  const preview = (typeof roomPreviews === 'object' && roomPreviews[r.id]) ? roomPreviews[r.id] : [];
-  const lastMsg = preview[preview.length - 1];
-  const previewHtml = lastMsg && lastMsg.text ? `
-    <div class="rc-preview">
-      <div class="rc-preview-dot"></div>
-      <span class="rc-preview-name" style="color:${lastMsg.color||'#00d4ff'}">${esc((lastMsg.name||'?').substring(0,10))}:</span>
-      <span class="rc-preview-text">${esc(lastMsg.text.substring(0,40))}</span>
-    </div>
-  ` : '';
-
-  // Animazione "live-room" se più di 5 utenti
-  const liveCls = cnt >= 5 ? ' live-room' : '';
-  // Classe speciale per stanze adulti
-  const adultCls = r.tier === 'adult' ? ' adult-room' : '';
-  // Badge 18+ per stanze adulti (sovrascrive fomo)
-  const adultBadge = r.tier === 'adult'
-    ? '<div class="fomo-tag adult">🔞 18+</div>' : fomoIndicator;
-
+function roomCard(r){
+  // ── Riga stanza semplice (testo): emoji + nome + descrizione + online ──
+  const cnt = roomOnline[r.id] ?? 0;
+  const cleanName = r.name.replace(/^[\p{Emoji}\p{Extended_Pictographic}️]+\s*/u,'').trim() || r.name;
+  const adult = r.tier === 'adult' ? '<span class="rl-18">18+</span>' : '';
   return `
-  <div class="room-card${liveCls}${adultCls}${heroCls}" onclick="enterRoom('${r.id}')" style="--rc-color:${r.color};--rc-glow:${r.color}33">
-    ${adultBadge}
-
-    <!-- Sfondo immagine a tutta card -->
-    <div class="rc-center" style="background-image: url('${r.img||''}'); background-size: cover; background-position: center;">
-      <div class="rc-image-overlay"></div>
-    </div>
-
-    <!-- Badge row in alto -->
-    <div class="rc-badges">
-      <div class="rc-online-pill${cnt===0?' rc-online-empty':''}">
-        <div class="rc-online-dot"></div>
-        <span id="ron_${r.id}" class="rc-num">${cnt>0?cnt:'Sii il primo!'}</span>
-      </div>
-      ${cnt>0?tempBadge(cnt):''}
-    </div>
-
-    <!-- Nome stanza (overlay sopra immagine) -->
-    <div class="rc-name-block">
-      <span class="rc-room-emoji">${r.emoji||''}</span>
-      <span class="rc-tile-name-overlay">${esc(cleanName)}</span>
-    </div>
-
-    ${previewHtml}
-
-    <!-- Footer: tap-to-enter + bell alert -->
-    <div class="rc-foot" style="justify-content:space-between;padding:0 2px">
-      <div class="rc-enter-pill">
-        <span>ENTRA</span>
-        <span class="rc-foot-arrow">→</span>
-      </div>
-      <button class="rc-bell-btn" id="bell_${r.id}" onclick="toggleRoomAlert('${r.id}',event)" title="Avvisami quando la stanza si anima">${getRoomAlertIcon(r.id)}</button>
-    </div>
-  </div>`;
+  <button class="room-row" onclick="enterRoom('${r.id}')">
+    <span class="rl-emoji" style="--rl-c:${r.color||'#8b95a5'}">${r.emoji||'💬'}</span>
+    <span class="rl-text">
+      <span class="rl-name">${esc(cleanName)}${adult}</span>
+      <span class="rl-desc">${esc(r.desc||'')}</span>
+    </span>
+    <span class="rl-meta">
+      <span class="rl-dot${cnt>0?' on':''}"></span>
+      <span class="rl-cnt" id="ron_${r.id}">${cnt>0?cnt:0}</span>
+    </span>
+  </button>`;
 }
 
 // ══ ENTER/LEAVE ══
@@ -6407,7 +6342,7 @@ function appendMsg(msg){
     const nameGlow=prem?`;text-shadow:0 0 6px ${col}`:'';
     const senderMc = msg.msgCount || 0;
     const lvl = userLevel(senderMc);
-    const lvlBadge = !consec ? `<span style="font-size:9px;color:#9ca3af;margin-left:3px;font-weight:600">lvl ${lvl}</span>` : '';
+    const lvlBadge = ''; // MODALITÀ SEMPLICE: niente "lvl" accanto al nome in chat
     const auraClass = (prem || lvl>=10) ? 'aura-prem' : '';
     const auraStyle = (prem || lvl>=10) ? `color:${col};` : '';
     const clickData = `data-uid="${esc(msg.userId||'')}" data-uname="${esc(name)}" data-uface="${esc(face)}" data-ucolor="${col}" data-uframe="${esc(msg.activeFrame||'none')}" onclick="openUserMenu(this)" style="cursor:pointer"`;
@@ -6940,7 +6875,7 @@ function addBadge(id,label){
   if((user.badges||[]).includes(id)) return;
   user.badges=[...(user.badges||[]),id];
   document.getElementById('stBadges').textContent=user.badges.length;
-  renderBadges(); saveUser(); showToast('🏆 Badge: '+label+'!');
+  renderBadges(); saveUser(); // MODALITÀ SEMPLICE: badge tracciati in silenzio (niente toast)
 }
 function renderBadges(){
   const earned=new Set(user?.badges||[]);
@@ -8538,7 +8473,13 @@ function openUserMenu(el){
   const uframe = el.dataset.uframe || 'none';
 
   if (!uid) return;
-  if (uid === user.id) { showToast('💜 Sei tu!'); return; }
+  // Clic su te stesso → apri il TUO profilo (per vederlo/modificarlo)
+  if (uid === user.id) { try{ showScreen('profile', document.querySelector('[data-sc=profile]')); }catch(e){} return; }
+
+  // Handle per il profilo: dato esplicito, oppure (per utenti registrati u_) il nome ≈ username
+  const uhandle = el.dataset.uhandle || (String(uid).startsWith('u_') ? String(uname||'').toLowerCase().replace(/[^a-z0-9_]/g,'') : '');
+  const safeColor = /^#[0-9a-f]{6}$/i.test(ucolor) ? ucolor : '#00d4ff';
+  const blocked = (typeof isBlocked === 'function') && isBlocked(uid);
 
   let modal = document.getElementById('userMenuModal');
   if (!modal) {
@@ -8548,31 +8489,36 @@ function openUserMenu(el){
     modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
     document.body.appendChild(modal);
   }
+  const X = `document.getElementById('userMenuModal').classList.remove('show')`;
   modal.innerHTML = `
-    <div class="modal-box" style="max-width:360px">
-      <div class="modal-hdr">
-        <div class="modal-title">👤 Profilo utente</div>
-        <button class="modal-close" onclick="document.getElementById('userMenuModal').classList.remove('show')">✕</button>
-      </div>
-      <div class="modal-body" style="text-align:center;padding:24px 20px">
-        <div class="prof-avatar-hero frame-${uframe}" style="--av-c1:${ucolor};--av-c2:${ucolor};width:90px;height:90px;font-size:48px;margin-bottom:10px">
-          <div class="prof-avatar-face">${uface}</div>
-        </div>
-        <div style="font-size:18px;font-weight:600;color:${ucolor};margin-bottom:4px">${esc(uname)}</div>
-        <div style="font-size:11px;color:#9ca3af;margin-bottom:20px">ID: ${uid.substring(0,12)}</div>
+    <div class="modal-box" style="max-width:330px">
+      <div class="modal-body" style="text-align:center;padding:26px 20px">
+        <div style="width:84px;height:84px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;font-size:42px;background:${safeColor}22;border:2px solid ${safeColor}">${uface}</div>
+        <div style="font-size:19px;font-weight:700;color:${safeColor};margin-bottom:3px">${esc(uname||'Utente')}</div>
+        <div id="umMeta" style="font-size:12px;color:#9ca3af;margin-bottom:18px">Utente della chat</div>
 
         <div style="display:flex;flex-direction:column;gap:8px">
-          <button class="modal-btn modal-btn-primary" onclick="actionDmFromUserMenu('${esc(uid)}','${esc(uname)}','${uface}','${ucolor}')" style="width:100%;padding:12px">💬 Manda messaggio privato</button>
-          <button class="modal-btn modal-btn-primary" style="background:#10b981;width:100%;padding:12px" onclick="actionAddFriendFromMenu('${esc(uid)}','${esc(uname)}')">➕ Aggiungi agli amici</button>
-          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionStartWebRTC('${esc(uid)}','${esc(uname)}')">📹 Video chat</button>
-          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="actionFavoriteFromMenu('${esc(uid)}','${esc(uname)}','${uface}','${ucolor}')">❤️ Aggiungi ai preferiti</button>
-          <button class="modal-btn modal-btn-secondary" style="background:rgba(239,68,68,0.15);color:#fca5a5;border:1px solid rgba(239,68,68,0.3);width:100%;padding:10px" onclick="actionBlockFromMenu('${esc(uid)}','${esc(uname)}','${uface}')">🚫 Blocca utente</button>
-          ${(user && user.username === 'bob2015') ? `<button class="modal-btn" style="background:rgba(220,38,38,0.25);color:#fca5a5;border:1px solid rgba(220,38,38,0.6);width:100%;padding:10px;font-weight:700" onclick="banUserFromMenu('${esc(uid)}','${esc(uname)}')">🔨 BAN utente</button>` : ''}
+          <button class="modal-btn modal-btn-primary" style="width:100%;padding:12px" onclick="${X};actionDmFromUserMenu('${esc(uid)}','${esc(uname)}','${uface}','${safeColor}')">💬 Messaggio privato</button>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="${X};actionStartWebRTC('${esc(uid)}','${esc(uname)}')">📹 Video chat</button>
+          <button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px" onclick="${X};actionAddFriendFromMenu('${esc(uid)}','${esc(uname)}')">➕ Aggiungi amico</button>
+          ${blocked
+            ? `<button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px;color:#86efac;border:1px solid rgba(34,197,94,.35)" onclick="${X};unblockUser('${esc(uid)}')">✅ Sblocca utente</button>`
+            : `<button class="modal-btn modal-btn-secondary" style="width:100%;padding:10px;background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.3)" onclick="${X};blockUser('${esc(uid)}','${esc(uname)}')">🚫 Blocca utente</button>`}
+          ${(user && user.username === 'bob2015') ? `<button class="modal-btn" style="background:rgba(220,38,38,0.25);color:#fca5a5;border:1px solid rgba(220,38,38,0.6);width:100%;padding:8px;font-weight:700" onclick="${X};banUserFromMenu('${esc(uid)}','${esc(uname)}')">🔨 BAN utente</button>` : ''}
         </div>
+        <button class="modal-btn" style="width:100%;padding:9px;background:none;color:#6b7280;margin-top:8px" onclick="${X}">Chiudi</button>
       </div>
     </div>
   `;
   modal.classList.add('show');
+  // Se l'utente è registrato e conosciamo l'handle → mostra livello + bio reali
+  if (uhandle) {
+    fetch('/api/profile/' + encodeURIComponent(uhandle)).then(r=>r.ok?r.json():null).then(p=>{
+      const m = document.getElementById('umMeta');
+      if (p && m) m.innerHTML = `⭐ Livello ${p.level||1}${p.statusText?` · ${esc(p.statusText)}`:''}` +
+        (p.bio ? `<div style="margin-top:8px;color:#cbd5e1;font-size:12px;line-height:1.5;font-style:italic">"${esc(p.bio.slice(0,140))}"</div>` : '');
+    }).catch(()=>{});
+  }
 }
 
 function actionDmFromUserMenu(uid, uname, uface, ucolor){
@@ -11606,6 +11552,7 @@ function checkLoginReward(){
   setTimeout(()=>showLoginRewardModal(streak),1000);
 }
 function showLoginRewardModal(streak){
+  return; // MODALITÀ SEMPLICE (Ciao Amigos): niente popup premio giornaliero (gamification rimossa)
   // ONBOARDING SNELLITO: non impilare mai il premio sopra al login-wall aperto
   const _w=document.getElementById('loginWall');
   if(_w && _w.classList.contains('show')){ window._lrPendingStreak=streak; return; }

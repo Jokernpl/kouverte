@@ -5268,4 +5268,70 @@ html,body,
 *:not(#kvNoBlur){ backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
 /* Senza la sfocatura, rendo le card e la nav un filo più piene così restano nitide e leggibili */
 .bnav{ background:linear-gradient(180deg, rgba(10,12,24,.92), rgba(7,8,18,.96)) !important; }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODALITÀ SEMPLICE — stile "Ciao Amigos"  (2026-06)
+   Chat veloce e leggibile: stanze a lista di testo, niente locandine,
+   niente animazioni/banner. Solo stanze + chat + profili.
+═══════════════════════════════════════════════════════════════ */
+
+/* 1) STOP a tutte le animazioni decorative — durata ~0 così lo stato finale
+   viene applicato subito (niente elementi che restano invisibili). */
+*, *::before, *::after{
+  animation-duration:0.001ms !important;
+  animation-delay:0ms !important;
+  animation-iteration-count:1 !important;
+}
+
+/* 2) Via i banner/decorazioni della home: resta header pulito + lista stanze. */
+#kvParticles, #kvAmbient,
+.kv-hero-card, .kv-hero-v2, .kv-hero-orbits, .kv-hero-mesh,
+.live-stats-bar,
+#resumeBanner, #onboardingStrip, #dailyStreakBanner, #referralBanner,
+#pwaInstallBanner, #pushNotifyBanner, #installBanner,
+#cityLeaderboard{ display:none !important; }
+
+/* 3) Via la sezione Giochi/Economia dalla barra in basso. */
+.bnav .nbtn[data-sc="econHome"]{ display:none !important; }
+
+/* 3b) Via la gamification dalla CHAT: monete, boost, regali, reazioni "fuoco", roulette. */
+#chatBoostBtn, #sdTimer, .coin-widget, #reactCounter,
+#fireBanner, #fireOverlay, #reactionStage,
+#rouletteFab, .cgift, .creact,
+#giftPickerOverlay, #lrOverlay{ display:none !important; }
+
+/* 4) STANZE A LISTA DI TESTO (Ciao Amigos) */
+.rooms-head{
+  font-size:12px; font-weight:800; letter-spacing:.6px; text-transform:uppercase;
+  color:#7c8698; margin:4px 4px 10px;
+}
+.rooms-simple{ display:flex; flex-direction:column; gap:7px; padding-bottom:10px; }
+.room-row{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  background:#161a23; border:1px solid #242b39; border-radius:13px;
+  padding:11px 13px; color:#e8eaf0; cursor:pointer; font-family:inherit;
+}
+.room-row:hover{ background:#1b2132; border-color:#2e3850; }
+.room-row:active{ background:#10131c; }
+.rl-emoji{
+  font-size:23px; width:44px; height:44px; min-width:44px;
+  display:grid; place-items:center; border-radius:11px;
+  background:rgba(255,255,255,.05);
+  background:color-mix(in srgb, var(--rl-c,#8b95a5) 18%, transparent);
+}
+.rl-text{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+.rl-name{ font-size:15.5px; font-weight:700; color:#f2f4f9; display:flex; align-items:center; gap:7px; line-height:1.2; }
+.rl-desc{ font-size:12px; color:#828d9f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rl-18{ font-size:9px; font-weight:800; color:#ff5c8a; border:1px solid rgba(255,92,138,.45); border-radius:5px; padding:1px 5px; letter-spacing:.3px; }
+.rl-meta{ display:flex; align-items:center; gap:7px; color:#aeb6c4; font-size:13px; font-weight:800; }
+.rl-dot{ width:8px; height:8px; border-radius:50%; background:#3a4252; flex:none; }
+.rl-dot.on{ background:#22c55e; box-shadow:0 0 7px rgba(34,197,94,.6); }
+.rl-cnt{ min-width:12px; text-align:right; font-variant-numeric:tabular-nums; }
+
+/* 5) PROFILO SEMPLICE: tengo avatar, nome, stato, bio (modificabili) e la nota vocale.
+   Via la gamification: livello/XP, monete, ruota, cornici, badge, pet/clan, referral, banner. */
+.prof-banner, .prof-level-pill,
+.rank-wrap, #profExtrasRow, .coin-big, .wheel-btn,
+.ref-sec, .frames-sec, .badges-sec{ display:none !important; }
+.prof-stats .stat-b:nth-child(3){ display:none !important; } /* via il conteggio "Badge" */
 .modal-overlay, .overlay{ background:rgba(6,8,16,.78) !important; }
