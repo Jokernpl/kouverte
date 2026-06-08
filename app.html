@@ -71,7 +71,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/app.css?v=20260604c">
+<link rel="stylesheet" href="/app.css?v=20260608a">
 </head>
 <body>
 
@@ -802,6 +802,11 @@
     </div>
     <div class="prof-name" id="profName" style="color:#fff">Anonimo</div>
     <div class="prof-level-pill" id="profLevelPill">Lv.1 · 0 XP</div>
+    <!-- Genere: come ti presenti (donne rosa / uomini azzurri) -->
+    <div class="prof-gender" id="profGenderRow">
+      <button type="button" class="pg-btn pg-f" id="pgF" onclick="setGender('f')">♀ Donna</button>
+      <button type="button" class="pg-btn pg-m" id="pgM" onclick="setGender('m')">♂ Uomo</button>
+    </div>
     <div class="prof-username" id="profUsername" style="display:none">@username</div>
     <button id="profShareBtn" onclick="sharePublicProfile()" style="display:none;margin-top:7px;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);color:#00d4ff;font-size:11px;font-weight:700;padding:5px 13px;border-radius:20px;cursor:pointer;letter-spacing:.3px">🔗 Condividi profilo</button>
 
@@ -1741,7 +1746,7 @@
 
 
 
-<script src="/app.js?v=20260604c"></script>
+<script src="/app.js?v=20260608a"></script>
 
 <!-- ── Live Reload (solo su localhost) ──────────────────────────────────── -->
 <script>

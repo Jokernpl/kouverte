@@ -517,6 +517,7 @@ function initUser(){
     if(!user.tempFrames) user.tempFrames = {}; // {frameId: expiresAt}
     if(typeof user.boostUntil !== 'number') user.boostUntil = 0;
     if(typeof user.confessUsedOn !== 'number') user.confessUsedOn = 0;
+    if(typeof user.gender !== 'string') user.gender = '';
   }
   else{
     isNewUser=true;
@@ -530,7 +531,7 @@ function initUser(){
       color:getColor(uid), msgCount:0, freeUsed:0,
       isPremium:false, premExpiry:0,
       roomsVisited:[], badges:[], ownedFrames:['none','silver','purple'], activeFrame:'none',
-      joinedAt:Date.now(),
+      joinedAt:Date.now(), gender:'',
       // Sistema economia
       coins:0, streak:0, lastLogin:0, lastSpin:0,
       tempFrames:{}, boostUntil:0, confessUsedOn:0
@@ -1616,6 +1617,9 @@ function getRank(mc){
 
 function updateProfileUI(){
   document.getElementById('profName').textContent=user.name;
+  // Colore nome profilo in base al genere (donne rosa / uomini azzurri) + stato bottoni
+  try{ const _pn=document.getElementById('profName'); if(_pn) _pn.style.color = genderColor(user.gender) || '#fff'; }catch(e){}
+  if(typeof refreshGenderButtons==='function') refreshGenderButtons();
   // Upsell Premium: nascondi il bottone se l'utente è già Premium
   const _pb=document.getElementById('profPremiumBtn'); if(_pb) _pb.style.display=(typeof isPrem==='function'&&isPrem())?'none':'flex';
   // Aggiorna subtitle header profilo
@@ -1913,7 +1917,7 @@ function connectSocket(){
       chatRoomUsers[roomId].set(u.socketId || u.id, {
         id: u.id, name: u.name, face: u.face, color: u.color,
         frame: u.frame, activeFrame: u.activeFrame || u.frame,
-        isPremium: u.isPremium
+        isPremium: u.isPremium, gender: u.gender || ''
       });
     });
     // Pulisci stati cam di utenti usciti
@@ -1949,7 +1953,54 @@ function pubUser(){
   return {id:user.id,name:user.name,color:user.color,face:user.face,
     frame:user.activeFrame,activeFrame:user.activeFrame,
     active_nickFx:user.active_nickFx,active_bubble:user.active_bubble,
-    isPremium:isPrem(),msgCount:user.msgCount||0};
+    isPremium:isPrem(),msgCount:user.msgCount||0,gender:user.gender||''};
+}
+
+// ── Genere (stile CiaoAmigos: donne rosa, uomini azzurri) ──
+function genderColor(g){ return g==='f' ? '#ff5fa2' : (g==='m' ? '#4aa8ff' : ''); }
+function genderGlyph(g){ return g==='f' ? '♀' : (g==='m' ? '♂' : ''); }
+function refreshGenderButtons(){
+  const f=document.getElementById('pgF'), m=document.getElementById('pgM');
+  if(f) f.classList.toggle('sel', user.gender==='f');
+  if(m) m.classList.toggle('sel', user.gender==='m');
+}
+function setGender(g){
+  user.gender = (g==='f'||g==='m') ? g : '';
+  try{ setLS('kv4_user',user); }catch(e){}
+  try{ setLS('kv4_gender_asked','1'); }catch(e){}
+  if(typeof saveUser==='function') saveUser();
+  refreshGenderButtons();
+  if(typeof updateProfileUI==='function') updateProfileUI();
+  // Ri-trasmetti alla stanza: gli altri vedono subito il colore aggiornato
+  if(typeof room!=='undefined' && room && socket?.connected)
+    socket.emit('join-chat-room',{roomId:room.id,user:pubUser()});
+  if(typeof renderUsersPanel==='function') renderUsersPanel();
+  if(typeof showToast==='function')
+    showToast(g==='f'?'♀ Sei segnata come Donna':(g==='m'?'♂ Sei segnato come Uomo':'Genere rimosso'));
+  const ov=document.getElementById('genderAsk'); if(ov) ov.style.display='none';
+}
+function askGenderOnce(){
+  try{
+    if(user && user.gender) return;
+    if(getLS('kv4_gender_asked')) return;
+  }catch(e){ return; }
+  let ov=document.getElementById('genderAsk');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='genderAsk'; ov.className='ga-overlay';
+    ov.innerHTML=
+      '<div class="ga-card">'+
+        '<div class="ga-title">Come ti presenti? 👋</div>'+
+        '<div class="ga-sub">Scegli per farti riconoscere nella stanza — donne in rosa, uomini in azzurro. Lo puoi cambiare dal profilo.</div>'+
+        '<div class="ga-btns">'+
+          '<button type="button" class="ga-f" onclick="setGender(\'f\')">♀ Donna</button>'+
+          '<button type="button" class="ga-m" onclick="setGender(\'m\')">♂ Uomo</button>'+
+        '</div>'+
+        '<div class="ga-skip" onclick="this.parentNode.parentNode.style.display=\'none\';try{setLS(\'kv4_gender_asked\',\'1\')}catch(e){}">Salta per ora</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+  }
+  ov.style.display='flex';
 }
 
 // ════════════════════════════════════════════
@@ -2802,7 +2853,21 @@ function renderUsersPanel() {
     return;
   }
 
+  // ── Intestazione "utenti online" con conteggio per genere (donne rosa / uomini azzurri) ──
+  let nF = 0, nM = 0;
+  usersMap.forEach((u) => { if (u && u.gender === 'f') nF++; else if (u && u.gender === 'm') nM++; });
+  const head = document.createElement('div');
+  head.className = 'rp-head';
+  head.innerHTML =
+    '<span class="rp-head-online">👥 ' + usersMap.size + ' online</span>' +
+    '<span class="rp-leg">' +
+      '<span class="lg-f" title="Donne online">♀ ' + nF + '</span>' +
+      '<span class="lg-m" title="Uomini online">♂ ' + nM + '</span>' +
+    '</span>';
+  container.appendChild(head);
+
   let firstOtherUser = null;
+  let othersCount = 0;
 
   const mySocketId = socket?.id;
   usersMap.forEach((userObj, socketId) => {
@@ -2813,6 +2878,7 @@ function renderUsersPanel() {
 
     // Salva il primo utente per auto-select (con socketId per confronto univoco)
     if (!firstOtherUser) firstOtherUser = { ...userObj, socketId };
+    othersCount++;
 
     const chip = document.createElement('div');
     chip.className = 'user-chip';
@@ -2826,9 +2892,15 @@ function renderUsersPanel() {
     if (userObj.color) avatar.style.background = userObj.color + '33';
     avatar.textContent = userObj.face || '🎭';
 
+    const ugender = userObj.gender || '';
+    const gc = genderColor(ugender);
     const name = document.createElement('div');
     name.className = 'user-chip-name';
-    name.textContent = (userObj.name || 'Anonimo').substring(0, 10);
+    name.textContent = (genderGlyph(ugender) ? genderGlyph(ugender) + ' ' : '') + (userObj.name || 'Anonimo').substring(0, 10);
+    if (gc) {
+      name.style.setProperty('color', gc, 'important'); // batte .user-chip-name{color:#fff!important}
+      avatar.style.boxShadow = '0 0 0 2px ' + gc + '66'; // alone rosa/azzurro sull'avatar
+    }
 
     // Stato cam: questo utente è "in onda"?
     const camOn = !!roomCamStates[userObj.id];
@@ -2837,8 +2909,8 @@ function renderUsersPanel() {
     // Stato cam (icona compatta: evita traboccamento nella lista stretta)
     const camStatus = document.createElement('div');
     camStatus.className = 'rp-cam-status ' + (camOn ? 'on' : 'off');
-    camStatus.textContent = camOn ? '🔴' : '📷';
-    camStatus.title = camOn ? 'In onda' : 'Cam spenta';
+    camStatus.textContent = camOn ? '🔴 live' : '📷 off';
+    camStatus.title = camOn ? 'Cam accesa — in onda' : 'Cam spenta';
 
     // Bottone: 👁 Guarda (se in onda) oppure 📹 Invita (se cam spenta)
     const videoBtn = document.createElement('button');
@@ -2878,6 +2950,14 @@ function renderUsersPanel() {
 
     container.appendChild(chip);
   });
+
+  // Se sono l'unico nella stanza, invito esplicito (l'header resta visibile)
+  if (othersCount === 0) {
+    const hint = document.createElement('div');
+    hint.className = 'rp-empty';
+    hint.textContent = '☝️ Sei il primo qui — aspetta che entrino altri!';
+    container.appendChild(hint);
+  }
   // Modello cam aperte: clicchi un utente in onda e vedi subito la sua cam (no accetta)
 }
 
@@ -6092,6 +6172,9 @@ function enterRoom(roomId){
 
   document.getElementById('chatMsgs').innerHTML='';
   socket.emit('join-chat-room',{roomId,user:pubUser()});
+
+  // Prima volta in una stanza: chiedi una volta come si presenta (rosa/azzurro)
+  setTimeout(()=>{ if(typeof askGenderOnce==='function') askGenderOnce(); }, 800);
 
   if(!sessionRooms.has(roomId)){
     sessionRooms.add(roomId);

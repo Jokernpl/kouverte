@@ -4855,6 +4855,58 @@ body[data-room="campania"] #chat{
 .room-people .chip-live-badge{ display:none !important; }
 .room-people .chip-video-btn{ position:static !important; flex-shrink:0; width:30px !important; height:30px !important; font-size:15px !important; }
 
+/* ── Intestazione "utenti online" + legenda generi (rosa/azzurro) ── */
+.rp-head{
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; justify-content:space-between; gap:6px;
+  padding:5px 7px; margin-bottom:3px;
+  background:linear-gradient(160deg,rgba(22,26,50,.96),rgba(10,13,22,.96));
+  border:1px solid rgba(255,255,255,.08); border-radius:9px;
+  backdrop-filter:blur(6px);
+}
+.rp-head-online{ font-size:11px; font-weight:800; color:#e5e7eb; white-space:nowrap; letter-spacing:.2px; }
+.rp-leg{ display:flex; gap:6px; flex-shrink:0; }
+.rp-leg span{ font-size:11px; font-weight:800; padding:1px 6px; border-radius:7px; white-space:nowrap; }
+.rp-leg .lg-f{ color:#ff5fa2; background:rgba(255,95,162,.14); border:1px solid rgba(255,95,162,.32); }
+.rp-leg .lg-m{ color:#4aa8ff; background:rgba(74,168,255,.14); border:1px solid rgba(74,168,255,.32); }
+.rp-empty{ padding:10px 8px; font-size:11px; color:#9ca3af; white-space:normal; line-height:1.4; }
+
+/* ── Selettore genere nel profilo ── */
+.prof-gender{ display:flex; gap:8px; justify-content:center; margin-top:8px; }
+.pg-btn{
+  font-size:12px; font-weight:700; padding:6px 16px; border-radius:20px; cursor:pointer;
+  background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:#cbd5e1;
+  transition:transform .12s, background .15s, border-color .15s, color .15s;
+}
+.pg-btn:hover{ transform:translateY(-1px); }
+.pg-f.sel{ background:rgba(255,95,162,.18); border-color:#ff5fa2; color:#ff7db5; box-shadow:0 0 0 2px rgba(255,95,162,.18); }
+.pg-m.sel{ background:rgba(74,168,255,.18); border-color:#4aa8ff; color:#73bcff; box-shadow:0 0 0 2px rgba(74,168,255,.18); }
+
+/* ── Overlay "come ti presenti?" (una tantum all'ingresso stanza) ── */
+.ga-overlay{
+  display:none; position:fixed; inset:0; z-index:9000;
+  align-items:center; justify-content:center; padding:24px;
+  background:rgba(6,8,16,.72); backdrop-filter:blur(4px);
+}
+.ga-card{
+  width:100%; max-width:340px; text-align:center;
+  background:linear-gradient(160deg,#1a1f3a,#0d1019);
+  border:1px solid rgba(255,255,255,.12); border-radius:18px;
+  padding:22px 20px; box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.ga-title{ font-size:18px; font-weight:800; color:#fff; margin-bottom:6px; }
+.ga-sub{ font-size:12.5px; color:#9ca3af; line-height:1.5; margin-bottom:16px; }
+.ga-btns{ display:flex; gap:10px; }
+.ga-btns button{
+  flex:1; font-size:14px; font-weight:800; padding:12px 0; border-radius:13px; cursor:pointer;
+  transition:transform .12s, filter .15s; color:#fff;
+}
+.ga-btns button:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+.ga-f{ background:linear-gradient(135deg,#ff5fa2,#ff3d85); border:none; }
+.ga-m{ background:linear-gradient(135deg,#4aa8ff,#2b7fff); border:none; }
+.ga-skip{ margin-top:13px; font-size:11.5px; color:#6b7280; cursor:pointer; }
+.ga-skip:hover{ color:#9ca3af; text-decoration:underline; }
+
 /* Area cam affianco (dx) */
 .rp-camview{
   flex:1; position:relative; min-width:0;
