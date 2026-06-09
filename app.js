@@ -1791,6 +1791,18 @@ function setConnState(state){
   else if(state==='online' && room) el.textContent=(roomOnline[room.id]??0)+' online';
 }
 
+// Token dispositivo persistente: NON va rimosso al cambio nome o "nuovo account",
+// così i crediti gratis restano legati al device (anti-reset). Vive in localStorage.
+function getDeviceToken(){
+  let t = null;
+  try { t = localStorage.getItem('kv4_device'); } catch(e){}
+  if(!t){
+    t = 'd_' + ((window.crypto && crypto.randomUUID) ? crypto.randomUUID().replace(/-/g,'') : (Date.now().toString(36) + Math.random().toString(36).slice(2,12)));
+    try { localStorage.setItem('kv4_device', t); } catch(e){}
+  }
+  return t;
+}
+
 function connectSocket(){
   if(typeof io==='undefined'){ showToast('⚠️ Impossibile caricare socket.io'); setTimeout(connectSocket,3000); return; }
   setConnState('connecting');
@@ -1799,6 +1811,8 @@ function connectSocket(){
   if (typeof registerWebRTCHandlers === 'function') registerWebRTCHandlers(socket);
   socket.on('connect',()=>{
     setConnState('online');
+    // Device binding: lega i crediti gratis al dispositivo (anti-reset nome/storage)
+    try { socket.emit('device-sync', { deviceToken: getDeviceToken(), freeUsed: (typeof user!=='undefined' && user && user.freeUsed) || 0 }); } catch(e){}
     if(room){ socket.emit('join-chat-room',{roomId:room.id,user:pubUser()}); }
     // Registra utente per DM — anche utenti anonimi con kv4_uid
     {
@@ -1845,6 +1859,21 @@ function connectSocket(){
       // NOTA: NON aggiornare chatRoomUsers qui — usa chiave userId invece di socketId
       // causando duplicati e self-chip. La fonte corretta è l'evento chat-users.
       if(msg.userId!==user.id){appendMsg(msg);scrollBot();}
+    }
+  });
+  // ── Device binding: il server è la fonte autorevole dei crediti gratis usati ──
+  socket.on('device-credits',({freeUsed,limit}={})=>{
+    if(typeof freeUsed==='number' && typeof isPrem==='function' && !isPrem()){
+      const before=user.freeUsed||0;
+      user.freeUsed=Math.max(before,freeUsed);           // non si può abbassare resettando lo storage
+      if(user.freeUsed!==before){ saveUser(); if(typeof updateFreeBar==='function') updateFreeBar(); }
+    }
+  });
+  socket.on('paywall-reached',({freeUsed,limit}={})=>{
+    if(typeof isPrem==='function' && !isPrem()){
+      user.freeUsed=Math.max(user.freeUsed||0, freeUsed||FREE_LIMIT);
+      saveUser(); if(typeof updateFreeBar==='function') updateFreeBar();
+      if(typeof showPaywall==='function') showPaywall();
     }
   });
   // ── Live Reactions ──

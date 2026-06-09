@@ -462,6 +462,70 @@ function saveDB(db) {
 }
 function markDirty() { dbDirty = true; }
 
+// ════════════════════════════════════════════════════════════════
+// DEVICE BINDING — crediti gratis legati al DISPOSITIVO (anti-reset)
+// Conta i messaggi gratis per dispositivo: cambiando nome / "nuovo
+// account" / svuotando lo storage il conteggio NON si azzera.
+// Identità: (1) token persistente del client `kv4_device`  (2) hash di IP+UA.
+// L'IP è salvato SOLO hashato (mai in chiaro) → privacy/GDPR.
+// L'IP è applicato in modo conservativo (solo a device nuovo, con decadenza)
+// per limitare i falsi positivi da NAT (più persone dietro lo stesso IP).
+// ════════════════════════════════════════════════════════════════
+const _crypto = require('crypto');
+const FREE_LIMIT_SRV   = 100;                  // deve combaciare col client FREE_LIMIT
+const DEVICE_SALT      = process.env.DEVICE_SALT || 'kv-dev-salt-v1';
+const IP_BIND_ENABLED  = process.env.IP_BIND_DISABLED ? false : true;
+const IP_DECAY_MS      = 48 * 3600 * 1000;     // l'IP "scade" dopo 48h di inattività (limita NAT)
+const DEVICE_MAX       = 50000;                // tetto voci salvate (prune delle più vecchie)
+const socketDevice     = {};                   // socket.id -> { tok, ipua }
+function _devHash(s){ return _crypto.createHash('sha256').update(DEVICE_SALT + '|' + s).digest('hex').slice(0, 24); }
+function _devClientIp(socket){
+  const h = (socket && socket.handshake && socket.handshake.headers) || {};
+  const xff = String(h['x-forwarded-for'] || '').split(',')[0].trim();
+  return String(h['cf-connecting-ip'] || xff || (socket && socket.handshake && socket.handshake.address) || '').replace(/^::ffff:/, '');
+}
+function _devGet(key){ return (key && DB.devices && DB.devices[key]) ? DB.devices[key] : null; }
+function _devSet(key, used){
+  if(!key) return null;
+  DB.devices = DB.devices || {};
+  const now = Date.now();
+  const d = DB.devices[key] || { u:0, f:now, l:now };
+  d.u = Math.max(d.u || 0, used || 0);
+  d.l = now;
+  DB.devices[key] = d; markDirty();
+  return d;
+}
+function _devPrune(){
+  const m = DB.devices; if(!m) return;
+  const keys = Object.keys(m);
+  if(keys.length <= DEVICE_MAX) return;
+  keys.map(k => [k, m[k].l || 0]).sort((a,b) => a[1]-b[1])
+      .slice(0, keys.length - DEVICE_MAX).forEach(([k]) => { delete m[k]; });
+}
+// Riconcilia i crediti gratis di un client col suo dispositivo.
+// Ritorna il numero di messaggi gratis "usati" autorevole per quel device.
+function reconcileDevice(socket, deviceToken, clientFreeUsed){
+  const tok  = (typeof deviceToken === 'string' && deviceToken) ? ('tok:' + deviceToken.slice(0, 48)) : null;
+  const ua   = String(((socket.handshake && socket.handshake.headers) || {})['user-agent'] || '').slice(0, 160);
+  const ipua = 'ipua:' + _devHash(_devClientIp(socket) + '|' + ua);
+  const cUsed = Math.max(0, Math.min(FREE_LIMIT_SRV, parseInt(clientFreeUsed) || 0));
+
+  const tokDev = tok ? _devGet(tok) : null;
+  const ipDev  = _devGet(ipua);
+
+  let eff = cUsed;
+  if (tokDev) eff = Math.max(eff, tokDev.u || 0);              // il token è la fonte primaria
+  const fresh  = !tokDev || (tokDev.u || 0) === 0;             // device nuovo o mai usato
+  const recent = ipDev && (Date.now() - (ipDev.l || 0) < IP_DECAY_MS);
+  if (IP_BIND_ENABLED && fresh && recent) eff = Math.max(eff, ipDev.u || 0); // IP solo come rete di sicurezza
+
+  if (tok) _devSet(tok, eff);
+  _devSet(ipua, eff);
+  _devPrune();
+  socketDevice[socket.id] = { tok, ipua };
+  return eff;
+}
+
 // Restore da Redis o Gist allo startup (il piu recente vince)
 async function tryRestoreFromRedis() {
     let bestBackup = null;
@@ -4856,6 +4920,15 @@ function scopaExecCapture(game, byId, card, cardIdx, captured){
 io.on('connection', (socket) => {
     console.log('[WEBRTC] Utente connesso:', socket.id);
 
+    // ── Device binding: lega i crediti gratis al dispositivo (anti-reset) ──
+    socket.on('device-sync', (payload = {}) => {
+        try {
+            const eff = reconcileDevice(socket, payload.deviceToken, payload.freeUsed);
+            socket.emit('device-credits', { freeUsed: eff, limit: FREE_LIMIT_SRV });
+        } catch (e) { /* non bloccare mai la connessione per il device-binding */ }
+    });
+    socket.on('disconnect', () => { delete socketDevice[socket.id]; });
+
     // ── SCOPA socket handlers ──────────────────────────────────────
     socket.on('scopa:join', ({ userId, name, face, color }) => {
         if(!userId||typeof userId!=='string') return;
@@ -5720,6 +5793,18 @@ io.on('connection', (socket) => {
         if (chatRoomHistory[roomId].length > 100) chatRoomHistory[roomId].shift();
         // Broadcast a tutti nella stanza TRANNE chi ha inviato (il mittente si gestisce lato client)
         socket.to('chat-' + roomId).emit('chat-message', { roomId, msg: clean });
+        // ── Device binding: conta il messaggio gratis sul dispositivo (anti-reset) ──
+        // Non blocca MAI l'invio: aggiorna solo il conteggio autorevole e, al limite,
+        // segnala al mittente di mostrare il paywall.
+        if (!clean.isPremium) {
+            const dev = socketDevice[socket.id];
+            if (dev) {
+                const cur = Math.max((_devGet(dev.tok) || {}).u || 0, (_devGet(dev.ipua) || {}).u || 0) + 1;
+                if (dev.tok) _devSet(dev.tok, cur);
+                _devSet(dev.ipua, cur);
+                if (cur >= FREE_LIMIT_SRV) socket.emit('paywall-reached', { freeUsed: cur, limit: FREE_LIMIT_SRV });
+            }
+        }
         // Traccia per leaderboard settimanale + classifica città
         trackWeeklyMsg(clean.userId, clean.name, clean.face, clean.color);
         trackDailyCity(roomId);
