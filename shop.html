@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1FE96B">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="LOSANGELESBROKER — Underground Services. ScamPages, Carding, OpSec, Malware, Web.">
+<meta property="og:title" content="LOSANGELESBROKER — Underground Services">
+<meta property="og:description" content="ScamPages, Carding, OpSec, Malware, Siti Web — tutto per il lavoro sporco.">
+<meta property="og:image" content="og-cover.jpg">
+<title>LOSANGELESBROKER — Underground Services</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --green: #1FE96B;
+    --green-glow: #1FE96B44;
+    --bg: #0a0a0a;
+    --card: #111111;
+    --card-hover: #1a1a1a;
+    --border: #222222;
+    --text: #e4e4e7;
+    --text-dim: #a1a1aa;
+    --text-muted: #71717a;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Manrope', -apple-system, sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NAVBAR ─── */
+  .navbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+  }
+  .navbar-inner {
+    max-width: 1200px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px;
+  }
+  .nav-logo {
+    font-size: 13px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--green); font-weight: 900;
+    text-shadow: 0 0 20px var(--green-glow);
+    font-family: 'Inter', sans-serif;
+  }
+  .nav-links { display: flex; gap: 24px; align-items: center; }
+  .nav-links a {
+    color: var(--text-dim); text-decoration: none; font-size: 13px;
+    font-weight: 500; letter-spacing: 0.05em; transition: color .2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: var(--green); }
+  .nav-btn {
+    background: var(--green); color: #000 !important;
+    padding: 8px 18px; border-radius: 8px; font-weight: 700 !important;
+    letter-spacing: 0.08em; transition: all .2s;
+  }
+  .nav-btn:hover { transform: scale(1.04); box-shadow: 0 0 24px var(--green-glow); }
+
+  /* ─── HERO ─── */
+  .hero {
+    text-align: center; padding: 80px 24px 60px;
+    position: relative;
+    background: radial-gradient(ellipse at 50% 0%, rgba(31,233,107,0.06) 0%, transparent 70%);
+  }
+  .hero-badge {
+    display: inline-block; padding: 6px 16px; border-radius: 100px;
+    border: 1px solid rgba(31,233,107,0.3);
+    color: var(--green); font-size: 11px; letter-spacing: 0.15em;
+    font-weight: 600; margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 8vw, 72px);
+    font-weight: 300; letter-spacing: 0.02em;
+    line-height: 1.1; margin-bottom: 16px;
+  }
+  .hero h1 span { color: var(--green); font-style: italic; }
+  .hero p {
+    color: var(--text-dim); font-size: 16px; max-width: 500px;
+    margin: 0 auto 32px; line-height: 1.6;
+  }
+  .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--green); color: #000; border: none;
+    padding: 14px 32px; border-radius: 12px; font-size: 14px;
+    font-weight: 700; letter-spacing: 0.06em; cursor: pointer;
+    transition: all .2s; text-decoration: none; display: inline-block;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-primary:hover { transform: scale(1.04); box-shadow: 0 0 30px var(--green-glow); }
+  .btn-outline {
+    background: transparent; color: var(--text-dim); border: 1px solid var(--border);
+    padding: 14px 32px; border-radius: 12px; font-size: 14px;
+    font-weight: 600; letter-spacing: 0.06em; cursor: pointer;
+    transition: all .2s; text-decoration: none;
+  }
+  .btn-outline:hover { border-color: var(--green); color: var(--green); }
+
+  /* ─── CATEGORIES ─── */
+  .categories {
+    display: flex; gap: 8px; padding: 0 24px; margin-bottom: 40px;
+    overflow-x: auto; justify-content: center; flex-wrap: wrap;
+  }
+  .cat-chip {
+    padding: 8px 20px; border-radius: 100px; font-size: 12px;
+    font-weight: 600; letter-spacing: 0.06em; white-space: nowrap;
+    cursor: pointer; border: 1px solid var(--border); color: var(--text-dim);
+    background: transparent; transition: all .2s; user-select: none;
+  }
+  .cat-chip:hover, .cat-chip.active {
+    background: rgba(31,233,107,0.1); border-color: var(--green);
+    color: var(--green);
+  }
+
+  /* ─── PRODUCT GRID ─── */
+  .shop { max-width: 1200px; margin: 0 auto; padding: 0 24px 80px; }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px; font-weight: 300;
+    margin-bottom: 8px; color: var(--text);
+  }
+  .section-sub {
+    color: var(--text-muted); font-size: 13px;
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 32px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    transition: all .3s; position: relative;
+  }
+  .card:hover {
+    background: var(--card-hover); border-color: rgba(31,233,107,0.3);
+    transform: translateY(-4px); box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+  }
+  .card-img {
+    width: 100%; aspect-ratio: 1; object-fit: cover;
+    background: #1a1a1a; display: flex; align-items: center;
+    justify-content: center; font-size: 48px;
+  }
+  .card-img img { width: 100%; height: 100%; object-fit: cover; }
+  .card-body { padding: 20px; }
+  .card-tag {
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--green); font-weight: 700; margin-bottom: 6px;
+  }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
+  .card-desc { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+  .card-price {
+    font-size: 18px; font-weight: 700; color: var(--green);
+    font-family: 'Inter', sans-serif;
+  }
+  .card-stock {
+    font-size: 11px; color: var(--text-muted); margin-top: 4px;
+  }
+  .card-btn {
+    margin-top: 14px; width: 100%; background: transparent;
+    border: 1px solid var(--green); color: var(--green);
+    padding: 10px; border-radius: 10px; font-size: 12px;
+    font-weight: 700; letter-spacing: 0.08em; cursor: pointer;
+    transition: all .2s; text-decoration: none; display: block; text-align: center;
+  }
+  .card-btn:hover { background: var(--green); color: #000; }
+
+  /* ─── TELEGRAM FLOAT ─── */
+  .telegram-float {
+    position: fixed; bottom: 28px; right: 28px; z-index: 200;
+    background: var(--green); color: #000; width: 56px; height: 56px;
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 24px; cursor: pointer;
+    box-shadow: 0 4px 24px var(--green-glow); transition: all .2s;
+    text-decoration: none;
+  }
+  .telegram-float:hover { transform: scale(1.1); }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    border-top: 1px solid var(--border); padding: 40px 24px;
+    text-align: center; color: var(--text-muted); font-size: 12px;
+    letter-spacing: 0.06em;
+  }
+  .footer a { color: var(--green); text-decoration: none; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 36px; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+    .card-body { padding: 14px; }
+    .card-title { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="nav-logo">LOSANGELESBROKER</div>
+    <div class="nav-links">
+      <a href="#menu" class="active">Menu</a>
+      <a href="#about">Chi Siamo</a>
+      <a href="https://t.me/losangelesbroker" class="nav-btn" target="_blank">✈️ Ordina</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">✦ Underground Services ✦</div>
+  <h1>Servizi <span>Offensivi</span></h1>
+  <p>ScamPages, Carding, OpSec, Malware, Siti Web. Tutto ciò che ti serve per operare nell'ombra. Qualità garantita, discrezione assoluta.</p>
+  <div class="hero-actions">
+    <a href="#menu" class="btn-primary">🗂️ Vedi Tutto</a>
+    <a href="https://t.me/losangelesbroker" target="_blank" class="btn-outline">✈️ Telegram</a>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<div class="categories" id="category-filter">
+  <button class="cat-chip active" data-cat="all">Tutto</button>
+  <button class="cat-chip" data-cat="scampage">🎣 ScamPages</button>
+  <button class="cat-chip" data-cat="opsec">🕶️ OpSec</button>
+  <button class="cat-chip" data-cat="carding">💳 Carding</button>
+  <button class="cat-chip" data-cat="web">🌐 Siti Web</button>
+  <button class="cat-chip" data-cat="malware">🦠 Malware</button>
+  <button class="cat-chip" data-cat="altro">📦 Altro</button>
+</div>
+
+<!-- PRODUCTS -->
+<main class="shop" id="menu">
+  <div class="section-title">Catalogo Completo</div>
+  <div class="section-sub">24 SERVIZI — Ordina via Telegram</div>
+  
+  <div class="grid" id="product-grid">
+    <!-- Riempito da JS -->
+  </div>
+</main>
+
+<!-- TELEGRAM FLOAT -->
+<a href="https://t.me/losangelesbroker" target="_blank" class="telegram-float" title="Ordina su Telegram">
+  ✈️
+</a>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>© 2026 LOSANGELESBROKER. Tutti i diritti riservati.</p>
+  <p style="margin-top:8px">Contatto: <a href="https://t.me/losangelesbroker">@losangelesbroker</a></p>
+</footer>
+
+<script>
+// ─── CATALOGO PRODOTTI ───
+const products = [
+  // ═══ SCAMPAGES ═══
+  {
+    id: 1, name: "ScamPage Poste Italiane",
+    desc: "Clone perfetto del sito Poste Italiane con pannello admin. Cattura credenziali, carta, OTP. Login + conferma OTP. Design responsive, antibot.",
+    price: "€ 150", tag: "🎣 SCAMPAGE", cat: "scampage",
+    img: "🏦", stock: "2 disponibili", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 2, name: "ScamPage Banca Intesa",
+    desc: "Clone Sanpaolo/Intesa con 3 step: login → dati carta → OTP. Pannello admin con export CSV, notifiche Telegram in tempo reale.",
+    price: "€ 180", tag: "🎣 SCAMPAGE", cat: "scampage",
+    img: "🪙", stock: "Disponibile", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 3, name: "ScamPage PayPal/Revolut",
+    desc: "Double clone PayPal + Revolut con verifica carta. Pagina interattiva con check saldo fittizio. Pannello con IP logger e geolocalizzazione.",
+    price: "€ 200", tag: "🎣 SCAMPAGE", cat: "scampage",
+    img: "💸", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 4, name: "ScamPage Custom (qualsiasi brand)",
+    desc: "Creo la ScamPage del brand che vuoi TU. Clone 1:1 con 2-3 step di verifica. Pannello admin, antibot, Cloudflare bypass, SSL incluso.",
+    price: "€ 300", tag: "🎣 SCAMPAGE", cat: "scampage",
+    img: "🎯", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+
+  // ═══ OPSEC ═══
+  {
+    id: 5, name: "Pacchetto Anonimato Base",
+    desc: "Guida + tool per navigare anonimo: VPN configurata, Tor routing, MAC spoofing, browser fingerprint spoofing, DNS leak protection.",
+    price: "€ 50", tag: "🕶️ OPSEC", cat: "opsec",
+    img: "🎭", stock: "Sempre disponibile", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 6, name: "Pacchetto Anonimato Avanzato",
+    desc: "Setup VM isolata, VPN multi-hop + Tor, burner phone virtuale, crypto mixer, PGP encryption. Pronto per operazioni sensibili.",
+    price: "€ 120", tag: "🕶️ OPSEC", cat: "opsec",
+    img: "🕵️", stock: "3 disponibili", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 7, name: "Identità Sintetica",
+    desc: "Creazione identità completa con documenti verificabili. Passaporto, patente, bolletta. Utile per KYC exchange, affitti, registrazioni.",
+    price: "€ 350", tag: "🕶️ OPSEC", cat: "opsec",
+    img: "🪪", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 8, name: "SIM Anonima + Burner Phone",
+    desc: "SIM prepagata non registrata + telefono usa e getta. Attivazione in 24h. Spedizione discreta.",
+    price: "€ 80", tag: "🕶️ OPSEC", cat: "opsec",
+    img: "📱", stock: "5 disponibili", link: "https://t.me/losangelesbroker"
+  },
+
+  // ═══ CARDING ═══
+  {
+    id: 9, name: "Guida Carding Completa",
+    desc: "Manuale PDF 200+ pagine: dalla scelta del BIN alla cashout. Tecniche 2025, siti cardabili, setup antidetect, gestione drops.",
+    price: "€ 60", tag: "💳 CARDING", cat: "carding",
+    img: "💳", stock: "Sempre disponibile", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 10, name: "Lista Siti Cardabili (aggiornata)",
+    desc: "Lista mensile di 50+ siti italiani/europei senza 3D Secure. Categorie: elettronica, abbigliamento, gift card, food delivery.",
+    price: "€ 30/mese", tag: "💳 CARDING", cat: "carding",
+    img: "🗂️", stock: "Aggiornamento mensile", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 11, name: "Setup Antidetect Completo",
+    desc: "Browser antidetect configurato con 10 profili puliti. Proxy residenziali, timezone spoofing, WebRTC leak fix, canvas fingerprint control.",
+    price: "€ 100", tag: "💳 CARDING", cat: "carding",
+    img: "🖥️", stock: "3 disponibili", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 12, name: "BIN List Premium 2025",
+    desc: "Database 500+ BIN verificati manualmente. Divisa per banca, paese, tipo carta. Include BIN non-VBV e high-balance.",
+    price: "€ 40", tag: "💳 CARDING", cat: "carding",
+    img: "📋", stock: "Sempre disponibile", link: "https://t.me/losangelesbroker"
+  },
+
+  // ═══ SITI WEB ═══
+  {
+    id: 13, name: "E-Commerce Fake (DropShipping)",
+    desc: "Sito e-commerce finto professionale per dropshipping/carding. 20+ prodotti, checkout funzionante, pannello admin. SSL incluso.",
+    price: "€ 250", tag: "🌐 SITI WEB", cat: "web",
+    img: "🏪", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 14, name: "Landing Page Phishing",
+    desc: "Landing page one-page ottimizzata per campagne phishing. Form cattura dati, redirect automatico, tracking pixel, design responsive.",
+    price: "€ 80", tag: "🌐 SITI WEB", cat: "web",
+    img: "📄", stock: "Consegna 24h", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 15, name: "Sito Crypto Fake / ICO Scam",
+    desc: "Sito crypto finto professionale con wallet connect, grafici animati, sezione team. Landing page + dashboard utente + pannello admin.",
+    price: "€ 400", tag: "🌐 SITI WEB", cat: "web",
+    img: "₿", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 16, name: "Hosting Anonimo + Dominio",
+    desc: "Hosting offshore + dominio registrato con dati fittizi. Nessun log, nessuna richiesta di documenti. Pagamento in crypto.",
+    price: "€ 25/mese", tag: "🌐 SITI WEB", cat: "web",
+    img: "☁️", stock: "Sempre disponibile", link: "https://t.me/losangelesbroker"
+  },
+
+  // ═══ MALWARE ═══
+  {
+    id: 17, name: "RAT Custom (Windows/Linux)",
+    desc: "Remote Access Tool personalizzato con C2 panel. Keylogger, screen capture, file manager, reverse shell, persistenza. FUD su Defender.",
+    price: "€ 300", tag: "🦠 MALWARE", cat: "malware",
+    img: "🐀", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 18, name: "Infostealer + Panel",
+    desc: "Cattura credenziali browser, cookie, wallet crypto, sessioni Telegram/Discord. Esporta in panel web. Bypass Windows Defender.",
+    price: "€ 200", tag: "🦠 MALWARE", cat: "malware",
+    img: "🦊", stock: "2 disponibili", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 19, name: "Keylogger USB / Software",
+    desc: "Keylogger hardware (USB) o software. Cattura ogni tasto digitato. Log inviati via email/FTP/Telegram. Indetectabile.",
+    price: "€ 80", tag: "🦠 MALWARE", cat: "malware",
+    img: "⌨️", stock: "5 disponibili (USB)", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 20, name: "Crypter / Obfuscator",
+    desc: "Crypter per rendere FUD qualsiasi .exe. Bypass Windows Defender, AVG, Avast, Kaspersky. Runtime decryption, anti-sandbox, anti-VM.",
+    price: "€ 150", tag: "🦠 MALWARE", cat: "malware",
+    img: "🔐", stock: "Disponibile", link: "https://t.me/losangelesbroker"
+  },
+
+  // ═══ ALTRO ═══
+  {
+    id: 21, name: "DDoS Attack — Layer 4/7",
+    desc: "Attacco DDoS su qualsiasi target. Layer 4 (TCP/UDP flood) o Layer 7 (HTTP flood). Test gratuito di 60 secondi.",
+    price: "€ 50/giorno", tag: "📦 ALTRO", cat: "altro",
+    img: "💣", stock: "Slot disponibili", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 22, name: "Account Cracking Tool",
+    desc: "Tool per brute-force/combo su siti web. Thread multipli, proxy rotanti, captcha solver. Configurabile per qualsiasi target.",
+    price: "€ 100", tag: "📦 ALTRO", cat: "altro",
+    img: "🔨", stock: "Disponibile", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 23, name: "SIM Swap Service",
+    desc: "Servizio SIM swap su qualsiasi operatore italiano. Portabilità del numero su SIM controllata. Tempo: 24-72 ore.",
+    price: "€ 500", tag: "📦 ALTRO", cat: "altro",
+    img: "📲", stock: "Su richiesta", link: "https://t.me/losangelesbroker"
+  },
+  {
+    id: 24, name: "Bot Telegram Custom",
+    desc: "Bot Telegram personalizzato come CRIMECODE. AI integrata, sistema codici, menu Matrix, comandi hacking. Uguale a questo.",
+    price: "€ 200", tag: "📦 ALTRO", cat: "altro",
+    img: "🤖", stock: "Su ordinazione", link: "https://t.me/losangelesbroker"
+  }
+];
+
+// ─── RENDER ───
+const grid = document.getElementById('product-grid');
+
+function renderProducts(filter = 'all') {
+  const filtered = filter === 'all' ? products : products.filter(p => p.cat === filter);
+  
+  grid.innerHTML = filtered.map(p => `
+    <div class="card" data-cat="${p.cat}">
+      <div class="card-img">${p.img}</div>
+      <div class="card-body">
+        <div class="card-tag">${p.tag}</div>
+        <div class="card-title">${p.name}</div>
+        <div class="card-desc">${p.desc}</div>
+        <div class="card-price">${p.price}</div>
+        <div class="card-stock">📦 ${p.stock}</div>
+        <a href="${p.link}" target="_blank" class="card-btn">✈️ ORDINA VIA TELEGRAM</a>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── CATEGORIE ───
+document.querySelectorAll('.cat-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    renderProducts(chip.dataset.cat);
+  });
+});
+
+// ─── RENDER INIZIALE ───
+renderProducts();
+
+// ─── SMOOTH SCROLL ───
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+</script>
+
+</body>
+</html>
